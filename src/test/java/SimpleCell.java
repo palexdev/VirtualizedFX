@@ -9,7 +9,6 @@ public class SimpleCell<T> extends HBox implements ISimpleCell {
 
     public SimpleCell(T data) {
         Label label = new Label(data.toString());
-        label.setStyle("-fx-border-color: gold");
         HBox.setHgrow(label, Priority.ALWAYS);
         label.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         label.setPadding(new Insets(0, 0, 0, 10));

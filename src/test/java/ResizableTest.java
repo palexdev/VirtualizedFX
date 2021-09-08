@@ -50,7 +50,6 @@ public class ResizableTest extends Application {
     private Label build(String s) {
         Label label = new Label(s);
         label.setPadding(new Insets(0, 0, 0, 10));
-        label.setStyle("-fx-border-color: gold");
         return label;
     }
 }

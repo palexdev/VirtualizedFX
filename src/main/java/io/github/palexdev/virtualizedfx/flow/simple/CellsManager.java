@@ -267,14 +267,14 @@ public class CellsManager<T, C extends ISimpleCell> {
         ));
         cells.putAll(toUpdate);
 
-        for (Map.Entry<Integer, C> entry : toUpdate.entrySet()) {
-            C cell = entry.getValue();
-            getChildren().set(entry.getKey(), cell.getNode());
-        }
         for (Map.Entry<Integer, C> entry : toRemove.entrySet()) {
             C cell = entry.getValue();
             cell.dispose();
             getChildren().remove(cell.getNode());
+        }
+        for (Map.Entry<Integer, C> entry : toUpdate.entrySet()) {
+            C cell = entry.getValue();
+            getChildren().set(entry.getKey(), cell.getNode());
         }
         processLayout(toUpdate);
     }

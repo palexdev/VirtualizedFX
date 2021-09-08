@@ -18,6 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.flow.simple;
 
+import io.github.palexdev.virtualizedfx.ResourceManager;
 import io.github.palexdev.virtualizedfx.cell.ISimpleCell;
 import io.github.palexdev.virtualizedfx.enums.Gravity;
 import io.github.palexdev.virtualizedfx.flow.base.VirtualFlow;
@@ -88,6 +89,7 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
      * Also adds listeners for the cellFactory property and the gravity property.
      */
     private void initialize() {
+        getStyleClass().add("virtual-flow");
         getChildren().add(container);
         setupScrollBars();
         cellFactory.addListener((observable, oldValue, newValue) -> {
@@ -253,12 +255,20 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
     //================================================================================
     // Override Methods
     //================================================================================
+
+    @Override
+    public String getUserAgentStylesheet() {
+        return ResourceManager.loadResource("SimpleVirtualFlow.css");
+    }
+
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
         //container.resize(getWidth(), getHeight());
-        vBar.resizeRelocate(getWidth() - 10, 0, 10, getHeight());
-        hBar.resizeRelocate(0, getHeight() - 10, getWidth(), 10);
+        double prefVerticalWidth = vBar.getPrefWidth();
+        double prefHorizontalHeight = hBar.getPrefHeight();
+        vBar.resizeRelocate(getWidth() - vBar.getWidth(), 0, prefVerticalWidth, getHeight());
+        hBar.resizeRelocate(0, getHeight() - hBar.getHeight(), getWidth(), prefHorizontalHeight);
     }
 
     //================================================================================

@@ -2,6 +2,6 @@ import javafx.application.Application;
 
 public class Launcher {
     public static void main(String[] args) {
-        Application.launch(SimpleVirtualFlowTest.class);
+        Application.launch(ResizableTest.class);
     }
 }

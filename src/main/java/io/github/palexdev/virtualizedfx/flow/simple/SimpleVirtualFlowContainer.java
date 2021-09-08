@@ -85,7 +85,7 @@ public class SimpleVirtualFlowContainer<T, C extends ISimpleCell> extends Group 
      * the cells manager and add the needed listeners.
      */
     private void initialize() {
-        setStyle("-fx-border-color: blue");
+        getStyleClass().add("cells-container");
         buildClip();
         ExecutionUtils.executeWhen(
                 virtualFlow.needsLayoutProperty(),

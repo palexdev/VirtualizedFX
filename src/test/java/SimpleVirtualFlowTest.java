@@ -49,7 +49,6 @@ public class SimpleVirtualFlowTest extends Application {
 
         virtualFlow.setPrefSize(700, 100);
         virtualFlow.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-        virtualFlow.setStyle("-fx-background-color: white;\n" + "-fx-border-color: red");
 
         updateInside.setOnAction(event -> virtualFlow.scrollToLast());
         updateOutside.setOnAction(event -> virtualFlow.scrollToFirst());
