@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'io.github.palexdev'
-version '11.0.1'
+version '11.0.2'
 
 repositories {
     mavenCentral()
@@ -28,7 +28,8 @@ dependencies {
 
     testImplementation "org.testfx:testfx-core:4.0.16-alpha"
     testImplementation "org.testfx:testfx-junit5:4.0.16-alpha"
-    testImplementation name: 'scenicview'}
+    testImplementation name: 'scenicview'
+}
 
 test {
     useJUnitPlatform()

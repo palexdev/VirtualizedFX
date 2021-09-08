@@ -44,18 +44,31 @@ public class NumberRange<T extends Number> {
     //================================================================================
     // Methods
     //================================================================================
+
+    /**
+     * @return the upper bound
+     */
     public T getMin() {
         return min;
     }
 
+    /**
+     * @return the lower bound
+     */
     public T getMax() {
         return max;
     }
 
+    /**
+     * Expands a range on integers to a List of integers.
+     */
     public static List<Integer> expandRange(NumberRange<Integer> range) {
         return IntStream.rangeClosed(range.getMin(), range.getMax()).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
+    /**
+     * Expands a range of integers to a Set of integers.
+     */
     public static Set<Integer> expandRangeToSet(NumberRange<Integer> range) {
         return IntStream.rangeClosed(range.getMin(), range.getMax()).collect(HashSet::new, HashSet::add, HashSet::addAll);
     }
@@ -149,9 +162,5 @@ public class NumberRange<T extends Number> {
      */
     public static boolean inRangeOf(long val, List<NumberRange<Long>> ranges) {
         return ranges.stream().anyMatch(range -> inRangeOf(val, range));
-    }
-
-    public static boolean lesserThan(NumberRange<Integer> first, NumberRange<Integer> second) {
-        return (first.getMax() < second.getMax()) || (first.getMin() < second.getMin());
     }
 }

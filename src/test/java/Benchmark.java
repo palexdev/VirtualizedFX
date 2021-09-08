@@ -1,10 +1,10 @@
-import io.github.palexdev.virtualizedfx.cell.base.ISimpleCell;
+import io.github.palexdev.virtualizedfx.cell.ISimpleCell;
+import io.github.palexdev.virtualizedfx.enums.Gravity;
 import io.github.palexdev.virtualizedfx.flow.simple.SimpleVirtualFlow;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ListCell;
@@ -34,11 +34,11 @@ public class Benchmark extends Application {
         runLater(1000, () -> {
             ObservableList<String> flowItems = getItems();
             System.out.println("\nNumber of VIRTUALFLOW cell creations/layouts when:");
-            SimpleVirtualFlow<String, ISimpleCell> flow = new SimpleVirtualFlow.Builder<String, ISimpleCell>()
-                    .setItems(flowItems)
-                    .setCellFactory(this::reg)
-                    .setOverscan(0)
-                    .build();
+            SimpleVirtualFlow<String, ISimpleCell> flow = SimpleVirtualFlow.Builder.create(
+                    flowItems,
+                    this::reg,
+                    Gravity.TOP_BOTTOM
+            );
             benchmark(flow, flowItems);
         });
     }
@@ -160,22 +160,7 @@ public class Benchmark extends Application {
         };
         reg.setPrefHeight(16);
         reg.setStyle("-fx-background-color: " + color);
-        return new ISimpleCell() {
-            @Override
-            public double getFixedHeight() {
-                return 16;
-            }
-
-            @Override
-            public double getFixedWidth() {
-                return -1;
-            }
-
-            @Override
-            public Node getNode() {
-                return reg;
-            }
-        };
+        return ISimpleCell.wrapNode(reg, -1, 16);
     }
 
     /**

@@ -21,6 +21,7 @@ package io.github.palexdev.virtualizedfx.utils;
 
 import javafx.scene.input.ScrollEvent;
 
+// TODO to change
 /**
  * Utility class for ScrollPanes and MFXFlowlessListViews.
  */

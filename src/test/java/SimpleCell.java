@@ -1,4 +1,4 @@
-import io.github.palexdev.virtualizedfx.cell.base.ISimpleCell;
+import io.github.palexdev.virtualizedfx.cell.ISimpleCell;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -28,6 +28,6 @@ public class SimpleCell<T> extends HBox implements ISimpleCell {
 
     @Override
     public double getFixedWidth() {
-        return -1;
+        return 32;
     }
 }

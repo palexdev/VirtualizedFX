@@ -122,6 +122,22 @@ public class ExecutionUtils {
         }
     }
 
+    /**
+     * Executes the given action (as a consumer) when the given {@link ObservableValue} changes.
+     * <p>
+     * If executeNow is true the action will be immediately run, the first value will be null, the second will be the current observable's value.
+     * <p></p>
+     * When the observable changes the executionCondition is evaluated and if it's true the action will be run with two arguments
+     * passed to the consumer, the first is the observable's oldValue, the second is the observable's newValue.
+     * <p>
+     * If isOneShot is true the listener will be removed from the observable as soon as it changes and executionCondition is true.
+     *
+     * @param property           the observable to add a listener to
+     * @param consumer           the action as a consumer to offer both the oldValue and newValue
+     * @param executeNow         to specify if the given action should be immediately executed if the expression is already true
+     * @param executionCondition to specify when the action should be executed
+     * @param isOneShot          to specify if the added listener should be removed after the first time the expression becomes true
+     */
     public static <T> void executeWhen(ObservableValue<? extends T> property, BiConsumer<T, T> consumer, boolean executeNow, BiFunction<T, T, Boolean> executionCondition, boolean isOneShot) {
         if (executeNow) {
             consumer.accept(null, property.getValue());
