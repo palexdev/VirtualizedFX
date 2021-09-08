@@ -1,6 +1,8 @@
 plugins {
     id 'java-library'
     id 'org.openjfx.javafxplugin' version '0.0.10'
+    id 'biz.aQute.bnd.builder' version '5.3.0'
+    id 'com.vanniktech.maven.publish' version '0.17.0'
 }
 
 group 'io.github.palexdev'
@@ -30,6 +32,55 @@ dependencies {
     testImplementation "org.testfx:testfx-junit5:4.0.16-alpha"
     testImplementation name: 'scenicview'
 }
+
+javadoc {
+    excludes = ['**/*.html', 'META-INF/**']
+
+    options.use = true
+    options.splitIndex = true
+    options.encoding = 'UTF-8'
+    options.author = true
+    options.version = true
+    options.windowTitle = "$project.name $project.version API"
+    options.docTitle = "$project.name $project.version API"
+    options.links = ['https://docs.oracle.com/en/java/javase/11/docs/api',
+                     'https://openjfx.io/javadoc/17']
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
+}
+
+task sourcesJarBuild(type: Jar, dependsOn: classes) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJarBuild
+    archives jar
+}
+
+jar {
+    manifest {
+        attributes(
+                'Bundle-Name': project.name,
+                'Bundle-Description': "Alternative VirtualFlows for JavaFX",
+                'Bundle-SymbolicName': 'io.github.palexdev',
+                'Export-Package': 'io.github.palexdev.virtualizedfx.*'
+        )
+    }
+}
+
+task removeBnd(type: Delete) {
+    delete fileTree(project.buildDir) {
+        include '**/*.bnd'
+    }
+}
+
+build.dependsOn removeBnd
 
 test {
     useJUnitPlatform()
