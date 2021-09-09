@@ -64,8 +64,8 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
     //================================================================================
     private final ObjectProperty<ObservableList<T>> items = new SimpleObjectProperty<>(FXCollections.observableArrayList());
     private final ObjectProperty<Function<T, C>> cellFactory = new SimpleObjectProperty<>();
-    private int overscan;
     private final ObjectProperty<Gravity> gravity = new SimpleObjectProperty<>();
+    private int overscan;
 
     private final ScrollBar hBar = new ScrollBar();
     private final DoubleProperty horizontalPosition = new SimpleDoubleProperty();
@@ -318,20 +318,6 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
     }
 
     /**
-     * @return the number of extra cells to build
-     */
-    public int getOverscan() {
-        return overscan;
-    }
-
-    /**
-     * Sets the number of extra cells to build.
-     */
-    public void setOverscan(int overscan) {
-        this.overscan = overscan;
-    }
-
-    /**
      * @return the orientation of the VirtualFlow
      */
     public Gravity getGravity() {
@@ -350,6 +336,36 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
      */
     public void setGravity(Gravity gravity) {
         this.gravity.set(gravity);
+    }
+
+    /**
+     * @return the number of extra cells to build
+     */
+    public int getOverscan() {
+        return overscan;
+    }
+
+    /**
+     * Sets the number of extra cells to build.
+     */
+    public void setOverscan(int overscan) {
+        this.overscan = overscan;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ScrollBar getHBar() {
+        return hBar;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ScrollBar getVBar() {
+        return vBar;
     }
 
     /**
@@ -392,6 +408,14 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
      */
     public void setHorizontalPosition(double hValue) {
         this.horizontalPosition.set(hValue);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SimpleVirtualFlow<T, C> getVirtualFlow() {
+        return this;
     }
 
     //================================================================================

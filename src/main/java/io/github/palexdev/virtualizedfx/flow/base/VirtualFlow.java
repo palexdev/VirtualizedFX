@@ -21,6 +21,8 @@ package io.github.palexdev.virtualizedfx.flow.base;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.layout.Region;
 
 import java.util.function.Function;
 
@@ -56,4 +58,21 @@ public interface VirtualFlow<T, C extends Cell> {
      * Sets the function used to build a Cell from an object of type T.
      */
     void setCellFactory(Function<T, C> cellFactory);
+
+    /**
+     * @return the instance of the horizontal scroll bar, null if the virtual flow
+     * doesn't have it
+     */
+    ScrollBar getHBar();
+
+    /**
+     * @return the instance of the vertical scroll bar, null if the virtual flow
+     * doesn't have it
+     */
+    ScrollBar getVBar();
+
+    /**
+     * @return the instance of the virtual flow
+     */
+    Region getVirtualFlow();
 }
