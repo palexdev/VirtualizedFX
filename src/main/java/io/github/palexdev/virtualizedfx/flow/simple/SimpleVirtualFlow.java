@@ -431,6 +431,35 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
         }
 
         /**
+         * @param items       The items list property
+         * @param cellFactory The function to convert items to cells
+         * @param gravity     The orientation
+         * @param <T>         The type of objects
+         * @param <C>         The type of cells
+         */
+        public static <T, C extends ISimpleCell> SimpleVirtualFlow<T, C> create(ObjectProperty<? extends ObservableList<T>> items, Function<T, C> cellFactory, Gravity gravity) {
+            return create(items, cellFactory, gravity, 0);
+        }
+
+        /**
+         * @param items       The items list property
+         * @param cellFactory The function to convert items to cells
+         * @param gravity     The orientation
+         * @param overscan    The number of extra cells to build
+         * @param <T>         The type of objects
+         * @param <C>         The type of cells
+         */
+        public static <T, C extends ISimpleCell> SimpleVirtualFlow<T, C> create(ObjectProperty<? extends ObservableList<T>> items, Function<T, C> cellFactory, Gravity gravity, int overscan) {
+            SimpleVirtualFlow<T, C> virtualFlow = new SimpleVirtualFlow<>();
+            virtualFlow.items.bind(items);
+            virtualFlow.setCellFactory(cellFactory);
+            virtualFlow.setGravity(gravity);
+            virtualFlow.overscan = overscan;
+            virtualFlow.initialize();
+            return virtualFlow;
+        }
+
+        /**
          * @param items       The items list
          * @param cellFactory The function to convert items to cells
          * @param gravity     The orientation
