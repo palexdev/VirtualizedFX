@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0"
+            prefWidth="800.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.TestController">
+   <FlowPane alignment="TOP_CENTER" columnHalignment="CENTER" hgap="30.0" layoutX="14.0" layoutY="14.0"
+             prefHeight="200.0" prefWidth="742.0" vgap="20.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0"
+             AnchorPane.topAnchor="14.0">
+      <padding>
+         <Insets bottom="7.0" left="7.0" right="7.0" top="7.0"/>
+      </padding>
+      <MFXButton buttonType="RAISED" onAction="#updateInside" prefHeight="32.0" prefWidth="125.0"
+                 text="Update Inside"/>
+      <MFXButton buttonType="RAISED" onAction="#updateOutside" prefHeight="32.0" prefWidth="125.0"
+                 text="Update Outside"/>
+      <MFXButton buttonType="RAISED" onAction="#add" prefHeight="32.0" prefWidth="125.0" text="Add"/>
+      <MFXButton buttonType="RAISED" onAction="#addAll" prefHeight="32.0" prefWidth="125.0" text="Add Multiple"/>
+      <MFXButton buttonType="RAISED" onAction="#deleteMiddle" prefHeight="32.0" prefWidth="125.0"
+                 text="Delete Middle"/>
+      <MFXButton buttonType="RAISED" onAction="#deleteSparse" prefHeight="32.0" prefWidth="125.0"
+                 text="Delete Sparse"/>
+      <MFXButton buttonType="RAISED" onAction="#setAll" prefHeight="32.0" prefWidth="125.0" text="Set All"/>
+      <MFXButton buttonType="RAISED" onAction="#clear" prefHeight="32.0" prefWidth="125.0" text="Clear"/>
+      <MFXButton buttonType="RAISED" onAction="#replace" prefHeight="32.0" prefWidth="125.0" text="Replace"/>
+      <MFXButton buttonType="RAISED" onAction="#changeFactory" prefHeight="32.0" prefWidth="125.0"
+                 text="Change Cell Factory"/>
+      <MFXButton buttonType="RAISED" onAction="#changeOrientation" prefHeight="32.0" prefWidth="125.0"
+                 text="Change Orientation"/>
+      <MFXButton buttonType="RAISED" onAction="#setWidth" prefHeight="32.0" prefWidth="125.0" text="Set Width"/>
+      <MFXButton buttonType="RAISED" onAction="#setHeight" prefHeight="32.0" prefWidth="125.0" text="Set Height"/>
+      <MFXButton buttonType="RAISED" onAction="#scrollByPixel" prefHeight="32.0" prefWidth="125.0"
+                 text="Scroll By Pixel"/>
+      <MFXButton buttonType="RAISED" onAction="#scrollToIndex" prefHeight="32.0" prefWidth="125.0"
+                 text="Scroll To Index"/>
+      <MFXButton buttonType="RAISED" onAction="#scrollToFirst" prefHeight="32.0" prefWidth="125.0"
+                 text="Scroll To First"/>
+      <MFXButton buttonType="RAISED" onAction="#scrollToLast" prefHeight="32.0" prefWidth="125.0"
+                 text="Scroll To Last"/>
+      <MFXButton buttonType="RAISED" onAction="#scrollToPixel" prefHeight="32.0" prefWidth="125.0"
+                 text="Scroll To Pixel"/>
+   </FlowPane>
+   <Separator layoutX="300.0" layoutY="213.0" prefWidth="200.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0"
+              AnchorPane.topAnchor="220.0"/>
+   <BorderPane AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0"
+               AnchorPane.topAnchor="250.0">
+      <center>
+         <Group fx:id="group"/>
+      </center>
+   </BorderPane>
+</AnchorPane>

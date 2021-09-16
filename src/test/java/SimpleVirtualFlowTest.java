@@ -1,9 +1,9 @@
-import io.github.palexdev.virtualizedfx.enums.Gravity;
 import io.github.palexdev.virtualizedfx.flow.simple.SimpleVirtualFlow;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -43,8 +43,7 @@ public class SimpleVirtualFlowTest extends Application {
         SimpleVirtualFlow<String, SimpleCell<String>> virtualFlow = SimpleVirtualFlow.Builder.create(
                 strings,
                 SimpleCell::new,
-                Gravity.LEFT_RIGHT,
-                5
+                Orientation.HORIZONTAL
         );
 
         virtualFlow.setPrefSize(700, 100);

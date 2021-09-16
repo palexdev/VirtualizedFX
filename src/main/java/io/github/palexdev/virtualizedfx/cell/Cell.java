@@ -25,21 +25,7 @@ import javafx.scene.Node;
  * <p>
  * Also offers a static method to quickly wrap a node into a cell.
  */
-public interface Cell {
-
-    /**
-     * Wraps the given node is a Cell.
-     */
-    static <N extends Node> Cell wrapNode(N node) {
-        return new Cell() {
-
-            @Override
-            public N getNode() { return node; }
-
-            @Override
-            public String toString() { return node.toString(); }
-        };
-    }
+public interface Cell<T> {
 
     /**
      * Returns the cell's node.
@@ -49,14 +35,29 @@ public interface Cell {
     Node getNode();
 
     /**
+     * Automatically called by the VirtualFlow
+     * <p>
+     * This method must be implemented to correctly
+     * update the Cell's content on scroll.
+     * <p>
+     * <b>Note:</b> if the Cell's content is a Node this method should
+     * also re-set the Cell's children because (quoting from JavaFX doc)
+     * 'A node may occur at most once anywhere in the scene graph' and it's
+     * possible that a Node may be removed from a Cell to be the content
+     * of another Cell.
+     */
+    void updateItem(T item);
+
+    /**
      * Automatically called by the VirtualFlow.
      * <p>
-     * Cells are dummy, they have no logic, no state nothing.
+     * Cells are dumb, they have no logic, no state.
      * This method allow cells implementations to keep track of a cell's index.
      * <p>
      * Default implementation is empty.
      */
-    default void updateIndex(int index) {}
+    default void updateIndex(int index) {
+    }
 
     /**
      * Automatically called after the cell has been laid out.

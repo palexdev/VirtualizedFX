@@ -128,7 +128,7 @@ public class ListChangeHelper {
         /**
          * For each {@link ChangeBean} that is an addition executes the given action.
          * <p>
-         * The consumer gives the `from` index, the `to` index and the Set of added indexes.
+         * The consumer gives the 'from' index, the 'to' index and the Set of added indexes.
          */
         public void processAddition(TriConsumer<Integer, Integer, Set<Integer>> action) {
             if (added.isEmpty()) return;
@@ -141,7 +141,7 @@ public class ListChangeHelper {
         /**
          * For each {@link ChangeBean} that is a removal executes the given action.
          * <p>
-         * The consumer gives the `from` index, the `to` index and the Set of removed indexes.
+         * The consumer gives the 'from' index, the 'to' index and the Set of removed indexes.
          */
         public void processRemoval(TriConsumer<Integer, Integer, Set<Integer>> action) {
             if (removed.isEmpty() || wasReplacement) return;
@@ -273,7 +273,7 @@ public class ListChangeHelper {
         }
 
         /**
-         * @return checks whether both `changed` and `removed` Sets are empty
+         * @return checks whether both 'changed' and 'removed' Sets are empty
          */
         public boolean isEmpty() {
             return changed.isEmpty() && removed.isEmpty();

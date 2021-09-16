@@ -19,6 +19,7 @@
 package io.github.palexdev.virtualizedfx.flow.base;
 
 import io.github.palexdev.virtualizedfx.cell.Cell;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ScrollBar;
@@ -32,7 +33,7 @@ import java.util.function.Function;
  * @param <T> the type of objects to represent
  * @param <C> the type of Cell to use
  */
-public interface VirtualFlow<T, C extends Cell> {
+public interface VirtualFlow<T, C extends Cell<T>> {
 
     /**
      * @return the items list
@@ -70,6 +71,36 @@ public interface VirtualFlow<T, C extends Cell> {
      * doesn't have it
      */
     ScrollBar getVBar();
+
+    /**
+     * @return the horizontal scroll bar's value
+     */
+    double getHorizontalPosition();
+
+    /**
+     * Property for the horizontal scroll bar's value.
+     */
+    DoubleProperty horizontalPositionProperty();
+
+    /**
+     * Sets the horizontal scroll bar's value
+     */
+    void setHorizontalPosition(double hValue);
+
+    /**
+     * @return the vertical scroll bar's value
+     */
+    double getVerticalPosition();
+
+    /**
+     * Property for the vertical scroll bar's value.
+     */
+    DoubleProperty verticalPositionProperty();
+
+    /**
+     * Sets the vertical scroll bar's value
+     */
+    void setVerticalPosition(double vValue);
 
     /**
      * @return the instance of the virtual flow

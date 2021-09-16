@@ -18,40 +18,38 @@
 
 package io.github.palexdev.virtualizedfx.flow.simple;
 
-import io.github.palexdev.virtualizedfx.cell.ISimpleCell;
-import io.github.palexdev.virtualizedfx.utils.ExecutionUtils;
+import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.flow.base.VirtualFlow;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.scene.Group;
-import javafx.scene.Parent;
+import javafx.scene.Node;
+import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
+import java.util.List;
+import java.util.Map;
 
 /**
- * This is the {@link Group} used by {@link SimpleVirtualFlow} that contains the cells.
+ * This is the {@link Region} used by {@link SimpleVirtualFlow} to contain the cells.
  * <p>
- * Keeps a reference to the VirtualFlow to communicate with it. It's needed to listen to changes to the
- * items list, get its sizes, also acts as a bridge for the {@link LayoutManager} and the {@link CellsManager}.
+ * To keep things easy and organized this container makes use of two helper classes, the {@link CellsManager} and {@link LayoutManager},
+ * and also acts as a bridge between those two helpers and the VirtualFlow.
  * <p></p>
- * To keep things easy and organized this container makes use of two helper classes, which are
- * {@link LayoutManager} and {@link CellsManager} to keep track of layout changes (scroll for example) and
- * update the visible cells accordingly.
+ * Since it keeps references to the CellsManager and the LayoutManager too, it's also responsible for listening to changes to the items list,
+ * and the items list property.
  *
  * @param <T> the type of object to represent
  * @param <C> the type of Cell to use
  */
-public class SimpleVirtualFlowContainer<T, C extends ISimpleCell> extends Group {
+public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
     //================================================================================
     // Properties
     //================================================================================
     private final SimpleVirtualFlow<T, C> virtualFlow;
-    final CellsManager<T, C> cellsManger;
-    final LayoutManager<T, C> layoutManager;
+    private final CellsManager<T, C> cellsManager;
+    private final LayoutManager<T, C> layoutManager;
 
     private final ChangeListener<? super ObservableList<T>> listChanged;
     private final ListChangeListener<? super T> itemsChanged;
@@ -61,18 +59,17 @@ public class SimpleVirtualFlowContainer<T, C extends ISimpleCell> extends Group 
     //================================================================================
     public SimpleVirtualFlowContainer(SimpleVirtualFlow<T, C> virtualFlow) {
         this.virtualFlow = virtualFlow;
-        this.layoutManager = new LayoutManager<>(virtualFlow);
-        this.cellsManger = new CellsManager<>(virtualFlow, layoutManager);
-        itemsChanged = cellsManger::itemsChanged;
+        this.cellsManager = new CellsManager<>(this);
+        this.layoutManager = new LayoutManager<>(this);
+
+        itemsChanged = c -> cellsManager.itemsChanged();
         listChanged = (observable, oldValue, newValue) -> {
-            layoutManager.reinitialize();
-            cellsManger.clear();
-            virtualFlow.scrollTo(0);
+            cellsManager.clear();
+            virtualFlow.scrollToPixel(0.0);
             oldValue.removeListener(itemsChanged);
             newValue.addListener(itemsChanged);
-            layoutManager.computeIndexes();
+            layoutManager.initFlow();
         };
-        initialize();
     }
 
     //================================================================================
@@ -80,81 +77,157 @@ public class SimpleVirtualFlowContainer<T, C extends ISimpleCell> extends Group 
     //================================================================================
 
     /**
-     * Calls {@link #buildClip()} and {@link ExecutionUtils#executeWhen(ObservableValue, BiConsumer, boolean, BiFunction, boolean)}
-     * when the VirtualFlow is initialized (listens to the {@link Parent#needsLayoutProperty()}) to initialize the layout manager,
-     * the cells manager and add the needed listeners.
+     * Calls {@link #buildClip()}, adds the needed listeners for the items list and the corresponding property,
+     * also calls {@link LayoutManager#initialize()}.
      */
-    private void initialize() {
-        getStyleClass().add("cells-container");
+    protected void initialize() {
         buildClip();
-        ExecutionUtils.executeWhen(
-                virtualFlow.needsLayoutProperty(),
-                (oldValue, newValue) -> {
-                    layoutManager.initialize();
-                    cellsManger.updateContent();
-                    virtualFlow.getItems().addListener(itemsChanged);
-                    virtualFlow.itemsProperty().addListener(listChanged);
-                },
-                false,
-                (oldValue, newValue) -> !newValue,
-                true
-        );
+        virtualFlow.getItems().addListener(itemsChanged);
+        virtualFlow.itemsProperty().addListener(listChanged);
+        layoutManager.initialize();
     }
 
     /**
      * Builds and sets the container's clip to hide the cells outside the viewport.
      * The clip not only has its width and height bound to the VirtualFlow's ones but also
-     * the layoutX and layoutY properties bound to the container's ones (values are inverted, multiplied by -1).
+     * the layoutX and layoutY properties bound to the VirtualFlow's horizontal and vertical positions,
+     * {@link VirtualFlow#horizontalPositionProperty()}, {@link VirtualFlow#verticalPositionProperty()}.
      */
     private void buildClip() {
-        Rectangle rectangle = new Rectangle();
-        rectangle.widthProperty().bind(virtualFlow.widthProperty());
-        rectangle.heightProperty().bind(virtualFlow.heightProperty());
-        rectangle.layoutXProperty().bind(layoutXProperty().multiply(-1));
-        rectangle.layoutYProperty().bind(layoutYProperty().multiply(-1));
-        setClip(rectangle);
+        Rectangle clip = new Rectangle();
+        clip.heightProperty().bind(virtualFlow.heightProperty());
+        clip.widthProperty().bind(virtualFlow.widthProperty());
+        clip.layoutXProperty().bind(virtualFlow.horizontalPositionProperty());
+        clip.layoutYProperty().bind(virtualFlow.verticalPositionProperty());
+        setClip(clip);
     }
 
     //================================================================================
-    // Getters/Setters
+    // Delegate Methods
     //================================================================================
 
     /**
-     * Delegate method to {@link LayoutManager#getTotalHeight()}.
+     * Delegate method for {@link CellsManager#initCells(int)}.
      */
-    public double getTotalHeight() {
-        return layoutManager.getTotalHeight();
+    protected void initCells(int num) {
+        cellsManager.initCells(num);
     }
 
     /**
-     * Delegate Method to {@link LayoutManager#totalHeightProperty()}.
+     * Delegate method for {@link CellsManager#updateCells(int, int)}.
      */
-    public DoubleProperty totalHeightProperty() {
-        return layoutManager.totalHeightProperty();
+    protected void updateCells(int start, int end) {
+        cellsManager.updateCells(start, end);
     }
 
     /**
-     * Delegate method to {@link LayoutManager#getTotalWidth()}.
+     * Delegate method for {@link LayoutManager#update(double)}.
      */
-    public double getTotalWidth() {
-        return layoutManager.getTotalWidth();
+    public void update(double scrolled) {
+        layoutManager.update(scrolled);
     }
 
     /**
-     * Delegate method to {@link LayoutManager#totalWidthProperty()}.
+     * Delegate method for {@link CellsManager#getCells()}.
      */
-    public DoubleProperty totalWidthProperty() {
-        return layoutManager.totalWidthProperty();
+    protected Map<Integer, C> getCells() {
+        return cellsManager.getCells();
+    }
+
+    /**
+     * Delegate method for {@link LayoutManager#getEstimatedHeight()}.
+     */
+    protected double getEstimatedHeight() {
+        return layoutManager.getEstimatedHeight();
+    }
+
+    /**
+     * Delegate method for {@link LayoutManager#estimatedHeightProperty()}.
+     */
+    protected DoubleProperty estimatedHeightProperty() {
+        return layoutManager.estimatedHeightProperty();
+    }
+
+    /**
+     * Delegate method for {@link LayoutManager#getEstimatedWidth()}.
+     */
+    protected double getEstimatedWidth() {
+        return layoutManager.getEstimatedWidth();
+    }
+
+    /**
+     * Delegate method for {@link LayoutManager#estimatedWidthProperty()}.
+     */
+    protected DoubleProperty estimatedWidthProperty() {
+        return layoutManager.estimatedWidthProperty();
+    }
+
+    /**
+     * Delegate method for {@link LayoutManager#getCellHeight()}.
+     */
+    public double getCellHeight() {
+        return layoutManager.getCellHeight();
+    }
+
+    /**
+     * Delegate method for {@link LayoutManager#getCellWidth()}.
+     */
+    public double getCellWidth() {
+        return layoutManager.getCellWidth();
+    }
+
+    /**
+     * Delegate method for {@link LayoutManager#getScrolled()}.
+     */
+    public double getScrolled() {
+        return layoutManager.getScrolled();
     }
 
     //================================================================================
-    // Override Methods
+    // Getters
     //================================================================================
 
     /**
-     * Overridden to be empty, the layout is done manually by the {@link CellsManager}
-     * when needed.
+     * @return the VirtualFlow instance
+     */
+    protected SimpleVirtualFlow<T, C> getVirtualFlow() {
+        return virtualFlow;
+    }
+
+    /**
+     * @return the CellsManager instance
+     */
+    protected CellsManager<T, C> getCellsManager() {
+        return cellsManager;
+    }
+
+    /**
+     * @return the LayoutManager instance
+     */
+    protected LayoutManager<T, C> getLayoutManager() {
+        return layoutManager;
+    }
+
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * Overridden to be accessible in this package.
+     *
+     * @return
      */
     @Override
-    protected void layoutChildren() {}
+    protected ObservableList<Node> getChildren() {
+        return super.getChildren();
+    }
+
+    /**
+     * Overridden to be empty. Layout is managed by {@link CellsManager#processLayout(List)}.
+     */
+    @Override
+    protected void layoutChildren() {
+    }
 }

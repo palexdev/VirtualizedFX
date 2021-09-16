@@ -19,10 +19,12 @@
 package io.github.palexdev.virtualizedfx.flow.simple;
 
 import io.github.palexdev.virtualizedfx.ResourceManager;
-import io.github.palexdev.virtualizedfx.cell.ISimpleCell;
-import io.github.palexdev.virtualizedfx.enums.Gravity;
+import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper;
+import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper.HorizontalHelper;
+import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.flow.base.VirtualFlow;
-import io.github.palexdev.virtualizedfx.utils.NumberUtils;
+import io.github.palexdev.virtualizedfx.utils.ExecutionUtils;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -43,41 +45,48 @@ import java.util.function.Function;
 /**
  * Simple implementation of {@link VirtualFlow}.
  * <p>
- * This Virtual Flow creates Cells of type {@link ISimpleCell}, it's features are:
- * <p> - Can prebuild and show a certain number of extra cells above and below the viewport, this is the overscan property
- * <p> - Can show the cells from TOP to BOTTOM or from LEFT to RIGHT, this is the gravity property
- * <p> - It's not necessary tp wrap the flow in a scroll pane as it already includes both the scroll bars
+ * This VirtualFlow creates Cells of type {@link Cell}, it's features are:
+ * <p> - The items list is managed automatically (insertions, removals or updates to the items)
+ * <p> - The cell factory can be changed any time
+ * <p> - Can show the cells from TOP to BOTTOM or from LEFT to RIGHT, this is the orientation property
+ * <p> - It's possible to change the orientation event at runtime (but it's also recommended resizing both the
+ * VirtualFlow and the cells)
+ * <p> - It's not necessary to wrap the flow in a scroll pane as it already includes both the scroll bars
  * <p> - It's possible to set the speed of both the scroll bars
  * <p> - It's possible to scroll manually by pixels or to cell index
  * <p> - It's possible to get the currently shown/built cells or a specific cell by index
  * <p></p>
- * To build a SimpleVirtualFlow use the {@link Builder} class.
+ * To build a SimpleVirtualFlow use the {@link SimpleVirtualFlow.Builder} class.
  * <p></p>
  * The cells are contained in a {@link Group} which is a {@link SimpleVirtualFlowContainer}.
  *
  * @param <T> the type of objects to represent
  * @param <C> the type of Cell to use
  */
-public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implements VirtualFlow<T, C> {
+public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements VirtualFlow<T, C> {
     //================================================================================
     // Properties
     //================================================================================
+    private final String STYLE_CLASS = "virtual-flow";
+    private final String STYLESHEET = ResourceManager.loadResource("SimpleVirtualFlow.css");
     private final ObjectProperty<ObservableList<T>> items = new SimpleObjectProperty<>(FXCollections.observableArrayList());
     private final ObjectProperty<Function<T, C>> cellFactory = new SimpleObjectProperty<>();
-    private final ObjectProperty<Gravity> gravity = new SimpleObjectProperty<>();
-    private int overscan;
 
     private final ScrollBar hBar = new ScrollBar();
     private final DoubleProperty horizontalPosition = new SimpleDoubleProperty();
+
     private final ScrollBar vBar = new ScrollBar();
     private final DoubleProperty verticalPosition = new SimpleDoubleProperty();
 
-    final SimpleVirtualFlowContainer<T, C> container = new SimpleVirtualFlowContainer<>(this);
+    private OrientationHelper orientationHelper;
+    private final ObjectProperty<Orientation> orientation = new SimpleObjectProperty<>(Orientation.VERTICAL);
+    private final SimpleVirtualFlowContainer<T, C> container = new SimpleVirtualFlowContainer<>(this);
 
     //================================================================================
     // Constructors
     //================================================================================
-    protected SimpleVirtualFlow() {}
+    protected SimpleVirtualFlow() {
+    }
 
     //================================================================================
     // Initialization
@@ -86,74 +95,104 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
     /**
      * Adds the container to the children list, calls {@link #setupScrollBars()}.
      * <p>
-     * Also adds listeners for the cellFactory property and the gravity property.
+     * Also adds listeners for the cellFactory property and the orientation property.
+     * Also initializes the orientation helper and the container when {@link #needsLayoutProperty()}
+     * is becomes false.
+     * <p></p>
+     * A little note: the orientation helper is initialized manually at this specific point
+     * because otherwise the added listeners cause an infinite loop that will eat RAM for some reason.
      */
-    private void initialize() {
-        getStyleClass().add("virtual-flow");
+    protected void initialize() {
+        getStyleClass().add(STYLE_CLASS);
         getChildren().add(container);
         setupScrollBars();
+
         cellFactory.addListener((observable, oldValue, newValue) -> {
-            container.cellsManger.clear();
-            scrollTo(0);
-            container.layoutManager.computeIndexes();
+            container.getCellsManager().clear();
+            scrollToPixel(0);
+            container.getLayoutManager().initialize();
         });
-        gravity.addListener(invalidated -> {
-            container.cellsManger.clear();
-            container.layoutManager.computeIndexes();
+
+        orientation.addListener((observable, oldValue, newValue) -> {
+            container.getCellsManager().clear();
+            scrollToPixel(0.0);
+            orientationHelper.dispose();
+            orientationHelper = (newValue == Orientation.VERTICAL) ?
+                    new VerticalHelper(this, container) :
+                    new HorizontalHelper(this, container);
+            container.getLayoutManager().initialize();
         });
+
+        ExecutionUtils.executeWhen(
+                needsLayoutProperty(),
+                (oldValue, newValue) -> {
+                    if (orientationHelper instanceof HorizontalHelper) {
+                        HorizontalHelper helper = (HorizontalHelper) orientationHelper;
+                        helper.initialize();
+                    } else {
+                        VerticalHelper helper = (VerticalHelper) orientationHelper;
+                        helper.initialize();
+                    }
+                    container.initialize();
+                },
+                false,
+                (oldValue, newValue) -> !newValue,
+                true
+        );
     }
 
     /**
-     * Sets up the scroll bars. Adds a style class for both: "vbar" for the vertical
-     * and "hbar" for the horizontal. By the default the unit increment of both bars is set to 15.
+     * Sets up the scroll bars. By the default the unit increment of both bars is set to 15.
      * Redirects any ScrollEvent to the scroll bars by modifying the {@link EventDispatcher} and
      * then adds the scroll bars to the children list.
      */
-    protected void setupScrollBars() {
-        hBar.getStyleClass().add("hbar");
+    private void setupScrollBars() {
+        // Managed
         hBar.setManaged(false);
+        vBar.setManaged(false);
+
+        // Orientation
         hBar.setOrientation(Orientation.HORIZONTAL);
+        vBar.setOrientation(Orientation.VERTICAL);
+
+        // Unit Increment
         hBar.setUnitIncrement(15);
+        vBar.setUnitIncrement(15);
+
+        // Max
         hBar.maxProperty().bind(Bindings.createDoubleBinding(
-                () -> {
-                    double val = snapSpaceX(container.getTotalWidth() - getWidth());
-                    double currScroll = getHorizontalPosition();
-                    if (currScroll < 0 || currScroll > val) {
-                        setHorizontalPosition(NumberUtils.clamp(currScroll, 0, val));
-                    }
-                    return val;
-                },
-                container.totalWidthProperty(), widthProperty(), gravityProperty()
+                () -> container.getEstimatedWidth() - getWidth(),
+                container.estimatedWidthProperty(), widthProperty()
+        ));
+        vBar.maxProperty().bind(Bindings.createDoubleBinding(
+                () -> container.getEstimatedHeight() - getHeight(),
+                container.estimatedHeightProperty(), heightProperty()
+        ));
+
+        // Visibility
+        hBar.visibleAmountProperty().bind(Bindings.createDoubleBinding(
+                () -> getWidth() - hBar.getWidth(),
+                widthProperty(), hBar.widthProperty()
         ));
         hBar.visibleProperty().bind(Bindings.createBooleanBinding(
-                () -> container.getTotalWidth() > getWidth(),
-                container.totalWidthProperty(), widthProperty()
+                () -> container.getEstimatedWidth() > getWidth(),
+                container.estimatedWidthProperty(), widthProperty()
         ));
-        horizontalPositionProperty().bindBidirectional(hBar.valueProperty());
-        horizontalPositionProperty().addListener((observable, oldValue, newValue) -> container.setLayoutX(-newValue.doubleValue()));
 
-        vBar.getStyleClass().add("vbar");
-        vBar.setManaged(false);
-        vBar.setOrientation(Orientation.VERTICAL);
-        vBar.setUnitIncrement(15);
-        vBar.maxProperty().bind(Bindings.createDoubleBinding(
-                () -> {
-                    double val = snapSpaceY(container.getTotalHeight() - getHeight());
-                    double currScroll = getVerticalPosition();
-                    if (currScroll < 0 || currScroll > val) {
-                        setVerticalPosition(NumberUtils.clamp(currScroll, 0, val));
-                    }
-                    return val;
-                },
-                container.totalHeightProperty(), heightProperty(), gravityProperty()
+        vBar.visibleAmountProperty().bind(Bindings.createDoubleBinding(
+                () -> getHeight() - vBar.getHeight(),
+                heightProperty(), vBar.heightProperty()
         ));
         vBar.visibleProperty().bind(Bindings.createBooleanBinding(
-                () -> container.getTotalHeight() > getHeight(),
-                container.totalHeightProperty(), heightProperty()
+                () -> container.getEstimatedHeight() > getHeight(),
+                container.estimatedHeightProperty(), heightProperty()
         ));
-        verticalPositionProperty().bindBidirectional(vBar.valueProperty());
-        verticalPositionProperty().addListener((observable, oldValue, newValue) -> container.setLayoutY(-newValue.doubleValue()));
 
+        // Positions
+        horizontalPosition.bindBidirectional(hBar.valueProperty());
+        verticalPosition.bindBidirectional(vBar.valueProperty());
+
+        // Event Dispatching
         EventDispatcher original = getEventDispatcher();
         setEventDispatcher((event, tail) -> {
             tail.prepend(vBar.getEventDispatcher());
@@ -172,68 +211,52 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
      */
     public C getCell(int index) {
         try {
-            return container.cellsManger.getCells().get(index);
+            return getCells().get(index);
         } catch (Exception ignored) {
             return null;
         }
     }
 
     /**
-     * @return all the currently built cells
+     * @return all the currently shown cells
      */
     public Map<Integer, C> getCells() {
-        return Collections.unmodifiableMap(container.cellsManger.getCells());
+        return Collections.unmodifiableMap(container.getCells());
     }
 
     /**
      * Scrolls by the given amount of pixels.
      */
     public void scrollBy(double pixels) {
-        if (getGravity() == Gravity.TOP_BOTTOM) {
-            double baseVal = getVerticalPosition();
-            double val = NumberUtils.clamp(baseVal + pixels, 0, vBar.getMax());
-            setVerticalPosition(val);
-        } else {
-            double baseVal = getHorizontalPosition();
-            double val = NumberUtils.clamp(baseVal + pixels, 0, hBar.getMax());
-            setHorizontalPosition(val);
-        }
-    }
-
-    /**
-     * Scrolls to the first cell.
-     */
-    public void scrollToFirst() {
-        scrollTo(0);
-    }
-
-    /**
-     * Scrolls to the last cell.
-     */
-    public void scrollToLast() {
-        scrollTo(getItems().size() - 1);
+        orientationHelper.scrollBy(pixels);
     }
 
     /**
      * Scrolls to the given cell index.
      */
     public void scrollTo(int index) {
-        if (getGravity() == Gravity.TOP_BOTTOM) {
-            setVerticalPosition(NumberUtils.clamp(container.layoutManager.getCellHeight() * index, 0, vBar.getMax()));
-        } else {
-            setHorizontalPosition(NumberUtils.clamp(container.layoutManager.getCellWidth() * index, 0, hBar.getMax()));
-        }
+        orientationHelper.scrollTo(index);
+    }
+
+    /**
+     * Scrolls to the first cell.
+     */
+    public void scrollToFirst() {
+        orientationHelper.scrollToFirst();
+    }
+
+    /**
+     * Scrolls to the last cell.
+     */
+    public void scrollToLast() {
+        orientationHelper.scrollToLast();
     }
 
     /**
      * Scrolls to the given pixel value.
      */
     public void scrollToPixel(double pixel) {
-        if (getGravity() == Gravity.TOP_BOTTOM) {
-            setVerticalPosition(NumberUtils.clamp(pixel, 0, vBar.getMax()));
-        } else {
-            setHorizontalPosition(NumberUtils.clamp(pixel, 0, hBar.getMax()));
-        }
+        orientationHelper.scrollToPixel(pixel);
     }
 
     /**
@@ -258,17 +281,16 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
 
     @Override
     public String getUserAgentStylesheet() {
-        return ResourceManager.loadResource("SimpleVirtualFlow.css");
+        return STYLESHEET;
     }
 
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
-        //container.resize(getWidth(), getHeight());
-        double prefVerticalWidth = vBar.getPrefWidth();
-        double prefHorizontalHeight = hBar.getPrefHeight();
-        vBar.resizeRelocate(getWidth() - vBar.getWidth(), 0, prefVerticalWidth, getHeight());
-        hBar.resizeRelocate(0, getHeight() - hBar.getHeight(), getWidth(), prefHorizontalHeight);
+        double prefVerticalWidth = vBar.prefWidth(-1);
+        double prefHorizontalHeight = hBar.prefHeight(-1);
+        vBar.resizeRelocate(getWidth() - prefVerticalWidth, 0, prefVerticalWidth, getHeight());
+        hBar.resizeRelocate(0, getHeight() - prefHorizontalHeight, getWidth(), prefHorizontalHeight);
     }
 
     //================================================================================
@@ -318,41 +340,6 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
     }
 
     /**
-     * @return the orientation of the VirtualFlow
-     */
-    public Gravity getGravity() {
-        return gravity.get();
-    }
-
-    /**
-     * The orientation property of the VirtualFlow.
-     */
-    public ObjectProperty<Gravity> gravityProperty() {
-        return gravity;
-    }
-
-    /**
-     * Sets the orientation of the VirtualFlow.
-     */
-    public void setGravity(Gravity gravity) {
-        this.gravity.set(gravity);
-    }
-
-    /**
-     * @return the number of extra cells to build
-     */
-    public int getOverscan() {
-        return overscan;
-    }
-
-    /**
-     * Sets the number of extra cells to build.
-     */
-    public void setOverscan(int overscan) {
-        this.overscan = overscan;
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -369,45 +356,79 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
     }
 
     /**
-     * @return the vertical scroll bar's value
+     * {@inheritDoc}
      */
+    @Override
     public double getVerticalPosition() {
         return verticalPosition.get();
     }
 
     /**
-     * Property for the vertical scroll bar's value.
+     * {@inheritDoc}
      */
     public DoubleProperty verticalPositionProperty() {
         return verticalPosition;
     }
 
     /**
-     * Sets the vertical scroll bar's value
+     * {@inheritDoc}
      */
+    @Override
     public void setVerticalPosition(double vValue) {
         this.verticalPosition.set(vValue);
     }
 
     /**
-     * @return the horizontal scroll bar's value
+     * {@inheritDoc}
      */
+    @Override
     public double getHorizontalPosition() {
         return horizontalPosition.get();
     }
 
     /**
-     * Property for the horizontal scroll bar's value.
+     * {@inheritDoc}
+     *
+     * @return
      */
     public DoubleProperty horizontalPositionProperty() {
         return horizontalPosition;
     }
 
     /**
-     * Sets the horizontal scroll bar's value
+     * {@inheritDoc}
      */
+    @Override
     public void setHorizontalPosition(double hValue) {
         this.horizontalPosition.set(hValue);
+    }
+
+    /**
+     * @return the orientation of the VirtualFlow
+     */
+    public Orientation getOrientation() {
+        return orientation.get();
+    }
+
+    /**
+     * The orientation property of the VirtualFlow.
+     */
+    public ObjectProperty<Orientation> orientationProperty() {
+        return orientation;
+    }
+
+    /**
+     * Sets the orientation of the VirtualFlow.
+     */
+    public void setOrientation(Orientation orientation) {
+        this.orientation.set(orientation);
+    }
+
+    /**
+     * @return the current {@link OrientationHelper} instance
+     */
+    protected OrientationHelper getOrientationHelper() {
+        return orientationHelper;
     }
 
     /**
@@ -433,28 +454,18 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
         /**
          * @param items       The items list property
          * @param cellFactory The function to convert items to cells
-         * @param gravity     The orientation
+         * @param orientation The orientation
          * @param <T>         The type of objects
          * @param <C>         The type of cells
          */
-        public static <T, C extends ISimpleCell> SimpleVirtualFlow<T, C> create(ObjectProperty<? extends ObservableList<T>> items, Function<T, C> cellFactory, Gravity gravity) {
-            return create(items, cellFactory, gravity, 0);
-        }
-
-        /**
-         * @param items       The items list property
-         * @param cellFactory The function to convert items to cells
-         * @param gravity     The orientation
-         * @param overscan    The number of extra cells to build
-         * @param <T>         The type of objects
-         * @param <C>         The type of cells
-         */
-        public static <T, C extends ISimpleCell> SimpleVirtualFlow<T, C> create(ObjectProperty<? extends ObservableList<T>> items, Function<T, C> cellFactory, Gravity gravity, int overscan) {
+        public static <T, C extends Cell<T>> SimpleVirtualFlow<T, C> create(ObjectProperty<? extends ObservableList<T>> items, Function<T, C> cellFactory, Orientation orientation) {
             SimpleVirtualFlow<T, C> virtualFlow = new SimpleVirtualFlow<>();
             virtualFlow.items.bind(items);
             virtualFlow.setCellFactory(cellFactory);
-            virtualFlow.setGravity(gravity);
-            virtualFlow.overscan = overscan;
+            virtualFlow.setOrientation(orientation);
+            virtualFlow.orientationHelper = (orientation == Orientation.HORIZONTAL) ?
+                    new HorizontalHelper(virtualFlow, virtualFlow.container) :
+                    new VerticalHelper(virtualFlow, virtualFlow.container);
             virtualFlow.initialize();
             return virtualFlow;
         }
@@ -462,28 +473,18 @@ public class SimpleVirtualFlow<T, C extends ISimpleCell> extends Region implemen
         /**
          * @param items       The items list
          * @param cellFactory The function to convert items to cells
-         * @param gravity     The orientation
+         * @param orientation The orientation
          * @param <T>         The type of objects
          * @param <C>         The type of cells
          */
-        public static <T, C extends ISimpleCell> SimpleVirtualFlow<T, C> create(ObservableList<T> items, Function<T, C> cellFactory, Gravity gravity) {
-            return create(items, cellFactory, gravity, 0);
-        }
-
-        /**
-         * @param items       The items list
-         * @param cellFactory The function to convert items to cells
-         * @param gravity     The orientation
-         * @param overscan    The number of extra cells to build
-         * @param <T>         The type of objects
-         * @param <C>         The type of cells
-         */
-        public static <T, C extends ISimpleCell> SimpleVirtualFlow<T, C> create(ObservableList<T> items, Function<T, C> cellFactory, Gravity gravity, int overscan) {
+        public static <T, C extends Cell<T>> SimpleVirtualFlow<T, C> create(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
             SimpleVirtualFlow<T, C> virtualFlow = new SimpleVirtualFlow<>();
             virtualFlow.setItems(items);
             virtualFlow.setCellFactory(cellFactory);
-            virtualFlow.setGravity(gravity);
-            virtualFlow.overscan = overscan;
+            virtualFlow.setOrientation(orientation);
+            virtualFlow.orientationHelper = (orientation == Orientation.HORIZONTAL) ?
+                    new HorizontalHelper(virtualFlow, virtualFlow.container) :
+                    new VerticalHelper(virtualFlow, virtualFlow.container);
             virtualFlow.initialize();
             return virtualFlow;
         }

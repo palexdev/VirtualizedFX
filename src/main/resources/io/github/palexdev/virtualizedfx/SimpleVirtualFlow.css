@@ -18,6 +18,7 @@
 
 .virtual-flow {
     -fx-background-color: white;
+
     -track-color: rgb(230, 230, 230);
     -thumb-color: rgb(137, 137, 137);
     -thumb-hover-color: rgb(89, 88, 91);

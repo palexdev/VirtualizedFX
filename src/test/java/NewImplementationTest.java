@@ -16,20 +16,27 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.palexdev.virtualizedfx.enums;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import org.scenicview.ScenicView;
 
-/**
- * Enumerator to represent the orientation of a VirtualFlow.
- */
-public enum Gravity {
+import java.io.IOException;
 
-    /**
-     * Vertical top to bottom
-     */
-    TOP_BOTTOM,
+public class NewImplementationTest extends Application {
 
-    /**
-     * Horizontal left to right
-     */
-    LEFT_RIGHT
+    @Override
+    public void start(Stage primaryStage) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("VirtualFlowTest.fxml"));
+        Parent root = loader.load();
+
+        Scene scene = new Scene(root);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        ScenicView.show(scene);
+    }
+
 }

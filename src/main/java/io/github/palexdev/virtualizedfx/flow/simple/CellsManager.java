@@ -19,51 +19,53 @@
 package io.github.palexdev.virtualizedfx.flow.simple;
 
 import io.github.palexdev.virtualizedfx.beans.NumberRange;
-import io.github.palexdev.virtualizedfx.cell.ISimpleCell;
-import io.github.palexdev.virtualizedfx.collections.CellsManagerUpdater;
-import io.github.palexdev.virtualizedfx.collections.SetsDiff;
-import io.github.palexdev.virtualizedfx.enums.Gravity;
-import io.github.palexdev.virtualizedfx.utils.ListChangeHelper;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
+import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper;
 import javafx.scene.Node;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+// TODO memoize cell factory anyway?
+
 /**
- * Helper class to properly keep track of the needed cells, add the
- * cells' nodes to the container and update the layout when needed.
+ * Helper class to properly keep track of the needed cells, add them
+ * to the container, update them on scroll, and update the cells layout.
  * <p></p>
- * This uses a separate range of indexes for the cells which reflects the
- * {@link LayoutManager} indexes but they are updated lazily, see {@link #updateContent()}.
+ * The 'system' is quite simple yet super efficient: it keeps a List called cellsPool that contains
+ * a number of cells (this number is the maximum number of cells that can be shown into the viewport).
+ * During initialization the cellPool is populated by {@link #initCells(int)} and then added to the container,
+ * they are also updated to be sure they are showing the right content. On scroll {@link #updateCells(int, int)}
+ * is called, this method processes the needed updates to do ({@link CellUpdate}), then updates the cells, the layout
+ * by calling {@link #processLayout(List)} and finally updates the indexes range of shown items.
  * <p></p>
- * For optimization reasons this helper uses only Map and Sets, indexes are unique so
- * using Lists would not make sense, and it's way slower.
- * <p>
- * There are two Maps:
- * <p> - cells: the currently built cells by their index
- * <p> - toUpdate: this map contains only the cells that need to be updated (in terms of layout) by their index
+ * The important part to understand is that rather than creating new cells everytime the flow scrolls
+ * we update the already created cells so the scroll is very smooth, and it's also efficient
+ * in terms of memory usage. This allows the flow to handle huge amounts of items (depending on cells' complexity of course).
  *
  * @param <T> the type of object to represent
  * @param <C> the type of Cell to use
  */
-public class CellsManager<T, C extends ISimpleCell> {
+public class CellsManager<T, C extends Cell<T>> {
     //================================================================================
     // Properties
     //================================================================================
     private final SimpleVirtualFlow<T, C> virtualFlow;
-    private final LayoutManager<T, C> layoutManager;
-    private NumberRange<Integer> indexes = NumberRange.of(-1);
-    private Map<Integer, C> cells = new HashMap<>();
-    private Map<Integer, C> toUpdate = new HashMap<>();
+    private final SimpleVirtualFlowContainer<T, C> container;
+    private final List<C> cellsPool = new ArrayList<>();
+    private final List<CellUpdate> updates = new ArrayList<>();
+    private NumberRange<Integer> lastRange = NumberRange.of(-1);
+    private boolean listChanged;
 
     //================================================================================
-    // Properties
+    // Constructors
     //================================================================================
-    public CellsManager(SimpleVirtualFlow<T, C> virtualFlow, LayoutManager<T, C> layoutManager) {
-        this.virtualFlow = virtualFlow;
-        this.layoutManager = layoutManager;
+    public CellsManager(SimpleVirtualFlowContainer<T, C> container) {
+        this.virtualFlow = container.getVirtualFlow();
+        this.container = container;
     }
 
     //================================================================================
@@ -71,212 +73,188 @@ public class CellsManager<T, C extends ISimpleCell> {
     //================================================================================
 
     /**
-     * Before doing anything checks if the {@link LayoutManager} indexes are the same of
-     * the cellsManager. In case they are this method exists immediately.
-     * <p>
-     * It also exits if the items list is empty.
-     * <p>
-     * From now on we assume that the indexes are different and the terms are:
-     * <p> - newRange for the layoutManger indexes
-     * <p> - indexes for the cellsManager indexes
-     * <p></p>
-     * First computes the difference between the indexes and the newRange using {@link SetsDiff#indexDifference(Set, Set)},
-     * since it takes two Sets as arguments the two ranges are expanded using {@link NumberRange#expandRangeToSet(NumberRange)}.
-     * <p>
-     * The result is a {@link SetsDiff} instance which contains removed and added indexes.
-     * For each removed index a cell is removed from the cells map and the nodes are accumulated in a temp Set.
-     * Then all the accumulated nodes are removed by using {@link ObservableList#removeAll(Collection)}.
-     * <p>
-     * After the removal the toUpdate map is build by mapping the added indexes to a Map of
-     * index-cell. The new cells are added to the cells map.
-     * Then all the new nodes are added to the container using {@link ObservableList#addAll(Collection)}.
-     * <p>
-     * At the end calls {@link #processLayout(Map)} with the toUpdate map as parameter and
-     * updates the indexes with the newRange.
-     */
-    void updateContent() {
-        int min = layoutManager.getIndexes().getMin();
-        int max = layoutManager.getIndexes().getMax();
-        NumberRange<Integer> newRange = NumberRange.of(min, max);
-        if (newRange.equals(indexes) || itemsSize() == 0) return;
-
-        SetsDiff<Integer> diff = SetsDiff.indexDifference(NumberRange.expandRangeToSet(indexes), NumberRange.expandRangeToSet(newRange));
-        Set<Node> toRemove = new HashSet<>();
-        for (Integer index : diff.getRemoved()) {
-            C cell = cells.remove(index);
-            toRemove.add(cell.getNode());
-            cell.dispose();
-        }
-        getChildren().removeAll(toRemove);
-
-        toUpdate = diff.getAdded().stream().collect(Collectors.toMap(
-                i -> i,
-                i -> virtualFlow.getCellFactory().apply(virtualFlow.getItems().get(i))
-        ));
-        cells.putAll(toUpdate);
-        getChildren().addAll(toUpdate.values().stream().map(C::getNode).collect(Collectors.toList()));
-        processLayout(toUpdate);
-        indexes = newRange;
-    }
-
-    /**
-     * Resets the CellsManager, also removes all nodes from the container.
-     * <p>
-     * Needed for example when the items list is changed.
-     */
-    void clear() {
-        indexes = NumberRange.of(-1);
-        cells.clear();
-        toUpdate.clear();
-        getChildren().clear();
-    }
-
-    /**
-     * This method is responsible for laying out the cells' nodes properly.
-     * <p>
-     * It is also responsible for calling {@link ISimpleCell#updateIndex(int)}, {@link ISimpleCell#beforeLayout()}, {@link ISimpleCell#afterLayout()}.
+     * Populates the cellsPool, adds them to the container and then calls {@link #updateCells(int, int)}
+     * (indexes from 0 to num) to ensure the cells are displaying the right content (should not be needed though)
      *
-     * @param cells the cells to layout
+     * @param num the number of cells to create
      */
-    private void processLayout(Map<Integer, C> cells) {
-        double ch = layoutManager.getCellHeight();
-        double cw = layoutManager.getCellWidth();
-        double nx = 0;
-        double ny = 0;
-        double nw = ((cw <= 0) ? virtualFlow.getWidth() : cw);
-        double nh = ((ch <= 0) ? virtualFlow.getHeight() : ch);
+    protected void initCells(int num) {
+        int diff = num - cellsPool.size();
+        for (int i = 0; i <= diff; i++) {
+            cellsPool.add(cellForIndex(i));
+        }
 
-        Gravity gravity = virtualFlow.getGravity();
-        if (gravity == Gravity.TOP_BOTTOM) {
-            for (Map.Entry<Integer, C> entry : cells.entrySet()) {
-                C cell = entry.getValue();
-                int index = entry.getKey();
-                cell.updateIndex(index);
-                cell.beforeLayout();
-                ny = nh * index;
-                cell.getNode().resizeRelocate(nx, ny, virtualFlow.getWidth(), nh);
-                cell.afterLayout();
+        // Add the cells to the container
+        container.getChildren().setAll(cellsPool.stream().map(C::getNode).collect(Collectors.toList()));
+
+        // Ensure that cells are properly updated
+        updateCells(0, num);
+    }
+
+    /**
+     * Responsible for updating the cells in the viewport.
+     * <p></p>
+     * If the items list is empty returns immediately.
+     * <p>
+     * If the list was cleared, so start and end are invalid, computes the maximum
+     * number of cells the viewport can show and calls {@link #initCells(int)}, then exits
+     * as that method will then call this with valid indexes.
+     * <p>
+     * If the new indexes range (start-end) is equal to the previous stored range
+     * it's not necessary to update the cells therefore exits. This check is ignored
+     * if the items list was changed (items replaced, added or removed), int this case
+     * it's needed to update.
+     * <p></p>
+     * The next check is to verify there are enough cells to show all the items from
+     * 'start' to 'end', the number of cells to show is computed in "optimal" conditions,
+     * but at some point it's possible for example that the first visible cell is only shown
+     * partially, this means that the last visible cell should be a new cell that the cellsPool
+     * can't offer, in cases like this it's needed to create new cells by calling {@link #supplyCells(int, int)}
+     * <p>
+     * A similar check is made if there are too many cells, in this case cells are removed.
+     * <p></p>
+     * The next step is a bit tricky. The cellsPool indexes go from 0 to size() of course,
+     * but the start and end parameters do not start from 0, let's say I have to show items
+     * from 10 to 20, so it's needed to use an "external" counter to get the cells from 0 to size(),
+     * while the items are retrieved from the list from 'start' to 'end', in this loop we create
+     * {@link CellUpdate} beans to make the code cleaner, after the loop {@link CellUpdate#update()} is
+     * called for each bean, then the layout is updated with {@link #processLayout(List)} and
+     * finally the range of shown items is updated.
+     *
+     * @param start the start index from which retrieve the items from the items list
+     * @param end   the final index up to which retrieve items from the items list
+     */
+    protected void updateCells(int start, int end) {
+        // If the items list is empty return immediately
+        if (virtualFlow.getItems().isEmpty()) return;
+
+        // If the list was cleared (so start and end are invalid) cells must be rebuilt
+        // by calling initCells(numOfCells), then return since that method will re-call this one
+        // with valid indexes.
+        if (start == -1 || end == -1) {
+            int num = container.getLayoutManager().lastVisible();
+            initCells(num);
+            return;
+        }
+
+        // If range not changed or empty items return
+        NumberRange<Integer> newRange = NumberRange.of(start, end);
+        if (lastRange.equals(newRange) && !listChanged) return;
+
+        // If there are not enough cells build them and add to the container
+        Set<Integer> itemsIndexes = NumberRange.expandRangeToSet(newRange);
+        if (itemsIndexes.size() > cellsPool.size()) {
+            supplyCells(cellsPool.size(), itemsIndexes.size());
+        } else if (itemsIndexes.size() < cellsPool.size()) {
+            int overFlow = cellsPool.size() - itemsIndexes.size();
+            for (int i = 0; i < overFlow; i++) {
+                cellsPool.remove(0);
+                container.getChildren().remove(0);
             }
-        } else {
-            for (Map.Entry<Integer, C> entry : cells.entrySet()) {
-                C cell = entry.getValue();
-                int index = entry.getKey();
-                cell.updateIndex(index);
-                cell.beforeLayout();
-                nx = nw * index;
-                cell.getNode().resizeRelocate(nx, ny, nw, virtualFlow.getHeight());
-                cell.afterLayout();
-            }
+        }
+
+        // Items index can go from 0 to size() of items list,
+        // cells can go from 0 to size() of the cells pool,
+        // Use a counter to get the cells and itemIndex to
+        // get the correct item and index to call
+        // updateIndex() and updateItem() later
+        updates.clear();
+        int poolIndex = 0;
+        for (Integer itemIndex : itemsIndexes) {
+            T item = virtualFlow.getItems().get(itemIndex);
+            CellUpdate update = new CellUpdate(item, cellsPool.get(poolIndex), itemIndex);
+            updates.add(update);
+            poolIndex++;
+        }
+
+        // Finally, update the cells, the layout and the range of items processed
+        updates.forEach(CellUpdate::update);
+        processLayout(updates);
+        lastRange = newRange;
+    }
+
+    /**
+     * Called when the items list changes, if the list
+     * has been cleared removes all the cells from the container
+     * then calls {@link #clear()} and then exits.
+     * <p>
+     * Otherwise calls {@link #updateCells(int, int)}, the indexes
+     * used are the ones stored by the CellsManager.
+     */
+    public void itemsChanged() {
+        if (virtualFlow.getItems().isEmpty()) {
+            container.getChildren().clear();
+            clear();
+            return;
+        }
+
+        listChanged = true;
+        updateCells(lastRange.getMin(), lastRange.getMax());
+        listChanged = false;
+    }
+
+    /**
+     * Responsible for laying out the cells from a list of {@link CellUpdate}s.
+     * <p></p>
+     * Since the layoutX/layoutY properties of the container are updated according to the ScrollBars'
+     * value, the cells are positioned according to the item's index in the items list.
+     * <p></p>
+     * To avoid if/else statements as much as possible the actual layout is computed by
+     * {@link OrientationHelper#layout(Node, int, double, double)}.
+     */
+    protected void processLayout(List<CellUpdate> updates) {
+        double cellW = container.getCellWidth();
+        double cellH = container.getCellHeight();
+        for (CellUpdate update : updates) {
+            int index = update.index;
+            C cell = update.cell;
+            Node node = cell.getNode();
+            cell.beforeLayout();
+            virtualFlow.getOrientationHelper().layout(node, index, cellW, cellH);
+            cell.afterLayout();
         }
     }
 
     /**
-     * Calls {@link #processLayout(Map)} with the complete cells map.
-     * <p>
-     * This is needed for example when the layout bounds of the VirtualFlow change.
+     * Resets the CellsManager by clearing the cellsPool, clearing the updates list and
+     * resetting the stored indexes range to [-1, -1].
      */
-    public void recomputeLayout() {
-        if (cells.isEmpty()) return;
-        processLayout(cells);
+    protected void clear() {
+        cellsPool.clear();
+        updates.clear();
+        lastRange = NumberRange.of(-1);
     }
 
     /**
-     * This method is responsible for processing changes in the items list.
-     * <p>
-     * To keep things clear, easy, organized the computation is managed by a separate
-     * helper class, {@link ListChangeHelper}.
-     * <p></p>
-     * Replacements are managed by {@link #replace(Set, Set)}. <p>
-     * Additions are managed by {@link #add(Set, int)}. <p>
-     * Removals are managed by {@link #remove(Set, int)}
+     * Creates new cells from the given 'start' index to the given 'end' index,
+     * the new cells are added to the cellsPool and to the container.
      */
-    public void itemsChanged(ListChangeListener.Change<? extends T> change) {
-        ListChangeHelper.Change c = ListChangeHelper.processChange(change, indexes);
-        c.processReplacement(this::replace);
-        c.processAddition((from, to, added) -> add(added, from));
-        c.processRemoval((from, to, added) -> remove(added, from));
-    }
-
-    /**
-     * Processes additions in the items list.
-     * <p></p>
-     * The computation is deferred to a helper class, {@link CellsManagerUpdater#computeAddition(Set, int)}.
-     * <p>
-     * Computes nodes additions and removals and then calls {@link #processLayout(Map)} with the toUpdate map
-     * which has been previously computed by the CellsManagerUpdater.
-     */
-    private void add(Set<Integer> added, int offset) {
-        CellsManagerUpdater<T, C> updater = new CellsManagerUpdater<>(this, i -> {
-            T item = virtualFlow.getItems().get(i);
-            return virtualFlow.getCellFactory().apply(item);
-        });
-        updater.computeAddition(added, offset);
-        this.cells = updater.getCompleteMap();
-        this.toUpdate = updater.getToUpdate();
-        updater.getToAdd().forEach((integer, c) -> getChildren().add(c.getNode()));
-        updater.getToRemove().forEach((integer, c) -> {
-            c.dispose();
-            getChildren().remove(c.getNode());
-        });
-        processLayout(toUpdate);
-    }
-
-    /**
-     * Processes removals in the items list.
-     * <p></p>
-     * The computation is deferred to a helper class, {@link CellsManagerUpdater#computeRemoval(Set, int)}.
-     * <p>
-     * Computes nodes additions and removals and then calls {@link #processLayout(Map)} with the toUpdate map
-     * which has been previously computed by the CellsManagerUpdater.
-     */
-    private void remove(Set<Integer> removed, int offset) {
-        CellsManagerUpdater<T, C> updater = new CellsManagerUpdater<>(this, i -> {
-            if (virtualFlow.getItems().isEmpty()) return null;
-            T item = virtualFlow.getItems().get(i);
-            return virtualFlow.getCellFactory().apply(item);
-        });
-        updater.computeRemoval(removed, offset);
-        this.cells = updater.getCompleteMap();
-        this.toUpdate = updater.getToUpdate();
-        updater.getToAdd().forEach((integer, c) -> getChildren().add(c.getNode()));
-        updater.getToRemove().forEach((integer, c) -> {
-            c.dispose();
-            getChildren().remove(c.getNode());
-        });
-        processLayout(toUpdate);
-    }
-
-    /**
-     * Processes replacements in the items list.
-     * <p></p>
-     * The toUpdate map is processed by mapping the changed Set to index-cell,
-     * a toRemove local map is built by mapping the removed Set to index-cell.
-     * <p></p>
-     * The cells map is updated by adding the toUpdate map then replacements are processed
-     * by using the {@link ObservableList#set(int, Object)} method and removals are processed
-     * by using the {@link ObservableList#remove(Object)} method.
-     */
-    private void replace(Set<Integer> changed, Set<Integer> removed) {
-        toUpdate = changed.stream().collect(Collectors.toMap(
-                i -> i,
-                i -> virtualFlow.getCellFactory().apply(virtualFlow.getItems().get(i))
-        ));
-        Map<Integer, C> toRemove = removed.stream().collect(Collectors.toMap(
-                i -> i,
-                cells::remove
-        ));
-        cells.putAll(toUpdate);
-
-        for (Map.Entry<Integer, C> entry : toRemove.entrySet()) {
-            C cell = entry.getValue();
-            cell.dispose();
-            getChildren().remove(cell.getNode());
+    protected void supplyCells(int start, int end) {
+        for (int i = start; i < end; i++) {
+            C cell = cellForIndex(i);
+            cellsPool.add(cell);
+            container.getChildren().add(cell.getNode());
         }
-        for (Map.Entry<Integer, C> entry : toUpdate.entrySet()) {
-            C cell = entry.getValue();
-            getChildren().set(entry.getKey(), cell.getNode());
-        }
-        processLayout(toUpdate);
+    }
+
+    /**
+     * Exchanges an index for a Cell.
+     * <p>
+     * Gets the item at the given index in the items list
+     * then calls {@link #cellForItem(Object)}.
+     */
+    protected C cellForIndex(int index) {
+        T item = virtualFlow.getItems().get(index);
+        return cellForItem(item);
+    }
+
+    /**
+     * Exchanges an item for a Cell.
+     * <p>
+     * Simply applies the VirtualFlow's cell factory to the given item.
+     */
+    protected C cellForItem(T item) {
+        return virtualFlow.getCellFactory().apply(item);
     }
 
     //================================================================================
@@ -284,30 +262,37 @@ public class CellsManager<T, C extends ISimpleCell> {
     //================================================================================
 
     /**
-     * @return an unmodifiable maps containing all the built cells
+     * @return a map of the currently shown cells by the item's index
      */
-    public Map<Integer, C> getCells() {
-        return Collections.unmodifiableMap(cells);
+    protected Map<Integer, C> getCells() {
+        return updates.stream().collect(Collectors.toMap(
+                u -> u.index,
+                u -> u.cell
+        ));
     }
 
-    /**
-     * @return the cells index range
-     */
-    public NumberRange<Integer> getIndexes() {
-        return indexes;
-    }
+    //================================================================================
+    // Internal Classes
+    //================================================================================
 
     /**
-     * @return the items list size
+     * Simple bean to contain a Cell, an item and the item's index.
+     * Responsible for calling {@link Cell#updateIndex(int)} and {@link Cell#updateItem(Object)}.
      */
-    public int itemsSize() {
-        return virtualFlow.getItems().size();
-    }
+    private class CellUpdate {
+        private final T item;
+        private final C cell;
+        private final int index;
 
-    /**
-     * Delegate to {@link SimpleVirtualFlowContainer#getChildren()}.
-     */
-    private ObservableList<Node> getChildren() {
-        return virtualFlow.container.getChildren();
+        public CellUpdate(T item, C cell, int index) {
+            this.item = item;
+            this.cell = cell;
+            this.index = index;
+        }
+
+        public void update() {
+            cell.updateIndex(index);
+            cell.updateItem(item);
+        }
     }
 }
