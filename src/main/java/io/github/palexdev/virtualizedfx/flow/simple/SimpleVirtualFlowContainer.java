@@ -97,8 +97,8 @@ public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
         Rectangle clip = new Rectangle();
         clip.heightProperty().bind(virtualFlow.heightProperty());
         clip.widthProperty().bind(virtualFlow.widthProperty());
-        clip.layoutXProperty().bind(virtualFlow.horizontalPositionProperty());
-        clip.layoutYProperty().bind(virtualFlow.verticalPositionProperty());
+        clip.layoutXProperty().bind(layoutXProperty().multiply(-1));
+        clip.layoutYProperty().bind(layoutYProperty().multiply(-1));
         setClip(clip);
     }
 

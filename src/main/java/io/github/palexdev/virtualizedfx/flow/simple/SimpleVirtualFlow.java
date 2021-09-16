@@ -24,23 +24,39 @@ import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper;
 import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.flow.base.VirtualFlow;
+import io.github.palexdev.virtualizedfx.utils.AnimationUtils;
 import io.github.palexdev.virtualizedfx.utils.ExecutionUtils;
+import io.github.palexdev.virtualizedfx.utils.NumberUtils;
+import io.github.palexdev.virtualizedfx.utils.ScrollUtils.ScrollDirection;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventDispatcher;
+import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.scene.Group;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
+import javafx.util.Duration;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+
+import static io.github.palexdev.virtualizedfx.utils.ScrollUtils.determineScrollDirection;
+import static io.github.palexdev.virtualizedfx.utils.ScrollUtils.isTrackPad;
 
 /**
  * Simple implementation of {@link VirtualFlow}.
@@ -82,6 +98,8 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
     private final ObjectProperty<Orientation> orientation = new SimpleObjectProperty<>(Orientation.VERTICAL);
     private final SimpleVirtualFlowContainer<T, C> container = new SimpleVirtualFlowContainer<>(this);
 
+    private final Features features = new Features();
+
     //================================================================================
     // Constructors
     //================================================================================
@@ -109,17 +127,24 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
 
         cellFactory.addListener((observable, oldValue, newValue) -> {
             container.getCellsManager().clear();
-            scrollToPixel(0);
+            scrollToPixel(0.0);
             container.getLayoutManager().initialize();
         });
 
         orientation.addListener((observable, oldValue, newValue) -> {
+            features.orientationChanged = true;
             container.getCellsManager().clear();
             scrollToPixel(0.0);
             orientationHelper.dispose();
-            orientationHelper = (newValue == Orientation.VERTICAL) ?
-                    new VerticalHelper(this, container) :
-                    new HorizontalHelper(this, container);
+            if (newValue == Orientation.VERTICAL) {
+                VerticalHelper verticalHelper = new VerticalHelper(this, container);
+                orientationHelper = verticalHelper;
+                verticalHelper.initialize();
+            } else {
+                HorizontalHelper horizontalHelper = new HorizontalHelper(this, container);
+                orientationHelper = horizontalHelper;
+                horizontalHelper.initialize();
+            }
             container.getLayoutManager().initialize();
         });
 
@@ -195,10 +220,16 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
         // Event Dispatching
         EventDispatcher original = getEventDispatcher();
         setEventDispatcher((event, tail) -> {
-            tail.prepend(vBar.getEventDispatcher());
-            tail.prepend(hBar.getEventDispatcher());
+            if (event instanceof ScrollEvent) {
+                if (getOrientation() == Orientation.VERTICAL) {
+                    tail.prepend(vBar.getEventDispatcher());
+                } else {
+                    tail.prepend(hBar.getEventDispatcher());
+                }
+            }
             return original.dispatchEvent(event, tail);
         });
+
         getChildren().addAll(hBar, vBar);
     }
 
@@ -432,6 +463,13 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
     }
 
     /**
+     * @return an instance of {@link Features}
+     */
+    public Features features() {
+        return features;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -489,4 +527,149 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
             return virtualFlow;
         }
     }
+
+    //================================================================================
+    // Extra Features
+    //================================================================================
+
+    /**
+     * Helper class to manage extra features of the VirtualFlow.
+     */
+    public class Features {
+        private Timeline overScrollAnimation;
+        private double overScroll = 0;
+        private boolean overScrollEnabled = false;
+        private boolean orientationChanged = false;
+
+        private Features() {
+        }
+
+        public void enableBounceEffect() {
+            enableBounceEffect(5, 40);
+        }
+
+        public void enableBounceEffect(double strength, double maxOverscroll) {
+            overScrollEnabled = true;
+            overScrollAnimation = new Timeline();
+            overScrollAnimation.setOnFinished(event -> overScroll = 0);
+
+            vBar.addEventHandler(ScrollEvent.ANY, event -> {
+                int mul;
+                if (vBar.getValue() == 0) {
+                    mul = -1;
+                } else if (vBar.getValue() == vBar.getMax()) {
+                    mul = 1;
+                } else {
+                    overScrollAnimation.stop();
+                    overScroll = 0;
+                    return;
+                }
+
+                overScroll = NumberUtils.clamp(overScroll - strength, -maxOverscroll, maxOverscroll);
+                KeyFrame kf0 = new KeyFrame(Duration.millis(100), new KeyValue(container.layoutYProperty(), -getVerticalPosition() + (overScroll * mul), AnimationUtils.INTERPOLATOR_V2));
+                KeyFrame kf1 = new KeyFrame(Duration.millis(350), new KeyValue(container.layoutYProperty(), -getVerticalPosition(), AnimationUtils.INTERPOLATOR_V2));
+                overScrollAnimation.getKeyFrames().setAll(kf0, kf1);
+                overScrollAnimation.playFromStart();
+            });
+
+            hBar.addEventHandler(ScrollEvent.ANY, event -> {
+                int mul;
+                if (hBar.getValue() == 0) {
+                    mul = -1;
+                } else if (hBar.getValue() == hBar.getMax()) {
+                    mul = 1;
+                } else {
+                    overScroll = 0;
+                    overScrollAnimation.stop();
+                    return;
+                }
+
+                overScroll = NumberUtils.clamp(overScroll - strength, -maxOverscroll, maxOverscroll);
+                KeyFrame kf0 = new KeyFrame(Duration.millis(100), new KeyValue(container.layoutXProperty(), -getHorizontalPosition() + (overScroll * mul), AnimationUtils.INTERPOLATOR_V2));
+                KeyFrame kf1 = new KeyFrame(Duration.millis(350), new KeyValue(container.layoutXProperty(), -getHorizontalPosition(), AnimationUtils.INTERPOLATOR_V2));
+                overScrollAnimation.getKeyFrames().setAll(kf0, kf1);
+                overScrollAnimation.playFromStart();
+            });
+        }
+
+        public void enableSmoothScrolling(double speed, double trackPadAdjustment) {
+            final double[] frictions = {0.99, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.04, 0.01, 0.008, 0.008, 0.008, 0.008, 0.0006, 0.0005, 0.00003, 0.00001};
+            final double[] derivatives = new double[frictions.length];
+            AtomicReference<Double> atomicSpeed = new AtomicReference<>(speed);
+
+            Timeline timeline = new Timeline();
+            AtomicReference<ScrollDirection> scrollDirection = new AtomicReference<>();
+            final ChangeListener<? super Orientation> orientationChangeListener = (observable, oldValue, newValue) -> {
+                timeline.stop();
+                setVerticalPosition(0);
+                setHorizontalPosition(0);
+            };
+            final EventHandler<MouseEvent> mouseHandler = event -> timeline.stop();
+            final EventHandler<ScrollEvent> scrollHandler = event -> {
+                if (overScrollEnabled) {
+                    overScrollAnimation.stop();
+                }
+
+                if (orientationChanged) {
+                    timeline.stop();
+                    orientationChanged = false;
+                    return;
+                }
+
+                if (event.getEventType() == ScrollEvent.SCROLL) {
+                    scrollDirection.set(determineScrollDirection(getOrientation(), event.getDeltaY()));
+                    if (isTrackPad(event.getDeltaY())) {
+                        atomicSpeed.set(speed / (trackPadAdjustment * 100));
+                    } else {
+                        atomicSpeed.set(speed);
+                    }
+                    derivatives[0] += scrollDirection.get().intDirection() * atomicSpeed.get();
+                    if (timeline.getStatus() == Animation.Status.STOPPED) {
+                        timeline.play();
+                    }
+
+                    if (!overScrollEnabled) {
+                        event.consume();
+                    }
+                }
+            };
+
+            if (getParent() != null) {
+                getParent().addEventFilter(MouseEvent.MOUSE_PRESSED, mouseHandler);
+            }
+            parentProperty().addListener((observable, oldValue, newValue) -> {
+                if (oldValue != null) {
+                    oldValue.removeEventFilter(MouseEvent.MOUSE_PRESSED, mouseHandler);
+                }
+                if (newValue != null) {
+                    newValue.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseHandler);
+                }
+            });
+
+            orientation.addListener(orientationChangeListener);
+            addEventFilter(MouseEvent.MOUSE_PRESSED, mouseHandler);
+            addEventFilter(ScrollEvent.ANY, scrollHandler);
+
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(3), (event) -> {
+                for (int i = 0; i < derivatives.length; i++) {
+                    derivatives[i] *= frictions[i];
+                }
+                for (int i = 1; i < derivatives.length; i++) {
+                    derivatives[i] += derivatives[i - 1];
+                }
+
+                double dy = derivatives[derivatives.length - 1];
+
+                DoubleProperty positionProperty = getOrientation() == Orientation.VERTICAL ? verticalPosition : horizontalPosition;
+                double max = getOrientation() == Orientation.VERTICAL ? vBar.getMax() : hBar.getMax();
+                positionProperty.set(NumberUtils.clamp(positionProperty.get() + dy, 0, max));
+
+                if (Math.abs(dy) < 0.001) {
+                    timeline.stop();
+                }
+            }));
+            timeline.setCycleCount(Animation.INDEFINITE);
+        }
+    }
+
 }

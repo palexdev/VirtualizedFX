@@ -56,6 +56,8 @@ public class TestController implements Initializable {
                 Orientation.VERTICAL
         );
         virtualFlow.setPrefSize(500, 100);
+        virtualFlow.features().enableBounceEffect();
+        virtualFlow.features().enableSmoothScrolling(1, 7);
 
         group.getChildren().setAll(virtualFlow);
     }

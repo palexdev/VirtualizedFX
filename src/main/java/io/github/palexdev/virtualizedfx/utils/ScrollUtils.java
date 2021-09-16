@@ -19,11 +19,10 @@
 package io.github.palexdev.virtualizedfx.utils;
 
 
-import javafx.scene.input.ScrollEvent;
+import javafx.geometry.Orientation;
 
-// TODO to change
 /**
- * Utility class for ScrollPanes and MFXFlowlessListViews.
+ * Utility class for VirtualFlows.
  */
 public class ScrollUtils {
 
@@ -36,7 +35,7 @@ public class ScrollUtils {
             this.intDirection = intDirection;
         }
 
-        public int getIntDirection() {
+        public int intDirection() {
             return intDirection;
         }
     }
@@ -45,54 +44,35 @@ public class ScrollUtils {
     }
 
     /**
-     * Determines if the given ScrollEvent comes from a trackpad.
+     * Determines if a scroll event comes from the trackpad from the given delta value.
      * <p></p>
-     * Although this method works in most cases, it is not very accurate.
-     * Since in JavaFX there's no way to tell if a ScrollEvent comes from a trackpad or a mouse
-     * we use this trick: I noticed that a mouse scroll has a delta of 32 (don't know if it changes depending on the device or OS)
-     * and trackpad scrolls have a way smaller delta. So depending on the scroll direction we check if the delta is lesser than 10
-     * (trackpad event) or greater(mouse event).
-     *
-     * @see ScrollEvent#getDeltaX()
-     * @see ScrollEvent#getDeltaY()
+     * There's no real way to distinguish a scroll event from trackpad or mouse but usually all
+     * trackpad events have a much lower delta value.
      */
-    public static boolean isTrackPad(ScrollEvent event, ScrollDirection scrollDirection) {
-        switch (scrollDirection) {
-            case UP:
-            case DOWN:
-                return Math.abs(event.getDeltaY()) < 10;
-            case LEFT:
-            case RIGHT:
-                return Math.abs(event.getDeltaX()) < 10;
-            default:
-                return false;
-        }
+    public static boolean isTrackPad(double delta) {
+        return Math.abs(delta) < 10;
     }
 
     /**
-     * Determines the scroll direction of the given ScrollEvent.
-     * <p></p>
-     * Although this method works fine, it is not very accurate.
-     * In JavaFX there's no concept of scroll direction, if you try to scroll with a trackpad
-     * you'll notice that you can scroll in both directions at the same time, both deltaX and deltaY won't be 0.
-     * <p></p>
-     * For this method to work we assume that this behavior is not possible.
-     * <p></p>
-     * If deltaY is 0 we return LEFT or RIGHT depending on deltaX (respectively if lesser or greater than 0).
-     * <p>
-     * Else we return DOWN or UP depending on deltaY (respectively if lesser or greater than 0).
-     *
-     * @see ScrollEvent#getDeltaX()
-     * @see ScrollEvent#getDeltaY()
+     * Determines the direction of the scroll from the given orientation and the given delta,
+     * uses {@link #upOrDown(double)} if orientation is VERTICAL or {@link #leftOrRight(double)}
+     * if orientation is HORIZONTAL.
      */
-    public static ScrollDirection determineScrollDirection(ScrollEvent event) {
-        double deltaX = event.getDeltaX();
-        double deltaY = event.getDeltaY();
+    public static ScrollDirection determineScrollDirection(Orientation orientation, double delta) {
+        return orientation == Orientation.VERTICAL ? upOrDown(delta) : leftOrRight(delta);
+    }
 
-        if (deltaY == 0.0) {
-            return deltaX < 0 ? ScrollDirection.LEFT : ScrollDirection.RIGHT;
-        } else {
-            return deltaY < 0 ? ScrollDirection.DOWN : ScrollDirection.UP;
-        }
+    /**
+     * If the given delta is lesser than 0 returns LEFT, otherwise returns RIGHT.
+     */
+    public static ScrollDirection leftOrRight(double delta) {
+        return delta < 0 ? ScrollDirection.LEFT : ScrollDirection.RIGHT;
+    }
+
+    /**
+     * If the given delta is lesser than 0 returns DOWN, otherwise returns UP.
+     */
+    public static ScrollDirection upOrDown(double delta) {
+        return delta < 0 ? ScrollDirection.DOWN : ScrollDirection.UP;
     }
 }
