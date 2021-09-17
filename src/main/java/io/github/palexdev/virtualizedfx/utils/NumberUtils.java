@@ -36,4 +36,12 @@ public class NumberUtils {
     public static int clamp(int val, int min, int max) {
         return Math.max(min, Math.min(max, val));
     }
+
+    /**
+     * Formats the given double value to have the given number of decimal places.
+     */
+    public static double formatTo(double value, int decimalPrecision) {
+        int calcScale = (int) Math.pow(10, decimalPrecision);
+        return (double) Math.round(value * calcScale) / calcScale;
+    }
 }

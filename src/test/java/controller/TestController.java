@@ -55,7 +55,7 @@ public class TestController implements Initializable {
                 LabelCell::new,
                 Orientation.VERTICAL
         );
-        virtualFlow.setPrefSize(500, 100);
+        virtualFlow.setPrefSize(250, 450);
         virtualFlow.features().enableBounceEffect();
         virtualFlow.features().enableSmoothScrolling(1, 7);
 

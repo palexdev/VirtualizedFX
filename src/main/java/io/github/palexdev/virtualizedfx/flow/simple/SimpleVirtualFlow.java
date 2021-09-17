@@ -52,6 +52,7 @@ import javafx.util.Duration;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -536,18 +537,35 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
      * Helper class to manage extra features of the VirtualFlow.
      */
     public class Features {
+        //================================================================================
+        // Properties
+        //================================================================================
         private Timeline overScrollAnimation;
         private double overScroll = 0;
         private boolean overScrollEnabled = false;
         private boolean orientationChanged = false;
 
+        //================================================================================
+        // Constructors
+        //================================================================================
         private Features() {
         }
 
+        //================================================================================
+        // Methods
+        //================================================================================
+
+        /**
+         * Calls {@link #enableBounceEffect(double, double)} with 5 and 40 values for
+         * strength and maxOverscroll respectively.
+         */
         public void enableBounceEffect() {
             enableBounceEffect(5, 40);
         }
 
+        /**
+         * Adds a bounce effect when the start or end of the flow is reached.
+         */
         public void enableBounceEffect(double strength, double maxOverscroll) {
             overScrollEnabled = true;
             overScrollAnimation = new Timeline();
@@ -592,13 +610,38 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
             });
         }
 
-        public void enableSmoothScrolling(double speed, double trackPadAdjustment) {
+        /**
+         * Calls {@link #enableSmoothScrolling(double, double, double)} with 7 and 0.05 values
+         * for trackPadAdjustment and scrollThreshold as second and third parameters.
+         */
+        public void enableSmoothScrolling(double speed) {
+            enableSmoothScrolling(speed, 7, 0.05);
+        }
+
+        /**
+         * Calls {@link #enableSmoothScrolling(double, double, double)} with 0.05 value
+         * for scrollThreshold as third parameter.
+         */
+        public void enableSmoothScrolling(double speed, double trackpadAdjustment) {
+            enableSmoothScrolling(speed, trackpadAdjustment, 0.05);
+        }
+
+        /**
+         * Enables smooth scrolling for this VirtualFlow.
+         *
+         * @param speed              parameter to adjust the speed
+         * @param trackPadAdjustment parameter to adjust the scrolling with the trackpad (formula is '(speed / (trackPadAdjustment * 100))')
+         * @param scrollThreshold    computed values lesser than this threshold will stop the scroll, recommended values are lesser than 1,
+         *                           it's ignored if using a trackpad
+         */
+        public void enableSmoothScrolling(double speed, double trackPadAdjustment, double scrollThreshold) {
             final double[] frictions = {0.99, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.04, 0.01, 0.008, 0.008, 0.008, 0.008, 0.0006, 0.0005, 0.00003, 0.00001};
             final double[] derivatives = new double[frictions.length];
             AtomicReference<Double> atomicSpeed = new AtomicReference<>(speed);
 
             Timeline timeline = new Timeline();
             AtomicReference<ScrollDirection> scrollDirection = new AtomicReference<>();
+            AtomicBoolean isTrackpad = new AtomicBoolean(false);
             final ChangeListener<? super Orientation> orientationChangeListener = (observable, oldValue, newValue) -> {
                 timeline.stop();
                 setVerticalPosition(0);
@@ -618,7 +661,8 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
 
                 if (event.getEventType() == ScrollEvent.SCROLL) {
                     scrollDirection.set(determineScrollDirection(getOrientation(), event.getDeltaY()));
-                    if (isTrackPad(event.getDeltaY())) {
+                    isTrackpad.set(isTrackPad(event.getDeltaY()));
+                    if (isTrackpad.get()) {
                         atomicSpeed.set(speed / (trackPadAdjustment * 100));
                     } else {
                         atomicSpeed.set(speed);
@@ -658,18 +702,17 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
                     derivatives[i] += derivatives[i - 1];
                 }
 
-                double dy = derivatives[derivatives.length - 1];
+                double dy = NumberUtils.formatTo(derivatives[derivatives.length - 1], 2);
 
                 DoubleProperty positionProperty = getOrientation() == Orientation.VERTICAL ? verticalPosition : horizontalPosition;
                 double max = getOrientation() == Orientation.VERTICAL ? vBar.getMax() : hBar.getMax();
                 positionProperty.set(NumberUtils.clamp(positionProperty.get() + dy, 0, max));
 
-                if (Math.abs(dy) < 0.001) {
+                if (!isTrackpad.get() && Math.abs(dy) < scrollThreshold) {
                     timeline.stop();
                 }
             }));
             timeline.setCycleCount(Animation.INDEFINITE);
         }
     }
-
 }

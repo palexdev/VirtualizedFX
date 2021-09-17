@@ -81,7 +81,7 @@ public class CellsManager<T, C extends Cell<T>> {
      */
     protected void initCells(int num) {
         int diff = num - cellsPool.size();
-        for (int i = 0; i <= diff && i < virtualFlow.getItems().size(); i++) {
+        for (int i = 0; i <= diff && i < itemsSize(); i++) {
             cellsPool.add(cellForIndex(i));
         }
 
@@ -127,7 +127,7 @@ public class CellsManager<T, C extends Cell<T>> {
      */
     protected void updateCells(int start, int end) {
         // If the items list is empty return immediately
-        if (virtualFlow.getItems().isEmpty()) return;
+        if (itemsEmpty()) return;
 
         // If the list was cleared (so start and end are invalid) cells must be rebuilt
         // by calling initCells(numOfCells), then return since that method will re-call this one
@@ -183,15 +183,28 @@ public class CellsManager<T, C extends Cell<T>> {
      * used are the ones stored by the CellsManager.
      */
     public void itemsChanged() {
-        if (virtualFlow.getItems().isEmpty()) {
+        if (itemsEmpty()) {
             container.getChildren().clear();
             clear();
             return;
         }
 
+        // Cells were previously cleared, re-initialize
+        if (lastRange.getMin() == -1 || lastRange.getMax() == -1) {
+            int num = container.getLayoutManager().lastVisible();
+            initCells(num);
+            return;
+        }
+
+        // If there are not enough cells build them and add to the container
+        int num = virtualFlow.getOrientationHelper().lastVisible() + 1;
+        if (cellsPool.size() < itemsSize() && cellsPool.size() < num) {
+            supplyCells(cellsPool.size(), itemsSize());
+        }
+
         listChanged = true;
-        int start = NumberUtils.clamp(lastRange.getMin(), 0, virtualFlow.getItems().size() - 1);
-        int end = NumberUtils.clamp(lastRange.getMin(), 0, virtualFlow.getItems().size() - 1);
+        int start = NumberUtils.clamp(lastRange.getMin(), 0, itemsSize() - 1);
+        int end = (lastRange.getMax() < num) ? num - 1 : NumberUtils.clamp(lastRange.getMax(), 0, itemsSize() - 1);
         updateCells(start, end);
         listChanged = false;
     }
@@ -258,6 +271,20 @@ public class CellsManager<T, C extends Cell<T>> {
      */
     protected C cellForItem(T item) {
         return virtualFlow.getCellFactory().apply(item);
+    }
+
+    /**
+     * Convenience method to retrieve the items list size.
+     */
+    private int itemsSize() {
+        return virtualFlow.getItems().size();
+    }
+
+    /**
+     * Convenience method to check if the items list is empty.
+     */
+    private boolean itemsEmpty() {
+        return virtualFlow.getItems().isEmpty();
     }
 
     //================================================================================
