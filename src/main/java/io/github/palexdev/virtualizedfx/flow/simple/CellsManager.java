@@ -21,6 +21,7 @@ package io.github.palexdev.virtualizedfx.flow.simple;
 import io.github.palexdev.virtualizedfx.beans.NumberRange;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper;
+import io.github.palexdev.virtualizedfx.utils.NumberUtils;
 import javafx.scene.Node;
 
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class CellsManager<T, C extends Cell<T>> {
      */
     protected void initCells(int num) {
         int diff = num - cellsPool.size();
-        for (int i = 0; i <= diff; i++) {
+        for (int i = 0; i <= diff && i < virtualFlow.getItems().size(); i++) {
             cellsPool.add(cellForIndex(i));
         }
 
@@ -189,7 +190,9 @@ public class CellsManager<T, C extends Cell<T>> {
         }
 
         listChanged = true;
-        updateCells(lastRange.getMin(), lastRange.getMax());
+        int start = NumberUtils.clamp(lastRange.getMin(), 0, virtualFlow.getItems().size() - 1);
+        int end = NumberUtils.clamp(lastRange.getMin(), 0, virtualFlow.getItems().size() - 1);
+        updateCells(start, end);
         listChanged = false;
     }
 
