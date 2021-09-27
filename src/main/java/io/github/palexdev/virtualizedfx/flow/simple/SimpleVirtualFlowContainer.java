@@ -62,13 +62,20 @@ public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
         this.cellsManager = new CellsManager<>(this);
         this.layoutManager = new LayoutManager<>(this);
 
-        itemsChanged = c -> cellsManager.itemsChanged();
+        itemsChanged = c -> {
+            if (!layoutManager.isInitialized()) initialize();
+            cellsManager.itemsChanged();
+        };
         listChanged = (observable, oldValue, newValue) -> {
             cellsManager.clear();
             virtualFlow.scrollToPixel(0.0);
             oldValue.removeListener(itemsChanged);
             newValue.addListener(itemsChanged);
-            layoutManager.initFlow();
+            if (!layoutManager.isInitialized()) {
+                layoutManager.initialize();
+            } else {
+                layoutManager.initFlow();
+            }
         };
     }
 

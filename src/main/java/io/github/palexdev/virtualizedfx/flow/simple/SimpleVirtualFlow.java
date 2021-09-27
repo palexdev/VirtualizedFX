@@ -127,12 +127,14 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
         setupScrollBars();
 
         cellFactory.addListener((observable, oldValue, newValue) -> {
+            container.getLayoutManager().setInitialized(false);
             container.getCellsManager().clear();
             scrollToPixel(0.0);
             container.getLayoutManager().initialize();
         });
 
         orientation.addListener((observable, oldValue, newValue) -> {
+            container.getLayoutManager().setInitialized(false);
             features.orientationChanged = true;
             container.getCellsManager().clear();
             scrollToPixel(0.0);

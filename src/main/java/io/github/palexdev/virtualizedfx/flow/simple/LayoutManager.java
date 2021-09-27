@@ -20,19 +20,14 @@ package io.github.palexdev.virtualizedfx.flow.simple;
 
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper;
-import io.github.palexdev.virtualizedfx.utils.ExecutionUtils;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 
 /**
  * Helper class to keep track of some parameters like:
@@ -50,6 +45,7 @@ public class LayoutManager<T, C extends Cell<T>> {
     //================================================================================
     private final SimpleVirtualFlow<T, C> virtualFlow;
     private final SimpleVirtualFlowContainer<T, C> container;
+    private boolean initialized;
 
     private double scrolled;
     private final DoubleProperty estimatedHeight = new SimpleDoubleProperty();
@@ -77,28 +73,19 @@ public class LayoutManager<T, C extends Cell<T>> {
      * This is needed to get the Cell's fixed height and width values.
      * Then calls {@link #initFlow()}.
      * <p>
-     * If the list is empty the initialization is deferred with
-     * {@link ExecutionUtils#executeWhen(ObservableValue, BiConsumer, boolean, BiFunction, boolean)}
-     * that will start the initialization when the list is not empty anymore.
+     * If the list is empty the method exits immediately, when
+     * the list property changes or the current list is not empty anymore
+     * the {@link SimpleVirtualFlowContainer} will tell the LayoutManager to initialize.
      */
     protected void initialize() {
         if (virtualFlow.getItems().isEmpty()) {
-            ExecutionUtils.executeWhen(
-                    virtualFlow.itemsProperty(),
-                    (oldList, newList) -> {
-                        C cell = virtualFlow.getCellFactory().apply(virtualFlow.getItems().get(0));
-                        retrieveCellsSizes(cell);
-                        initFlow();
-                    },
-                    false,
-                    (oldList, newList) -> !newList.isEmpty(),
-                    true
-            );
-        } else {
-            C cell = virtualFlow.getCellFactory().apply(virtualFlow.getItems().get(0));
-            retrieveCellsSizes(cell);
-            initFlow();
+            return;
         }
+
+        C cell = virtualFlow.getCellFactory().apply(virtualFlow.getItems().get(0));
+        retrieveCellsSizes(cell);
+        initFlow();
+        setInitialized(true);
     }
 
     /**
@@ -233,5 +220,19 @@ public class LayoutManager<T, C extends Cell<T>> {
      */
     public double getScrolled() {
         return scrolled;
+    }
+
+    /**
+     * @return the init state of the LayoutManager
+     */
+    protected boolean isInitialized() {
+        return initialized;
+    }
+
+    /**
+     * Sets the init state of the LayoutManager
+     */
+    protected void setInitialized(boolean initialized) {
+        this.initialized = initialized;
     }
 }
