@@ -189,11 +189,23 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
 
         // Max
         hBar.maxProperty().bind(Bindings.createDoubleBinding(
-                () -> container.getEstimatedWidth() - getWidth(),
+                () -> {
+                    double max = container.getEstimatedWidth() - getWidth();
+                    if (getHorizontalPosition() > max) {
+                        setHorizontalPosition(max);
+                    }
+                    return max;
+                },
                 container.estimatedWidthProperty(), widthProperty()
         ));
         vBar.maxProperty().bind(Bindings.createDoubleBinding(
-                () -> container.getEstimatedHeight() - getHeight(),
+                () -> {
+                    double max = container.getEstimatedHeight() - getHeight();
+                    if (getVerticalPosition() > max) {
+                        setVerticalPosition(max);
+                    }
+                    return max;
+                },
                 container.estimatedHeightProperty(), heightProperty()
         ));
 

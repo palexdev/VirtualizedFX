@@ -197,14 +197,16 @@ public class CellsManager<T, C extends Cell<T>> {
         }
 
         // If there are not enough cells build them and add to the container
-        int num = virtualFlow.getOrientationHelper().lastVisible() + 1;
-        if (cellsPool.size() < itemsSize() && cellsPool.size() < num) {
-            supplyCells(cellsPool.size(), itemsSize());
+        int first = virtualFlow.getOrientationHelper().firstVisible();
+        int last = virtualFlow.getOrientationHelper().lastVisible() + 1;
+        int delta = last - first;
+        if (cellsPool.size() < delta) {
+            supplyCells(cellsPool.size(), delta);
         }
 
         listChanged = true;
         int start = NumberUtils.clamp(lastRange.getMin(), 0, itemsSize() - 1);
-        int end = (lastRange.getMax() < num) ? num - 1 : NumberUtils.clamp(lastRange.getMax(), 0, itemsSize() - 1);
+        int end = (lastRange.getMax() < last) ? last - 1 : NumberUtils.clamp(lastRange.getMax(), 0, itemsSize() - 1);
         updateCells(start, end);
         listChanged = false;
     }

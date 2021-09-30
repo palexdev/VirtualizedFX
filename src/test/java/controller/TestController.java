@@ -134,6 +134,13 @@ public class TestController implements Initializable {
     }
 
     @FXML
+    void deleteLast(ActionEvent event) {
+        virtualFlow.getItems().remove(
+                virtualFlow.getItems().size() - 1
+        );
+    }
+
+    @FXML
     void replace(ActionEvent event) {
         ObservableList<MFXLabel> newLabels = FXCollections.observableArrayList();
         IntStream.rangeClosed(0, 100).forEach(i -> newLabels.add(createLabel("NewList " + i, getRandomIcon())));
