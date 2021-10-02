@@ -67,6 +67,7 @@ public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
             cellsManager.itemsChanged();
         };
         listChanged = (observable, oldValue, newValue) -> {
+            cellsManager.requestLayout();
             cellsManager.clear();
             virtualFlow.scrollToPixel(0.0);
             oldValue.removeListener(itemsChanged);

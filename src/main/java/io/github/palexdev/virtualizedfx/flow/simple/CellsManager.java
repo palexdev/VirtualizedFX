@@ -234,6 +234,16 @@ public class CellsManager<T, C extends Cell<T>> {
     }
 
     /**
+     * Calls {@link #processLayout(List)} with the previously
+     * built {@link CellUpdate}s.
+     */
+    protected void requestLayout() {
+        if (!updates.isEmpty()) {
+            processLayout(updates);
+        }
+    }
+
+    /**
      * Resets the CellsManager by clearing the cellsPool, clearing the updates list and
      * resetting the stored indexes range to [-1, -1].
      */
