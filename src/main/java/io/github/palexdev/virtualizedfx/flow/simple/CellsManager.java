@@ -194,7 +194,7 @@ public class CellsManager<T, C extends Cell<T>> {
                 container.getChildren().remove(0);
             }
         } else if (cellsPool.size() < num) {
-            int max = NumberUtils.clamp(num, 0, itemsSize() - 1);
+            int max = NumberUtils.clamp(num, 0, itemsSize());
             supplyCells(cellsPool.size(), max);
         }
 
@@ -251,11 +251,12 @@ public class CellsManager<T, C extends Cell<T>> {
     }
 
     /**
-     * Creates new cells from the given 'start' index to the given 'end' index,
-     * the new cells are added to the cellsPool and to the container.
+     * Creates new cells from the given {@code from} index, keeps creating cells
+     * until the cell pool size has reached {@code targetSize}, new cells are also added
+     * to the container.
      */
-    protected void supplyCells(int start, int end) {
-        for (int i = start; i < end; i++) {
+    protected void supplyCells(int from, int targetSize) {
+        for (int i = from; cellsPool.size() < targetSize; i++) {
             C cell = cellForIndex(i);
             cellsPool.add(cell);
             container.getChildren().add(cell.getNode());
