@@ -127,17 +127,17 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
         setupScrollBars();
 
         cellFactory.addListener((observable, oldValue, newValue) -> {
-            container.getLayoutManager().setInitialized(false);
-            container.getCellsManager().clear();
             scrollToPixel(0.0);
+            container.getCellsManager().clear();
+            container.getLayoutManager().setInitialized(false);
             container.getLayoutManager().initialize();
         });
 
         orientation.addListener((observable, oldValue, newValue) -> {
+            scrollToPixel(0.0);
+            container.getCellsManager().clear();
             container.getLayoutManager().setInitialized(false);
             features.orientationChanged = true;
-            container.getCellsManager().clear();
-            scrollToPixel(0.0);
             orientationHelper.dispose();
             if (newValue == Orientation.VERTICAL) {
                 VerticalHelper verticalHelper = new VerticalHelper(this, container);
@@ -190,7 +190,7 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
         // Max
         hBar.maxProperty().bind(Bindings.createDoubleBinding(
                 () -> {
-                    double max = container.getEstimatedWidth() - getWidth();
+                    double max = NumberUtils.clamp(container.getEstimatedWidth() - getWidth(), 0, Double.MAX_VALUE);
                     if (getHorizontalPosition() > max) {
                         setHorizontalPosition(max);
                     }
@@ -200,7 +200,7 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
         ));
         vBar.maxProperty().bind(Bindings.createDoubleBinding(
                 () -> {
-                    double max = container.getEstimatedHeight() - getHeight();
+                    double max = NumberUtils.clamp(container.getEstimatedHeight() - getHeight(), 0, Double.MAX_VALUE);
                     if (getVerticalPosition() > max) {
                         setVerticalPosition(max);
                     }
@@ -210,19 +210,13 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
         ));
 
         // Visibility
-        hBar.visibleAmountProperty().bind(Bindings.createDoubleBinding(
-                () -> getWidth() - hBar.getWidth(),
-                widthProperty(), hBar.widthProperty()
-        ));
+        hBar.visibleAmountProperty().bind(widthProperty());
         hBar.visibleProperty().bind(Bindings.createBooleanBinding(
                 () -> container.getEstimatedWidth() > getWidth(),
                 container.estimatedWidthProperty(), widthProperty()
         ));
 
-        vBar.visibleAmountProperty().bind(Bindings.createDoubleBinding(
-                () -> getHeight() - vBar.getHeight(),
-                heightProperty(), vBar.heightProperty()
-        ));
+        vBar.visibleAmountProperty().bind(heightProperty());
         vBar.visibleProperty().bind(Bindings.createBooleanBinding(
                 () -> container.getEstimatedHeight() > getHeight(),
                 container.estimatedHeightProperty(), heightProperty()
@@ -597,9 +591,10 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
                     return;
                 }
 
+                double pos = -(getVerticalPosition() % container.getCellHeight());
                 overScroll = NumberUtils.clamp(overScroll - strength, -maxOverscroll, maxOverscroll);
-                KeyFrame kf0 = new KeyFrame(Duration.millis(100), new KeyValue(container.layoutYProperty(), -getVerticalPosition() + (overScroll * mul), AnimationUtils.INTERPOLATOR_V2));
-                KeyFrame kf1 = new KeyFrame(Duration.millis(350), new KeyValue(container.layoutYProperty(), -getVerticalPosition(), AnimationUtils.INTERPOLATOR_V2));
+                KeyFrame kf0 = new KeyFrame(Duration.millis(100), new KeyValue(container.layoutYProperty(), pos + (overScroll * mul), AnimationUtils.INTERPOLATOR_V2));
+                KeyFrame kf1 = new KeyFrame(Duration.millis(350), new KeyValue(container.layoutYProperty(), pos, AnimationUtils.INTERPOLATOR_V2));
                 overScrollAnimation.getKeyFrames().setAll(kf0, kf1);
                 overScrollAnimation.playFromStart();
             });
@@ -616,9 +611,10 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
                     return;
                 }
 
+                double pos = -(getHorizontalPosition() % container.getCellWidth());
                 overScroll = NumberUtils.clamp(overScroll - strength, -maxOverscroll, maxOverscroll);
-                KeyFrame kf0 = new KeyFrame(Duration.millis(100), new KeyValue(container.layoutXProperty(), -getHorizontalPosition() + (overScroll * mul), AnimationUtils.INTERPOLATOR_V2));
-                KeyFrame kf1 = new KeyFrame(Duration.millis(350), new KeyValue(container.layoutXProperty(), -getHorizontalPosition(), AnimationUtils.INTERPOLATOR_V2));
+                KeyFrame kf0 = new KeyFrame(Duration.millis(100), new KeyValue(container.layoutXProperty(), pos + (overScroll * mul), AnimationUtils.INTERPOLATOR_V2));
+                KeyFrame kf1 = new KeyFrame(Duration.millis(350), new KeyValue(container.layoutXProperty(), pos, AnimationUtils.INTERPOLATOR_V2));
                 overScrollAnimation.getKeyFrames().setAll(kf0, kf1);
                 overScrollAnimation.playFromStart();
             });
@@ -717,7 +713,6 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
                 }
 
                 double dy = NumberUtils.formatTo(derivatives[derivatives.length - 1], 2);
-
                 DoubleProperty positionProperty = getOrientation() == Orientation.VERTICAL ? verticalPosition : horizontalPosition;
                 double max = getOrientation() == Orientation.VERTICAL ? vBar.getMax() : hBar.getMax();
                 positionProperty.set(NumberUtils.clamp(positionProperty.get() + dy, 0, max));

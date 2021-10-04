@@ -46,6 +46,11 @@ public interface OrientationHelper {
     int lastVisible();
 
     /**
+     * @return the number of cells to show
+     */
+    int computeCellsNumber();
+
+    /**
      * Computes the estimated height of the flow.
      */
     double computeEstimatedHeight(double cellHeight);
@@ -123,7 +128,6 @@ public interface OrientationHelper {
      * Scrolls the flow to the given pixel value.
      */
     void scrollToPixel(double pixel);
-
     //================================================================================
     // Others
     //================================================================================
@@ -135,7 +139,6 @@ public interface OrientationHelper {
      * is changed (typically occurs when the orientation changes).
      */
     void dispose();
-
 
     //================================================================================
     // Implementations
@@ -171,9 +174,9 @@ public interface OrientationHelper {
             this.virtualFlow = virtualFlow;
             this.container = container;
 
-            this.widthChanged = (observable, oldValue, newValue) -> container.update(virtualFlow.getHorizontalPosition());
+            this.widthChanged = (observable, oldValue, newValue) -> container.reset();
             this.posChanged = (observable, oldValue, newValue) -> {
-                container.setLayoutX(-newValue.doubleValue());
+                container.setLayoutX(-newValue.doubleValue() % container.getCellWidth());
                 container.update(newValue.doubleValue());
             };
         }
@@ -235,6 +238,14 @@ public interface OrientationHelper {
         }
 
         /**
+         * @return the number of cells to show based on the viewport's width and cells' width
+         */
+        @Override
+        public int computeCellsNumber() {
+            return (int) Math.ceil(virtualFlow.getVirtualFlow().getWidth() / container.getCellWidth()) + 1;
+        }
+
+        /**
          * @return the VirtualFlow's height
          */
         @Override
@@ -289,7 +300,7 @@ public interface OrientationHelper {
          */
         @Override
         public void layout(Node node, int index, double cellW, double cellH) {
-            double pos = index * cellW;
+            double pos = container.snapPositionX(cellW * index);
             resizeRelocate(node, pos, cellW, cellH);
         }
 
@@ -388,9 +399,9 @@ public interface OrientationHelper {
             this.virtualFlow = virtualFlow;
             this.container = container;
 
-            this.heightChanged = (observable, oldValue, newValue) -> container.update(virtualFlow.getVerticalPosition());
+            this.heightChanged = (observable, oldValue, newValue) -> container.reset();
             this.posChanged = (observable, oldValue, newValue) -> {
-                container.setLayoutY(-newValue.doubleValue());
+                container.setLayoutY(-newValue.doubleValue() % container.getCellHeight());
                 container.update(newValue.doubleValue());
             };
         }
@@ -452,6 +463,14 @@ public interface OrientationHelper {
         }
 
         /**
+         * @return the number of cells to show based on the viewport's height and cells' height
+         */
+        @Override
+        public int computeCellsNumber() {
+            return (int) Math.ceil(virtualFlow.getVirtualFlow().getHeight() / container.getCellHeight()) + 1;
+        }
+
+        /**
          * @return the given cellHeight multiplied by the number of items
          */
         @Override
@@ -506,7 +525,7 @@ public interface OrientationHelper {
          */
         @Override
         public void layout(Node node, int index, double cellW, double cellH) {
-            double pos = index * cellH;
+            double pos = container.snapPositionY(cellH * index);
             resizeRelocate(node, pos, cellW, cellH);
         }
 

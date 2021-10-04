@@ -27,7 +27,6 @@ import javafx.scene.Node;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 // TODO memoize cell factory anyway?
@@ -39,12 +38,12 @@ import java.util.stream.Collectors;
  * The 'system' is quite simple yet super efficient: it keeps a List called cellsPool that contains
  * a number of cells (this number is the maximum number of cells that can be shown into the viewport).
  * During initialization the cellPool is populated by {@link #initCells(int)} and then added to the container,
- * they are also updated to be sure they are showing the right content. On scroll {@link #updateCells(int, int)}
- * is called, this method processes the needed updates to do ({@link CellUpdate}), then updates the cells, the layout
- * by calling {@link #processLayout(List)} and finally updates the indexes range of shown items.
+ * they are also updated to be sure they are showing the right content. On scroll {@link #updateCells(int)}
+ * is called, this method processes the needed updates to do, see ({@link CellUpdate}), then updates the cells,
+ * updates the layout by calling {@link #processLayout(List)} and finally updates the indexes range of shown items.
  * <p></p>
  * The important part to understand is that rather than creating new cells everytime the flow scrolls
- * we update the already created cells so the scroll is very smooth, and it's also efficient
+ * we update the already created cells, so the scroll is very smooth, and it's also efficient
  * in terms of memory usage. This allows the flow to handle huge amounts of items (depending on cells' complexity of course).
  *
  * @param <T> the type of object to represent
@@ -74,14 +73,13 @@ public class CellsManager<T, C extends Cell<T>> {
     //================================================================================
 
     /**
-     * Populates the cellsPool, adds them to the container and then calls {@link #updateCells(int, int)}
+     * Populates the cellsPool, adds them to the container and then calls {@link #updateCells(int)}
      * (indexes from 0 to num) to ensure the cells are displaying the right content (should not be needed though)
      *
      * @param num the number of cells to create
      */
     protected void initCells(int num) {
-        int diff = num - cellsPool.size();
-        for (int i = 0; i <= diff && i < itemsSize(); i++) {
+        for (int i = 0; i < num && i < itemsSize(); i++) {
             cellsPool.add(cellForIndex(i));
         }
 
@@ -89,165 +87,164 @@ public class CellsManager<T, C extends Cell<T>> {
         container.getChildren().setAll(cellsPool.stream().map(C::getNode).collect(Collectors.toList()));
 
         // Ensure that cells are properly updated
-        updateCells(0, num);
+        updateCells(0);
     }
 
     /**
      * Responsible for updating the cells in the viewport.
      * <p></p>
      * If the items list is empty returns immediately.
-     * <p>
-     * If the list was cleared, so start and end are invalid, computes the maximum
-     * number of cells the viewport can show and calls {@link #initCells(int)}, then exits
-     * as that method will then call this with valid indexes.
+     * <p></p>
+     * Computes the max number of cells to show by calling {@link OrientationHelper#computeCellsNumber()}
+     * then computes the {@code end} index by adding the {@code start} index to it (clamped between 0 and number of items).
+     * <p></p>
+     * If the list was cleared, so {@code start} is invalid, calls {@link #initCells(int)} with
+     * the previous computed max, then exits as that method will then call this with a valid start index.
      * <p>
      * If the new indexes range (start-end) is equal to the previous stored range
      * it's not necessary to update the cells therefore exits. This check is ignored
      * if the items list was changed (items replaced, added or removed), int this case
      * it's needed to update.
      * <p></p>
-     * The next check is to verify there are enough cells to show all the items from
-     * 'start' to 'end', the number of cells to show is computed in "optimal" conditions,
-     * but at some point it's possible for example that the first visible cell is only shown
-     * partially, this means that the last visible cell should be a new cell that the cellsPool
-     * can't offer, in cases like this it's needed to create new cells by calling {@link #supplyCells(int, int)}
-     * <p>
-     * A similar check is made if there are too many cells, in this case cells are removed.
-     * <p></p>
-     * The next step is a bit tricky. The cellsPool indexes go from 0 to size() of course,
+     * The next step is a bit tricky. The cellsPool indexes go from 0 to size() - 1 of course,
      * but the start and end parameters do not start from 0, let's say I have to show items
-     * from 10 to 20, so it's needed to use an "external" counter to get the cells from 0 to size(),
-     * while the items are retrieved from the list from 'start' to 'end', in this loop we create
+     * from 10 to 20, so it's needed to use an "external" counter to get the cells from 0 to size() - 1,
+     * while the items are retrieved from the list from {@code start} to {@code end}, in this loop we create
      * {@link CellUpdate} beans to make the code cleaner, after the loop {@link CellUpdate#update()} is
      * called for each bean, then the layout is updated with {@link #processLayout(List)} and
      * finally the range of shown items is updated.
      *
      * @param start the start index from which retrieve the items from the items list
-     * @param end   the final index up to which retrieve items from the items list
      */
-    protected void updateCells(int start, int end) {
-        // If the items list is empty return immediately
+    protected void updateCells(int start) {
         if (itemsEmpty()) return;
 
-        // If the list was cleared (so start and end are invalid) cells must be rebuilt
-        // by calling initCells(numOfCells), then return since that method will re-call this one
-        // with valid indexes.
-        if (start == -1 || end == -1) {
-            int num = container.getLayoutManager().lastVisible();
-            initCells(num);
+        // Compute the range of items to show, from the given start to
+        // start + max, where max is the number of cells that can be shown at any time.
+        int max = virtualFlow.getOrientationHelper().computeCellsNumber();
+        int rEnd = NumberUtils.clamp(start + max, 0, itemsSize());
+        NumberRange<Integer> range = NumberRange.of(start, rEnd);
+
+        // If the start index is invalid (list was cleared for example),
+        // it's needed to re-initialize the cells.
+        if (start == -1) {
+            initCells(max);
             return;
         }
 
-        // If range not changed or empty items return
-        NumberRange<Integer> newRange = NumberRange.of(start, end);
-        if (lastRange.equals(newRange) && !listChanged) return;
+        // If the last range of shown items is equal to the computed one
+        // there's no need to update. Exception being if the list was changed (listChanged flag).
+        if (lastRange.equals(range) && !listChanged) return;
 
-        // If there are not enough cells build them and add to the container
-        Set<Integer> itemsIndexes = NumberRange.expandRangeToSet(newRange);
-        if (itemsIndexes.size() > cellsPool.size()) {
-            supplyCells(cellsPool.size(), itemsIndexes.size());
-        } else if (itemsIndexes.size() < cellsPool.size()) {
-            int overFlow = cellsPool.size() - itemsIndexes.size();
-            for (int i = 0; i < overFlow; i++) {
-                cellsPool.remove(0);
-                container.getChildren().remove(0);
-            }
-        }
-
-        // Items index can go from 0 to size() of items list,
-        // cells can go from 0 to size() of the cells pool,
-        // Use a counter to get the cells and itemIndex to
-        // get the correct item and index to call
-        // updateIndex() and updateItem() later
+        // If everything went well, the last updates are cleared
+        // and recomputed. Here's where the real update process starts.
         updates.clear();
         int poolIndex = 0;
-        for (Integer itemIndex : itemsIndexes) {
-            T item = virtualFlow.getItems().get(itemIndex);
-            CellUpdate update = new CellUpdate(item, cellsPool.get(poolIndex), itemIndex);
+        for (int i = range.getMin(); i < range.getMax(); i++) {
+            T item = virtualFlow.getItems().get(i);
+            CellUpdate update = new CellUpdate(item, cellsPool.get(poolIndex), i);
             updates.add(update);
             poolIndex++;
         }
 
-        // Finally, update the cells, the layout and the range of items processed
+        // Update the cells, process the layout and update the range of shown items.
         updates.forEach(CellUpdate::update);
         processLayout(updates);
-        lastRange = newRange;
+        lastRange = range;
     }
 
     /**
      * Called when the items list changes, if the list
-     * has been cleared removes all the cells from the container
-     * then calls {@link #clear()} and then exits.
+     * has been cleared calls {@link #clear()} and then exits.
      * <p>
-     * Otherwise calls {@link #updateCells(int, int)}, the indexes
-     * used are the ones stored by the CellsManager.
+     * If the last range is invalid (meaning that the container is empty) computes the
+     * max number of cells to show with {@link OrientationHelper#computeCellsNumber()},
+     * then calls {@link #initCells(int)} with that number.
+     * <p></p>
+     * If none of the above conditions are met then we have to make several checks:
+     * <p>
+     * It's needed to check if there are too many cells in the pool or too few,
+     * depending on the case, it's needed to remove/supply some cells.
+     * <p></p>
+     * Finally the listChanged flag is set to true to force the update and
+     * {@link #updateCells(int)} is called, the start index is the last start index.
      */
     public void itemsChanged() {
         if (itemsEmpty()) {
-            container.getChildren().clear();
             clear();
             return;
         }
 
         // Cells were previously cleared, re-initialize
         if (lastRange.getMin() == -1 || lastRange.getMax() == -1) {
-            int num = container.getLayoutManager().lastVisible();
+            int num = virtualFlow.getOrientationHelper().computeCellsNumber();
             initCells(num);
             return;
         }
 
-        // If there are not enough cells build them and add to the container
-        int first = virtualFlow.getOrientationHelper().firstVisible();
-        int last = virtualFlow.getOrientationHelper().lastVisible() + 1;
-        int delta = last - first;
-        if (cellsPool.size() < delta) {
-            supplyCells(cellsPool.size(), delta);
+        // If there are too many cells, remove them from the pool and the container.
+        // If there are not enough cells then supply the needed amount.
+        int num = virtualFlow.getOrientationHelper().computeCellsNumber();
+        if (cellsPool.size() > num || cellsPool.size() > itemsSize()) {
+            int overflow = (cellsPool.size() > num) ? cellsPool.size() - num :
+                    cellsPool.size() > itemsSize() ? cellsPool.size() - itemsSize() : 0;
+            for (int i = 0; i < overflow; i++) {
+                C cell = cellsPool.remove(0);
+                cell.dispose();
+                container.getChildren().remove(0);
+            }
+        } else if (cellsPool.size() < num) {
+            int max = NumberUtils.clamp(num, 0, itemsSize() - 1);
+            supplyCells(cellsPool.size(), max);
         }
 
         listChanged = true;
-        int start = NumberUtils.clamp(lastRange.getMin(), 0, itemsSize() - 1);
-        int end = (lastRange.getMax() < last) ? last - 1 : NumberUtils.clamp(lastRange.getMax(), 0, itemsSize() - 1);
-        updateCells(start, end);
+        updateCells(lastRange.getMin());
         listChanged = false;
     }
 
     /**
      * Responsible for laying out the cells from a list of {@link CellUpdate}s.
      * <p></p>
-     * Since the layoutX/layoutY properties of the container are updated according to the ScrollBars'
-     * value, the cells are positioned according to the item's index in the items list.
-     * <p></p>
-     * To avoid if/else statements as much as possible the actual layout is computed by
+     * The positioning is absolute, it always starts from [0, 0], this ensures
+     * that there is no white space above or below any cell.
+     * <p>
+     * For each update (from 0 to updates.size()) cell's position is computed by
      * {@link OrientationHelper#layout(Node, int, double, double)}.
      */
     protected void processLayout(List<CellUpdate> updates) {
         double cellW = container.getCellWidth();
         double cellH = container.getCellHeight();
-        for (CellUpdate update : updates) {
-            int index = update.index;
+
+        for (int i = 0; i < updates.size(); i++) {
+            CellUpdate update = updates.get(i);
             C cell = update.cell;
             Node node = cell.getNode();
             cell.beforeLayout();
-            virtualFlow.getOrientationHelper().layout(node, index, cellW, cellH);
+            virtualFlow.getOrientationHelper().layout(node, i, cellW, cellH);
             cell.afterLayout();
         }
     }
 
     /**
-     * Calls {@link #processLayout(List)} with the previously
-     * built {@link CellUpdate}s.
+     * Drastic reset of the VirtualFlow, scroll position is set back
+     * to 0.0, {@link #clear()} is called, cells are re-initialized {@link #initCells(int)}.
+     * <p>
+     * Typically happens when the layout bounds of the VirtualFlow changed.
      */
-    protected void requestLayout() {
-        if (!updates.isEmpty()) {
-            processLayout(updates);
-        }
+    protected void reset() {
+        virtualFlow.scrollToPixel(0.0);
+        clear();
+        int max = virtualFlow.getOrientationHelper().computeCellsNumber();
+        initCells(max);
     }
 
     /**
-     * Resets the CellsManager by clearing the cellsPool, clearing the updates list and
-     * resetting the stored indexes range to [-1, -1].
+     * Resets the CellsManager by clearing the container's children, clearing the cellsPool,
+     * clearing the updates list and resetting the stored indexes range to [-1, -1].
      */
     protected void clear() {
+        container.getChildren().clear();
         cellsPool.clear();
         updates.clear();
         lastRange = NumberRange.of(-1);

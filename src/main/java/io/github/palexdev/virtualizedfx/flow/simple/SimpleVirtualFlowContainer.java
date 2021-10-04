@@ -66,8 +66,8 @@ public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
             if (!layoutManager.isInitialized()) initialize();
             cellsManager.itemsChanged();
         };
+
         listChanged = (observable, oldValue, newValue) -> {
-            cellsManager.requestLayout();
             cellsManager.clear();
             virtualFlow.scrollToPixel(0.0);
             oldValue.removeListener(itemsChanged);
@@ -122,10 +122,10 @@ public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
     }
 
     /**
-     * Delegate method for {@link CellsManager#updateCells(int, int)}.
+     * Delegate method for {@link CellsManager#updateCells(int)}.
      */
-    protected void updateCells(int start, int end) {
-        cellsManager.updateCells(start, end);
+    protected void updateCells(int start) {
+        cellsManager.updateCells(start);
     }
 
     /**
@@ -133,6 +133,13 @@ public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
      */
     public void update(double scrolled) {
         layoutManager.update(scrolled);
+    }
+
+    /**
+     * Delegate method for {@link CellsManager#reset()}.
+     */
+    public void reset() {
+        cellsManager.reset();
     }
 
     /**

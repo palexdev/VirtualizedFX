@@ -22,12 +22,17 @@ import io.github.palexdev.materialfx.controls.MFXCheckbox;
 import io.github.palexdev.materialfx.controls.MFXLabel;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.flow.simple.SimpleVirtualFlow;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
@@ -49,7 +54,7 @@ public class TestController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        IntStream.rangeClosed(0, 10_000).forEach(i -> labels.add(createLabel("Label " + i, getRandomIcon())));
+        IntStream.rangeClosed(0, 10_000).forEach(i -> labels.add(createLabel("Label " + i)));
         virtualFlow = SimpleVirtualFlow.Builder.create(
                 labels,
                 LabelCell::new,
@@ -62,8 +67,8 @@ public class TestController implements Initializable {
         group.getChildren().setAll(virtualFlow);
     }
 
-    private MFXLabel createLabel(String text, String iconDescription) {
-        FontIcon icon = new FontIcon(iconDescription);
+    private MFXLabel createLabel(String text) {
+        FontIcon icon = new FontIcon(getRandomIcon());
         icon.setIconColor(Color.PURPLE);
         icon.setIconSize(14);
 
@@ -83,29 +88,29 @@ public class TestController implements Initializable {
     }
 
     @FXML
-    void add(ActionEvent event) {
-        virtualFlow.getItems().add(0, createLabel("New Label at 0", getRandomIcon()));
+    void add() {
+        virtualFlow.getItems().add(0, createLabel("New String at 0"));
     }
 
     @FXML
-    void addAll(ActionEvent event) {
+    void addAll() {
         virtualFlow.getItems().addAll(
                 2,
                 List.of(
-                        createLabel("Add All At 2", getRandomIcon()),
-                        createLabel("Add All At 2", getRandomIcon()),
-                        createLabel("Add All At 2", getRandomIcon())
+                        createLabel("Add All At 2"),
+                        createLabel("Add All At 2"),
+                        createLabel("Add All At 2")
                 )
         );
     }
 
     @FXML
-    void changeFactory(ActionEvent event) {
+    void changeFactory() {
         virtualFlow.setCellFactory(LabelCell2::new);
     }
 
     @FXML
-    void changeOrientation(ActionEvent event) {
+    void changeOrientation() {
         virtualFlow.setOrientation(
                 virtualFlow.getOrientation() == Orientation.VERTICAL ?
                         Orientation.HORIZONTAL :
@@ -114,17 +119,17 @@ public class TestController implements Initializable {
     }
 
     @FXML
-    void clear(ActionEvent event) {
+    void clear() {
         virtualFlow.getItems().clear();
     }
 
     @FXML
-    void deleteMiddle(ActionEvent event) {
+    void deleteMiddle() {
         virtualFlow.getItems().remove(2);
     }
 
     @FXML
-    void deleteSparse(ActionEvent event) {
+    void deleteSparse() {
         virtualFlow.getItems().removeAll(
                 labels.get(2),
                 labels.get(5),
@@ -134,69 +139,71 @@ public class TestController implements Initializable {
     }
 
     @FXML
-    void deleteLast(ActionEvent event) {
+    void deleteLast() {
         virtualFlow.getItems().remove(
                 virtualFlow.getItems().size() - 1
         );
     }
 
     @FXML
-    void replace(ActionEvent event) {
-        ObservableList<MFXLabel> newLabels = FXCollections.observableArrayList();
-        IntStream.rangeClosed(0, 100).forEach(i -> newLabels.add(createLabel("NewList " + i, getRandomIcon())));
-        virtualFlow.setItems(newLabels);
+    void replace() {
+        ObservableList<MFXLabel> labels = FXCollections.observableArrayList();
+        IntStream.rangeClosed(0, 100).forEach(i -> labels.add(createLabel("NewList " + i)));
+        virtualFlow.setItems(labels);
     }
 
     @FXML
-    void scrollByPixel(ActionEvent event) {
+    void scrollByPixel() {
         virtualFlow.scrollBy(20);
     }
 
     @FXML
-    void scrollToFirst(ActionEvent event) {
+    void scrollToFirst() {
         virtualFlow.scrollToFirst();
     }
 
     @FXML
-    void scrollToIndex(ActionEvent event) {
+    void scrollToIndex() {
         virtualFlow.scrollTo(70);
     }
 
     @FXML
-    void scrollToLast(ActionEvent event) {
+    void scrollToLast() {
         virtualFlow.scrollToLast();
     }
 
     @FXML
-    void scrollToPixel(ActionEvent event) {
+    void scrollToPixel() {
         virtualFlow.scrollToPixel(20);
     }
 
     @FXML
-    void setAll(ActionEvent event) {
-        ObservableList<MFXLabel> newLabels = FXCollections.observableArrayList();
-        IntStream.rangeClosed(0, 100).forEach(i -> newLabels.add(createLabel("NewLabels " + i, getRandomIcon())));
-        virtualFlow.getItems().setAll(newLabels);
+    void setAll() {
+        ObservableList<MFXLabel> labels = FXCollections.observableArrayList();
+        IntStream.rangeClosed(0, 100).forEach(i -> labels.add(createLabel("NewStrings " + i)));
+        virtualFlow.getItems().setAll(labels);
     }
 
     @FXML
-    void setHeight(ActionEvent event) {
-        virtualFlow.setPrefHeight(400);
+    void setHeight() {
+        double val = virtualFlow.getOrientation() == Orientation.VERTICAL ? 450 : 150;
+        virtualFlow.setPrefHeight(val);
     }
 
     @FXML
-    void setWidth(ActionEvent event) {
-        virtualFlow.setPrefWidth(300);
+    void setWidth() {
+        double val = virtualFlow.getOrientation() == Orientation.HORIZONTAL ? 600 : 250;
+        virtualFlow.setPrefWidth(val);
     }
 
     @FXML
-    void updateInside(ActionEvent event) {
-        virtualFlow.getItems().set(5, createLabel("5 Changed", getRandomIcon()));
+    void updateInside() {
+        virtualFlow.getItems().set(5, createLabel("5 Changed"));
     }
 
     @FXML
-    void updateOutside(ActionEvent event) {
-        virtualFlow.getItems().set(80, createLabel("80 Changed", getRandomIcon()));
+    void updateOutside() {
+        virtualFlow.getItems().set(80, createLabel("80 Changed"));
     }
 
     private static class LabelCell extends HBox implements Cell<MFXLabel> {
@@ -205,8 +212,8 @@ public class TestController implements Initializable {
 
         public LabelCell(MFXLabel data) {
             this.data = data;
-            setPrefHeight(32);
-            setMaxHeight(USE_PREF_SIZE);
+            setPrefSize(200, 32);
+            setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
             render(data);
         }
 
@@ -262,6 +269,107 @@ public class TestController implements Initializable {
         @Override
         public void updateIndex(int index) {
             this.index = index;
+        }
+    }
+
+    private static class StringCell2 extends HBox implements Cell<String> {
+        private final MFXCheckbox checkbox = new MFXCheckbox("");
+        private final MFXLabel label = new MFXLabel();
+        private int index;
+
+        public StringCell2(String data) {
+            label.setUnfocusedLineColor(Color.TRANSPARENT);
+            label.setLineColor(Color.TRANSPARENT);
+            label.setLabelAlignment(Pos.CENTER_LEFT);
+            label.setAlignment(Pos.CENTER_LEFT);
+            label.setText(data);
+
+            setPrefSize(200, 32);
+            setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
+            checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> System.out.println(newValue));
+            render();
+        }
+
+        private void render() {
+            getChildren().setAll(checkbox, label);
+        }
+
+        @Override
+        public Node getNode() {
+            return this;
+        }
+
+        @Override
+        public void updateItem(String item) {
+            label.setText(item);
+            render();
+        }
+
+        @Override
+        public void updateIndex(int index) {
+            this.index = index;
+        }
+    }
+
+    private static class DebugCell extends HBox implements Cell<String> {
+        private final StringProperty text = new SimpleStringProperty();
+        private final IntegerProperty index = new SimpleIntegerProperty();
+
+        public DebugCell(String text) {
+            MFXLabel label = new MFXLabel();
+            label.setUnfocusedLineColor(Color.TRANSPARENT);
+            label.setLineColor(Color.TRANSPARENT);
+            label.setLabelAlignment(Pos.CENTER_LEFT);
+            label.setAlignment(Pos.CENTER_LEFT);
+
+            setPrefSize(200, 32);
+            setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
+            getChildren().setAll(label);
+
+            label.textProperty().bind(Bindings.createStringBinding(
+                    () -> getText() + " " + getIndex() + " " + getLayoutY(),
+                    textProperty(), indexProperty(), layoutYProperty()
+            ));
+            setText(text);
+        }
+
+        @Override
+        public Node getNode() {
+            return this;
+        }
+
+        @Override
+        public void updateItem(String item) {
+            setText(item);
+        }
+
+        @Override
+        public void updateIndex(int index) {
+            setIndex(index);
+        }
+
+        public String getText() {
+            return text.get();
+        }
+
+        public StringProperty textProperty() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text.set(text);
+        }
+
+        public int getIndex() {
+            return index.get();
+        }
+
+        public IntegerProperty indexProperty() {
+            return index;
+        }
+
+        public void setIndex(int index) {
+            this.index.set(index);
         }
     }
 }

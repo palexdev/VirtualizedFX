@@ -90,11 +90,12 @@ public class LayoutManager<T, C extends Cell<T>> {
 
     /**
      * Calls {@link #bindings()} and {@link CellsManager#initCells(int)},
-     * the num of cells passed is computed by calling {@link #lastVisible()}.
+     * the num of cells passed is computed by calling {@link OrientationHelper#computeCellsNumber()}.
      */
     protected void initFlow() {
         bindings();
-        container.initCells(lastVisible());
+        int num = virtualFlow.getOrientationHelper().computeCellsNumber();
+        container.initCells(num);
     }
 
     /**
@@ -123,14 +124,13 @@ public class LayoutManager<T, C extends Cell<T>> {
 
     /**
      * Called on scroll to update the amount of pixels scrolled and
-     * then calls {@link CellsManager#updateCells(int, int)},
-     * the passed indexes are computed by {@link #firstVisible()} and {@link #lastVisible()}.
+     * then calls {@link CellsManager#updateCells(int)},
+     * the passed start index is computed by {@link #firstVisible()}.
      */
     public void update(double scrolled) {
         this.scrolled = scrolled;
         int start = firstVisible();
-        int end = lastVisible();
-        container.updateCells(start, end);
+        container.updateCells(start);
     }
 
     /**
