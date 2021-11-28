@@ -79,6 +79,7 @@ public class CellsManager<T, C extends Cell<T>> {
      * @param num the number of cells to create
      */
     protected void initCells(int num) {
+        cellsPool.clear();
         for (int i = 0; i < num && i < itemsSize(); i++) {
             cellsPool.add(cellForIndex(i));
         }

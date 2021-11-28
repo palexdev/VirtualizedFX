@@ -210,13 +210,29 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
         ));
 
         // Visibility
-        hBar.visibleAmountProperty().bind(widthProperty());
+        hBar.visibleAmountProperty().bind(Bindings.createDoubleBinding(
+                () -> {
+                    if (!hBar.isVisible()) return 0.0;
+                    double viewportHeight = getWidth();
+                    double contentHeight = container.getEstimatedWidth();
+                    double ratio = viewportHeight / contentHeight;
+                    return viewportHeight - hBar.getWidth() * ratio;
+                }, vBar.visibleProperty(), widthProperty(), container.estimatedWidthProperty(), vBar.widthProperty()
+        ));
         hBar.visibleProperty().bind(Bindings.createBooleanBinding(
                 () -> container.getEstimatedWidth() > getWidth(),
                 container.estimatedWidthProperty(), widthProperty()
         ));
 
-        vBar.visibleAmountProperty().bind(heightProperty());
+        vBar.visibleAmountProperty().bind(Bindings.createDoubleBinding(
+                () -> {
+                    if (!vBar.isVisible()) return 0.0;
+                    double viewportHeight = getHeight();
+                    double contentHeight = container.getEstimatedHeight();
+                    double ratio = viewportHeight / contentHeight;
+                    return viewportHeight - vBar.getHeight() * ratio;
+                }, vBar.visibleProperty(), heightProperty(), container.estimatedHeightProperty(), vBar.heightProperty()
+        ));
         vBar.visibleProperty().bind(Bindings.createBooleanBinding(
                 () -> container.getEstimatedHeight() > getHeight(),
                 container.estimatedHeightProperty(), heightProperty()
