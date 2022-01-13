@@ -19,7 +19,10 @@
 package controller;
 
 import io.github.palexdev.materialfx.controls.MFXCheckbox;
+import io.github.palexdev.materialfx.controls.MFXIconWrapper;
 import io.github.palexdev.materialfx.controls.MFXLabel;
+import io.github.palexdev.materialfx.font.MFXFontIcon;
+import io.github.palexdev.materialfx.utils.ColorUtils;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.flow.simple.SimpleVirtualFlow;
 import javafx.beans.binding.Bindings;
@@ -31,6 +34,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -61,6 +65,9 @@ public class TestController implements Initializable {
                 Orientation.VERTICAL
         );
         virtualFlow.setPrefSize(250, 450);
+        virtualFlow.setMaxWidth(100);
+        virtualFlow.setFitToWidth(false);
+        virtualFlow.setFitToHeight(false);
         virtualFlow.features().enableBounceEffect();
         virtualFlow.features().enableSmoothScrolling(1, 7);
 
@@ -186,7 +193,7 @@ public class TestController implements Initializable {
 
     @FXML
     void setHeight() {
-        double val = virtualFlow.getOrientation() == Orientation.VERTICAL ? 450 : 150;
+        double val = virtualFlow.getOrientation() == Orientation.VERTICAL ? 450 : 100;
         virtualFlow.setPrefHeight(val);
     }
 
@@ -206,7 +213,7 @@ public class TestController implements Initializable {
         virtualFlow.getItems().set(80, createLabel("80 Changed"));
     }
 
-    private static class LabelCell extends HBox implements Cell<MFXLabel> {
+    private class LabelCell extends HBox implements Cell<MFXLabel> {
         private MFXLabel data;
         private int index;
 
@@ -214,11 +221,17 @@ public class TestController implements Initializable {
             this.data = data;
             setPrefSize(200, 32);
             setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
+            setAlignment(Pos.CENTER_LEFT);
             render(data);
         }
 
         private void render(MFXLabel data) {
-            getChildren().setAll(data);
+            MFXIconWrapper randomIcon = new MFXIconWrapper(new MFXFontIcon("mfx-google", 12, ColorUtils.getRandomColor()), 24);
+            Insets insets = virtualFlow.getOrientation() == Orientation.VERTICAL ?
+                    new Insets(0, 12, 0, 100) :
+                    new Insets(100, 0, 12, 0);
+            HBox.setMargin(randomIcon, insets);
+            getChildren().setAll(data, randomIcon);
         }
 
         @Override

@@ -140,6 +140,7 @@ public class CellsManager<T, C extends Cell<T>> {
         // If everything went well, the last updates are cleared
         // and recomputed. Here's where the real update process starts.
         updates.clear();
+        cellsPool.forEach(cell -> cell.getNode().setVisible(false));
         int poolIndex = 0;
         for (int i = range.getMin(); i < range.getMax(); i++) {
             T item = virtualFlow.getItems().get(i);
@@ -221,10 +222,19 @@ public class CellsManager<T, C extends Cell<T>> {
             CellUpdate update = updates.get(i);
             C cell = update.cell;
             Node node = cell.getNode();
+            node.setVisible(true);
             cell.beforeLayout();
             virtualFlow.getOrientationHelper().layout(node, i, cellW, cellH);
             cell.afterLayout();
         }
+    }
+
+    /**
+     * Forces {@link #processLayout(List)} with the previously
+     * computed updates.
+     */
+    protected void requestLayout() {
+        processLayout(updates);
     }
 
     /**

@@ -19,6 +19,9 @@
 package io.github.palexdev.virtualizedfx.flow.base;
 
 import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper.HorizontalHelper;
+import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper.VerticalHelper;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
@@ -61,6 +64,16 @@ public interface VirtualFlow<T, C extends Cell<T>> {
     void setCellFactory(Function<T, C> cellFactory);
 
     /**
+     * @return the width of the cells
+     */
+    double getCellWidth();
+
+    /**
+     * @return the height of the cells
+     */
+    double getCellHeight();
+
+    /**
      * @return the instance of the horizontal scroll bar, null if the virtual flow
      * doesn't have it
      */
@@ -71,6 +84,30 @@ public interface VirtualFlow<T, C extends Cell<T>> {
      * doesn't have it
      */
     ScrollBar getVBar();
+
+    boolean isFitToWidth();
+
+    /**
+     * Specifies whether the cells should take all the space
+     * available on the x axis.
+     * <p>
+     * This is used by the {@link VerticalHelper}.
+     */
+    BooleanProperty fitToWidthProperty();
+
+    void setFitToWidth(boolean fitToWidth);
+
+    boolean isFitToHeight();
+
+    /**
+     * Specifies whether the cells should take all the space
+     * available on the y axis.
+     * <p>
+     * This is used by the {@link HorizontalHelper}.
+     */
+    BooleanProperty fitToHeightProperty();
+
+    void setFitToHeight(boolean fitToHeight);
 
     /**
      * @return the horizontal scroll bar's value

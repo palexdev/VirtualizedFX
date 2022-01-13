@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'io.github.palexdev'
-version '11.2.3'
+version '11.2.4'
 
 repositories {
     mavenCentral()
@@ -76,6 +76,14 @@ jar {
                 'Bundle-SymbolicName': 'io.github.palexdev',
                 'Export-Package': 'io.github.palexdev.virtualizedfx.*'
         )
+    }
+}
+
+allprojects {
+    plugins.withId("com.vanniktech.maven.publish") {
+        mavenPublish {
+            sonatypeHost = "S01"
+        }
     }
 }
 

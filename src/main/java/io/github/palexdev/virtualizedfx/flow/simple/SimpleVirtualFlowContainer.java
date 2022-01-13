@@ -192,6 +192,18 @@ public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
     }
 
     /**
+     * Forces the {@link LayoutManager} to recompute the cells sizes.
+     */
+    public void recomputeCellsSize() {
+        if (virtualFlow.getItems().isEmpty()) {
+            return;
+        }
+
+        C cell = virtualFlow.getCellFactory().apply(virtualFlow.getItems().get(0));
+        layoutManager.retrieveCellsSizes(cell);
+    }
+
+    /**
      * Delegate method for {@link LayoutManager#getScrolled()}.
      */
     public double getScrolled() {
@@ -244,5 +256,12 @@ public class SimpleVirtualFlowContainer<T, C extends Cell<T>> extends Region {
      */
     @Override
     protected void layoutChildren() {
+    }
+
+    /**
+     * Forces the {@link CellsManager} to recompute the cells layout.
+     */
+    public void requestCellsLayout() {
+        cellsManager.requestLayout();
     }
 }

@@ -24,6 +24,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.layout.Region;
 
 /**
  * Helper class to avoid as much as possible if/else statements to check
@@ -95,9 +96,15 @@ public interface OrientationHelper {
      * <p>
      */
     static double boundSize(double pref, double min, double max) {
-        double a = Math.max(pref, min);
-        double b = Math.max(min, max);
-        return Math.min(a, b);
+        return NumberUtils.clamp(pref, min, max);
+    }
+
+    static double boundWidth(Node node) {
+        return boundSize(node.prefWidth(-1), node.minWidth(-1), node.maxWidth(-1));
+    }
+
+    static double boundHeight(Node node) {
+        return boundSize(node.prefHeight(-1), node.minHeight(-1), node.maxHeight(-1));
     }
 
     //================================================================================
@@ -165,7 +172,9 @@ public interface OrientationHelper {
         private final SimpleVirtualFlowContainer<?, ?> container;
 
         private ChangeListener<? super Number> widthChanged;
-        private ChangeListener<? super Number> posChanged;
+        private ChangeListener<? super Number> heightChanged;
+        private ChangeListener<? super Number> vPosChanged;
+        private ChangeListener<? super Number> hPosChanged;
 
         //================================================================================
         // Constructors
@@ -175,7 +184,12 @@ public interface OrientationHelper {
             this.container = container;
 
             this.widthChanged = (observable, oldValue, newValue) -> container.reset();
-            this.posChanged = (observable, oldValue, newValue) -> {
+            this.heightChanged = (observable, oldValue, newValue) -> {
+                container.recomputeCellsSize();
+                container.requestCellsLayout();
+            };
+            this.vPosChanged = (observable, oldValue, newValue) -> container.setLayoutY(-newValue.floatValue() % container.getCellHeight());
+            this.hPosChanged = (observable, oldValue, newValue) -> {
                 container.setLayoutX(-newValue.doubleValue() % container.getCellWidth());
                 container.update(newValue.doubleValue());
             };
@@ -192,7 +206,9 @@ public interface OrientationHelper {
          */
         public void initialize() {
             virtualFlow.getVirtualFlow().widthProperty().addListener(widthChanged);
-            virtualFlow.horizontalPositionProperty().addListener(posChanged);
+            virtualFlow.getVirtualFlow().heightProperty().addListener(heightChanged);
+            virtualFlow.verticalPositionProperty().addListener(vPosChanged);
+            virtualFlow.horizontalPositionProperty().addListener(hPosChanged);
         }
 
         //================================================================================
@@ -250,7 +266,11 @@ public interface OrientationHelper {
          */
         @Override
         public double computeEstimatedHeight(double cellHeight) {
-            return virtualFlow.getVirtualFlow().getHeight();
+            Region vf = virtualFlow.getVirtualFlow();
+            if (virtualFlow.isFitToHeight()) {
+                return vf.getHeight();
+            }
+            return Math.max(vf.getHeight(), container.getHeight());
         }
 
         /**
@@ -267,10 +287,10 @@ public interface OrientationHelper {
          */
         @Override
         public double getHeight(Node node) {
+            Region vf = virtualFlow.getVirtualFlow();
             double max = node.maxHeight(-1);
-            return max == Double.MAX_VALUE ?
-                    virtualFlow.getVirtualFlow().getHeight() :
-                    boundSize(node.prefHeight(-1), node.minHeight(-1), max);
+            double pref = node.prefHeight(-1);
+            return virtualFlow.isFitToHeight() ? max == Double.MAX_VALUE ? vf.getHeight() : boundHeight(node) : Math.max(pref, container.getHeight());
         }
 
         /**
@@ -363,9 +383,13 @@ public interface OrientationHelper {
         @Override
         public void dispose() {
             virtualFlow.getVirtualFlow().widthProperty().removeListener(widthChanged);
-            virtualFlow.horizontalPositionProperty().removeListener(posChanged);
+            virtualFlow.getVirtualFlow().heightProperty().removeListener(heightChanged);
+            virtualFlow.verticalPositionProperty().removeListener(vPosChanged);
+            virtualFlow.horizontalPositionProperty().removeListener(hPosChanged);
             widthChanged = null;
-            posChanged = null;
+            heightChanged = null;
+            vPosChanged = null;
+            hPosChanged = null;
         }
     }
 
@@ -389,8 +413,10 @@ public interface OrientationHelper {
         private final VirtualFlow<?, ?> virtualFlow;
         private final SimpleVirtualFlowContainer<?, ?> container;
 
+        private ChangeListener<? super Number> widthChanged;
         private ChangeListener<? super Number> heightChanged;
-        private ChangeListener<? super Number> posChanged;
+        private ChangeListener<? super Number> vPosChanged;
+        private ChangeListener<? super Number> hPosChanged;
 
         //================================================================================
         // Constructors
@@ -399,11 +425,16 @@ public interface OrientationHelper {
             this.virtualFlow = virtualFlow;
             this.container = container;
 
+            this.widthChanged = (observable, oldValue, newValue) -> {
+                container.recomputeCellsSize();
+                container.requestCellsLayout();
+            };
             this.heightChanged = (observable, oldValue, newValue) -> container.reset();
-            this.posChanged = (observable, oldValue, newValue) -> {
+            this.vPosChanged = (observable, oldValue, newValue) -> {
                 container.setLayoutY(-newValue.doubleValue() % container.getCellHeight());
                 container.update(newValue.doubleValue());
             };
+            this.hPosChanged = ((observable, oldValue, newValue) -> container.setLayoutX(-newValue.doubleValue() % container.getCellWidth()));
         }
 
         //================================================================================
@@ -416,8 +447,10 @@ public interface OrientationHelper {
          * DO NOT CALL THIS METHOD, it's automatically handled by the VirtualFlow.
          */
         public void initialize() {
+            virtualFlow.getVirtualFlow().widthProperty().addListener(widthChanged);
             virtualFlow.getVirtualFlow().heightProperty().addListener(heightChanged);
-            virtualFlow.verticalPositionProperty().addListener(posChanged);
+            virtualFlow.verticalPositionProperty().addListener(vPosChanged);
+            virtualFlow.horizontalPositionProperty().addListener(hPosChanged);
         }
 
         //================================================================================
@@ -483,7 +516,11 @@ public interface OrientationHelper {
          */
         @Override
         public double computeEstimatedWidth(double cellWidth) {
-            return virtualFlow.getVirtualFlow().getWidth();
+            Region vf = virtualFlow.getVirtualFlow();
+            if (virtualFlow.isFitToWidth()) {
+                return vf.getWidth();
+            }
+            return Math.max(vf.getWidth(), container.getWidth());
         }
 
         /**
@@ -500,10 +537,10 @@ public interface OrientationHelper {
          */
         @Override
         public double getWidth(Node node) {
+            Region vf = virtualFlow.getVirtualFlow();
             double max = node.maxWidth(-1);
-            return max == Double.MAX_VALUE ?
-                    virtualFlow.getVirtualFlow().getWidth() :
-                    boundSize(node.prefWidth(-1), node.minWidth(-1), max);
+            double pref = node.prefWidth(-1);
+            return virtualFlow.isFitToWidth() ? max == Double.MAX_VALUE ? vf.getWidth() : boundWidth(node) : Math.max(pref, container.getWidth());
         }
 
         /**
@@ -587,10 +624,14 @@ public interface OrientationHelper {
          */
         @Override
         public void dispose() {
+            virtualFlow.getVirtualFlow().widthProperty().removeListener(widthChanged);
             virtualFlow.getVirtualFlow().heightProperty().removeListener(heightChanged);
-            virtualFlow.verticalPositionProperty().removeListener(posChanged);
+            virtualFlow.verticalPositionProperty().removeListener(vPosChanged);
+            virtualFlow.horizontalPositionProperty().removeListener(hPosChanged);
+            widthChanged = null;
             heightChanged = null;
-            posChanged = null;
+            vPosChanged = null;
+            hPosChanged = null;
         }
     }
 }

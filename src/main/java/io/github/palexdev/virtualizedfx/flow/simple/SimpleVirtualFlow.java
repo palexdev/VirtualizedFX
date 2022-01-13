@@ -25,7 +25,6 @@ import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper.HorizontalHe
 import io.github.palexdev.virtualizedfx.flow.base.OrientationHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.flow.base.VirtualFlow;
 import io.github.palexdev.virtualizedfx.utils.AnimationUtils;
-import io.github.palexdev.virtualizedfx.utils.ExecutionUtils;
 import io.github.palexdev.virtualizedfx.utils.NumberUtils;
 import io.github.palexdev.virtualizedfx.utils.ScrollUtils.ScrollDirection;
 import javafx.animation.Animation;
@@ -33,10 +32,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -66,14 +62,12 @@ import static io.github.palexdev.virtualizedfx.utils.ScrollUtils.isTrackPad;
  * <p> - The items list is managed automatically (insertions, removals or updates to the items)
  * <p> - The cell factory can be changed any time
  * <p> - Can show the cells from TOP to BOTTOM or from LEFT to RIGHT, this is the orientation property
- * <p> - It's possible to change the orientation event at runtime (but it's also recommended resizing both the
+ * <p> - It's possible to change the orientation even at runtime (but it's also recommended resizing both the
  * VirtualFlow and the cells)
  * <p> - It's not necessary to wrap the flow in a scroll pane as it already includes both the scroll bars
  * <p> - It's possible to set the speed of both the scroll bars
  * <p> - It's possible to scroll manually by pixels or to cell index
  * <p> - It's possible to get the currently shown/built cells or a specific cell by index
- * <p></p>
- * To build a SimpleVirtualFlow use the {@link SimpleVirtualFlow.Builder} class.
  * <p></p>
  * The cells are contained in a {@link Group} which is a {@link SimpleVirtualFlowContainer}.
  *
@@ -95,9 +89,13 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
     private final ScrollBar vBar = new ScrollBar();
     private final DoubleProperty verticalPosition = new SimpleDoubleProperty();
 
+    private final BooleanProperty fitToWidth = new SimpleBooleanProperty(true);
+    private final BooleanProperty fitToHeight = new SimpleBooleanProperty(true);
+
     private OrientationHelper orientationHelper;
     private final ObjectProperty<Orientation> orientation = new SimpleObjectProperty<>(Orientation.VERTICAL);
     private final SimpleVirtualFlowContainer<T, C> container = new SimpleVirtualFlowContainer<>(this);
+    private boolean initialized = false;
 
     private final Features features = new Features();
 
@@ -105,6 +103,26 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
     // Constructors
     //================================================================================
     protected SimpleVirtualFlow() {
+    }
+
+    public SimpleVirtualFlow(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
+        setItems(items);
+        setCellFactory(cellFactory);
+        setOrientation(orientation);
+        orientationHelper = (orientation == Orientation.HORIZONTAL) ?
+                new HorizontalHelper(this, container) :
+                new VerticalHelper(this, container);
+        initialize();
+    }
+
+    public SimpleVirtualFlow(ObjectProperty<ObservableList<T>> items, Function<T, C> cellFactory, Orientation orientation) {
+        this.items.bind(items);
+        setCellFactory(cellFactory);
+        setOrientation(orientation);
+        orientationHelper = (orientation == Orientation.HORIZONTAL) ?
+                new HorizontalHelper(this, container) :
+                new VerticalHelper(this, container);
+        initialize();
     }
 
     //================================================================================
@@ -150,23 +168,6 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
             }
             container.getLayoutManager().initialize();
         });
-
-        ExecutionUtils.executeWhen(
-                needsLayoutProperty(),
-                (oldValue, newValue) -> {
-                    if (orientationHelper instanceof HorizontalHelper) {
-                        HorizontalHelper helper = (HorizontalHelper) orientationHelper;
-                        helper.initialize();
-                    } else {
-                        VerticalHelper helper = (VerticalHelper) orientationHelper;
-                        helper.initialize();
-                    }
-                    container.initialize();
-                },
-                false,
-                (oldValue, newValue) -> !newValue,
-                true
-        );
     }
 
     /**
@@ -255,6 +256,18 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
             return original.dispatchEvent(event, tail);
         });
 
+        // Unfortunately scrolling works only on the VirtualFlow's orientation,
+        // the other scroll bar needs to be dragged.
+        // I have no idea on how to properly fix this and I have
+        // absolutely no intention of learning all this JavaFX event handling shit
+        // only to fix this. If you have any idea, submit a PR
+        vBar.addEventFilter(ScrollEvent.SCROLL, event -> {
+            if (getOrientation() == Orientation.HORIZONTAL) event.consume();
+        });
+        hBar.addEventFilter(ScrollEvent.SCROLL, event -> {
+            if (getOrientation() == Orientation.VERTICAL) event.consume();
+        });
+
         getChildren().addAll(hBar, vBar);
     }
 
@@ -336,6 +349,16 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
     //================================================================================
 
     @Override
+    protected double computePrefWidth(double height) {
+        return 100;
+    }
+
+    @Override
+    protected double computePrefHeight(double width) {
+        return 100;
+    }
+
+    @Override
     public String getUserAgentStylesheet() {
         return STYLESHEET;
     }
@@ -347,6 +370,18 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
         double prefHorizontalHeight = hBar.prefHeight(-1);
         vBar.resizeRelocate(getWidth() - prefVerticalWidth, 0, prefVerticalWidth, getHeight());
         hBar.resizeRelocate(0, getHeight() - prefHorizontalHeight, getWidth(), prefHorizontalHeight);
+
+        if (!initialized) {
+            initialized = true;
+            if (orientationHelper instanceof HorizontalHelper) {
+                HorizontalHelper helper = (HorizontalHelper) orientationHelper;
+                helper.initialize();
+            } else {
+                VerticalHelper helper = (VerticalHelper) orientationHelper;
+                helper.initialize();
+            }
+            container.initialize();
+        }
     }
 
     //================================================================================
@@ -399,6 +434,22 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
      * {@inheritDoc}
      */
     @Override
+    public double getCellWidth() {
+        return container.getCellWidth();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getCellHeight() {
+        return container.getCellHeight();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ScrollBar getHBar() {
         return hBar;
     }
@@ -409,6 +460,38 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
     @Override
     public ScrollBar getVBar() {
         return vBar;
+    }
+
+    public boolean isFitToWidth() {
+        return fitToWidth.get();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public BooleanProperty fitToWidthProperty() {
+        return fitToWidth;
+    }
+
+    public void setFitToWidth(boolean fitToWidth) {
+        this.fitToWidth.set(fitToWidth);
+    }
+
+    public boolean isFitToHeight() {
+        return fitToHeight.get();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public BooleanProperty fitToHeightProperty() {
+        return fitToHeight;
+    }
+
+    public void setFitToHeight(boolean fitToHeight) {
+        this.fitToHeight.set(fitToHeight);
     }
 
     /**
@@ -509,6 +592,7 @@ public class SimpleVirtualFlow<T, C extends Cell<T>> extends Region implements V
     /**
      * Builder class to create {@link SimpleVirtualFlow}s.
      */
+    @Deprecated(forRemoval = true)
     public static class Builder {
 
         private Builder() {

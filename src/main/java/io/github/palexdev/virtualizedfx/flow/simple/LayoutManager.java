@@ -111,11 +111,11 @@ public class LayoutManager<T, C extends Cell<T>> {
 
         heightBinding = Bindings.createDoubleBinding(
                 () -> virtualFlow.getOrientationHelper().computeEstimatedHeight(cellHeight),
-                virtualFlow.getItems(), virtualFlow.heightProperty(), virtualFlow.orientationProperty()
+                virtualFlow.getItems(), virtualFlow.heightProperty(), virtualFlow.orientationProperty(), virtualFlow.fitToHeightProperty(), container.heightProperty()
         );
         widthBinding = Bindings.createDoubleBinding(
                 () -> virtualFlow.getOrientationHelper().computeEstimatedWidth(cellWidth),
-                virtualFlow.getItems(), virtualFlow.widthProperty(), virtualFlow.orientationProperty()
+                virtualFlow.getItems(), virtualFlow.widthProperty(), virtualFlow.orientationProperty(), virtualFlow.fitToWidthProperty(), container.widthProperty()
         );
 
         estimatedHeight.bind(heightBinding);
@@ -158,7 +158,7 @@ public class LayoutManager<T, C extends Cell<T>> {
      * the cell will be properly resized, and we can get its sizes with
      * {@link OrientationHelper#getHeight(Node)} and {@link OrientationHelper#getWidth(Node)}.
      */
-    private void retrieveCellsSizes(C cell) {
+    protected void retrieveCellsSizes(C cell) {
         Node node = cell.getNode();
         Group group = new Group();
         group.getChildren().add(node);
