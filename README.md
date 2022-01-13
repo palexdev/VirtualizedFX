@@ -9,10 +9,10 @@
 VirtualizedFX is yet another attempt at creating an efficient and flexible virtual flow for JavaFX. For those who don't
 know what a VirtualFlow is I suggest you reading these articles which also helped me a lot in the realuzation of
 VirtualizedFX:
-[1](https://medium.com/ingeniouslysimple/building-a-virtualized-list-from-scratch-9225e8bec120),
-[2](https://dev.to/murilovarela/make-your-virtualized-list-5cpm),
-[3](https://dev.to/nishanbajracharya/what-i-learned-from-building-my-own-virtualized-list-library-for-react-45ik),
-[4](https://betterprogramming.pub/virtualized-rendering-from-scratch-in-react-34c2ad482b16)
+<a href="https://medium.com/ingeniouslysimple/building-a-virtualized-list-from-scratch-9225e8bec120">[1]</a>,
+<a href="https://dev.to/murilovarela/make-your-virtualized-list-5cpm">[2]</a>,
+<a href="https://dev.to/nishanbajracharya/what-i-learned-from-building-my-own-virtualized-list-library-for-react-45ik">[3]</a>,
+<a href="https://betterprogramming.pub/virtualized-rendering-from-scratch-in-react-34c2ad482b16">[4]</a>.
 <p></p>
 
 Unlike other VirtualFlows, VirtualizedFX's code is well documented, well organized and fairly simple which not only
