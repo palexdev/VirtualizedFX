@@ -1,13 +1,13 @@
 plugins {
     id 'java-library'
-    id 'org.openjfx.javafxplugin' version '0.0.10'
-    id 'biz.aQute.bnd.builder' version '5.3.0'
-    id 'com.vanniktech.maven.publish' version '0.18.0'
+    id 'org.openjfx.javafxplugin' version '0.0.12'
+    id 'biz.aQute.bnd.builder' version '6.2.0'
+    id 'com.vanniktech.maven.publish' version '0.19.0'
     id 'org.javamodularity.moduleplugin' version '1.8.10'
 }
 
 group 'io.github.palexdev'
-version '11.2.4'
+version '11.2.5'
 
 repositories {
     mavenCentral()
@@ -21,22 +21,22 @@ sourceCompatibility = '11'
 targetCompatibility = '11'
 
 javafx {
-    version = '17'
+    version = '17.0.2'
     modules = ['javafx.controls', 'javafx.fxml', 'javafx.web']
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 
     testImplementation "org.testfx:testfx-core:4.0.16-alpha"
     testImplementation "org.testfx:testfx-junit5:4.0.16-alpha"
     testImplementation name: 'scenicview'
-    testImplementation 'io.github.palexdev:materialfx:11.12.0'
-    testImplementation 'org.fxmisc.flowless:flowless:0.6.6'
-    testImplementation 'org.kordamp.ikonli:ikonli-core:12.2.0'
-    testImplementation 'org.kordamp.ikonli:ikonli-javafx:12.2.0'
-    testImplementation 'org.kordamp.ikonli:ikonli-fontawesome5-pack:12.2.0'
+    testImplementation 'io.github.palexdev:materialfx:11.13.2'
+    testImplementation 'org.fxmisc.flowless:flowless:0.6.9'
+    testImplementation 'org.kordamp.ikonli:ikonli-core:12.3.0'
+    testImplementation 'org.kordamp.ikonli:ikonli-javafx:12.3.0'
+    testImplementation 'org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.0'
 }
 
 javadoc {

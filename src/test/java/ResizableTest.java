@@ -21,10 +21,10 @@ public class ResizableTest extends Application {
 
         ObservableList<String> strings = FXCollections.observableArrayList();
         IntStream.rangeClosed(0, 50).forEach(i -> strings.add("S" + i));
-        SimpleVirtualFlow<String, Cell<String>> virtualFlow = SimpleVirtualFlow.Builder.create(
-                strings,
-                SimpleCell::new,
-                Orientation.VERTICAL
+        SimpleVirtualFlow<String, Cell<String>> virtualFlow = new SimpleVirtualFlow<>(
+		        strings,
+		        SimpleCell::new,
+		        Orientation.VERTICAL
         );
 
         stackPane.getChildren().add(virtualFlow);

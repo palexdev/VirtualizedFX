@@ -64,7 +64,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.palexdev:virtualizedfx:11.2.4'
+  implementation 'io.github.palexdev:virtualizedfx:11.2.5'
 }
 ```
 
@@ -75,7 +75,7 @@ dependencies {
 <dependency>
     <groupId>io.github.palexdev</groupId>
     <artifactId>virtualizedfx</artifactId>
-    <version>11.2.4</version>
+    <version>11.2.5</version>
 </dependency>
 ```
 
