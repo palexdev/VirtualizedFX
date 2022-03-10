@@ -20,7 +20,6 @@ package controller;
 
 import io.github.palexdev.materialfx.controls.MFXCheckbox;
 import io.github.palexdev.materialfx.controls.MFXIconWrapper;
-import io.github.palexdev.materialfx.controls.MFXLabel;
 import io.github.palexdev.materialfx.font.MFXFontIcon;
 import io.github.palexdev.materialfx.utils.ColorUtils;
 import io.github.palexdev.virtualizedfx.cell.Cell;
@@ -39,6 +38,7 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
@@ -50,8 +50,8 @@ import java.util.ResourceBundle;
 import java.util.stream.IntStream;
 
 public class TestController implements Initializable {
-    private final ObservableList<MFXLabel> labels = FXCollections.observableArrayList();
-    private SimpleVirtualFlow<MFXLabel, Cell<MFXLabel>> virtualFlow;
+    private final ObservableList<Label> labels = FXCollections.observableArrayList();
+    private SimpleVirtualFlow<Label, Cell<Label>> virtualFlow;
 
     @FXML
     private Group group;
@@ -59,7 +59,7 @@ public class TestController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         IntStream.rangeClosed(0, 10_000).forEach(i -> labels.add(createLabel("Label " + i)));
-        virtualFlow = SimpleVirtualFlow.Builder.create(
+        virtualFlow = new SimpleVirtualFlow<>(
                 labels,
                 LabelCell::new,
                 Orientation.VERTICAL
@@ -74,16 +74,14 @@ public class TestController implements Initializable {
         group.getChildren().setAll(virtualFlow);
     }
 
-    private MFXLabel createLabel(String text) {
+    private Label createLabel(String text) {
         FontIcon icon = new FontIcon(getRandomIcon());
         icon.setIconColor(Color.PURPLE);
         icon.setIconSize(14);
 
-        MFXLabel label = new MFXLabel(text);
-        label.setLineColor(Color.TRANSPARENT);
-        label.setUnfocusedLineColor(Color.TRANSPARENT);
+        Label label = new Label(text);
         label.setStyle("-fx-background-color: transparent");
-        label.setLeadingIcon(icon);
+        label.setGraphic(icon);
         label.setGraphicTextGap(10);
         return label;
     }
@@ -154,7 +152,7 @@ public class TestController implements Initializable {
 
     @FXML
     void replace() {
-        ObservableList<MFXLabel> labels = FXCollections.observableArrayList();
+        ObservableList<Label> labels = FXCollections.observableArrayList();
         IntStream.rangeClosed(0, 100).forEach(i -> labels.add(createLabel("NewList " + i)));
         virtualFlow.setItems(labels);
     }
@@ -186,7 +184,7 @@ public class TestController implements Initializable {
 
     @FXML
     void setAll() {
-        ObservableList<MFXLabel> labels = FXCollections.observableArrayList();
+        ObservableList<Label> labels = FXCollections.observableArrayList();
         IntStream.rangeClosed(0, 100).forEach(i -> labels.add(createLabel("NewStrings " + i)));
         virtualFlow.getItems().setAll(labels);
     }
@@ -213,11 +211,11 @@ public class TestController implements Initializable {
         virtualFlow.getItems().set(80, createLabel("80 Changed"));
     }
 
-    private class LabelCell extends HBox implements Cell<MFXLabel> {
-        private MFXLabel data;
+    private class LabelCell extends HBox implements Cell<Label> {
+        private Label data;
         private int index;
 
-        public LabelCell(MFXLabel data) {
+        public LabelCell(Label data) {
             this.data = data;
             setPrefSize(200, 32);
             setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
@@ -225,7 +223,7 @@ public class TestController implements Initializable {
             render(data);
         }
 
-        private void render(MFXLabel data) {
+        private void render(Label data) {
             MFXIconWrapper randomIcon = new MFXIconWrapper(new MFXFontIcon("mfx-google", 12, ColorUtils.getRandomColor()), 24);
             Insets insets = virtualFlow.getOrientation() == Orientation.VERTICAL ?
                     new Insets(0, 12, 0, 100) :
@@ -240,7 +238,7 @@ public class TestController implements Initializable {
         }
 
         @Override
-        public void updateItem(MFXLabel item) {
+        public void updateItem(Label item) {
             this.data = item;
             render(data);
         }
@@ -251,12 +249,12 @@ public class TestController implements Initializable {
         }
     }
 
-    private static class LabelCell2 extends HBox implements Cell<MFXLabel> {
+    private static class LabelCell2 extends HBox implements Cell<Label> {
         private final MFXCheckbox checkbox = new MFXCheckbox("");
-        private MFXLabel data;
+        private Label data;
         private int index;
 
-        public LabelCell2(MFXLabel data) {
+        public LabelCell2(Label data) {
             this.data = data;
             setPrefSize(200, 32);
             setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
@@ -264,7 +262,7 @@ public class TestController implements Initializable {
             render(data);
         }
 
-        private void render(MFXLabel data) {
+        private void render(Label data) {
             getChildren().setAll(checkbox, data);
         }
 
@@ -274,7 +272,7 @@ public class TestController implements Initializable {
         }
 
         @Override
-        public void updateItem(MFXLabel item) {
+        public void updateItem(Label item) {
             this.data = item;
             render(data);
         }
@@ -287,13 +285,10 @@ public class TestController implements Initializable {
 
     private static class StringCell2 extends HBox implements Cell<String> {
         private final MFXCheckbox checkbox = new MFXCheckbox("");
-        private final MFXLabel label = new MFXLabel();
+        private final Label label = new Label();
         private int index;
 
         public StringCell2(String data) {
-            label.setUnfocusedLineColor(Color.TRANSPARENT);
-            label.setLineColor(Color.TRANSPARENT);
-            label.setLabelAlignment(Pos.CENTER_LEFT);
             label.setAlignment(Pos.CENTER_LEFT);
             label.setText(data);
 
@@ -329,10 +324,7 @@ public class TestController implements Initializable {
         private final IntegerProperty index = new SimpleIntegerProperty();
 
         public DebugCell(String text) {
-            MFXLabel label = new MFXLabel();
-            label.setUnfocusedLineColor(Color.TRANSPARENT);
-            label.setLineColor(Color.TRANSPARENT);
-            label.setLabelAlignment(Pos.CENTER_LEFT);
+            Label label = new Label();
             label.setAlignment(Pos.CENTER_LEFT);
 
             setPrefSize(200, 32);

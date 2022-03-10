@@ -40,7 +40,7 @@ public class SimpleVirtualFlowTest extends Application {
 
         ObservableList<String> strings = FXCollections.observableArrayList();
         IntStream.range(0, 1000).forEach(value -> strings.add(String.valueOf(value)));
-        SimpleVirtualFlow<String, SimpleCell<String>> virtualFlow = SimpleVirtualFlow.Builder.create(
+        SimpleVirtualFlow<String, SimpleCell<String>> virtualFlow = new SimpleVirtualFlow<>(
                 strings,
                 SimpleCell::new,
                 Orientation.HORIZONTAL
