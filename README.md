@@ -1,5 +1,6 @@
 [![HitCount](http://hits.dwyl.com/PAlex404/VirtualizedFX.svg)](http://hits.dwyl.com/PAlex404/VirtualizedFX)
 [![GitHub Workflow Status](https://github.com/palexdev/VirtualizedFX/actions/workflows/gradle.yml/badge.svg)](https://github.com/palexdev/VirtualizedFX/actions/workflows/gradle.yml)
+![Sonatype Nexus (Releases)](https://img.shields.io/nexus/r/io.github.palexdev/virtualizedfx?server=https%3A%2F%2Fs01.oss.sonatype.org&style=flat-square)
 ![GitHub issues](https://img.shields.io/github/issues-raw/palexdev/virtualizedfx?style=flat-square)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/palexdev/virtualizedfx?style=flat-square)
 ![GitHub](https://img.shields.io/github/license/palexdev/virtualizedfx?style=flat-square)
