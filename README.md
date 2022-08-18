@@ -17,24 +17,36 @@ VirtualizedFX:
 <p></p>
 
 Unlike other VirtualFlows, VirtualizedFX's code is well documented, well organized and fairly simple which not only
-makes the project easier to maintain but also easier to understand, also it <b>doesn't</b> depend on any third party
-library/software.
+makes the project easier to maintain but also easier to understand. As of version 11.5.0, it has two dependencies which
+are
+[MFXCore](https://github.com/palexdev/MFXCore) and [MFXResources](https://github.com/palexdev/MFXResources). They bring
+a bunch of utilities, beans and icons for the needed controls and to make development easier.
 
 As of now VirtualizedFX offers only a basic Virtual Flow to implement ListViews, TableViews and maybe also TreeViews.
-The cells must have fixes sizes depending on the orientation (fixed width for horizontal flows, and fixed height for
+The cells must have fixed sizes depending on the orientation (fixed width for horizontal flows, and fixed height for
 vertical flows) and this is the most efficient form of Virtual Flow. In the future I would also like to implement more
 complex Virtual Flows, one that doesn't care about cells sizes, one specifically for TreeViews and who knows what else.
 <p></p>
+As of version 11.5.0 the fixed cell size is managed directly by the virtual flow making it possible to change the cells'
+size at anytime, even at runtime.
+<p></p>
 
-<h3 align="center">SimpleVirtualFlow</h3>
-SimpleVirtualFlow is the basic implementation of a Virtual Flow offered by VirtualizedFX. Without talking about that
+<h3 align="center">VirtualFlow</h3>
+VirtualFlow is the basic implementation of a Virtual Flow offered by VirtualizedFX. Without talking about that
 blob/spaghetti coding that is the JavaFX VirtualFlow, let's compare it to Flowless.
 
 - The base idea of cells is the same. For VirtualizedFX Cells are just dumb controls they do not have any logic and they
-  aren't even nodes. This makes the Virtual Flow extremely flexible and efficient.
+  aren't even nodes. This makes the Virtual Flow extremely flexible and efficient. However, note that, in most occasions
+  if
+  not always you will end up using a JavaFX's Pane and implement the Cell interface.
 - Cells are always reused, this makes the code easier, and the Virtual Flow more efficient as creating new Nodes is way
   more heavy on performance rather than updating them, consider that the user can scroll at very fast speeds, and
   creating new cells at those speeds is a no go for a component that has efficiency as a top priority.
+  Storing them in memory is also a no go, you always have to consider edge cases, in which for example you could have
+  thousands
+  or millions of items, this will likely lead to an OutOfMemoryException
+
+  // TODO here
 - There are empty cells, or to be more precise, they are hidden if they are not needed. This allows to do some cool
   tricks with the Virtual Flow, for example you could create paginated lists or tables. In such cases for example the
   last page may not have enough items to fill the viewport so the unneeded cells are hidden.

@@ -22,8 +22,6 @@ import javafx.scene.Node;
 
 /**
  * Base API for all cells.
- * <p>
- * Also offers a static method to quickly wrap a node into a cell.
  */
 public interface Cell<T> {
 

@@ -1,0 +1,84 @@
+/*
+ * Copyright (C) 2022 Parisi Alessandro
+ * This file is part of MaterialFX (https://github.com/palexdev/MaterialFX).
+ *
+ * MaterialFX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * MaterialFX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with MaterialFX.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.mfx-scroll-bar {
+	-background: rgba(230, 230, 230, 1.0);
+	-border: rgba(223, 223, 223, 1.0);
+	-thumb: rgba(115, 115, 115, 1.0);
+	-thumb-hop: rgba(99, 99, 99, 1.0);
+
+	-fx-background-color: -background;
+	-fx-background-radius: 7;
+	-fx-border-color: -border;
+	-fx-border-radius: 7;
+	-fx-padding: 1;
+}
+
+.mfx-scroll-bar .thumb {
+	-fx-background-color: -thumb;
+	-fx-background-radius: 7;
+	-fx-pref-width: 7;
+	-fx-pref-height: 7;
+}
+
+.mfx-scroll-bar .thumb:hover,
+.mfx-scroll-bar .thumb:pressed {
+	-fx-background-color: -thumb-hop;
+}
+
+.mfx-scroll-bar .mfx-icon-wrapper {
+	-fx-background-color: transparent;
+	-fx-background-radius: 30;
+	-mfx-size: 14;
+}
+
+.mfx-scroll-bar .mfx-icon-wrapper .mfx-ripple-generator {
+	-mfx-auto-clip: true;
+}
+
+.mfx-scroll-bar .mfx-icon-wrapper .mfx-font-icon {
+	-mfx-size: 12;
+}
+
+.mfx-scroll-bar .mfx-icon-wrapper:hover {
+	-fx-background-color: #d3d3d3;
+}
+
+.mfx-scroll-bar .mfx-icon-wrapper:focused {
+	-fx-background-color: #737373;
+}
+
+.mfx-scroll-bar .mfx-icon-wrapper:focused .mfx-font-icon {
+	-mfx-color: white;
+}
+
+.mfx-scroll-bar:vertical .decrement-icon .mfx-font-icon {
+	-mfx-description: "mfx-angle-up";
+}
+
+.mfx-scroll-bar:vertical .increment-icon .mfx-font-icon {
+	-mfx-description: "mfx-angle-down";
+}
+
+.mfx-scroll-bar:horizontal .decrement-icon .mfx-font-icon {
+	-mfx-description: "mfx-angle-left";
+}
+
+.mfx-scroll-bar:horizontal .increment-icon .mfx-font-icon {
+	-mfx-description: "mfx-angle-right";
+}
