@@ -24,6 +24,7 @@ import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper.Change;
 import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper.ChangeType;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.enums.UpdateType;
+import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
 
 import java.util.*;
 
@@ -432,6 +433,11 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * This is responsible for computing the layout map which will be used by the {@link OrientationHelper}
 	 * to correctly position the cells in the viewport.
 	 * <p></p>
+	 * There are two cases in which the method won't execute:
+	 * <p> 1) This is empty
+	 * <p> 2) The virtual flow using this state is instance of {@link PaginatedVirtualFlow}, in this case
+	 * {@link #computePaginatedPositions()} is used instead.
+	 * <p></p>
 	 * This is rather complex as this also takes into account some exceptional cases which otherwise would lead
 	 * to cells being positioned outside the viewport.
 	 * <p>
@@ -468,6 +474,10 @@ public class ViewportState<T, C extends Cell<T>> {
 	 */
 	public void computePositions() {
 		if (isEmpty()) return;
+		if (virtualFlow instanceof PaginatedVirtualFlow) {
+			computePaginatedPositions();
+			return;
+		}
 
 		OrientationHelper helper = virtualFlow.getOrientationHelper();
 		double cellSize = virtualFlow.getCellSize();
@@ -496,6 +506,49 @@ public class ViewportState<T, C extends Cell<T>> {
 			layoutMap.put(cell, bottom);
 			bottom -= cellSize;
 		}
+	}
+
+	/**
+	 * This is the implementation of {@link #computePositions()} exclusively for {@link PaginatedVirtualFlow}s.
+	 * <p>
+	 * This is much simpler as there is no free scrolling, all cells will have a precise position at any time in the
+	 * page.
+	 * <p></p>
+	 * First we clear the layout map to ensure there's no garbage in it.
+	 * <p>
+	 * Then we get a series of important parameters, such as:
+	 * <p> - The cells' size
+	 * <p> - The first and last visible cells
+	 * <p>
+	 * At this point the computation can begin. This method differs in this from {@link #computePositions()} because
+	 * it positions cells from top to bottom.
+	 * <p>
+	 * Another crucial difference is that we must ensure that only the needed cells will be visible. Let's suppose we
+	 * want to show 5 cells per page but because of the number of items, the last page can show only 2 items. The other 3
+	 * cells are not removed from the viewport, but they are hidden and not laid out.
+	 */
+	public void computePaginatedPositions() {
+		layoutMap.clear();
+
+		PaginatedVirtualFlow pFlow = (PaginatedVirtualFlow) virtualFlow;
+		OrientationHelper helper = pFlow.getOrientationHelper();
+		double cellSize = virtualFlow.getCellSize();
+		int first = helper.firstVisible();
+		int last = Math.min(first + helper.maxCells() - 1, pFlow.getItems().size() - 1);
+		IntegerRange range = new IntegerRange(first, last);
+
+		double pos;
+		for (int i = first; i <= last; i++) {
+			C cell = cells.get(i);
+			pos = layoutMap.size() * cellSize;
+			layoutMap.put(cell, pos);
+			cell.getNode().setVisible(true);
+		}
+
+		cells.keySet().stream()
+				.filter(i -> !IntegerRange.inRangeOf(i, range))
+				.map(i -> cells.get(i).getNode())
+				.forEach(n -> n.setVisible(false));
 	}
 
 	/**

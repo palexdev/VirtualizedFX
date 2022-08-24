@@ -200,7 +200,7 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 
 		// HBar
 		hBarVisibleAmountProperty().bind(DoubleBindingBuilder.build()
-				.setMapper(() -> sp.getWidth() / sp.getContentBounds().getWidth())
+				.setMapper(() -> sp.getWidth() / sp.getContentBounds().getVirtualWidth())
 				.addSources(sp.widthProperty(), sp.contentBoundsProperty())
 				.get()
 		);
@@ -214,14 +214,14 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 		sp.hValProperty().bindBidirectional(hBar.valueProperty());
 		sp.hMaxProperty().bindBidirectional(hBar.maxProperty());
 		hBar.buttonsGapProperty().bind(sp.buttonsGapProperty());
-		hBar.trackIncrementProperty().bind(sp.trackIncrementProperty());
-		hBar.unitIncrementProperty().bind(sp.unitIncrementProperty());
+		hBar.trackIncrementProperty().bind(sp.hTrackIncrementProperty());
+		hBar.unitIncrementProperty().bind(sp.hUnitIncrementProperty());
 		hBar.smoothScrollProperty().bind(sp.smoothScrollProperty());
 		hBar.trackSmoothScrollProperty().bind(sp.trackSmoothScrollProperty());
 
 		// VBar
 		vBarVisibleAmountProperty().bind(DoubleBindingBuilder.build()
-				.setMapper(() -> sp.getHeight() / sp.getContentBounds().getHeight())
+				.setMapper(() -> sp.getHeight() / sp.getContentBounds().getVirtualHeight())
 				.addSources(sp.heightProperty(), sp.contentBoundsProperty())
 				.get()
 		);
@@ -236,8 +236,8 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 		sp.vMaxProperty().bindBidirectional(vBar.maxProperty());
 		vBar.buttonsVisibleProperty().bind(sp.buttonsVisibleProperty());
 		vBar.buttonsGapProperty().bind(sp.buttonsGapProperty());
-		vBar.trackIncrementProperty().bind(sp.trackIncrementProperty());
-		vBar.unitIncrementProperty().bind(sp.unitIncrementProperty());
+		vBar.trackIncrementProperty().bind(sp.vTrackIncrementProperty());
+		vBar.unitIncrementProperty().bind(sp.vUnitIncrementProperty());
 		vBar.smoothScrollProperty().bind(sp.smoothScrollProperty());
 		vBar.trackSmoothScrollProperty().bind(sp.trackSmoothScrollProperty());
 	}

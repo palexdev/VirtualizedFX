@@ -93,7 +93,8 @@ public class NewImpTest extends Application {
 		vsp.setSmoothScroll(true);
 		vsp.setTrackSmoothScroll(true);
 		vsp.setButtonsVisible(true);
-		vsp.setUnitIncrement(0.02);
+		vsp.setHUnitIncrement(0.02);
+		vsp.setVUnitIncrement(0.02);
 
 		FlowPane fp = buildButtonsPane(bp, primaryStage);
 		bp.setTop(fp);

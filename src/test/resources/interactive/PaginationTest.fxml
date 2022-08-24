@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (C) 2022 Parisi Alessandro
+  ~ This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX).
+  ~
+  ~ VirtualizedFX is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ VirtualizedFX is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<?import io.github.palexdev.materialfx.controls.MFXFilterComboBox?>
+<?import io.github.palexdev.materialfx.controls.MFXSpinner?>
+<?import io.github.palexdev.mfxcore.controls.MFXIconWrapper?>
+<?import io.github.palexdev.mfxresources.font.MFXFontIcon?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+<StackPane id="rootPane" fx:id="rootPane" stylesheets="@PaginationTest.css" xmlns="http://javafx.com/javafx/18"
+           xmlns:fx="http://javafx.com/fxml/1" fx:controller="interactive.controller.PaginationTestController">
+   <children>
+      <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0"
+            prefWidth="1440.0">
+         <children>
+            <HBox fx:id="windowHeader" alignment="CENTER_RIGHT" spacing="10.0" styleClass="header">
+               <padding>
+                  <Insets bottom="17.0" left="10.0" right="10.0" top="10.0"/>
+               </padding>
+               <children>
+                  <Label fx:id="headerLabel" maxWidth="1.7976931348623157E308" text="Label" HBox.hgrow="ALWAYS"/>
+                  <MFXFontIcon id="minimizeIcon" onMouseClicked="#minimize" styleClass="headerIcon"/>
+                  <MFXFontIcon id="maximizeIcon" onMouseClicked="#maximize" styleClass="headerIcon"/>
+                  <MFXFontIcon id="closeIcon" description="" onMouseClicked="#close" styleClass="headerIcon"/>
+               </children>
+            </HBox>
+            <HBox id="actionsPane" alignment="CENTER" minHeight="60.0" spacing="15.0">
+               <padding>
+                  <Insets bottom="10.0" top="10.0"/>
+               </padding>
+               <children>
+                  <Label text="Actions"/>
+                  <MFXFilterComboBox id="actionsBox" fx:id="actionsBox" floatMode="DISABLED" scrollOnOpen="true"/>
+                  <MFXIconWrapper id="runIcon" fx:id="runIcon" onMouseClicked="#runAction" size="27.0">
+                     <icon>
+                        <MFXFontIcon description="mfx-caret-right" size="24.0"/>
+                     </icon>
+                     <HBox.margin>
+                        <Insets left="5.0"/>
+                     </HBox.margin>
+                  </MFXIconWrapper>
+               </children>
+            </HBox>
+            <BorderPane fx:id="contentPane" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+               <padding>
+                  <Insets bottom="10.0" left="50.0" right="50.0" top="10.0"/>
+               </padding>
+            </BorderPane>
+            <HBox alignment="CENTER">
+               <VBox.margin>
+                  <Insets/>
+               </VBox.margin>
+               <padding>
+                  <Insets bottom="10.0" top="10.0"/>
+               </padding>
+               <children>
+                  <MFXSpinner fx:id="spinner"/>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
+</StackPane>

@@ -27,6 +27,7 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectPrope
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper.VerticalHelper;
 import javafx.beans.property.*;
@@ -38,6 +39,7 @@ import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
+import javafx.scene.shape.Rectangle;
 
 import java.util.List;
 import java.util.Map;
@@ -330,6 +332,13 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 		}
 	};
 
+	private final StyleableDoubleProperty clipBorderRadius = new StyleableDoubleProperty(
+			StyleableProperties.CLIP_BORDER_RADIUS,
+			this,
+			"clipBorderRadius",
+			0.0
+	);
+
 	public boolean isFitToBreadth() {
 		return fitToBreadth.get();
 	}
@@ -378,6 +387,32 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 		this.orientation.set(orientation);
 	}
 
+	public double getClipBorderRadius() {
+		return clipBorderRadius.get();
+	}
+
+	/**
+	 * Used by the viewport's clip to set its border radius.
+	 * This is useful when you want to make a rounded virtual flow, this
+	 * prevents the content from going outside the view.
+	 * <p></p>
+	 * This is mostly useful if not using the flow with {@link VirtualScrollPane}, this is the same as
+	 * {@link VirtualScrollPane#clipBorderRadiusProperty()}.
+	 * <p></p>
+	 * <b>Side note:</b> the clip is a {@link Rectangle}, now for some
+	 * fucking reason the rectangle's arcWidth and arcHeight values used to make
+	 * it round do not act like the border-radius or background-radius properties,
+	 * instead their value is usually 2 / 2.5 times the latter.
+	 * So for a border radius of 5 you want this value to be at least 10/13.
+	 */
+	public StyleableDoubleProperty clipBorderRadiusProperty() {
+		return clipBorderRadius;
+	}
+
+	public void setClipBorderRadius(double clipBorderRadius) {
+		this.clipBorderRadius.set(clipBorderRadius);
+	}
+
 	//================================================================================
 	// CssMetaData
 	//================================================================================
@@ -407,10 +442,17 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 						Orientation.VERTICAL
 				);
 
+		private static final CssMetaData<VirtualFlow<?, ?>, Number> CLIP_BORDER_RADIUS =
+				FACTORY.createSizeCssMetaData(
+						"-fx-clip-border-radius",
+						VirtualFlow::clipBorderRadiusProperty,
+						0.0
+				);
+
 		static {
 			cssMetaDataList = StyleUtils.cssMetaDataList(
 					Control.getClassCssMetaData(),
-					FIT_TO_BREADTH, CELL_SIZE, ORIENTATION
+					FIT_TO_BREADTH, CELL_SIZE, ORIENTATION, CLIP_BORDER_RADIUS
 			);
 		}
 	}

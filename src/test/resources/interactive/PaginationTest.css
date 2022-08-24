@@ -18,7 +18,6 @@
 
 @import "MFXColors.css";
 
-/* Root and Header */
 #rootPane {
 	-fx-background-color: white;
 	-fx-background-radius: 5;
@@ -65,7 +64,6 @@
 	-fx-opacity: 1.0;
 }
 
-/* Actions Pane */
 #actionsPane {
 	-fx-border-color: transparent transparent lightgray transparent;
 }
@@ -85,20 +83,6 @@
 
 #runIcon .mfx-ripple-generator {
 	-mfx-ripple-color: rgba(49, 208, 76, 0.3);
-	-mfx-ripple-radius: 24;
-}
-
-#switchIcon .mfx-font-icon {
-	-mfx-color: #f23b59;
-	-fx-opacity: 0.7;
-}
-
-#switchIcon:hover .mfx-font-icon {
-	-fx-opacity: 1.0;
-}
-
-#switchIcon .mfx-ripple-generator {
-	-mfx-ripple-color: rgba(242, 59, 89, 0.3);
 	-mfx-ripple-radius: 24;
 }
 
@@ -126,9 +110,8 @@
 	-mfx-selected: #c4d0ff;
 }
 
-/* VirtualFlow */
 .virtual-scroll-pane {
-	-fx-clip-border-radius: 13;
+	-fx-clip-border-radius: 10;
 }
 
 .virtual-flow {
@@ -146,43 +129,4 @@
 
 .virtual-flow .cell .label .text {
 	-fx-font-smoothing-type: gray;
-}
-
-/* Footer */
-.mfx-checkbox {
-	-mfx-main: #1b96ed;
-}
-
-.mfx-checkbox .ripple-container .mfx-ripple-generator {
-	-mfx-animation-speed: 1.5;
-	-mfx-ripple-color: rgba(27, 150, 237, 0.3);
-	-mfx-ripple-radius: 16;
-}
-
-#footer:focused {
-	-fx-border-color: #1b96ed;
-}
-
-#footer:focused .header-pane .mfx-icon-wrapper .mfx-font-icon {
-	-mfx-color: #1b96ed;
-}
-
-#footer .header-pane .mfx-icon-wrapper .mfx-ripple-generator {
-	-mfx-ripple-color: rgba(27, 150, 237, 0.3);;
-}
-
-#footer:focused .content-pane {
-	-fx-border-color: #1b96ed transparent transparent transparent;
-}
-
-#footer .mfx-text-field {
-	-fx-border-color: #1b96ed;
-}
-
-#footer .mfx-text-field:focus-within .floating-text {
-	-fx-text-fill: #1b96ed;
-}
-
-#footer .mfx-text-field .text-field {
-	-fx-highlight-fill: #c4d0ff; /* Selected text highlight */
 }

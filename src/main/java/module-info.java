@@ -29,5 +29,6 @@ module VirtualizedFX {
 	// Deprecated Flow Package
 	exports io.github.palexdev.virtualizedfx.unused.base;
 	exports io.github.palexdev.virtualizedfx.unused.simple;
+	exports io.github.palexdev.virtualizedfx.flow.paginated;
 
 }

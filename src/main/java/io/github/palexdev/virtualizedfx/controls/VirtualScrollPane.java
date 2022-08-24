@@ -23,10 +23,14 @@ import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
+import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
+import io.github.palexdev.mfxcore.observables.When;
+import io.github.palexdev.mfxcore.utils.EnumUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.ResourceManager;
+import io.github.palexdev.virtualizedfx.beans.VirtualBounds;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.controls.behavior.MFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VirtualScrollPaneSkin;
@@ -36,13 +40,13 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlow;
+import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
-import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -98,7 +102,7 @@ public class VirtualScrollPane extends Control {
 	private final String STYLESHEET = ResourceManager.loadResource("VirtualScrollPane.css");
 
 	private final ObjectProperty<Node> content = new SimpleObjectProperty<>();
-	private final ObjectProperty<Bounds> contentBounds = new SimpleObjectProperty<>();
+	private final ObjectProperty<VirtualBounds> contentBounds = new SimpleObjectProperty<>(VirtualBounds.EMPTY);
 
 	//================================================================================
 	// ScrollBars Properties & Config
@@ -140,33 +144,33 @@ public class VirtualScrollPane extends Control {
 	 * <b>NOTE:</b> once this is not needed anymore you should call {@link #disposeFor(VirtualScrollPane)}
 	 * to avoid memory leaks which may occur because of {@link BiBindingManager}
 	 */
-	public static <T, C extends Cell<T>> VirtualScrollPane wrap(VirtualFlow<T, C> virtualFlow) {
-		VirtualScrollPane vsp = new VirtualScrollPane(virtualFlow);
+	public static <T, C extends Cell<T>> VirtualScrollPane wrap(VirtualFlow<T, C> flow) {
+		VirtualScrollPane vsp = new VirtualScrollPane(flow);
 		BiBindingManager bindingManager = BiBindingManager.instance();
 
-		vsp.orientationProperty().bind(virtualFlow.orientationProperty());
-		vsp.contentBoundsProperty().bind(ObjectBindingBuilder.<Bounds>build()
+		vsp.orientationProperty().bind(flow.orientationProperty());
+		vsp.contentBoundsProperty().bind(ObjectBindingBuilder.<VirtualBounds>build()
 				.setMapper(() -> {
-					Orientation o = virtualFlow.getOrientation();
-					double breadth = virtualFlow.getMaxBreadth();
-					double length = virtualFlow.getEstimatedLength();
+					Orientation o = flow.getOrientation();
+					double breadth = flow.getMaxBreadth();
+					double length = flow.getEstimatedLength();
 					return (o == Orientation.VERTICAL) ?
-							new BoundingBox(0, 0, breadth, length) :
-							new BoundingBox(0, 0, length, breadth);
+							VirtualBounds.of(flow.getWidth(), flow.getHeight(), breadth, length) :
+							VirtualBounds.of(flow.getWidth(), flow.getHeight(), length, breadth);
 				})
-				.addSources(virtualFlow.orientationProperty())
-				.addSources(virtualFlow.maxBreadthProperty())
-				.addSources(virtualFlow.estimatedLengthProperty())
+				.addSources(flow.orientationProperty())
+				.addSources(flow.maxBreadthProperty())
+				.addSources(flow.estimatedLengthProperty())
 				.get()
 		);
 
 		bindingManager.bindBidirectional(vsp.vValProperty())
-				.to(virtualFlow.vPosProperty(), (oldValue, newValue) -> {
-					OrientationHelper helper = virtualFlow.getOrientationHelper();
-					virtualFlow.setVPos(newValue.doubleValue() * helper.maxVScroll());
+				.to(flow.vPosProperty(), (oldValue, newValue) -> {
+					OrientationHelper helper = flow.getOrientationHelper();
+					flow.setVPos(newValue.doubleValue() * helper.maxVScroll());
 				})
 				.with((oldValue, newValue) -> {
-					OrientationHelper helper = virtualFlow.getOrientationHelper();
+					OrientationHelper helper = flow.getOrientationHelper();
 					double max = helper.maxVScroll();
 					double val = (max != 0) ? newValue.doubleValue() / max : 0;
 					vsp.setVVal(val);
@@ -175,12 +179,12 @@ public class VirtualScrollPane extends Control {
 				.create();
 
 		bindingManager.bindBidirectional(vsp.hValProperty())
-				.to(virtualFlow.hPosProperty(), (oldValue, newValue) -> {
-					OrientationHelper helper = virtualFlow.getOrientationHelper();
-					virtualFlow.setHPos(newValue.doubleValue() * helper.maxHScroll());
+				.to(flow.hPosProperty(), (oldValue, newValue) -> {
+					OrientationHelper helper = flow.getOrientationHelper();
+					flow.setHPos(newValue.doubleValue() * helper.maxHScroll());
 				})
 				.with((oldValue, newValue) -> {
-					OrientationHelper helper = virtualFlow.getOrientationHelper();
+					OrientationHelper helper = flow.getOrientationHelper();
 					double max = helper.maxHScroll();
 					double val = (max != 0) ? newValue.doubleValue() / max : 0;
 					vsp.setHVal(val);
@@ -192,12 +196,210 @@ public class VirtualScrollPane extends Control {
 	}
 
 	/**
-	 * Disposes the bindings created by {@link #wrap(VirtualFlow)}.
+	 * Does the hard job for you by creating a new {@code VirtualScrollPane} wrapping the
+	 * given {@link PaginatedVirtualFlow}, initializing the needed bindings for the content bounds, the scrolling and the
+	 * orientation.
+	 * <p></p>
+	 * <b>NOTE:</b> once this is not needed anymore you should call {@link #disposeFor(VirtualScrollPane)}
+	 * to avoid memory leaks which may occur because of {@link BiBindingManager} and {@link When}.
+	 */
+	public static <T, C extends Cell<T>> VirtualScrollPane wrap(PaginatedVirtualFlow<T, C> flow) {
+		VirtualScrollPane vsp = new VirtualScrollPane(flow) {
+			@Override
+			protected double computeMinHeight(double width) {
+				Orientation o = flow.getOrientation();
+				if (o == Orientation.VERTICAL) return computePrefHeight(width);
+				return super.computeMinHeight(width);
+			}
+
+			@Override
+			protected double computeMaxHeight(double width) {
+				Orientation o = flow.getOrientation();
+				if (o == Orientation.VERTICAL) return computePrefHeight(width);
+				return super.computeMaxHeight(width);
+			}
+
+			@Override
+			protected double computeMinWidth(double height) {
+				Orientation o = flow.getOrientation();
+				if (o == Orientation.HORIZONTAL) return computePrefWidth(height);
+				return super.computeMinWidth(height);
+			}
+
+			@Override
+			protected double computeMaxWidth(double height) {
+				Orientation o = flow.getOrientation();
+				if (o == Orientation.HORIZONTAL) return computePrefWidth(height);
+				return super.computeMaxWidth(height);
+			}
+		};
+
+		When.onInvalidated(flow.orientationProperty())
+				.then(invalidated -> createBindingsFor(vsp, flow))
+				.executeNow()
+				.listen();
+
+		vsp.orientationProperty().bind(ObjectBindingBuilder.<Orientation>build()
+				.setMapper(() -> EnumUtils.next(Orientation.class, flow.getOrientation()))
+				.addSources(flow.orientationProperty())
+				.get()
+		);
+		vsp.contentBoundsProperty().bind(ObjectBindingBuilder.<VirtualBounds>build()
+				.setMapper(() -> {
+					Orientation o = flow.getOrientation();
+					double breadth = flow.getMaxBreadth();
+					double length = flow.getEstimatedLength();
+					return (o == Orientation.VERTICAL) ?
+							VirtualBounds.of(flow.getWidth(), flow.getHeight(), breadth, 0) :
+							VirtualBounds.of(flow.getWidth(), flow.getHeight(), 0, breadth);
+				})
+				.addSources(flow.orientationProperty())
+				.addSources(flow.maxBreadthProperty())
+				.addSources(flow.estimatedLengthProperty())
+				.get()
+		);
+		return vsp;
+	}
+
+	/**
+	 * Sets the horizontal scroll speed for the given {@link VirtualScrollPane}.
+	 *
+	 * @param unitIncrement  the amount of pixels to scroll when using buttons or mouse scroll
+	 * @param smoothUnit     the amount of pixels to scroll when smooth scrolling with the mouse
+	 * @param trackIncrement the amount of pixels to scroll when using the track
+	 */
+	public static void setHSpeed(VirtualScrollPane vsp, double unitIncrement, double smoothUnit, double trackIncrement) {
+		vsp.hUnitIncrementProperty().bind(DoubleBindingBuilder.build()
+				.setMapper(() -> {
+					Orientation o = vsp.getOrientation();
+					VirtualBounds cBounds = vsp.getContentBounds();
+					double viewL = cBounds.getWidth();
+					double contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
+					double pixels = vsp.isSmoothScroll() ? smoothUnit : unitIncrement;
+					return Math.max(0, pixels / (contentL - viewL));
+				})
+				.addSources(vsp.orientationProperty(), vsp.heightProperty(), vsp.widthProperty())
+				.addSources(vsp.contentBoundsProperty(), vsp.smoothScrollProperty())
+				.get()
+		);
+		vsp.hTrackIncrementProperty().bind(DoubleBindingBuilder.build()
+				.setMapper(() -> {
+					Orientation o = vsp.getOrientation();
+					VirtualBounds cBounds = vsp.getContentBounds();
+					double viewL = cBounds.getWidth();
+					double contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
+					return Math.max(0, trackIncrement / (contentL - viewL));
+				})
+				.addSources(vsp.orientationProperty(), vsp.heightProperty(), vsp.widthProperty(), vsp.contentBoundsProperty())
+				.get()
+		);
+	}
+
+	/**
+	 * Sets the vertical scroll speed for the given {@link VirtualScrollPane}.
+	 *
+	 * @param unitIncrement  the amount of pixels to scroll when using buttons or mouse scroll
+	 * @param smoothUnit     the amount of pixels to scroll when smooth scrolling with the mouse
+	 * @param trackIncrement the amount of pixels to scroll when using the track
+	 */
+	public static void setVSpeed(VirtualScrollPane vsp, double unitIncrement, double smoothUnit, double trackIncrement) {
+		vsp.vUnitIncrementProperty().bind(DoubleBindingBuilder.build()
+				.setMapper(() -> {
+					Orientation o = vsp.getOrientation();
+					VirtualBounds cBounds = vsp.getContentBounds();
+					double viewL = cBounds.getHeight();
+					double contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
+					double pixels = vsp.isSmoothScroll() ? smoothUnit : unitIncrement;
+					return Math.max(0, pixels / (contentL - viewL));
+				})
+				.addSources(vsp.orientationProperty(), vsp.heightProperty(), vsp.widthProperty())
+				.addSources(vsp.contentBoundsProperty(), vsp.smoothScrollProperty())
+				.get()
+		);
+		vsp.vTrackIncrementProperty().bind(DoubleBindingBuilder.build()
+				.setMapper(() -> {
+					Orientation o = vsp.getOrientation();
+					VirtualBounds cBounds = vsp.getContentBounds();
+					double viewL = cBounds.getHeight();
+					double contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
+					return Math.max(0, trackIncrement / (contentL - viewL));
+				})
+				.addSources(vsp.orientationProperty(), vsp.heightProperty(), vsp.widthProperty(), vsp.contentBoundsProperty())
+				.get()
+		);
+	}
+
+	/**
+	 * Disposes the bindings created by {@link #wrap(VirtualFlow)} and {@link #wrap(PaginatedVirtualFlow)}.
 	 */
 	public static void disposeFor(VirtualScrollPane vsp) {
 		BiBindingManager bindingManager = BiBindingManager.instance();
 		bindingManager.disposeFor(vsp.vValProperty());
 		bindingManager.disposeFor(vsp.hValProperty());
+
+		if (vsp.getContent() != null && vsp.getContent() instanceof PaginatedVirtualFlow) {
+			disposeFor((PaginatedVirtualFlow<?, ?>) vsp.getContent());
+		}
+	}
+
+	/**
+	 * When using {@link #wrap(PaginatedVirtualFlow)} a special listener is added using the {@link When} utility
+	 * class. This method is responsible for disposing that listener. The preferred way though would be just using
+	 * {@link #disposeFor(VirtualScrollPane)} which will call this method is the scroll pane's content is not null
+	 * and instance of {@link PaginatedVirtualFlow}.
+	 */
+	public static void disposeFor(PaginatedVirtualFlow<?, ?> flow) {
+		When.disposeFor(flow.orientationProperty());
+	}
+
+	/**
+	 * This is automatically called by a listener added in {@link #wrap(PaginatedVirtualFlow)} when the flow's orientation
+	 * changes. This type of flow is special because we want to scroll only in the opposite direction of the orientation
+	 * and of course only if there are cells that are larger than the viewport. When the flow's orientation changes,
+	 * the bindings for the {@code VirtualScrollPane} must be re-built taking into consideration the new orientation.
+	 * <p>
+	 * When the orientation is HORIZONTAL a binding for the vertical position/scroll is built, otherwise when the
+	 * orientation is VERTICAL a binding for the horizontal position/scroll is built.
+	 * <p>
+	 * Exactly as for {@link #wrap(VirtualFlow)}, bindings are bidirectional and constructed by the {@link BiBindingManager}
+	 * utility, since these bindings need some extra processing/mapping before setting the values. Which means that
+	 * for disposal you need to use {@link BiBindingManager} methods or the ones provided here by the scroll pane.
+	 */
+	private static <T, C extends Cell<T>> void createBindingsFor(VirtualScrollPane vsp, PaginatedVirtualFlow<T, C> flow) {
+		BiBindingManager bindingManager = BiBindingManager.instance();
+		bindingManager.disposeFor(vsp.vValProperty());
+		bindingManager.disposeFor(vsp.hValProperty());
+
+		Orientation o = flow.getOrientation();
+		if (o == Orientation.HORIZONTAL) {
+			bindingManager.bindBidirectional(vsp.vValProperty())
+					.to(flow.vPosProperty(), (oldValue, newValue) -> {
+						OrientationHelper helper = flow.getOrientationHelper();
+						flow.setVPos(newValue.doubleValue() * helper.maxVScroll());
+					})
+					.with((oldValue, newValue) -> {
+						OrientationHelper helper = flow.getOrientationHelper();
+						double max = helper.maxVScroll();
+						double val = (max != 0) ? newValue.doubleValue() / max : 0;
+						vsp.setVVal(val);
+					})
+					.override(true)
+					.create();
+		} else {
+			bindingManager.bindBidirectional(vsp.hValProperty())
+					.to(flow.hPosProperty(), (oldValue, newValue) -> {
+						OrientationHelper helper = flow.getOrientationHelper();
+						flow.setHPos(newValue.doubleValue() * helper.maxHScroll());
+					})
+					.with((oldValue, newValue) -> {
+						OrientationHelper helper = flow.getOrientationHelper();
+						double max = helper.maxHScroll();
+						double val = (max != 0) ? newValue.doubleValue() / max : 0;
+						vsp.setHVal(val);
+					})
+					.override(true)
+					.create();
+		}
 	}
 
 	//================================================================================
@@ -305,17 +507,31 @@ public class VirtualScrollPane extends Control {
 			3.0
 	);
 
-	private final StyleableDoubleProperty trackIncrement = new StyleableDoubleProperty(
-			StyleableProperties.TRACK_INCREMENT,
+	private final StyleableDoubleProperty hTrackIncrement = new StyleableDoubleProperty(
+			StyleableProperties.H_TRACK_INCREMENT,
 			this,
-			"trackIncrement",
+			"hTrackIncrement",
 			0.1
 	);
 
-	private final StyleableDoubleProperty unitIncrement = new StyleableDoubleProperty(
-			StyleableProperties.UNIT_INCREMENT,
+	private final StyleableDoubleProperty hUnitIncrement = new StyleableDoubleProperty(
+			StyleableProperties.H_UNIT_INCREMENT,
 			this,
-			"unitIncrement",
+			"hUnitIncrement",
+			0.01
+	);
+
+	private final StyleableDoubleProperty vTrackIncrement = new StyleableDoubleProperty(
+			StyleableProperties.V_TRACK_INCREMENT,
+			this,
+			"vTrackIncrement",
+			0.1
+	);
+
+	private final StyleableDoubleProperty vUnitIncrement = new StyleableDoubleProperty(
+			StyleableProperties.V_UNIT_INCREMENT,
+			this,
+			"vUnitIncrement",
 			0.01
 	);
 
@@ -508,36 +724,68 @@ public class VirtualScrollPane extends Control {
 		this.buttonsGap.set(buttonsGap);
 	}
 
-	public double getTrackIncrement() {
-		return trackIncrement.get();
+	public double getHTrackIncrement() {
+		return hTrackIncrement.get();
 	}
 
 	/**
-	 * Specifies the amount added/subtracted to the scroll bars' value used by the
-	 * scroll bars' track.
+	 * Specifies the amount added/subtracted to the horizontal scroll bar's value used by the
+	 * scroll bar's track.
 	 */
-	public StyleableDoubleProperty trackIncrementProperty() {
-		return trackIncrement;
+	public StyleableDoubleProperty hTrackIncrementProperty() {
+		return hTrackIncrement;
 	}
 
-	public void setTrackIncrement(double trackIncrement) {
-		this.trackIncrement.set(trackIncrement);
+	public void setHTrackIncrement(double hTrackIncrement) {
+		this.hTrackIncrement.set(hTrackIncrement);
 	}
 
-	public double getUnitIncrement() {
-		return unitIncrement.get();
+	public double getHUnitIncrement() {
+		return hUnitIncrement.get();
 	}
 
 	/**
-	 * Specifies the amount added/subtracted to the scroll bars' value used by the
+	 * Specifies the amount added/subtracted to the horizontal scroll bar's value used by the
 	 * buttons and by scrolling.
 	 */
-	public StyleableDoubleProperty unitIncrementProperty() {
-		return unitIncrement;
+	public StyleableDoubleProperty hUnitIncrementProperty() {
+		return hUnitIncrement;
 	}
 
-	public void setUnitIncrement(double unitIncrement) {
-		this.unitIncrement.set(unitIncrement);
+	public void setHUnitIncrement(double hUnitIncrement) {
+		this.hUnitIncrement.set(hUnitIncrement);
+	}
+
+	public double getVTrackIncrement() {
+		return vTrackIncrement.get();
+	}
+
+	/**
+	 * Specifies the amount added/subtracted to the vertical scroll bar's value used by the
+	 * scroll bar's track.
+	 */
+	public StyleableDoubleProperty vTrackIncrementProperty() {
+		return vTrackIncrement;
+	}
+
+	public void setVTrackIncrement(double trackIncrement) {
+		this.vTrackIncrement.set(trackIncrement);
+	}
+
+	public double getVUnitIncrement() {
+		return vUnitIncrement.get();
+	}
+
+	/**
+	 * Specifies the amount added/subtracted to the vertical scroll bar's value used by the
+	 * buttons and by scrolling.
+	 */
+	public StyleableDoubleProperty vUnitIncrementProperty() {
+		return vUnitIncrement;
+	}
+
+	public void setVUnitIncrement(double unitIncrement) {
+		this.vUnitIncrement.set(unitIncrement);
 	}
 
 	public boolean isSmoothScroll() {
@@ -685,17 +933,31 @@ public class VirtualScrollPane extends Control {
 						3.0
 				);
 
-		private static final CssMetaData<VirtualScrollPane, Number> TRACK_INCREMENT =
+		private static final CssMetaData<VirtualScrollPane, Number> H_TRACK_INCREMENT =
 				FACTORY.createSizeCssMetaData(
-						"-fx-track-increment",
-						VirtualScrollPane::trackIncrementProperty,
-						0.15
+						"-fx-htrack-increment",
+						VirtualScrollPane::hTrackIncrementProperty,
+						0.1
 				);
 
-		private static final CssMetaData<VirtualScrollPane, Number> UNIT_INCREMENT =
+		private static final CssMetaData<VirtualScrollPane, Number> H_UNIT_INCREMENT =
 				FACTORY.createSizeCssMetaData(
-						"-fx-unit-increment",
-						VirtualScrollPane::unitIncrementProperty,
+						"-fx-hunit-increment",
+						VirtualScrollPane::hUnitIncrementProperty,
+						0.01
+				);
+
+		private static final CssMetaData<VirtualScrollPane, Number> V_TRACK_INCREMENT =
+				FACTORY.createSizeCssMetaData(
+						"-fx-vtrack-increment",
+						VirtualScrollPane::vTrackIncrementProperty,
+						0.1
+				);
+
+		private static final CssMetaData<VirtualScrollPane, Number> V_UNIT_INCREMENT =
+				FACTORY.createSizeCssMetaData(
+						"-fx-vunit-increment",
+						VirtualScrollPane::vUnitIncrementProperty,
 						0.01
 				);
 
@@ -727,7 +989,7 @@ public class VirtualScrollPane extends Control {
 					HBAR_PADDING, VBAR_PADDING,
 					AUTO_HIDE_BARS, DRAG_TO_SCROLL,
 					BUTTONS_VISIBLE, BUTTONS_GAP,
-					TRACK_INCREMENT, UNIT_INCREMENT,
+					H_TRACK_INCREMENT, H_UNIT_INCREMENT, V_TRACK_INCREMENT, V_UNIT_INCREMENT,
 					SMOOTH_SCROLL, SMOOTH_SCROLL_ON_TRACK_PRESS,
 					CLIP_BORDER_RADIUS
 			);
@@ -756,7 +1018,7 @@ public class VirtualScrollPane extends Control {
 		this.content.set(content);
 	}
 
-	public Bounds getContentBounds() {
+	public VirtualBounds getContentBounds() {
 		return contentBounds.get();
 	}
 
@@ -764,11 +1026,11 @@ public class VirtualScrollPane extends Control {
 	 * Specifies the content bounds, this cannot be ignored to make the scroll pane
 	 * work as intended.
 	 */
-	public ObjectProperty<Bounds> contentBoundsProperty() {
+	public ObjectProperty<VirtualBounds> contentBoundsProperty() {
 		return contentBounds;
 	}
 
-	public void setContentBounds(Bounds contentBounds) {
+	public void setContentBounds(VirtualBounds contentBounds) {
 		this.contentBounds.set(contentBounds);
 	}
 

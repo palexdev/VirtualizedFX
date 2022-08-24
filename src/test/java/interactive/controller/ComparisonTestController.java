@@ -30,10 +30,10 @@ import io.github.palexdev.mfxcore.animations.ConsumerTransition;
 import io.github.palexdev.mfxcore.animations.Interpolators;
 import io.github.palexdev.mfxcore.base.TriConsumer;
 import io.github.palexdev.mfxcore.base.beans.PositionBean;
-import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
 import io.github.palexdev.mfxcore.builders.nodes.IconWrapperBuilder;
 import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
+import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
@@ -64,6 +64,7 @@ import javafx.util.Pair;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -137,28 +138,14 @@ public class ComparisonTestController implements Initializable {
 		rFlow.setCellSize(64);
 
 		vsp = VirtualScrollPane.wrap(rFlow);
-		vsp.unitIncrementProperty().bind(DoubleBindingBuilder.build()
-				.setMapper(() -> {
-					Orientation o = vsp.getOrientation();
-					double viewL = (o == Orientation.VERTICAL) ? vsp.getHeight() : vsp.getWidth();
-					double contentL = rFlow.getEstimatedLength();
-					double pixels = (vsp.isSmoothScroll()) ? rFlow.getCellSize() * 1.5 : 15;
-					return Math.max(0, pixels / (contentL - viewL));
-				})
-				.addSources(vsp.orientationProperty(), vsp.heightProperty(), vsp.widthProperty())
-				.addSources(vsp.smoothScrollProperty(), rFlow.cellSizeProperty(), rFlow.estimatedLengthProperty())
-				.get()
-		);
-		vsp.trackIncrementProperty().bind(DoubleBindingBuilder.build()
-				.setMapper(() -> {
-					Orientation o = vsp.getOrientation();
-					double viewL = (o == Orientation.VERTICAL) ? vsp.getHeight() : vsp.getWidth();
-					double contentL = rFlow.getEstimatedLength();
-					return Math.max(0, 40 / (contentL - viewL));
-				})
-				.addSources(vsp.orientationProperty(), vsp.heightProperty(), vsp.widthProperty(), rFlow.estimatedLengthProperty())
-				.get()
-		);
+		Runnable speedAction = () -> {
+			VirtualScrollPane.setVSpeed(vsp, 15, rFlow.getCellSize() * 1.5, 15);
+			VirtualScrollPane.setHSpeed(vsp, 15, rFlow.getCellSize() * 1.5, 15);
+		};
+		When.onInvalidated(rFlow.cellSizeProperty())
+				.then(i -> speedAction.run())
+				.executeNow()
+				.listen();
 		//vsp.setLayoutMode(LayoutMode.COMPACT);
 		//vsp.setAutoHideBars(true);
 	}
@@ -625,7 +612,7 @@ public class ComparisonTestController implements Initializable {
 		}
 	}
 
-	private abstract static class CommonCell extends HBox implements Cell<Integer> {
+	public abstract static class CommonCell extends HBox implements Cell<Integer> {
 		protected final Label label;
 		protected Integer item;
 		protected int index;
@@ -667,7 +654,7 @@ public class ComparisonTestController implements Initializable {
 		protected abstract String dataToString();
 	}
 
-	private static class DetailedCell extends CommonCell {
+	public static class DetailedCell extends CommonCell {
 		private final MFXIconWrapper icon;
 
 		public DetailedCell(Integer item) {
@@ -717,7 +704,7 @@ public class ComparisonTestController implements Initializable {
 		}
 	}
 
-	private static class AlternativeCell extends CommonCell {
+	public static class AlternativeCell extends CommonCell {
 		private final MFXIconWrapper icon;
 
 		public AlternativeCell(Integer item) {
@@ -790,6 +777,49 @@ public class ComparisonTestController implements Initializable {
 		MFXButton cancelAction = new MFXButton("Cancel");
 		cancelAction.setOnAction(event -> {
 			val.set(-1.0);
+			sd.close();
+		});
+		((MFXGenericDialog) sd.getContent()).addActions(okAction, cancelAction);
+		sd.showAndWait();
+		return val.get();
+	}
+
+	public static int getIntFromUser(Pane owner, String title, String fieldText) {
+		MFXTextField field = new MFXTextField("", "", fieldText);
+		field.setFloatMode(FloatMode.INLINE);
+		field.setPrefSize(240, 32);
+		StackPane content = new StackPane(field);
+		content.setAlignment(Pos.CENTER);
+
+		MFXStageDialog sd = MFXGenericDialogBuilder.build()
+				.setHeaderText(title)
+				.setShowAlwaysOnTop(false)
+				.setShowMinimize(false)
+				.setContent(content)
+				.toStageDialogBuilder()
+				.initModality(Modality.WINDOW_MODAL)
+				.initOwner(owner.getScene().getWindow())
+				.setOwnerNode(owner)
+				.setCenterInOwnerNode(true)
+				.setScrimOwner(true)
+				.get();
+
+		AtomicInteger val = new AtomicInteger(0);
+		MFXButton okAction = new MFXButton("OK");
+		okAction.setOnAction(event -> {
+			try {
+				val.set(Integer.parseInt(field.getText()));
+				if (val.get() <= 0) {
+					field.setFloatingText("Invalid value, > 0");
+					return;
+				}
+				sd.close();
+			} catch (NumberFormatException ignored) {
+			}
+		});
+		MFXButton cancelAction = new MFXButton("Cancel");
+		cancelAction.setOnAction(event -> {
+			val.set(-1);
 			sd.close();
 		});
 		((MFXGenericDialog) sd.getContent()).addActions(okAction, cancelAction);

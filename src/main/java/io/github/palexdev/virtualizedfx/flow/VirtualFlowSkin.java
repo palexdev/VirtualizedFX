@@ -118,6 +118,8 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		clip = new Rectangle();
 		clip.widthProperty().bind(virtualFlow.widthProperty());
 		clip.heightProperty().bind(virtualFlow.heightProperty());
+		clip.arcWidthProperty().bind(virtualFlow.clipBorderRadiusProperty());
+		clip.arcHeightProperty().bind(virtualFlow.clipBorderRadiusProperty());
 		virtualFlow.setClip(clip);
 
 		// Build listeners

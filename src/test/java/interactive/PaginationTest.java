@@ -18,16 +18,30 @@
 
 package interactive;
 
+import interactive.controller.PaginationTestController;
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import org.scenicview.ScenicView;
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.verbose", "true");
-		Application.launch(PaginationTest.class);
+public class PaginationTest extends Application {
+
+	@Override
+	public void start(Stage primaryStage) throws Exception {
+		FXMLLoader loader = new FXMLLoader(Launcher.class.getResource("PaginationTest.fxml"));
+		loader.setControllerFactory(o -> new PaginationTestController(primaryStage));
+		Parent root = loader.load();
+		Scene scene = new Scene(root);
+		scene.setFill(Color.TRANSPARENT);
+		primaryStage.initStyle(StageStyle.TRANSPARENT);
+		primaryStage.setTitle("Pagination Test");
+		primaryStage.setScene(scene);
+		primaryStage.show();
+
+		ScenicView.show(scene);
 	}
 }
