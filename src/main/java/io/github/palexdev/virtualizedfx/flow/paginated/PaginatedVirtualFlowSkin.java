@@ -20,6 +20,7 @@ package io.github.palexdev.virtualizedfx.flow.paginated;
 
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlowSkin;
+import javafx.beans.InvalidationListener;
 import javafx.geometry.Orientation;
 
 /**
@@ -29,16 +30,25 @@ import javafx.geometry.Orientation;
  * {@link PaginatedVirtualFlow#cellSizeProperty()} and of course {@link PaginatedVirtualFlow#orientationProperty()}.
  */
 public class PaginatedVirtualFlowSkin<T, C extends Cell<T>> extends VirtualFlowSkin<T, C> {
+	private InvalidationListener lengthListener;
+
 	//================================================================================
 	// Constructors
 	//================================================================================
 	public PaginatedVirtualFlowSkin(PaginatedVirtualFlow<T, C> virtualFlow) {
 		super(virtualFlow);
+		lengthListener = invalidated -> virtualFlow.updateMaxPage();
+		addListeners();
 	}
 
 	//================================================================================
 	// Methods
 	//================================================================================
+
+	private void addListeners() {
+		PaginatedVirtualFlow<T, C> flow = getFlow();
+		flow.estimatedLengthProperty().addListener(lengthListener);
+	}
 
 	/**
 	 * @return {@link #getSkinnable()} cast as {@link PaginatedVirtualFlow}
@@ -109,5 +119,12 @@ public class PaginatedVirtualFlowSkin<T, C extends Cell<T>> extends VirtualFlowS
 		Orientation o = getSkinnable().getOrientation();
 		if (o == Orientation.VERTICAL) return getLength();
 		return super.computeMaxHeight(width, topInset, rightInset, bottomInset, leftInset);
+	}
+
+	@Override
+	public void dispose() {
+		getFlow().estimatedLengthProperty().removeListener(lengthListener);
+		lengthListener = null;
+		super.dispose();
 	}
 }

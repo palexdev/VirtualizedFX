@@ -14,6 +14,50 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [NoVer] - 02-09-2022
+
+## Added
+
+- Add new tests for both ComparisonTestController and PaginationTestController
+
+## Changed
+
+- Bump MFXCore to version 11.0.15
+- Override toString() method for VirtualBounds
+- ViewportState: make compute positions methods return the layout map
+- Renamed AbstractHelper to AbstractOrientationHelper
+- Moved estimated length and max breadth properties to super class
+- The helpers now do not need the ViewportManager in the constructor as it can be retrieved from the virtual flow.
+  Improvement for the orientationHelperFactory since the user cannot access the manager
+- VirtualFlow, adapt to the aforementioned changes. Also add protected method to set the orientation helper
+- Moved the cellSize invalidation code to separate method that can be overridden by subclasses if needed
+- Improved PaginatedVirtualFlow management of the current page and max page
+- Adapt PaginatedHelper to the aforementioned changes
+- PaginatedVirtualFlow override cellSizeChanged() method to use goToPage() instead of scrollToPixel()
+- Improved animation of cells' background
+
+## Fixed
+
+- VirtualScrollPane: fixed scroll bars' value not updating when the estimated length was changing
+- ViewportState: fixed state transition which lead to NullPointerException is some rare cases. Also covered some extra
+  cases specifically for the PaginatedVirtualFlow
+- ViewportState: the algorithm responsible for transitioning to a new state in case of ADDITIONS is the virtual flow
+  list has been completely rewritten as the previous implementation had some bugs for the original virtual flow and was
+  also inadequate for the PaginatedVirtualFlow (2 or more bugs were found for that)
+- ViewportState: the isViewportFull() methods now behaves differently for the PaginatedVirtualFlow, counting only the
+  visible cells
+- ViewportState: the getFirst() methods now behaves differently for the PaginatedVirtualFlow, instead of using the
+  range's min value it now asks the OrientationHelper to compute the first visible cell. This is because of an issue
+  occurring when a page was not full (some cells hidden, not enough items)
+- ViewportState: the getLast() method now is more heavyweight since the returned value is now computed by finding the
+  max index in the cells map. This at the benefit of 100% accuracy for both virtual flow implementations
+- PaginatedHelper: Add scrollToPixel() method to the "forbidden" methods to avoid issues
+- PaginatedVirtualFlow: fixed an issue that caused the display of the wrong page when changing the cells per page
+  property
+- PaginatedVirtualFlowSkin: added a listener on the estimated length property to fix an issue that caused the max page
+  to not update when the length changed
+- PaginationTestController: removed MFXSpinner in favor of custom solution. Needs to be fixed asap in MaterialFX
+
 ## [11.5.0] - 24-08-2022
 
 ## Added

@@ -94,9 +94,8 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 				}
 
 				if (state.getType() == UpdateType.CHANGE) helper.invalidatePos();
-				state.computePositions();
 
-				Map<C, Double> layoutMap = state.getLayoutMap();
+				Map<C, Double> layoutMap = state.computePositions();
 				double mBreadth = 0.0; // Max breadth
 
 				for (Map.Entry<? extends Cell<?>, Double> e : layoutMap.entrySet()) {

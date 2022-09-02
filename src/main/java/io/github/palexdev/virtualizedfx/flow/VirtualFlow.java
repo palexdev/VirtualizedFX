@@ -30,6 +30,7 @@ import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper.VerticalHelper;
+import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -109,14 +110,14 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	};
 	private final FunctionProperty<Orientation, OrientationHelper> orientationHelperFactory = new FunctionProperty<>(o ->
 			(o == Orientation.VERTICAL) ?
-					new VerticalHelper(VirtualFlow.this, viewportManager) :
-					new HorizontalHelper(VirtualFlow.this, viewportManager)
+					new VerticalHelper(VirtualFlow.this) :
+					new HorizontalHelper(VirtualFlow.this)
 	) {
 		@Override
 		protected void invalidated() {
 			Orientation orientation = getOrientation();
 			OrientationHelper helper = get().apply(orientation);
-			VirtualFlow.this.orientationHelper.set(helper);
+			setOrientationHelper(helper);
 		}
 	};
 
@@ -162,6 +163,18 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 		needsViewportLayout.set(true);
 	}
 
+	protected void cellSizeChanged() {
+		OrientationHelper helper = getOrientationHelper();
+		if (helper != null) {
+			helper.computeEstimatedLength();
+		}
+
+		if (getWidth() != 0.0 && getHeight() != 0.0) { // TODO test with w and h = 0 initially
+			viewportManager.init();
+			scrollToPixel(0);
+		}
+	}
+
 	//================================================================================
 	// Delegate Methods
 	//================================================================================
@@ -169,6 +182,8 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	/**
 	 * Tells the current {@link #orientationHelperProperty()} to scroll
 	 * by the given amount of pixels.
+	 * <p>
+	 * Unsupported by {@link PaginatedVirtualFlow}
 	 */
 	public void scrollBy(double pixels) {
 		OrientationHelper helper = getOrientationHelper();
@@ -178,6 +193,8 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	/**
 	 * Tells the current {@link #orientationHelperProperty()} to scroll
 	 * to the given pixel.
+	 * <p>
+	 * Unsupported by {@link PaginatedVirtualFlow}
 	 */
 	public void scrollToPixel(double pixel) {
 		OrientationHelper helper = getOrientationHelper();
@@ -300,21 +317,8 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 			32.0
 	) {
 		@Override
-		public void set(double newValue) {
-			super.set(newValue);
-		}
-
-		@Override
 		protected void invalidated() {
-			OrientationHelper helper = getOrientationHelper();
-			if (helper != null) {
-				helper.computeEstimatedLength();
-			}
-
-			if (getWidth() != 0.0 && getHeight() != 0.0) { // TODO test with w and h = 0 initially
-				viewportManager.init();
-				scrollToPixel(0);
-			}
+			cellSizeChanged();
 		}
 	};
 
@@ -327,7 +331,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 		protected void invalidated() {
 			Orientation orientation = get();
 			OrientationHelper helper = getOrientationHelperFactory().apply(orientation);
-			VirtualFlow.this.orientationHelper.set(helper);
+			setOrientationHelper(helper);
 			viewportManager.reset();
 		}
 	};
@@ -540,6 +544,10 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	 */
 	public ReadOnlyObjectProperty<OrientationHelper> orientationHelperProperty() {
 		return orientationHelper.getReadOnlyProperty();
+	}
+
+	protected void setOrientationHelper(OrientationHelper orientationHelper) {
+		this.orientationHelper.set(orientationHelper);
 	}
 
 	public Function<Orientation, OrientationHelper> getOrientationHelperFactory() {

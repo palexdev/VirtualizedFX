@@ -79,19 +79,30 @@ public class PaginatedVirtualFlow<T, C extends Cell<T>> extends VirtualFlow<T, C
 	//================================================================================
 	private final String STYLE_CLASS = "paginated-virtual-flow";
 
-	private final IntegerProperty currentPage = new SimpleIntegerProperty() {
+	private final IntegerProperty currentPage = new SimpleIntegerProperty(1) {
+		@Override
+		public void set(int newValue) {
+			int clamped = NumberUtils.clamp(newValue, 1, getMaxPage());
+			super.set(clamped);
+		}
+
 		@Override
 		protected void invalidated() {
 			int page = get();
-			goToPage(page);
+			changePage(page);
 		}
 	};
 	private final ReadOnlyIntegerWrapper maxPage = new ReadOnlyIntegerWrapper() {
 		@Override
+		public void set(int newValue) {
+			int clamped = Math.max(1, newValue);
+			super.set(clamped);
+		}
+
+		@Override
 		protected void invalidated() {
 			int max = get();
-			int curr = NumberUtils.clamp(getCurrentPage(), 0, max);
-			System.out.println(curr);
+			int curr = NumberUtils.clamp(getCurrentPage(), 1, max);
 			setCurrentPage(curr);
 		}
 	};
@@ -126,16 +137,24 @@ public class PaginatedVirtualFlow<T, C extends Cell<T>> extends VirtualFlow<T, C
 	}
 
 	/**
+	 * Shortcut for {@link #setCellsPerPage(int)}.
+	 * When the {@link #currentPageProperty()} is invalidated {@link #changePage(int)} is automatically called
+	 */
+	public void goToPage(int page) {
+		setCurrentPage(page);
+	}
+
+	/**
 	 * Gets the current {@link PaginatedHelper} and calls {@link PaginatedHelper#goToPage(int)}, but
 	 * before doing so it ensures that the max page is correct by calling {@link #updateMaxPage()}.
 	 */
-	public void goToPage(int page) {
+	protected void changePage(int page) {
 		OrientationHelper helper = getOrientationHelper();
 		if (!(helper instanceof PaginatedHelper))
 			throw new IllegalStateException("The virtual flow's OrientationHelper is not of type PaginatedHelper!");
 
 		updateMaxPage();
-		PaginatedHelper pHelper = (PaginatedHelper) helper;
+		PaginatedHelper pHelper = ((PaginatedHelper) helper);
 		pHelper.goToPage(page);
 	}
 
@@ -187,19 +206,33 @@ public class PaginatedVirtualFlow<T, C extends Cell<T>> extends VirtualFlow<T, C
 	//================================================================================
 
 	/**
-	 * Calls {@link #goToPage(int)} with 1 as parameter.
+	 * Sets the {@link #currentPageProperty()} to 1.
 	 */
 	@Override
 	public void scrollToFirst() {
-		goToPage(1);
+		setCurrentPage(1);
 	}
 
 	/**
-	 * Calls {@link #goToPage(int)} with {@link #maxPageProperty()} as parameter.
+	 * Sets the {@link #currentPageProperty()} to {@link #maxPageProperty()}.
 	 */
 	@Override
 	public void scrollToLast() {
-		goToPage(getMaxPage());
+		int page = getMaxPage();
+		goToPage(page);
+	}
+
+	@Override
+	protected void cellSizeChanged() {
+		OrientationHelper helper = getOrientationHelper();
+		if (helper != null) {
+			helper.computeEstimatedLength();
+		}
+
+		if (getWidth() != 0.0 && getHeight() != 0.0) { // TODO test with w and h = 0 initially
+			getViewportManager().init();
+			goToPage(0);
+		}
 	}
 
 	@Override
@@ -224,6 +257,7 @@ public class PaginatedVirtualFlow<T, C extends Cell<T>> extends VirtualFlow<T, C
 		@Override
 		protected void invalidated() {
 			updateMaxPage();
+			changePage(getCurrentPage());
 			requestViewportLayout();
 		}
 	};

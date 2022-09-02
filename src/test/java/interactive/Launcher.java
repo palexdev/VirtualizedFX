@@ -28,6 +28,7 @@ public class Launcher {
 		//System.setProperty("prism.vsync", "false");
 		//System.setProperty("prism.showdirty", "true");
 		//System.setProperty("prism.verbose", "true");
-		Application.launch(PaginationTest.class);
+		Application.launch(ComparisonTest.class);
+
 	}
 }

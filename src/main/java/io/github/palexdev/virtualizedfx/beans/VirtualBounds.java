@@ -67,6 +67,16 @@ public class VirtualBounds {
 						height == 0 && virtualHeight == 0);
 	}
 
+	@Override
+	public String toString() {
+		return "VirtualBounds{" +
+				"width=" + width +
+				", height=" + height +
+				", virtualWidth=" + virtualWidth +
+				", virtualHeight=" + virtualHeight +
+				'}';
+	}
+
 	//================================================================================
 	// Getters
 	//================================================================================

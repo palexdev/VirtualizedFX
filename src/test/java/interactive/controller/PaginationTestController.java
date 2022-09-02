@@ -22,15 +22,17 @@ import interactive.controller.ComparisonTestController.AlternativeCell;
 import interactive.controller.ComparisonTestController.DetailedCell;
 import interactive.model.Model;
 import io.github.palexdev.materialfx.controls.MFXFilterComboBox;
-import io.github.palexdev.materialfx.controls.MFXSpinner;
 import io.github.palexdev.materialfx.controls.MFXTextField;
-import io.github.palexdev.materialfx.controls.models.spinner.IntegerSpinnerModel;
+import io.github.palexdev.materialfx.enums.FloatMode;
+import io.github.palexdev.materialfx.utils.NodeUtils;
+import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
+import io.github.palexdev.mfxcore.builders.nodes.IconWrapperBuilder;
 import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
-import io.github.palexdev.mfxcore.utils.fx.NodeUtils;
 import io.github.palexdev.mfxcore.utils.fx.RegionUtils;
+import io.github.palexdev.mfxresources.builders.IconBuilder;
 import io.github.palexdev.mfxresources.font.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
@@ -42,11 +44,11 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.net.URL;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -66,26 +68,13 @@ public class PaginationTestController implements Initializable {
 	private double yOffset;
 	private boolean canDrag = false;
 
-	@FXML
-	private StackPane rootPane;
-
-	@FXML
-	private HBox windowHeader;
-
-	@FXML
-	private Label headerLabel;
-
-	@FXML
-	private MFXFilterComboBox<Action> actionsBox;
-
-	@FXML
-	private MFXIconWrapper runIcon;
-
-	@FXML
-	private BorderPane contentPane;
-
-	@FXML
-	private MFXSpinner<Integer> spinner;
+	@FXML private StackPane rootPane;
+	@FXML private HBox windowHeader;
+	@FXML private Label headerLabel;
+	@FXML private MFXFilterComboBox<Action> actionsBox;
+	@FXML private MFXIconWrapper runIcon;
+	@FXML private BorderPane contentPane;
+	@FXML private HBox footer;
 
 	public PaginationTestController(Stage stage) {
 		this.stage = stage;
@@ -143,32 +132,46 @@ public class PaginationTestController implements Initializable {
 
 		// Footer
 		// TODO spinner models are absolute garbage
-		IntegerSpinnerModel ism = new IntegerSpinnerModel(1);
-		ism.setMin(1);
-		spinner.setSpinnerModel(ism);
-		spinner.setTextTransformer((focused, text) -> text + "/" + ism.getMax());
+		MFXIconWrapper goFirst = IconWrapperBuilder.build()
+				.setIcon(IconBuilder.build().setDescription("mfx-step-backward").setSize(16).get())
+				.setSize(32)
+				.defaultRippleGeneratorBehavior()
+				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> flow.scrollToFirst()).getNode();
+		NodeUtils.makeRegionCircular(goFirst);
 
-		// TODO add alignment
-		NodeUtils.waitForSkin(
-				spinner,
-				() -> {
-					MFXTextField field = (MFXTextField) spinner.lookup(".mfx-text-field");
-					field.setAlignment(Pos.CENTER);
-				}, false, true);
+		MFXIconWrapper goBack = IconWrapperBuilder.build()
+				.setIcon(IconBuilder.build().setDescription("mfx-caret-left").setSize(16).get())
+				.setSize(32)
+				.defaultRippleGeneratorBehavior()
+				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> flow.setCurrentPage(Math.max(0, flow.getCurrentPage() - 1))).getNode();
+		NodeUtils.makeRegionCircular(goBack);
 
-		flow.maxPageProperty().addListener((observable, oldValue, newValue) -> {
-			int newMax = newValue.intValue();
-			int val = ism.getValue();
-			ism.setMax(newMax);
-			if (newMax < val) {
-				ism.setValue(newMax);
-			}
-			System.out.println(MessageFormat.format("Max {0} Val {1}", newMax, val));
-		});
-		ism.setMax(flow.getMaxPage());
-		ism.valueProperty().addListener((observable, oldValue, newValue) -> flow.setCurrentPage(newValue));
+		MFXIconWrapper goForward = IconWrapperBuilder.build()
+				.setIcon(IconBuilder.build().setDescription("mfx-caret-right").setSize(16).get())
+				.setSize(32)
+				.defaultRippleGeneratorBehavior()
+				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> flow.setCurrentPage(flow.getCurrentPage() + 1)).getNode();
+		NodeUtils.makeRegionCircular(goForward);
 
-		flow.stateProperty().addListener(invalidated -> System.out.println(flow.getLastRange()));
+		MFXIconWrapper goLast = IconWrapperBuilder.build()
+				.setIcon(IconBuilder.build().setDescription("mfx-step-forward").setSize(16).get())
+				.setSize(32)
+				.defaultRippleGeneratorBehavior()
+				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> flow.scrollToLast()).getNode();
+		NodeUtils.makeRegionCircular(goLast);
+
+		MFXTextField label = MFXTextField.asLabel();
+		label.setFloatMode(FloatMode.DISABLED);
+		label.setAlignment(Pos.CENTER);
+		label.setLeadingIcon(new HBox(5, goFirst, goBack));
+		label.setTrailingIcon(new HBox(5, goForward, goLast));
+		label.textProperty().bind(StringBindingBuilder.build()
+				.setMapper(() -> flow.getCurrentPage() + "/" + flow.getMaxPage())
+				.addSources(flow.currentPageProperty(), flow.maxPageProperty())
+				.get()
+		);
+
+		footer.getChildren().addAll(label);
 	}
 
 	@FXML
@@ -210,217 +213,148 @@ public class PaginationTestController implements Initializable {
 	}
 
 	private enum Action {
-		UPDATE_AT_5(flow -> {
-			Runnable action = () -> flow.getItems().set(5, RandomUtils.random.nextInt(0, 9999));
-			execute(action);
-		}),
-		UPDATE_AT_25(flow -> {
-			Runnable action = () -> flow.getItems().set(25, RandomUtils.random.nextInt(0, 9999));
-			execute(action);
-		}),
-		ADD_AT_0(flow -> {
-			Runnable action = () -> flow.getItems().add(0, RandomUtils.random.nextInt(0, 9999));
-			execute(action);
-		}),
-		ADD_MULTIPLE_AT_3(flow -> {
+		UPDATE_AT_5(flow -> execute(() -> flow.getItems().set(5, RandomUtils.random.nextInt(0, 9999)))),
+		UPDATE_AT_25(flow -> execute(() -> flow.getItems().set(25, RandomUtils.random.nextInt(0, 9999)))),
+		ADD_AT_0(flow -> execute(() -> flow.getItems().add(0, RandomUtils.random.nextInt(0, 9999)))),
+		ADD_AT_3(flow -> execute(() -> flow.getItems().add(3, RandomUtils.random.nextInt(0, 9999)))),
+		ADD_AT_END(flow -> execute(() -> flow.getItems().add(flow.getItems().size(), RandomUtils.random.nextInt(0, 9999)))),
+		ADD_MULTIPLE_AT_3(flow -> execute(() -> {
 			List<Integer> integers = List.of(
 					RandomUtils.random.nextInt(0, 9999),
 					RandomUtils.random.nextInt(0, 9999),
 					RandomUtils.random.nextInt(0, 9999),
 					RandomUtils.random.nextInt(0, 9999)
 			);
-			Runnable action = () -> flow.getItems().addAll(3, integers);
-			execute(action);
-		}),
-		DELETE_AT_3(flow -> {
-			Runnable action = () -> flow.getItems().remove(3);
-			execute(action);
-		}),
-		DELETE_SPARSE(flow -> {
-			Runnable action = () -> flow.getItems().removeAll(
-					flow.getItems().get(2), flow.getItems().get(5),
-					flow.getItems().get(6), flow.getItems().get(8),
-					flow.getItems().get(25), flow.getItems().get(53)
-			);
-			execute(action);
-		}),
-		DELETE_FIRST(flow -> {
-			Runnable action = () -> flow.getItems().remove(0);
-			execute(action);
-		}),
-		DELETE_LAST(flow -> {
-			Runnable action = () -> flow.getItems().remove(flow.getItems().size() - 1);
-			execute(action);
-		}),
-		DELETE_ALL_VISIBLE(flow -> {
-			Runnable action = () -> {
-				Integer[] integers = flow.getIndexedCells().keySet().stream()
-						.map(i -> flow.getItems().get(i))
-						.toArray(Integer[]::new);
-				flow.getItems().removeAll(integers);
-			};
-			execute(action);
-		}),
-		REPLACE_ALL(flow -> {
+			flow.getItems().addAll(3, integers);
+		})),
+		DELETE_AT_3(flow -> execute(() -> flow.getItems().remove(3))),
+		DELETE_SPARSE(flow -> execute(() -> flow.getItems().removeAll(
+				flow.getItems().get(2), flow.getItems().get(5),
+				flow.getItems().get(6), flow.getItems().get(8),
+				flow.getItems().get(25), flow.getItems().get(53)
+		))),
+		DELETE_FIRST(flow -> execute(() -> flow.getItems().remove(0))),
+		DELETE_LAST(flow -> execute(() -> flow.getItems().remove(flow.getItems().size() - 1))),
+		DELETE_ALL_VISIBLE(flow -> execute(() -> {
+			Integer[] integers = flow.getIndexedCells().keySet().stream()
+					.map(i -> flow.getItems().get(i))
+					.toArray(Integer[]::new);
+			flow.getItems().removeAll(integers);
+		})),
+		REPLACE_ALL(flow -> execute(() -> {
 			List<Integer> integers = IntStream.rangeClosed(0, 50)
 					.mapToObj(i -> RandomUtils.random.nextInt(0, 9999))
 					.toList();
-			Runnable action = () -> flow.getItems().setAll(integers);
-			execute(action);
-		}),
-		REVERSE_SORT(flow -> {
-			Runnable action = () -> flow.getItems().sort((o1, o2) -> Comparator.<Integer>reverseOrder().compare(o1, o2));
-			execute(action);
-		}),
-		CLEAR_LIST(flow -> {
-			Runnable action = () -> flow.getItems().clear();
-			execute(action);
-		}),
-		CHANGE_VIEWPORT_SIZE_TO(flow -> {
-			Runnable action = () -> {
-				VirtualScrollPane vsp = (VirtualScrollPane) flow.getParent().getParent();
-				String fText = (flow.getOrientation() == Orientation.VERTICAL) ?
-						"Current height: " + vsp.getHeight() :
-						"Current width: " + vsp.getWidth();
-				double value = getSizeFromUser(root, "Change Viewport Size To...", fText);
-				if (value == -1.0) return;
+			flow.getItems().setAll(integers);
+		})),
+		REVERSE_SORT(flow -> execute(() -> flow.getItems().sort((o1, o2) -> Comparator.<Integer>reverseOrder().compare(o1, o2)))),
+		CLEAR_LIST(flow -> execute(() -> flow.getItems().clear())),
+		CHANGE_VIEWPORT_SIZE_TO(flow -> execute(() -> {
+			VirtualScrollPane vsp = (VirtualScrollPane) flow.getParent().getParent();
+			String fText = (flow.getOrientation() == Orientation.VERTICAL) ?
+					"Current height: " + vsp.getHeight() :
+					"Current width: " + vsp.getWidth();
+			double value = getSizeFromUser(root, "Change Viewport Size To...", fText);
+			if (value == -1.0) return;
 
-				if (flow.getOrientation() == Orientation.VERTICAL) {
-					vsp.setPrefHeight(value);
-					vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE);
-				} else {
-					vsp.setPrefWidth(value);
-					vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE);
-				}
-			};
-			execute(action);
-		}),
-		RESET_VIEWPORT_SIZE(flow -> {
-			Runnable action = () -> {
-				VirtualScrollPane vsp = (VirtualScrollPane) flow.getParent().getParent();
-				vsp.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
-				vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
-			};
-			execute(action);
-		}),
-		CHANGE_CELLS_SIZE_TO(flow -> {
-			Runnable action = () -> {
-				double value = getSizeFromUser(root, "Change Cells Size To...", "Current Size: " + flow.getCellSize());
-				if (value == -1.0) return;
-				flow.setCellSize(value);
-			};
-			execute(action);
-		}),
-		CHANGE_CELLS_PER_PAGE(flow -> {
-			Runnable action = () -> {
-				int value = getIntFromUser(root, "Change Cells Per Page To...", "Current Number: " + flow.getCellsPerPage());
-				if (value == -1) return;
-				flow.setCellsPerPage(value);
-			};
-			execute(action);
-		}),
-		REPLACE_LIST(flow -> {
-			Runnable action = () -> {
-				ObservableList<Integer> integers = IntStream.rangeClosed(0, 200)
-						.mapToObj(i -> RandomUtils.random.nextInt(0, 9999))
-						.collect(FXCollectors.toList());
-				flow.setItems(integers);
-			};
-			execute(action);
-		}),
-		SWITCH_CELLS_FACTORY(flow -> {
-			Runnable action = () -> {
-				Class<? extends Cell<Integer>> lastFactory = lastFactoryMap.get(flow);
-				Function<Integer, Cell<Integer>> factory;
-				if (lastFactory == DetailedCell.class) {
-					factory = AlternativeCell::new;
-					lastFactoryMap.put(flow, AlternativeCell.class);
-				} else {
-					factory = DetailedCell::new;
-					lastFactoryMap.put(flow, DetailedCell.class);
-				}
-				flow.setCellFactory(factory);
-			};
-			execute(action);
-		}),
-		SWITCH_ORIENTATION(flow -> {
-			Runnable action = () -> {
-				Orientation newOr;
-				if (flow.getOrientation() == Orientation.VERTICAL) {
-					newOr = Orientation.HORIZONTAL;
-					flow.setOrientation(newOr);
-					flow.setCellSize(100);
-				} else {
-					newOr = Orientation.VERTICAL;
-					flow.setOrientation(newOr);
-					flow.setCellSize(64);
-				}
-			};
-			execute(action);
-		}),
-		TEST_VARIABLE_BREADTH(flow -> {
-			Runnable action = () -> {
-				if (!flow.isFitToBreadth()) {
-					flow.setFitToBreadth(true);
-					return;
-				}
+			if (flow.getOrientation() == Orientation.VERTICAL) {
+				vsp.setPrefHeight(value);
+				vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE);
+			} else {
+				vsp.setPrefWidth(value);
+				vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE);
+			}
+		})),
+		RESET_VIEWPORT_SIZE(flow -> execute(() -> {
+			VirtualScrollPane vsp = (VirtualScrollPane) flow.getParent().getParent();
+			vsp.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+			vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+		})),
+		CHANGE_CELLS_SIZE_TO(flow -> execute(() -> {
+			double value = getSizeFromUser(root, "Change Cells Size To...", "Current Size: " + flow.getCellSize());
+			if (value == -1.0) return;
+			flow.setCellSize(value);
+		})),
+		CHANGE_CELLS_PER_PAGE(flow -> execute(() -> {
+			int value = getIntFromUser(root, "Change Cells Per Page To...", "Current Number: " + flow.getCellsPerPage());
+			if (value == -1) return;
+			flow.setCellsPerPage(value);
+		})),
+		REPLACE_LIST(flow -> execute(() -> {
+			ObservableList<Integer> integers = IntStream.rangeClosed(0, 200)
+					.mapToObj(i -> RandomUtils.random.nextInt(0, 9999))
+					.collect(FXCollectors.toList());
+			flow.setItems(integers);
+		})),
+		SWITCH_CELLS_FACTORY(flow -> execute(() -> {
+			Class<? extends Cell<Integer>> lastFactory = lastFactoryMap.get(flow);
+			Function<Integer, Cell<Integer>> factory;
+			if (lastFactory == DetailedCell.class) {
+				factory = AlternativeCell::new;
+				lastFactoryMap.put(flow, AlternativeCell.class);
+			} else {
+				factory = DetailedCell::new;
+				lastFactoryMap.put(flow, DetailedCell.class);
+			}
+			flow.setCellFactory(factory);
+		})),
+		SWITCH_ORIENTATION(flow -> execute(() -> {
+			Orientation newOr;
+			if (flow.getOrientation() == Orientation.VERTICAL) {
+				newOr = Orientation.HORIZONTAL;
+				flow.setOrientation(newOr);
+				flow.setCellSize(100);
+			} else {
+				newOr = Orientation.VERTICAL;
+				flow.setOrientation(newOr);
+				flow.setCellSize(64);
+			}
+		})),
+		TEST_VARIABLE_BREADTH(flow -> execute(() -> {
+			if (!flow.isFitToBreadth()) {
+				flow.setFitToBreadth(true);
+				return;
+			}
 
-				Orientation o = flow.getOrientation();
-				Function<Integer, Cell<Integer>> factory;
-				if (o == Orientation.VERTICAL) {
-					factory = i -> new DetailedCell(i) {
-						{
-							setPrefSize(USE_COMPUTED_SIZE, USE_COMPUTED_SIZE);
-						}
+			Orientation o = flow.getOrientation();
+			Function<Integer, Cell<Integer>> factory;
+			if (o == Orientation.VERTICAL) {
+				factory = i -> new DetailedCell(i) {
+					{
+						setPrefSize(USE_COMPUTED_SIZE, USE_COMPUTED_SIZE);
+					}
 
-						@Override
-						protected double computePrefWidth(double height) {
-							double def = flow.getWidth();
-							int delta = RandomUtils.random.nextInt(0, 100);
-							boolean mul = RandomUtils.random.nextBoolean();
-							return def + (mul ? delta : -delta);
-						}
-					};
-				} else {
-					factory = i -> new DetailedCell(i) {
-						{
-							setPrefSize(USE_COMPUTED_SIZE, USE_COMPUTED_SIZE);
-						}
+					@Override
+					protected double computePrefWidth(double height) {
+						double def = flow.getWidth();
+						int delta = RandomUtils.random.nextInt(0, 100);
+						boolean mul = RandomUtils.random.nextBoolean();
+						return def + (mul ? delta : -delta);
+					}
+				};
+			} else {
+				factory = i -> new DetailedCell(i) {
+					{
+						setPrefSize(USE_COMPUTED_SIZE, USE_COMPUTED_SIZE);
+					}
 
-						@Override
-						protected double computePrefHeight(double width) {
-							double def = flow.getHeight();
-							int delta = RandomUtils.random.nextInt(0, 100);
-							boolean mul = RandomUtils.random.nextBoolean();
-							return def + (mul ? delta : -delta);
-						}
-					};
-				}
-				flow.setCellFactory(factory);
-				flow.setFitToBreadth(false);
-			};
-			execute(action);
-		}),
-		SCROLL_BY_64PX(flow -> {
-			Runnable action = () -> flow.scrollBy(64.0);
-			execute(action);
-		}),
-		SCROLL_TO_64PX(flow -> {
-			Runnable action = () -> flow.scrollToPixel(64.0);
-			execute(action);
-		}),
-		SCROLL_TO_INDEX_20(flow -> {
-			Runnable action = () -> flow.scrollToIndex(20);
-			execute(action);
-		}),
-		SCROLL_TO_FIRST(flow -> {
-			Runnable action = flow::scrollToFirst;
-			execute(action);
-		}),
-		SCROLL_TO_LAST(flow -> {
-			Runnable action = flow::scrollToLast;
-			execute(action);
-		});
+					@Override
+					protected double computePrefHeight(double width) {
+						double def = flow.getHeight();
+						int delta = RandomUtils.random.nextInt(0, 100);
+						boolean mul = RandomUtils.random.nextBoolean();
+						return def + (mul ? delta : -delta);
+					}
+				};
+			}
+			flow.setCellFactory(factory);
+			flow.setFitToBreadth(false);
+		})),
+		GO_TO_PAGE(flow -> execute(() -> flow.goToPage(getIntFromUser(root, "Go To Page...",
+				"Available Pages %d/%d".formatted(1, flow.getMaxPage()))))),
+		SCROLL_TO_INDEX_20(flow -> execute(() -> flow.scrollToIndex(20))),
+		SCROLL_TO_FIRST(flow -> execute(flow::scrollToFirst)),
+		SCROLL_TO_LAST(flow -> execute(flow::scrollToLast));
 
 		private final TestAction<Integer> action;
 

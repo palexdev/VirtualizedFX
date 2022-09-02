@@ -19,7 +19,6 @@
   -->
 
 <?import io.github.palexdev.materialfx.controls.MFXFilterComboBox?>
-<?import io.github.palexdev.materialfx.controls.MFXSpinner?>
 <?import io.github.palexdev.mfxcore.controls.MFXIconWrapper?>
 <?import io.github.palexdev.mfxresources.font.MFXFontIcon?>
 <?import javafx.geometry.*?>
@@ -64,16 +63,13 @@
                   <Insets bottom="10.0" left="50.0" right="50.0" top="10.0"/>
                </padding>
             </BorderPane>
-            <HBox alignment="CENTER">
+            <HBox fx:id="footer" alignment="CENTER">
                <VBox.margin>
                   <Insets/>
                </VBox.margin>
                <padding>
                   <Insets bottom="10.0" top="10.0"/>
                </padding>
-               <children>
-                  <MFXSpinner fx:id="spinner"/>
-               </children>
             </HBox>
          </children>
       </VBox>

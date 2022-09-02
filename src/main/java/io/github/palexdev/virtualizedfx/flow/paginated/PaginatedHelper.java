@@ -45,7 +45,7 @@ public interface PaginatedHelper extends OrientationHelper {
 		protected PaginatedVirtualFlow<?, ?> pFlow;
 
 		public PaginatedHorizontalHelper(PaginatedVirtualFlow<?, ?> virtualFlow, ViewportManager<?, ?> viewportManager) {
-			super(virtualFlow, viewportManager);
+			super(virtualFlow);
 			this.pFlow = virtualFlow;
 		}
 
@@ -84,7 +84,7 @@ public interface PaginatedHelper extends OrientationHelper {
 		 */
 		@Override
 		public void goToPage(int page) {
-			scrollToPixel(pageToPos(page));
+			super.scrollToPixel(pageToPos(page));
 		}
 
 		/**
@@ -123,7 +123,7 @@ public interface PaginatedHelper extends OrientationHelper {
 		protected PaginatedVirtualFlow<?, ?> pFlow;
 
 		public PaginatedVerticalHelper(PaginatedVirtualFlow<?, ?> virtualFlow, ViewportManager<?, ?> viewportManager) {
-			super(virtualFlow, viewportManager);
+			super(virtualFlow);
 			this.pFlow = virtualFlow;
 		}
 
@@ -162,7 +162,7 @@ public interface PaginatedHelper extends OrientationHelper {
 		 */
 		@Override
 		public void goToPage(int page) {
-			scrollToPixel(pageToPos(page));
+			super.scrollToPixel(pageToPos(page));
 		}
 
 		/**
@@ -174,6 +174,17 @@ public interface PaginatedHelper extends OrientationHelper {
 		@Override
 		public void scrollBy(double pixels) {
 			throw new UnsupportedOperationException("The paginated flow cannot scroll by a given amount of pixels");
+		}
+
+		/**
+		 * This is unsupported as the {@link PaginatedVirtualFlow} can only scroll to certain pixel values, given
+		 * by the pages.
+		 *
+		 * @throws UnsupportedOperationException
+		 */
+		@Override
+		public void scrollToPixel(double pixel) {
+			throw new UnsupportedOperationException("The paginated flow cannot scroll to a given pixel");
 		}
 
 		/**

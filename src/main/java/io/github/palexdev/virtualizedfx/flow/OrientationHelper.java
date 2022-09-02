@@ -132,21 +132,31 @@ public interface OrientationHelper {
 	 * Abstract implementation of {@link OrientationHelper}, base class for both {@link HorizontalHelper} and
 	 * {@link VerticalHelper} to extract common properties.
 	 */
-	abstract class AbstractHelper implements OrientationHelper {
+	abstract class AbstractOrientationHelper implements OrientationHelper {
 		protected final VirtualFlow<?, ?> virtualFlow;
 		protected final ViewportManager<?, ?> viewportManager;
 
 		protected final DoubleProperty estimatedLength = new SimpleDoubleProperty();
 		protected final DoubleProperty maxBreadth = new SimpleDoubleProperty();
 
-		public AbstractHelper(VirtualFlow<?, ?> virtualFlow, ViewportManager<?, ?> viewportManager) {
+		public AbstractOrientationHelper(VirtualFlow<?, ?> virtualFlow) {
 			this.virtualFlow = virtualFlow;
-			this.viewportManager = viewportManager;
+			this.viewportManager = virtualFlow.getViewportManager();
+		}
+
+		@Override
+		public ReadOnlyDoubleProperty estimatedLengthProperty() {
+			return estimatedLength;
+		}
+
+		@Override
+		public ReadOnlyDoubleProperty maxBreadthProperty() {
+			return maxBreadth;
 		}
 	}
 
 	/**
-	 * Concrete implementation of {@link AbstractHelper} for managing the virtual flow when its orientation
+	 * Concrete implementation of {@link AbstractOrientationHelper} for managing the virtual flow when its orientation
 	 * is HORIZONTAL.
 	 * <p></p>
 	 * This helper adds the following listeners:
@@ -154,13 +164,13 @@ public interface OrientationHelper {
 	 * <p> - A listener to the virtual flow's height to re-layout, {@link VirtualFlow#requestViewportLayout()}
 	 * <p> - A listener on the virtual flow's hPos property to process the scroll, {@link ViewportManager#onScroll()}
 	 */
-	class HorizontalHelper extends AbstractHelper {
+	class HorizontalHelper extends AbstractOrientationHelper {
 		private ChangeListener<? super Number> widthListener;
 		private InvalidationListener heightListener;
 		private InvalidationListener hPosListener;
 
-		public HorizontalHelper(VirtualFlow<?, ?> virtualFlow, ViewportManager<?, ?> viewportManager) {
-			super(virtualFlow, viewportManager);
+		public HorizontalHelper(VirtualFlow<?, ?> virtualFlow) {
+			super(virtualFlow);
 
 			widthListener = (observable, oldValue, newValue) -> {
 				if (newValue.doubleValue() > 0) viewportManager.init();
@@ -222,11 +232,6 @@ public interface OrientationHelper {
 			return val;
 		}
 
-		@Override
-		public ReadOnlyDoubleProperty estimatedLengthProperty() {
-			return estimatedLength;
-		}
-
 		/**
 		 * {@inheritDoc}
 		 * <p>
@@ -238,11 +243,6 @@ public interface OrientationHelper {
 		public double computeBreadth(Node node) {
 			boolean fitToBreadth = virtualFlow.isFitToBreadth();
 			return fitToBreadth ? virtualFlow.getHeight() : LayoutUtils.boundHeight(node);
-		}
-
-		@Override
-		public ReadOnlyDoubleProperty maxBreadthProperty() {
-			return maxBreadth;
 		}
 
 		/**
@@ -292,8 +292,8 @@ public interface OrientationHelper {
 		public void invalidatePos() {
 			double length = estimatedLength.get();
 			double breadth = maxBreadth.get();
-			virtualFlow.setVPos(Math.min(virtualFlow.getVPos(), length));
-			virtualFlow.setHPos(Math.min(virtualFlow.getHPos(), breadth));
+			virtualFlow.setVPos(Math.min(virtualFlow.getVPos(), breadth));
+			virtualFlow.setHPos(Math.min(virtualFlow.getHPos(), length));
 		}
 
 		@Override
@@ -341,7 +341,7 @@ public interface OrientationHelper {
 	}
 
 	/**
-	 * Concrete implementation of {@link AbstractHelper} for managing the virtual flow when its orientation
+	 * Concrete implementation of {@link AbstractOrientationHelper} for managing the virtual flow when its orientation
 	 * is VERTICAL.
 	 * <p></p>
 	 * This helper adds the following listeners:
@@ -349,13 +349,13 @@ public interface OrientationHelper {
 	 * <p> - A listener to the virtual flow's width to re-layout, {@link VirtualFlow#requestViewportLayout()}
 	 * <p> - A listener on the virtual flow's vPos property to process the scroll, {@link ViewportManager#onScroll()}
 	 */
-	class VerticalHelper extends AbstractHelper {
+	class VerticalHelper extends AbstractOrientationHelper {
 		private ChangeListener<? super Number> heightListener;
 		private InvalidationListener widthListener;
 		private InvalidationListener vPosListener;
 
-		public VerticalHelper(VirtualFlow<?, ?> virtualFlow, ViewportManager<?, ?> viewportManager) {
-			super(virtualFlow, viewportManager);
+		public VerticalHelper(VirtualFlow<?, ?> virtualFlow) {
+			super(virtualFlow);
 
 			heightListener = (observable, oldValue, newValue) -> {
 				if (newValue.doubleValue() > 0) viewportManager.init();
@@ -417,11 +417,6 @@ public interface OrientationHelper {
 			return val;
 		}
 
-		@Override
-		public ReadOnlyDoubleProperty estimatedLengthProperty() {
-			return estimatedLength;
-		}
-
 		/**
 		 * {@inheritDoc}
 		 * <p>
@@ -433,11 +428,6 @@ public interface OrientationHelper {
 		public double computeBreadth(Node node) {
 			boolean fitToBreadth = virtualFlow.isFitToBreadth();
 			return fitToBreadth ? virtualFlow.getWidth() : LayoutUtils.boundWidth(node);
-		}
-
-		@Override
-		public ReadOnlyDoubleProperty maxBreadthProperty() {
-			return maxBreadth;
 		}
 
 		/**

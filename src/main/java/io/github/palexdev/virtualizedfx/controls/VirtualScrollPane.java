@@ -18,6 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.controls;
 
+import io.github.palexdev.mfxcore.base.bindings.BiBindingHelper;
 import io.github.palexdev.mfxcore.base.bindings.BiBindingManager;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
@@ -32,6 +33,7 @@ import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.ResourceManager;
 import io.github.palexdev.virtualizedfx.beans.VirtualBounds;
 import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.controls.behavior.MFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VirtualScrollPaneSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
@@ -41,6 +43,8 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlow;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
+import io.github.palexdev.virtualizedfx.grid.GridHelper;
+import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -164,6 +168,20 @@ public class VirtualScrollPane extends Control {
 				.get()
 		);
 
+		BiBindingHelper<Number> vValHelper = new BiBindingHelper<>() {
+			{
+				When.onInvalidated(flow.estimatedLengthProperty())
+						.condition(val -> flow.getOrientation() == Orientation.VERTICAL)
+						.then(val -> invalidate())
+						.listen();
+			}
+
+			@Override
+			public void dispose() {
+				super.dispose();
+				When.disposeFor(flow.estimatedLengthProperty());
+			}
+		};
 		bindingManager.bindBidirectional(vsp.vValProperty())
 				.to(flow.vPosProperty(), (oldValue, newValue) -> {
 					OrientationHelper helper = flow.getOrientationHelper();
@@ -175,9 +193,24 @@ public class VirtualScrollPane extends Control {
 					double val = (max != 0) ? newValue.doubleValue() / max : 0;
 					vsp.setVVal(val);
 				})
+				.withHelper(vValHelper)
 				.override(true)
 				.create();
 
+		BiBindingHelper<Number> hValHelper = new BiBindingHelper<>() {
+			{
+				When.onInvalidated(flow.estimatedLengthProperty())
+						.condition(val -> flow.getOrientation() == Orientation.HORIZONTAL)
+						.then(val -> invalidate())
+						.listen();
+			}
+
+			@Override
+			public void dispose() {
+				super.dispose();
+				When.disposeFor(flow.estimatedLengthProperty());
+			}
+		};
 		bindingManager.bindBidirectional(vsp.hValProperty())
 				.to(flow.hPosProperty(), (oldValue, newValue) -> {
 					OrientationHelper helper = flow.getOrientationHelper();
@@ -189,6 +222,7 @@ public class VirtualScrollPane extends Control {
 					double val = (max != 0) ? newValue.doubleValue() / max : 0;
 					vsp.setHVal(val);
 				})
+				.withHelper(hValHelper)
 				.override(true)
 				.create();
 

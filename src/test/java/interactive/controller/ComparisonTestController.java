@@ -25,6 +25,7 @@ import io.github.palexdev.materialfx.dialogs.MFXGenericDialogBuilder;
 import io.github.palexdev.materialfx.dialogs.MFXStageDialog;
 import io.github.palexdev.materialfx.enums.DialogType;
 import io.github.palexdev.materialfx.enums.FloatMode;
+import io.github.palexdev.mfxcore.animations.Animations;
 import io.github.palexdev.mfxcore.animations.Animations.SequentialBuilder;
 import io.github.palexdev.mfxcore.animations.ConsumerTransition;
 import io.github.palexdev.mfxcore.animations.Interpolators;
@@ -44,6 +45,7 @@ import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlow;
 import io.github.palexdev.virtualizedfx.unused.simple.SimpleVirtualFlow;
+import javafx.animation.Animation;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -283,7 +285,6 @@ public class ComparisonTestController implements Initializable {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private enum Action {
 		UPDATE_AT_5((mode, oldImp, newImp) -> {
 			Runnable oAction = () -> oldImp.getItems().set(5, RandomUtils.random.nextInt(0, 9999));
@@ -298,6 +299,11 @@ public class ComparisonTestController implements Initializable {
 		ADD_AT_0((mode, oldImp, newImp) -> {
 			Runnable oAction = () -> oldImp.getItems().add(0, RandomUtils.random.nextInt(0, 9999));
 			Runnable nAction = () -> newImp.getItems().add(0, RandomUtils.random.nextInt(0, 9999));
+			execute(mode, oAction, nAction);
+		}),
+		ADD_AT_END((mode, oldImp, newImp) -> {
+			Runnable oAction = () -> oldImp.getItems().add(oldImp.getItems().size(), RandomUtils.random.nextInt(0, 9999));
+			Runnable nAction = () -> newImp.getItems().add(oldImp.getItems().size(), RandomUtils.random.nextInt(0, 9999));
 			execute(mode, oAction, nAction);
 		}),
 		ADD_MULTIPLE_AT_3((mode, oldImp, newImp) -> {
@@ -616,6 +622,7 @@ public class ComparisonTestController implements Initializable {
 		protected final Label label;
 		protected Integer item;
 		protected int index;
+		protected Animation bAnimation;
 
 		public CommonCell(Integer item) {
 			this.item = item;
@@ -630,7 +637,17 @@ public class ComparisonTestController implements Initializable {
 
 			StyleUtils.setBackground(this, Color.TRANSPARENT);
 
-			addEventHandler(MouseEvent.MOUSE_CLICKED, event -> updateItem(CommonCell.this.item));
+			addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+				updateItem(CommonCell.this.item);
+				Animations.PauseBuilder.build()
+						.setDuration(animationDuration)
+						.setOnFinished(end -> {
+							if (bAnimation != null && Animations.isStopped(bAnimation))
+								StyleUtils.setBackground(this, Color.TRANSPARENT);
+						})
+						.getAnimation()
+						.play();
+			});
 		}
 
 		@Override
@@ -648,10 +665,25 @@ public class ComparisonTestController implements Initializable {
 		public void updateItem(Integer item) {
 			this.item = item;
 			label.setText(dataToString());
-			animateBackground(this);
+
+			if (bAnimation != null && Animations.isPlaying(bAnimation)) {
+				bAnimation.stop();
+				StyleUtils.setBackground(this, Color.TRANSPARENT);
+			}
+			bAnimation = animateBackground(this);
+			bAnimation.play();
 		}
 
 		protected abstract String dataToString();
+
+		@Override
+		public void dispose() {
+			if (bAnimation != null) {
+				bAnimation.stop();
+				bAnimation = null;
+				StyleUtils.setBackground(this, Color.TRANSPARENT);
+			}
+		}
 	}
 
 	public static class DetailedCell extends CommonCell {
@@ -724,7 +756,7 @@ public class ComparisonTestController implements Initializable {
 		}
 	}
 
-	public static void animateBackground(Region region) {
+	public static Animation animateBackground(Region region) {
 		int r = RandomUtils.random.nextInt(0, 255);
 		int g = RandomUtils.random.nextInt(0, 255);
 		int b = RandomUtils.random.nextInt(0, 255);
@@ -734,11 +766,10 @@ public class ComparisonTestController implements Initializable {
 		ConsumerTransition ct2 = ConsumerTransition.of(frac -> StyleUtils.setBackground(region, Color.rgb(r, g, b, 1.0 - frac)))
 				.setDuration(500)
 				.setInterpolatorFluent(Interpolators.INTERPOLATOR_V1);
-		SequentialBuilder.build()
+		return SequentialBuilder.build()
 				.add(ct1)
 				.add(ct2)
-				.getAnimation()
-				.play();
+				.getAnimation();
 	}
 
 	protected static double getSizeFromUser(Pane owner, String title, String fieldText) {
