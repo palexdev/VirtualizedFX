@@ -23,8 +23,8 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProp
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.flow.FlowState;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper;
-import io.github.palexdev.virtualizedfx.flow.ViewportState;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlow;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedHelper.PaginatedHorizontalHelper;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedHelper.PaginatedVerticalHelper;
@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
  * <p></p>
  * Last but not least a word of <b>warning</b>.
  * <p>
- * Note that this is a naive implementation. Some things/components, like the {@link ViewportState} class, have been
+ * Note that this is a naive implementation. Some things/components, like the {@link FlowState} class, have been
  * adapted to work with this, but if you are not careful you could easily break or mess things up.
  * <p>
  * For example: the correct way to scroll in this flow is to change the current page property, but nothing prevents you
@@ -172,8 +172,8 @@ public class PaginatedVirtualFlow<T, C extends Cell<T>> extends VirtualFlow<T, C
 
 	/**
 	 * Returns the range of displayed items in the current page.
-	 * It is preferable to use this instead of {@link ViewportState#getRange()} as this range
-	 * doesn't take into account the cells that have been hidden, see {@link ViewportState#computePaginatedPositions()}.
+	 * It is preferable to use this instead of {@link FlowState#getRange()} as this range
+	 * doesn't take into account the cells that have been hidden, see {@link FlowState#computePaginatedPositions()}.
 	 * <p></p>
 	 * In case the current {@link #orientationHelperProperty()} is null, returns {@code IntegerRange.of(-1)}.
 	 */
@@ -189,7 +189,7 @@ public class PaginatedVirtualFlow<T, C extends Cell<T>> extends VirtualFlow<T, C
 	/**
 	 * Returns a map containing all the currently visible cells in the page.
 	 * It is preferable to use this with {@link PaginatedVirtualFlow} instead of {@link #getIndexedCells()} because
-	 * of this {@link ViewportState#computePaginatedPositions()}.
+	 * of this {@link FlowState#computePaginatedPositions()}.
 	 * <p></p>
 	 * In case the range is equal to {@code IntegerRange.of(-1)}, returns an empty map.
 	 */

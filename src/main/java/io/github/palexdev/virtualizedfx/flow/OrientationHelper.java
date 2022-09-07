@@ -258,7 +258,7 @@ public interface OrientationHelper {
 		 * Think about this. We have cells of size 64. and we scroll 15px on each gesture. When we reach 60px, we can still
 		 * see the cell for 4px, but once we scroll again it makes to sense to go to 75px because the first cell won't be
 		 * visible anymore, so we go back at 11px. Now the top cell will be visible for 53px. Keep in mind that cells
-		 * are always positioned from the end to 0 (exceptions documented here {@link ViewportState#computePositions()}).
+		 * are always positioned from the end to 0 (exceptions documented here {@link FlowState#computePositions()}).
 		 * <p>
 		 * Long story short, scrolling is just an illusion, the viewport just scroll by a little to give this illusion and
 		 * when needed the cells are just repositioned from the end. This is important because the estimated length
@@ -459,7 +459,7 @@ public interface OrientationHelper {
 		 * Think about this. We have cells of size 64. and we scroll 15px on each gesture. When we reach 60px, we can still
 		 * see the cell for 4px, but once we scroll again it makes to sense to go to 75px because the first cell won't be
 		 * visible anymore, so we go back at 11px. Now the top cell will be visible for 53px. Keep in mind that cells
-		 * are always positioned from the end to 0 (exceptions documented here {@link ViewportState#computePositions()}).
+		 * are always positioned from the end to 0 (exceptions documented here {@link FlowState#computePositions()}).
 		 * <p>
 		 * Long story short, scrolling is just an illusion, the viewport just scroll by a little to give this illusion and
 		 * when needed the cells are just repositioned from the end. This is important because the estimated length

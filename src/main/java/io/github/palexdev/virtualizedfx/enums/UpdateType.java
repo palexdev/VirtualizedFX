@@ -18,10 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.enums;
 
-import io.github.palexdev.virtualizedfx.flow.ViewportState;
+import io.github.palexdev.virtualizedfx.flow.FlowState;
 
 /**
- * Enumeration to differentiate the various types of {@link ViewportState}.
+ * Enumeration to differentiate the various types of {@link FlowState}.
  * <p>
  * To be more precise, this is used to indicate which event lead to the creation of the new state.
  */

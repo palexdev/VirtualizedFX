@@ -75,6 +75,7 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		thumbPos = DoubleBindingBuilder.build()
 				.setMapper(() -> valToPos(scrollBar.getValue()))
 				.addSources(scrollBar.valueProperty())
+				.addSources(thumb.widthProperty(), thumb.heightProperty())
 				.get();
 
 
@@ -111,7 +112,6 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 				vamAdjust = false; // TODO check effectiveness
 				return;
 			}
-			thumbPos.invalidate();
 			sb.requestLayout();
 		};
 

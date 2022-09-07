@@ -66,7 +66,7 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 	private ListChangeListener<? super T> itemsChanged;
 	private ChangeListener<? super ObservableList<T>> listChanged;
 	private InvalidationListener factoryChanged;
-	private ChangeListener<? super ViewportState<T, C>> stateChanged;
+	private ChangeListener<? super FlowState<T, C>> stateChanged;
 	private ChangeListener<? super OrientationHelper> orientationChanged;
 	private ChangeListener<? super Boolean> layoutRequestListener;
 
@@ -86,8 +86,8 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 					throw new IllegalStateException("OrientationHelper is null, cannot proceed with layout");
 
 				DoubleProperty maxBreadth = (DoubleProperty) helper.maxBreadthProperty();
-				ViewportState<T, C> state = virtualFlow.getState();
-				if (state == ViewportState.EMPTY || state.isEmpty()) {
+				FlowState<T, C> state = virtualFlow.getState();
+				if (state == FlowState.EMPTY || state.isEmpty()) {
 					helper.invalidatePos();
 					maxBreadth.set(0.0); // TODO add reset breadth to helper?
 					return;
@@ -95,12 +95,12 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 
 				if (state.getType() == UpdateType.CHANGE) helper.invalidatePos();
 
-				Map<C, Double> layoutMap = state.computePositions();
+				Map<Double, C> layoutMap = state.computePositions();
 				double mBreadth = 0.0; // Max breadth
 
-				for (Map.Entry<? extends Cell<?>, Double> e : layoutMap.entrySet()) {
-					Cell<?> cell = e.getKey();
-					Double pos = e.getValue();
+				for (Map.Entry<Double, ? extends Cell<?>> e : layoutMap.entrySet()) {
+					Cell<?> cell = e.getValue();
+					Double pos = e.getKey();
 					Node node = cell.getNode();
 					cell.beforeLayout();
 					double breadth = helper.computeBreadth(node);
@@ -123,24 +123,12 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 
 		// Build listeners
 		ViewportManager<T, C> viewportManager = virtualFlow.getViewportManager();
-		itemsChanged = c -> {
-			virtualFlow.getOrientationHelper().computeEstimatedLength();
-			viewportManager.onListChange(c);
-		};
-
-		listChanged = (observable, oldValue, newValue) -> {
-			if (oldValue != null) oldValue.removeListener(itemsChanged);
-			if (newValue != null) {
-				newValue.addListener(itemsChanged);
-				virtualFlow.getOrientationHelper().computeEstimatedLength();
-				viewportManager.reset();
-			}
-		};
-
+		itemsChanged = this::onItemsChanged;
+		listChanged = (observable, oldValue, newValue) -> onListChanged(oldValue, newValue);
 		factoryChanged = invalidated -> viewportManager.reset();
 
 		stateChanged = (observable, oldValue, newValue) -> {
-			if (newValue == ViewportState.EMPTY) {
+			if (newValue == FlowState.EMPTY) {
 				viewport.getChildren().clear();
 				return;
 			}
@@ -195,6 +183,35 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		virtualFlow.stateProperty().addListener(stateChanged);
 		virtualFlow.orientationHelperProperty().addListener(orientationChanged);
 		virtualFlow.needsViewportLayoutProperty().addListener(layoutRequestListener);
+	}
+
+	/**
+	 * Tells the flow's components what to do when the items list changes.
+	 * By default, this causes the removal of the itemsChanged listener from the old list,
+	 * which is then added to the new list. The estimated length is also recomputed and the viewport reset.
+	 */
+	protected void onListChanged(ObservableList<? extends T> oldList, ObservableList<? extends T> newList) {
+		if (oldList != null) oldList.removeListener(itemsChanged);
+
+		VirtualFlow<T, C> virtualFlow = getSkinnable();
+		ViewportManager<T, C> viewportManager = virtualFlow.getViewportManager();
+		if (newList != null) {
+			newList.addListener(itemsChanged);
+			virtualFlow.getOrientationHelper().computeEstimatedLength();
+			viewportManager.reset();
+		}
+	}
+
+	/**
+	 * Tells the flow's components what to do when the items in the list change.
+	 * By default, this causes the re-computation of the estimated length followed
+	 * by the computation of the new flow' state
+	 */
+	protected void onItemsChanged(ListChangeListener.Change<? extends T> c) {
+		VirtualFlow<T, C> virtualFlow = getSkinnable();
+		ViewportManager<T, C> viewportManager = virtualFlow.getViewportManager();
+		virtualFlow.getOrientationHelper().computeEstimatedLength();
+		viewportManager.onListChange(c);
 	}
 
 	//================================================================================

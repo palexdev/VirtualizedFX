@@ -14,6 +14,30 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [NoVer] - 07-09-2022
+
+## Changed
+
+- Bump MFXCore to version 11.0.16
+- Renamed ViewportState to FlowState
+- Renamed StateProperty to FlowStateProperty
+- VirtualFlowSkin: move itemsChanged listener code to protected method, needed by PaginatedVirtualFlowSkin subclass
+- VirtualFlowSkin: move listChanged listener code to protected method, needed by PaginatedVirtualFlowSkin
+- VirtualFlowSkin: adapted layout code to changes made to FlowState
+- FlowState: inverted the layoutMap to Double -> Cell. This to make use of a TreeMap to always keep the positions
+  ordered in reverse, thus avoiding a Collections.sort() in the computePositions() method
+
+## Fixed
+
+- MFXScrollBarSkin: fixed a bug that caused the thumb to be positioned outside the track in some specific occasions
+- VirtualScrollPane: Sometimes it's also needed to invalidate the position of the virtual flow when the length changes
+- PaginatedVirtualFlowSkin: sometimes the number of pages was not updated by listening on the estimatedLength property
+  for some reason. Fixed by doing it every time the items list changes or the list changes
+- FlowState: further testing proved that even the new algorithm to manage additions to the items list was still failing
+  for both VirtualFlow and PaginatedVirtualFlow. Switched to a "mapping" technique which should finally work for both
+- FlowState: also fixed algorithm to handle replacements in the items list as it was misbehaving in some specific
+  occasions
+
 ## [NoVer] - 02-09-2022
 
 ## Added

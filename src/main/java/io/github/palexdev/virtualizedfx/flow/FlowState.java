@@ -24,10 +24,12 @@ import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper.Change;
 import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper.ChangeType;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.enums.UpdateType;
+import io.github.palexdev.virtualizedfx.flow.FlowMapping.FullMapping;
+import io.github.palexdev.virtualizedfx.flow.FlowMapping.PartialMapping;
+import io.github.palexdev.virtualizedfx.flow.FlowMapping.ValidMapping;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Class used by the {@link ViewportManager} to represent the state of the viewport at a given time.
@@ -49,11 +51,11 @@ import java.util.stream.Collectors;
  * is empty, and no state can be created.
  */
 @SuppressWarnings("rawtypes")
-public class ViewportState<T, C extends Cell<T>> {
+public class FlowState<T, C extends Cell<T>> {
 	//================================================================================
 	// Static Properties
 	//================================================================================
-	public static final ViewportState EMPTY = new ViewportState<>();
+	public static final FlowState EMPTY = new FlowState<>();
 
 	//================================================================================
 	// Properties
@@ -61,21 +63,22 @@ public class ViewportState<T, C extends Cell<T>> {
 	private final VirtualFlow<T, C> virtualFlow;
 	private final IntegerRange range;
 	private final Map<Integer, C> cells = new TreeMap<>();
-	private final Map<C, Double> layoutMap = new LinkedHashMap<>();
+	private final Map<Double, C> layoutMap = new TreeMap<>(Comparator.<Double>comparingDouble(v -> v).reversed());
 	private final int targetSize;
 	private UpdateType type = UpdateType.INIT;
 	private boolean cellsChanged = false;
+	private boolean hidden = false;
 
 	//================================================================================
 	// Constructors
 	//================================================================================
-	private ViewportState() {
+	private FlowState() {
 		this.virtualFlow = null;
 		this.range = IntegerRange.of(-1);
 		this.targetSize = -1;
 	}
 
-	public ViewportState(VirtualFlow<T, C> virtualFlow, IntegerRange range) {
+	public FlowState(VirtualFlow<T, C> virtualFlow, IntegerRange range) {
 		this.virtualFlow = virtualFlow;
 		this.range = range;
 		this.targetSize = virtualFlow.getOrientationHelper().maxCells();
@@ -109,11 +112,11 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * @param newRange the new state's range of items
 	 * @return the new state
 	 */
-	public ViewportState<T, C> transition(IntegerRange newRange) {
+	public FlowState<T, C> transition(IntegerRange newRange) {
 		if (range.equals(newRange)) return this;
 		type = UpdateType.SCROLL;
 
-		ViewportState<T, C> newState = new ViewportState<>(virtualFlow, newRange);
+		FlowState<T, C> newState = new FlowState<>(virtualFlow, newRange);
 		Deque<Integer> toUpdate = new ArrayDeque<>();
 		for (int i = newRange.getMin(); i <= newRange.getMax(); i++) {
 			C common = cells.remove(i);
@@ -124,18 +127,16 @@ public class ViewportState<T, C extends Cell<T>> {
 			toUpdate.add(i);
 		}
 
-		if (!toUpdate.isEmpty()) {
-			Iterator<Map.Entry<Integer, C>> it = cells.entrySet().iterator();
-			while (it.hasNext() && !toUpdate.isEmpty()) {
-				Map.Entry<Integer, C> next = it.next();
-				C cell = next.getValue();
-				int cIndex = toUpdate.removeFirst();
-				T item = virtualFlow.getItems().get(cIndex);
-				cell.updateIndex(cIndex);
-				cell.updateItem(item);
-				newState.addCell(cIndex, cell);
-				it.remove();
-			}
+		Iterator<Map.Entry<Integer, C>> it = cells.entrySet().iterator();
+		while (!toUpdate.isEmpty() && it.hasNext()) {
+			Map.Entry<Integer, C> next = it.next();
+			C cell = next.getValue();
+			int cIndex = toUpdate.removeFirst();
+			T item = virtualFlow.getItems().get(cIndex);
+			cell.updateIndex(cIndex);
+			cell.updateItem(item);
+			newState.addCell(cIndex, cell);
+			it.remove();
 		}
 
 		// Ensure that no cells remains in the old state, also dispose them
@@ -169,8 +170,8 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * @param changes the list of {@link ListChangeHelper.Change}s processed by the {@link ListChangeHelper}
 	 * @return the new state
 	 */
-	public ViewportState<T, C> transition(List<Change> changes) {
-		ViewportState<T, C> newState = this;
+	public FlowState<T, C> transition(List<Change> changes) {
+		FlowState<T, C> newState = this;
 		for (Change change : changes) {
 			newState = newState.transition(change);
 		}
@@ -223,7 +224,7 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * At this point the computation begins, there are several cases to consider.
 	 * <p>
 	 * The first case are the cells that appear before the index at which the change occurred. Those cells are copied as
-	 * they are from the old state to the new one, their index is also removed from the "availables" set.
+	 * they are from the old state to the new one, their index is also removed from the "available" set.
 	 * <p>
 	 * Now we have to distinguish two other cases: the cells that need a partial update (only index update) and the ones
 	 * that need a full update (both index and item updates).
@@ -237,11 +238,11 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * <p>
 	 * The next operation for all types of flows is to remove some indexes from the deque under the following conditions:
 	 * <p> 1) until the for loop index "i" must be lesser that the change size
-	 * <p> 2) the availables indexes must not be empty
+	 * <p> 2) the "available" indexes must not be empty
 	 * <p> 3) the viewport must be full, {@link #isViewportFull()}
 	 * <p></p>
 	 * Now for each of the indexes remaining in the deque cells are removed from the old state and updated only by index.
-	 * The index is also removed from the "availables" set.
+	 * The index is also removed from the "available" set.
 	 * <p></p>
 	 * The last remaining case, cells that need a full update, branches out into two sub-cases.
 	 * Starting from the cellIndex we need (given by {@code Math.max(first, change.getFrom())}),
@@ -262,7 +263,7 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * <p>
 	 * After all of that the new state object is returned.
 	 * <b>REMOVAL</b>
-	 * The computation in case of added items to the list is complex and a bit heavy on performance. There are
+	 * The computation in case of removed items from the list is complex and a bit heavy on performance. There are
 	 * several things to consider, and it was hard to find a generic algorithm that would correctly compute the new state
 	 * in all possible situations, included exceptional cases.
 	 * <p>
@@ -301,10 +302,10 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * @param change the {@link Change} to process which eventually will lead to the new state
 	 * @return a new {@code ViewportState} object or in exceptional cases the old state
 	 */
-	protected ViewportState<T, C> transition(Change change) {
+	protected FlowState<T, C> transition(Change change) {
 		switch (change.getType()) {
 			case PERMUTATION: {
-				ViewportState<T, C> newState = new ViewportState<>(virtualFlow, range);
+				FlowState<T, C> newState = new FlowState<>(virtualFlow, range);
 				cells.forEach((index, cell) -> {
 					T item = virtualFlow.getItems().get(index);
 					cell.updateItem(item);
@@ -314,27 +315,33 @@ public class ViewportState<T, C extends Cell<T>> {
 				return newState;
 			}
 			case REPLACE: {
+				OrientationHelper helper = virtualFlow.getOrientationHelper();
 				int cellsNum = cellsNum();
-				int min = range.getMin();
-				int max = Math.min(min + targetSize - 1, virtualFlow.getItems().size() - 1);
-				IntegerRange newRange = IntegerRange.of(min, max);
-				ViewportState<T, C> newState = new ViewportState<>(virtualFlow, newRange);
+				int last = helper.lastVisible();
+				int first = last - cellsNum + 1;
+				if (change.getFrom() > last) return this;
 
-				for (int i = min; i <= max; i++) {
-					C cell = cells.remove(i);
+				IntegerRange newRange = IntegerRange.of(first, last);
+				FlowState<T, C> newState = new FlowState<>(virtualFlow, newRange);
 
-					if (cell == null) {
-						T item = virtualFlow.getItems().get(i);
-						cell = virtualFlow.getCellFactory().apply(item);
-						cell.updateIndex(i);
-						newState.addCell(i, cell);
+				Deque<Integer> available = new ArrayDeque<>(cells.keySet());
+				for (int i = first; i <= last; i++) {
+					if (!change.hasChanged(i)) {
+						newState.addCell(i, cells.remove(i));
+						available.remove(i);
 						continue;
 					}
 
-					if (change.hasChanged(i)) {
-						T item = virtualFlow.getItems().get(i);
+					Integer index = available.poll();
+					T item = virtualFlow.getItems().get(i);
+					C cell;
+					if (index != null) {
+						cell = cells.remove(index);
 						cell.updateItem(item);
+					} else {
+						cell = virtualFlow.getCellFactory().apply(item);
 					}
+					cell.updateIndex(i);
 					newState.addCell(i, cell);
 				}
 
@@ -343,7 +350,7 @@ public class ViewportState<T, C extends Cell<T>> {
 					while (it.hasNext()) {
 						C cell = it.next().getValue();
 						cell.dispose();
-						layoutMap.remove(cell);
+						layoutMap.values().remove(cell);
 						it.remove();
 					}
 				}
@@ -352,67 +359,70 @@ public class ViewportState<T, C extends Cell<T>> {
 				return newState;
 			}
 			case ADD: {
-				boolean viewportFull = isViewportFull();
-				if (viewportFull && change.getFrom() > range.getMax()) break;
+				if (isViewportFull() && change.getFrom() > range.getMax()) return this;
 
 				// Pre-computation
-				OrientationHelper helper = virtualFlow.getOrientationHelper();
 				int first = getFirst();
-				int last = helper.lastVisible();
+				int last = (virtualFlow instanceof PaginatedVirtualFlow) ?
+						getLast() :
+						getLastAvailable();
 				int cellsNum = cellsNum();
-				Set<Integer> availables = new TreeSet<>(cells.keySet());
-				ViewportState<T, C> newState = new ViewportState<>(virtualFlow, IntegerRange.of(first, last));
+				IntegerRange newRange = IntegerRange.of(first, last);
+				FlowState<T, C> newState = new FlowState<>(virtualFlow, newRange);
 
-				// Copy valid
+				// Compute mappings
+				// In short: old indexes will be mapped to what they should
+				// be in the new state.
+				// Valid ones remain the same
+				// Partials (item unchanged, index to update) are shifted
+				// Full (item changed) are mapped to the new needed items
+				// Once mappings are computed they are "executed"
+				Set<Integer> available = IntegerRange.expandRangeToSet(newRange);
+				Map<Integer, FlowMapping<T, C>> mappings = new HashMap<>();
 				for (int i = first; i < change.getFrom(); i++) {
-					newState.addCell(i, cells.remove(i));
-					availables.remove(i);
+					mappings.put(i, new ValidMapping<>(i));
+					available.remove(i);
 				}
 
-				// Compute the indexes for which cells will be partially updated
-				Deque<Integer> pUpdates = new ArrayDeque<>(availables);
-				if (virtualFlow instanceof PaginatedVirtualFlow) {
-					pUpdates = pUpdates.stream()
-							.filter(i -> cells.get(i).getNode().isVisible())
-							.collect(Collectors.toCollection(ArrayDeque::new));
-				}
-				for (int i = 0; i < change.size() && !availables.isEmpty() && viewportFull; i++) {
-					pUpdates.removeLast();
-				}
+				int from = Math.max(change.getFrom(), first);
+				int targetSize = Math.min(virtualFlow.getItems().size(), newState.targetSize);
+				int lastInvalid = -1;
+				Deque<Integer> keys = getKeysDeque();
+				while (!available.isEmpty() || mappings.size() != targetSize) {
+					Integer index = keys.poll();
+					if (mappings.containsKey(index)) continue;
 
-				for (Integer index : pUpdates) {
-					int newIndex = index + change.size();
-					C cell = cells.remove(index);
-					cell.updateIndex(newIndex);
-					newState.addCell(newIndex, cell);
-					availables.remove(index);
-				}
-
-				// Perform the remaining full updates
-				int cellIndex = Math.max(first, change.getFrom());
-				int remaining = newState.getRange().diff() - newState.cellsNum() + 1;
-				Deque<Integer> availableQueue = new ArrayDeque<>(availables);
-				for (int i = 0; i < remaining; i++) {
-					C cell;
-					Integer index = availableQueue.pollLast();
-					T item = virtualFlow.getItems().get(cellIndex);
 					if (index != null) {
-						cell = cells.remove(index);
-						cell.updateItem(item);
-					} else {
-						cell = virtualFlow.getCellFactory().apply(item);
+						int newIndex = index + change.size();
+						if (IntegerRange.inRangeOf(newIndex, newRange) && !change.hasChanged(newIndex)) {
+							mappings.put(index, new PartialMapping<>(newIndex));
+							available.remove(newIndex);
+							continue;
+						}
 					}
-					cell.updateIndex(cellIndex);
-					newState.addCell(cellIndex, cell);
-					cellIndex++;
-				}
 
-				// Special handling for PaginatedVirtualFlow
-				// Ensure that remaining cells in the old state are carried by
-				// the new state too
+					int fIndex;
+					if (index == null) {
+						fIndex = lastInvalid;
+						lastInvalid--;
+					} else {
+						fIndex = index;
+					}
+					mappings.put(fIndex, new FullMapping<>(from));
+					available.remove(from);
+					from++;
+				}
+				mappings.forEach((i, m) -> m.manage(this, newState, i));
+
 				if (virtualFlow instanceof PaginatedVirtualFlow) {
+					// Ensure that remaining cells in the old state are carried by the new state too
 					newState.addCells(cells);
 					cells.clear();
+				} else if (!range.equals(newRange)) {
+					// If ranges are not the same there was an exceptional case
+					// as described by computePositions() documentation
+					// In such cases the old layout map is not valid
+					layoutMap.clear();
 				}
 
 				newState.setCellsChanged(newState.cellsNum() != cellsNum);
@@ -424,7 +434,7 @@ public class ViewportState<T, C extends Cell<T>> {
 				int max = Math.min(range.getMin() + targetSize - 1, virtualFlow.getItems().size() - 1);
 				int min = Math.max(0, max - targetSize + 1);
 				IntegerRange newRange = IntegerRange.of(min, max);
-				ViewportState<T, C> newState = new ViewportState<>(virtualFlow, newRange);
+				FlowState<T, C> newState = new FlowState<>(virtualFlow, newRange);
 
 				Set<Integer> pUpdate = IntegerRange.expandRangeToSet(range);
 				pUpdate.removeAll(change.getIndexes());
@@ -460,7 +470,7 @@ public class ViewportState<T, C extends Cell<T>> {
 						Map.Entry<Integer, C> next = it.next();
 						C cell = next.getValue();
 						cell.dispose();
-						layoutMap.remove(cell);
+						layoutMap.values().remove(cell);
 						it.remove();
 					}
 					newState.setCellsChanged(true);
@@ -515,7 +525,7 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * At this point we iterate from the end of the range to the start (so reverse order), each cell is put in the
 	 * layout map with the current bottom position, updated at each iteration as follows {@code bottom -= cellSize}.
 	 */
-	public Map<C, Double> computePositions() {
+	public Map<Double, C> computePositions() {
 		if (isEmpty()) return Map.of();
 		if (virtualFlow instanceof PaginatedVirtualFlow) {
 			return computePaginatedPositions();
@@ -528,12 +538,11 @@ public class ViewportState<T, C extends Cell<T>> {
 		boolean adjust = last > virtualFlow.getItems().size() - 1 && isViewportFull();
 
 		if (!adjust && type == UpdateType.CHANGE && layoutMap.size() >= targetSize) {
-			List<Double> positions = new ArrayList<>(layoutMap.values());
-			positions.sort(Comparator.reverseOrder());
-			for (int i = range.getMax(); i >= range.getMin(); i--) {
+			Iterator<Double> it = new ArrayList<>(layoutMap.keySet()).iterator();
+			for (int i = range.getMax(); i >= range.getMin() && it.hasNext(); i--) {
 				C cell = cells.get(i);
-				double pos = positions.remove(0);
-				layoutMap.put(cell, pos);
+				double pos = it.next();
+				layoutMap.put(pos, cell);
 			}
 			return layoutMap;
 		}
@@ -545,7 +554,7 @@ public class ViewportState<T, C extends Cell<T>> {
 
 		for (int i = range.getMax(); i >= range.getMin(); i--) {
 			C cell = cells.get(i);
-			layoutMap.put(cell, bottom);
+			layoutMap.put(bottom, cell);
 			bottom -= cellSize;
 		}
 		return layoutMap;
@@ -570,7 +579,7 @@ public class ViewportState<T, C extends Cell<T>> {
 	 * want to show 5 cells per page but because of the number of items, the last page can show only 2 items. The other 3
 	 * cells are not removed from the viewport, but they are hidden and not laid out.
 	 */
-	public Map<C, Double> computePaginatedPositions() {
+	public Map<Double, C> computePaginatedPositions() {
 		layoutMap.clear();
 
 		PaginatedVirtualFlow pFlow = (PaginatedVirtualFlow) virtualFlow;
@@ -584,13 +593,14 @@ public class ViewportState<T, C extends Cell<T>> {
 		for (int i = first; i <= last; i++) {
 			C cell = cells.get(i);
 			pos = layoutMap.size() * cellSize;
-			layoutMap.put(cell, pos);
+			layoutMap.put(pos, cell);
 			cell.getNode().setVisible(true);
 		}
 
 		cells.keySet().stream()
 				.filter(i -> !IntegerRange.inRangeOf(i, range))
 				.map(i -> cells.get(i).getNode())
+				.peek(node -> hidden = true)
 				.forEach(n -> n.setVisible(false));
 		return layoutMap;
 	}
@@ -622,11 +632,11 @@ public class ViewportState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Retrieves the last cell index with {@link #getLast()}, then removes and returns
+	 * Retrieves the last cell index with {@link #getLastAvailable()}, then removes and returns
 	 * the cell from the cells map.
 	 */
 	protected C removeLast() {
-		int last = getLast();
+		int last = getLastAvailable();
 		return cells.remove(last);
 	}
 
@@ -660,27 +670,44 @@ public class ViewportState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * @return the state's range start index.
-	 * Special handling for {@code PaginatedVirtualFlow} covered, the min is computed
-	 * with {@link OrientationHelper#firstVisible()} as some cells may be hidden
+	 * Shortcut for {@link OrientationHelper#firstVisible()}.
 	 */
 	public int getFirst() {
-		int first = range.getMin();
-		if (virtualFlow instanceof PaginatedVirtualFlow) {
-			first = virtualFlow.getOrientationHelper().firstVisible();
-		}
-		return first;
+		return virtualFlow.getOrientationHelper().firstVisible();
 	}
 
 	/**
-	 * @return the last displayed cell. To make sure that this returns a correct value
-	 * (even for special cases for {@code PaginatedVirtualFlow}), the value is computed by iterating on the cells keySet
-	 * to get the max index
+	 * Shortcut for {@link OrientationHelper#lastVisible()}.
 	 */
 	public int getLast() {
+		return virtualFlow.getOrientationHelper().lastVisible();
+	}
+
+	/**
+	 * @return the last cell available in the cells map
+	 */
+	public int getLastAvailable() {
 		return cells.keySet().stream()
 				.max(Integer::compareTo)
 				.orElse(range.getMax());
+	}
+
+	protected Deque<Integer> getKeysDeque() {
+		if (virtualFlow instanceof PaginatedVirtualFlow && hidden) {
+			Deque<Integer> deque = new ArrayDeque<>();
+			Set<Integer> keys = new LinkedHashSet<>(cells.keySet());
+			Iterator<Integer> it = keys.iterator();
+			while (it.hasNext()) {
+				Integer index = it.next();
+				C cell = cells.get(index);
+				if (!cell.getNode().isVisible()) continue;
+				deque.add(index);
+				it.remove();
+			}
+			deque.addAll(keys);
+			return deque;
+		}
+		return new ArrayDeque<>(cells.keySet());
 	}
 
 	/**
@@ -694,6 +721,13 @@ public class ViewportState<T, C extends Cell<T>> {
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
+
+	/**
+	 * @return the {@link VirtualFlow} instance associated to this state
+	 */
+	public VirtualFlow<T, C> getVirtualFlow() {
+		return virtualFlow;
+	}
 
 	/**
 	 * @return the range of items displayed
@@ -719,14 +753,14 @@ public class ViewportState<T, C extends Cell<T>> {
 	/**
 	 * @return the Map containing the cells mapped by their position in the viewport
 	 */
-	protected Map<C, Double> getLayoutMap() {
+	protected Map<Double, C> getLayoutMap() {
 		return layoutMap;
 	}
 
 	/**
 	 * @return {@link #getLayoutMap()} but public and wrapped in an unmodifiable Map
 	 */
-	public Map<C, Double> getLayoutMapUnmodifiable() {
+	public Map<Double, C> getLayoutMapUnmodifiable() {
 		return Collections.unmodifiableMap(layoutMap);
 	}
 
@@ -757,5 +791,12 @@ public class ViewportState<T, C extends Cell<T>> {
 	 */
 	protected void setCellsChanged(boolean cellsChanged) {
 		this.cellsChanged = cellsChanged;
+	}
+
+	/**
+	 * @return whether any of the cells in the state have been hidden
+	 */
+	public boolean anyHidden() {
+		return hidden;
 	}
 }

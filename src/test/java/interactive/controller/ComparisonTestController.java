@@ -303,7 +303,7 @@ public class ComparisonTestController implements Initializable {
 		}),
 		ADD_AT_END((mode, oldImp, newImp) -> {
 			Runnable oAction = () -> oldImp.getItems().add(oldImp.getItems().size(), RandomUtils.random.nextInt(0, 9999));
-			Runnable nAction = () -> newImp.getItems().add(oldImp.getItems().size(), RandomUtils.random.nextInt(0, 9999));
+			Runnable nAction = () -> newImp.getItems().add(newImp.getItems().size(), RandomUtils.random.nextInt(0, 9999));
 			execute(mode, oAction, nAction);
 		}),
 		ADD_MULTIPLE_AT_3((mode, oldImp, newImp) -> {
@@ -647,6 +647,11 @@ public class ComparisonTestController implements Initializable {
 						})
 						.getAnimation()
 						.play();
+			});
+
+			addEventFilter(MouseEvent.MOUSE_EXITED, event -> {
+				if (bAnimation != null && !Animations.isPlaying(bAnimation))
+					StyleUtils.setBackground(this, Color.TRANSPARENT);
 			});
 		}
 

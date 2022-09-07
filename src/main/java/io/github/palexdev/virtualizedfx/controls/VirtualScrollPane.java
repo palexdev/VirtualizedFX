@@ -172,7 +172,10 @@ public class VirtualScrollPane extends Control {
 			{
 				When.onInvalidated(flow.estimatedLengthProperty())
 						.condition(val -> flow.getOrientation() == Orientation.VERTICAL)
-						.then(val -> invalidate())
+						.then(val -> {
+							flow.getOrientationHelper().invalidatePos();
+							invalidate();
+						})
 						.listen();
 			}
 
@@ -201,7 +204,10 @@ public class VirtualScrollPane extends Control {
 			{
 				When.onInvalidated(flow.estimatedLengthProperty())
 						.condition(val -> flow.getOrientation() == Orientation.HORIZONTAL)
-						.then(val -> invalidate())
+						.then(val -> {
+							flow.getOrientationHelper().invalidatePos();
+							invalidate();
+						})
 						.listen();
 			}
 
@@ -282,7 +288,6 @@ public class VirtualScrollPane extends Control {
 				.setMapper(() -> {
 					Orientation o = flow.getOrientation();
 					double breadth = flow.getMaxBreadth();
-					double length = flow.getEstimatedLength();
 					return (o == Orientation.VERTICAL) ?
 							VirtualBounds.of(flow.getWidth(), flow.getHeight(), breadth, 0) :
 							VirtualBounds.of(flow.getWidth(), flow.getHeight(), 0, breadth);

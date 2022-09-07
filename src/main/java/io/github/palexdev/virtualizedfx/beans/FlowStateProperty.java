@@ -19,22 +19,22 @@
 package io.github.palexdev.virtualizedfx.beans;
 
 import io.github.palexdev.virtualizedfx.cell.Cell;
-import io.github.palexdev.virtualizedfx.flow.ViewportState;
+import io.github.palexdev.virtualizedfx.flow.FlowState;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
-public class StateProperty<T, C extends Cell<T>> extends ReadOnlyObjectWrapper<ViewportState<T, C>> {
-	public StateProperty() {
+public class FlowStateProperty<T, C extends Cell<T>> extends ReadOnlyObjectWrapper<FlowState<T, C>> {
+	public FlowStateProperty() {
 	}
 
-	public StateProperty(ViewportState<T, C> initialValue) {
+	public FlowStateProperty(FlowState<T, C> initialValue) {
 		super(initialValue);
 	}
 
-	public StateProperty(Object bean, String name) {
+	public FlowStateProperty(Object bean, String name) {
 		super(bean, name);
 	}
 
-	public StateProperty(Object bean, String name, ViewportState<T, C> initialValue) {
+	public FlowStateProperty(Object bean, String name, FlowState<T, C> initialValue) {
 		super(bean, name, initialValue);
 	}
 }

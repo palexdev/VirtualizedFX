@@ -248,15 +248,15 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 		return maxBreadth;
 	}
 
-	public ViewportState<T, C> getState() {
+	public FlowState<T, C> getState() {
 		return viewportManager.getState();
 	}
 
 	/**
-	 * Specifies the current {@link ViewportState} which describes the state of the viewport. This property is useful
+	 * Specifies the current {@link FlowState} which describes the state of the viewport. This property is useful
 	 * to listen to any change happening in the viewport.
 	 */
-	public ReadOnlyObjectProperty<ViewportState<T, C>> stateProperty() {
+	public ReadOnlyObjectProperty<FlowState<T, C>> stateProperty() {
 		return viewportManager.stateProperty();
 	}
 
@@ -272,7 +272,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	}
 
 	/**
-	 * Delegate method for {@link ViewportState#getCells()}.
+	 * Delegate method for {@link FlowState#getCells()}.
 	 */
 	public Map<Integer, C> getIndexedCells() {
 		return viewportManager.getState().getCells();

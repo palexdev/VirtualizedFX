@@ -22,7 +22,7 @@ import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper;
-import io.github.palexdev.virtualizedfx.beans.StateProperty;
+import io.github.palexdev.virtualizedfx.beans.FlowStateProperty;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ListChangeListener;
@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * The {@code ViewportManager} is responsible for managing the flow's viewport, the cells.
  * It stores the current state of the viewport at any time with two properties:
- * <p> - The state property which holds an object of type {@link ViewportState}
+ * <p> - The state property which holds an object of type {@link FlowState}
  * <p> - The last range property which holds the current range of displayed items, as a {@link IntegerRange}
  * <p></p>
  * This is responsible for initializing, update on scroll, update on any change on the items list,
@@ -48,7 +48,7 @@ public class ViewportManager<T, C extends Cell<T>> {
 	// Properties
 	//================================================================================
 	private final VirtualFlow<T, C> virtualFlow;
-	private final StateProperty<T, C> state = new StateProperty<>(ViewportState.EMPTY);
+	private final FlowStateProperty<T, C> state = new FlowStateProperty<>(FlowState.EMPTY);
 	private final IntegerRangeProperty lastRange = new IntegerRangeProperty();
 
 	//================================================================================
@@ -78,10 +78,10 @@ public class ViewportManager<T, C extends Cell<T>> {
 	 * needed cells, for this reason we prevent any error from occurring by "correcting" the start index as follows:
 	 * {@code Math.max(end - num + 1, 0)}
 	 * <p></p>
-	 * The next step is to instantiate a new {@link ViewportState} which will be the new state of the viewport,
+	 * The next step is to instantiate a new {@link FlowState} which will be the new state of the viewport,
 	 * and the current "old" state.
 	 * <p>
-	 * If the old state is {@link ViewportState#EMPTY} then from start to end index
+	 * If the old state is {@link FlowState#EMPTY} then from start to end index
 	 * new cells are created and added to the new state. Then both the state property and
 	 * last range property are updated and finally {@link VirtualFlow#requestViewportLayout()} is called.
 	 * <p>
@@ -113,9 +113,9 @@ public class ViewportManager<T, C extends Cell<T>> {
 		IntegerRange range = IntegerRange.of(first, last);
 
 		// Compute the new state
-		ViewportState<T, C> newState = new ViewportState<>(virtualFlow, range);
-		ViewportState<T, C> oldState = getState();
-		if (oldState == ViewportState.EMPTY) {
+		FlowState<T, C> newState = new FlowState<>(virtualFlow, range);
+		FlowState<T, C> oldState = getState();
+		if (oldState == FlowState.EMPTY) {
 			for (int i = range.getMin(); i <= range.getMax(); i++) {
 				T item = indexToItem(i);
 				C cell = itemToCell(item);
@@ -152,18 +152,18 @@ public class ViewportManager<T, C extends Cell<T>> {
 	/**
 	 * This is responsible for updating the viewport state on scroll.
 	 * <p></p>
-	 * If the current state is {@link ViewportState#EMPTY} or the items list is empty, exits immediately.
+	 * If the current state is {@link FlowState#EMPTY} or the items list is empty, exits immediately.
 	 * <p>
 	 * The first step is to compute the new range of items to display. Then the new state is updated only
 	 * if the current range and the computed one are different, the new state is built with
-	 * {@link ViewportState#transition(IntegerRange)}.
+	 * {@link FlowState#transition(IntegerRange)}.
 	 * <p>
 	 * The second step is to call {@link VirtualFlow#requestViewportLayout()}, but this happens only if the last range and the
 	 * new range are not equal.
 	 */
 	public void onScroll() {
-		ViewportState<T, C> state = getState();
-		if (state == ViewportState.EMPTY || itemsEmpty()) return;
+		FlowState<T, C> state = getState();
+		if (state == FlowState.EMPTY || itemsEmpty()) return;
 
 		OrientationHelper helper = virtualFlow.getOrientationHelper();
 		int num = helper.maxCells();
@@ -190,9 +190,9 @@ public class ViewportManager<T, C extends Cell<T>> {
 	 * <p></p>
 	 * There are three separate situations:
 	 * <p> 1) The items list is empty, calls {@link #clear()} and exits
-	 * <p> 2) The current state is {@link ViewportState#EMPTY}, calls {@link #init()} and exits
+	 * <p> 2) The current state is {@link FlowState#EMPTY}, calls {@link #init()} and exits
 	 * <p> 3) The given change is processed by using the {@link ListChangeHelper} utility class,
-	 * then the new state is computed by using {@link ViewportState#transition(List)}, finally
+	 * then the new state is computed by using {@link FlowState#transition(List)}, finally
 	 * {@link VirtualFlow#requestViewportLayout()} is called and the last range property is updated.
 	 */
 	public void onListChange(ListChangeListener.Change<? extends T> c) {
@@ -201,7 +201,7 @@ public class ViewportManager<T, C extends Cell<T>> {
 			return;
 		}
 
-		if (getState() == ViewportState.EMPTY) {
+		if (getState() == FlowState.EMPTY) {
 			init();
 			return;
 		}
@@ -213,10 +213,10 @@ public class ViewportManager<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Clears the viewport. Sets the state to {@link ViewportState#EMPTY}.
+	 * Clears the viewport. Sets the state to {@link FlowState#EMPTY}.
 	 */
 	public void clear() {
-		setState(ViewportState.EMPTY);
+		setState(FlowState.EMPTY);
 		OrientationHelper helper = virtualFlow.getOrientationHelper();
 		helper.computeEstimatedLength();
 		virtualFlow.requestViewportLayout(); // To invalidate the positions
@@ -265,18 +265,18 @@ public class ViewportManager<T, C extends Cell<T>> {
 		return virtualFlow;
 	}
 
-	public ViewportState<T, C> getState() {
+	public FlowState<T, C> getState() {
 		return state.get();
 	}
 
 	/**
-	 * Specifies the current state of the viewport as a {@link ViewportState} object.
+	 * Specifies the current state of the viewport as a {@link FlowState} object.
 	 */
-	public ReadOnlyObjectProperty<ViewportState<T, C>> stateProperty() {
+	public ReadOnlyObjectProperty<FlowState<T, C>> stateProperty() {
 		return state.getReadOnlyProperty();
 	}
 
-	protected void setState(ViewportState<T, C> state) {
+	protected void setState(FlowState<T, C> state) {
 		this.state.set(state);
 	}
 
