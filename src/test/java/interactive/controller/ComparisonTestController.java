@@ -87,43 +87,23 @@ public class ComparisonTestController implements Initializable {
 	private double xOffset;
 	private double yOffset;
 	private boolean canDrag = false;
+
+	private static boolean animEnabled;
 	private static double animationDuration = 500.0;
 
-	@FXML
-	private StackPane rootPane;
-
-	@FXML
-	private HBox windowHeader;
-
-	@FXML
-	private Label headerLabel;
-
-	@FXML
-	private Label selectionLabel;
-
-	@FXML
-	private StackPane leftPane;
-
-	@FXML
-	private StackPane rightPane;
-
-	@FXML
-	private MFXComboBox<Action> actionsBox;
-
-	@FXML
-	private MFXIconWrapper runIcon;
-
-	@FXML
-	private MFXIconWrapper switchIcon;
-
-	@FXML
-	private MFXCheckbox ssCheck;
-
-	@FXML
-	private MFXCheckbox modeCheck;
-
-	@FXML
-	private MFXTextField durationField;
+	@FXML private StackPane rootPane;
+	@FXML private HBox windowHeader;
+	@FXML private Label headerLabel;
+	@FXML private Label selectionLabel;
+	@FXML private StackPane leftPane;
+	@FXML private StackPane rightPane;
+	@FXML private MFXComboBox<Action> actionsBox;
+	@FXML private MFXIconWrapper runIcon;
+	@FXML private MFXIconWrapper switchIcon;
+	@FXML private MFXCheckbox ssCheck;
+	@FXML private MFXCheckbox modeCheck;
+	@FXML private MFXCheckbox animCheck;
+	@FXML private MFXTextField durationField;
 
 	public ComparisonTestController(Stage stage) {
 		this.stage = stage;
@@ -228,6 +208,10 @@ public class ComparisonTestController implements Initializable {
 		// Misc
 		leftPane.getChildren().setAll(lFlow);
 		rightPane.getChildren().setAll(vsp);
+		When.onChanged(animCheck.selectedProperty())
+				.then((oldValue, newValue) -> animEnabled = newValue)
+				.executeNow()
+				.listen();
 	}
 
 	@FXML
@@ -675,8 +659,11 @@ public class ComparisonTestController implements Initializable {
 				bAnimation.stop();
 				StyleUtils.setBackground(this, Color.TRANSPARENT);
 			}
-			bAnimation = animateBackground(this);
-			bAnimation.play();
+
+			if (animEnabled) {
+				bAnimation = animateBackground(this);
+				bAnimation.play();
+			}
 		}
 
 		protected abstract String dataToString();

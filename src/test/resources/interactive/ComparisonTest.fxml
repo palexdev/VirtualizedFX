@@ -81,6 +81,8 @@
                             AnchorPane.topAnchor="10.0"/>
                <MFXCheckbox fx:id="modeCheck" text="Run on both" AnchorPane.leftAnchor="180.0"
                             AnchorPane.topAnchor="10.0"/>
+               <MFXCheckbox fx:id="animCheck" text="Enable background animations" selected="true"
+                            AnchorPane.leftAnchor="340.0" AnchorPane.topAnchor="10.0"/>
                <MFXTextField fx:id="durationField" floatingText="Background animation duration" layoutX="22.0"
                              layoutY="57.0" measureUnit="ms" prefHeight="38.0" prefWidth="250.0" text="500"
                              AnchorPane.leftAnchor="20.0" AnchorPane.topAnchor="50.0"/>

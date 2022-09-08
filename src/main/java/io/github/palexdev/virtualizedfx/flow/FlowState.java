@@ -34,18 +34,23 @@ import java.util.*;
 /**
  * Class used by the {@link ViewportManager} to represent the state of the viewport at a given time.
  * <p>
- * The idea is to have an immutable state so each state is a different object.
+ * The idea is to have an immutable state so each state is a different object, with some exceptional cases
+ * when the state doesn't need to be re-computed, so the old object is returned.
  * <p></p>
  * This offers information such as:
- * <p> - The range of displayed items, {@link #getRange()}
+ * <p> - The range of items contained in the state, {@link #getRange()}. <b>Note</b> that sometimes this range doesn't
+ * correspond to the needed range of items. To always get a 100% accurate range use the {@link OrientationHelper}.
+ * An example could be the {@code PaginatedVirtualFlow} in case a page has not enough items to be full, still all the needed
+ * cells are built anyway and stored in the state.
  * <p> - The cells in the viewport, mapped like follows itemIndex -> cell
- * <p> - The position of the cells in the viewport, this is typically used by the {@link OrientationHelper} to lay out the
- * cells according to the state, mapped like follows cell -> position
+ * <p> - The position each cell must have in the viewport
  * <p> - The expected number of cells, {@link #getTargetSize()}
  * <p> - The type of event that lead the old state to transition to this new one, see {@link UpdateType}
  * <p> - A flag to check if new cells were created or some were deleted, {@link #haveCellsChanged()}.
  * This is used by {@link VirtualFlowSkin} since we want to update the viewport children only when the cells
  * changed.
+ * <p> - A flag specifically for the {@link PaginatedVirtualFlow} to indicate whether the state also contains some
+ * cells that are hidden in the viewport, {@link #anyHidden()}
  * <p></p>
  * This also contains a particular global state, {@link #EMPTY}, typically used to indicate that the viewport
  * is empty, and no state can be created.
@@ -63,7 +68,7 @@ public class FlowState<T, C extends Cell<T>> {
 	private final VirtualFlow<T, C> virtualFlow;
 	private final IntegerRange range;
 	private final Map<Integer, C> cells = new TreeMap<>();
-	private final Map<Double, C> layoutMap = new TreeMap<>(Comparator.<Double>comparingDouble(v -> v).reversed());
+	private final Set<Double> positions = new TreeSet<>();
 	private final int targetSize;
 	private UpdateType type = UpdateType.INIT;
 	private boolean cellsChanged = false;
@@ -106,7 +111,7 @@ public class FlowState<T, C extends Cell<T>> {
 	 * So in the above example, cells {@code [0, 2]} are removed from this state, updated, then
 	 * added to the new state as {@code [11, 13]}
 	 * <p>
-	 * In some cases (especially for the {@link PaginatedVirtualFlow}) it may happed that some cells are still
+	 * In some cases (especially for the {@link PaginatedVirtualFlow}) it may happen that some cells are still
 	 * present in the old state, for this reason a check makes sure that they are properly disposed and removed.
 	 *
 	 * @param newRange the new state's range of items
@@ -164,8 +169,8 @@ public class FlowState<T, C extends Cell<T>> {
 	 * it should always be one.
 	 * <p></p>
 	 * For each change in the list creates a new state from the previous one, starting by this one, using {@link #transition(Change)}.
-	 * Once the new state has been computed, changes the update type to {@link UpdateType#CHANGE} and copies the layout map
-	 * too (for reusable positions)
+	 * Once the new state has been computed, changes the update type to {@link UpdateType#CHANGE} and copies the positions
+	 * {@code Set} too (for reusable positions)
 	 *
 	 * @param changes the list of {@link ListChangeHelper.Change}s processed by the {@link ListChangeHelper}
 	 * @return the new state
@@ -175,7 +180,7 @@ public class FlowState<T, C extends Cell<T>> {
 		for (Change change : changes) {
 			newState = newState.transition(change);
 		}
-		newState.layoutMap.putAll(layoutMap);
+		newState.positions.addAll(positions);
 		newState.type = UpdateType.CHANGE;
 		return newState;
 	}
@@ -184,7 +189,7 @@ public class FlowState<T, C extends Cell<T>> {
 	 * This is responsible for processing a single {@link Change} bean and produce a new state
 	 * according to the change's {@link ChangeType}.
 	 * <p></p>
-	 * In the following line I'm going to document each type.
+	 * In the following lines I'm going to document each type.
 	 * <p></p>
 	 * <b>PERMUTATION</b>
 	 * The permutation case while not being the most complicated can still be considered a bit heavy to compute
@@ -192,82 +197,67 @@ public class FlowState<T, C extends Cell<T>> {
 	 * on the cell's {@link Cell#updateItem(Object)} implementation.
 	 * <p></p>
 	 * <b>REPLACE</b>
-	 * When items are replaced in the list there are several things to consider.
-	 * The algorithm iterates over the state's range, from min to max cells are removed by index from the
-	 * old state. If the cell is null it means that a new one must be created, then it's added to the new state.
-	 * Otherwise, if the cell is not null, we check whether the index is one at which a change occurred by using
-	 * {@link Change#hasChanged(int)}, in that case it's needed to update the cell's item before adding it to the
-	 * new state.
+	 * The algorithm for replacements gets a {@link Deque} of the cells keySet, then from the first index to the last one.
+	 * In this loop it checks if the at the "i" index no change occurred, in this case the cell is removed from the old
+	 * state and copied as is in the new state.
 	 * <p>
-	 * It may happen that the old state still contains some cell, but at this point we assume
-	 * that the viewport is already full, so, these cells must be disposed and removed from the layout map as well.
-	 * <p>
-	 * Last but not least, we must correctly set the {@link #haveCellsChanged()} flag so that the viewport can update its
-	 * children if needed, to set it we simply check if the number of cells in the new state is equal to the old state,
-	 * note that the latter is stored in a variable before starting the whole process as cells are then removed from the
-	 * old state.
+	 * If a change occurred, an index is extracted from the deque and at this point two things can happen:
+	 * <p> If the index is null it means that a new cell need to be created
+	 * <p> Otherwise a cell is extracted from the old state, its item updated
+	 * <p> Then the cell index is updated and the cell moved to the new state
+	 * <p></p>
+	 * Last but not least we check if there are any remaining cells in the old state. In such case those are disposed,
+	 * removed from the old state, and also the positions {@code Set} is invalidated
 	 * <p></p>
 	 * <b>ADDITION</b>
 	 * The computation in case of added items to the list is complex and a bit heavy on performance. There are
 	 * several things to consider, and it was hard to find a generic algorithm that would correctly compute the new state
-	 * in all possible situations, included exceptional cases, and that would work for the {@link PaginatedVirtualFlow} too.
-	 * <p>
-	 * The simplest of these cases is when the viewport is full and the range at which changes occurred is greater than
-	 * the state's range, any item added after the last displayed item is not a relevant change, the old state will be
-	 * returned. In all other cases the computation for the new state can begin.
-	 * <p>
-	 * Before everything else, we get a series of useful information like the first cell of the range retrieved with
-	 * {@link #getFirst()} (note that this depends on the flow implementation), the last cell of the range with
-	 * {@link OrientationHelper#lastVisible()} and then we copy the cells keySet (so their indexes) to a temporary
-	 * {@link TreeSet} which will tell us the available/remaining cells/indexes.
-	 * <p>
-	 * At this point the computation begins, there are several cases to consider.
-	 * <p>
-	 * The first case are the cells that appear before the index at which the change occurred. Those cells are copied as
-	 * they are from the old state to the new one, their index is also removed from the "available" set.
-	 * <p>
-	 * Now we have to distinguish two other cases: the cells that need a partial update (only index update) and the ones
-	 * that need a full update (both index and item updates).
-	 * <p>
-	 * The partial updates are computes from the remaining available indexes and stored in a {@link Deque}.
-	 * Before proceeding there are two operations to do:
-	 * <p>
-	 * In case we are dealing with a {@link PaginatedVirtualFlow} the available indexes may not be correct. For example,
-	 * for pages having only a bunch of visible cells the ones that are hidden must be excluded. In this case the
-	 * partial update indexes are computed iterating on the deque and filtering only by visible cells.
-	 * <p>
-	 * The next operation for all types of flows is to remove some indexes from the deque under the following conditions:
-	 * <p> 1) until the for loop index "i" must be lesser that the change size
-	 * <p> 2) the "available" indexes must not be empty
-	 * <p> 3) the viewport must be full, {@link #isViewportFull()}
+	 * in all possible situations, included exceptional cases and for {@link PaginatedVirtualFlow} too.
 	 * <p></p>
-	 * Now for each of the indexes remaining in the deque cells are removed from the old state and updated only by index.
-	 * The index is also removed from the "available" set.
+	 * The simplest of these cases is when changes occur after the displayed range of items, the old state will be
+	 * returned. In all the other cases the computation for the new state can begin.
+	 * <p>
+	 * The first step is to get a series of useful information such as:
+	 * <p> - The index of the first item to display, {@link #getFirst()}
+	 * <p> - The index of the last item to display, {@link #getLast()} for {@link PaginatedVirtualFlow} and
+	 * {@link #getLastAvailable()} for {@link VirtualFlow}
+	 * <p>
+	 * At this point the computation begins. The new algorithm uses "mappings" to process how old cells will be used
+	 * in the new state, see also {@link FlowMapping}
 	 * <p></p>
-	 * The last remaining case, cells that need a full update, branches out into two sub-cases.
-	 * Starting from the cellIndex we need (given by {@code Math.max(first, change.getFrom())}),
-	 * and for the remaining number of cells we need (given by {@code newState.getRange().diff() - newState.cellsNum() + 1}),
-	 * an index is removed from the remaining available ones and here we have the two sub-cases.
-	 * <p> 1) The index is not null, which means that the cell can be extracted from the old state, updated and added
-	 * to the new state
-	 * <p> 2) The index is null, which means we need to create a new cell with the flow's factory, update its index and
+	 * There are three types of mappings:
+	 * <p>
+	 * The first mappings we do are the ones for valid cells, those that come before the index at which the change
+	 * occurred. The built mappings are of type {@link ValidMapping}, cells are moved as they are to the new state
+	 * <p>
+	 * Then we get the cells keySet as a {@link Deque} with {@link #getKeysDeque()} and we start checking for
+	 * partial updates and full updates.
+	 * <p>
+	 * For each index in the deque (until the new state doesn't need any more cells) we have three checks:
+	 * <p> - We check if the extracted index has already been mapped before, in this case we go to the next iteration
+	 * <p> - We check that the index is not null (see {@link Deque#poll()}) and that the expected new index is in the
+	 * range of the new state and that it is not one of the indexes at which a change occurred. If all the conditions are
+	 * met a {@link PartialMapping} is built, this will extract the cell from the old state, update its index and then
 	 * add it to the new state
-	 * <p></p>
-	 * The last steps are:
-	 * <p> 1) For {@link PaginatedVirtualFlow} we must ensure that no cells remain in the old state, as this would lead
-	 * to an exception later on when computing their positions, keep in mind that the {@link PaginatedVirtualFlow} uses the
-	 * visibility trick for the viewport. It may seem that some cells are missing, but they are there, just hidden.
-	 * For this reason, remaining cells are copied to the new state and then removed from the old state.
-	 * <p> 2) We must check if the cells number has changed between the old state and the new state as this determines
-	 * whether the viewport should update its children.
+	 * <p> - In case the previous conditions were not met there are yet two cases to distinguish. If the inner conditions
+	 * were not met then there are cells that can be reused, if the index was null, there are no cells that can be reused.
+	 * In any of these two cases a {@link FullMapping} is built. The mapping will then decide if a new cell is needed,
+	 * or an old one must be updated.
 	 * <p>
-	 * After all of that the new state object is returned.
+	 * Once the mappings have been created they are "executed" by calling {@link FlowMapping#manage(FlowState, FlowState, int)}
+	 * for each of them.
+	 * <p></p>
+	 * Last steps depend on the flow implementation. For {@link VirtualFlow} we check if the old range and the new range
+	 * are not the same. When an addition occur, the range is sure to not change exception for specific cases, for which
+	 * the positions {@code Set} is invalidated. For {@link PaginatedVirtualFlow} we ensure that no cells are left in the
+	 * old state by moving them to the new state (hidden cells for example)
+	 * <p></p>
 	 * <b>REMOVAL</b>
 	 * The computation in case of removed items from the list is complex and a bit heavy on performance. There are
 	 * several things to consider, and it was hard to find a generic algorithm that would correctly compute the new state
 	 * in all possible situations, included exceptional cases.
-	 * <p>
-	 * The simplest of these cases is when changes occurred after the displayed range of items, the old state will be
+	 * <p></p>
+	 * The simplest of these cases is when changes occur after the displayed range of items, the old state will be
 	 * returned. In all the other cases the computation for the new state can begin.
 	 * <p>
 	 * The first step is to separate those cells that only require a partial update (only index) from the others.
@@ -296,7 +286,7 @@ public class FlowState<T, C extends Cell<T>> {
 	 * <p> 5) The cell is added to the new state
 	 * <p>
 	 * Last but not least we check if any cells are still available in the old state. These need to be disposed
-	 * and removed from the layout map. Note that in such case we also need to indicate that the viewport needs to
+	 * and removed from the positions {@code Set}. Note that in such case we also need to indicate that the viewport needs to
 	 * update its children, as always just by setting {@link #haveCellsChanged()} to true.
 	 *
 	 * @param change the {@link Change} to process which eventually will lead to the new state
@@ -350,22 +340,21 @@ public class FlowState<T, C extends Cell<T>> {
 					while (it.hasNext()) {
 						C cell = it.next().getValue();
 						cell.dispose();
-						layoutMap.values().remove(cell);
 						it.remove();
 					}
+					positions.clear();
 				}
 
 				newState.setCellsChanged(newState.cellsNum() != cellsNum);
 				return newState;
 			}
 			case ADD: {
-				if (isViewportFull() && change.getFrom() > range.getMax()) return this;
+				boolean viewportFull = isViewportFull();
+				if (viewportFull && change.getFrom() > range.getMax()) return this;
 
 				// Pre-computation
 				int first = getFirst();
-				int last = (virtualFlow instanceof PaginatedVirtualFlow) ?
-						getLast() :
-						getLastAvailable();
+				int last = getLast();
 				int cellsNum = cellsNum();
 				IntegerRange newRange = IntegerRange.of(first, last);
 				FlowState<T, C> newState = new FlowState<>(virtualFlow, newRange);
@@ -385,7 +374,7 @@ public class FlowState<T, C extends Cell<T>> {
 				}
 
 				int from = Math.max(change.getFrom(), first);
-				int targetSize = Math.min(virtualFlow.getItems().size(), newState.targetSize);
+				int targetSize = computeTargetSize(newState.targetSize);
 				int lastInvalid = -1;
 				Deque<Integer> keys = getKeysDeque();
 				while (!available.isEmpty() || mappings.size() != targetSize) {
@@ -394,7 +383,7 @@ public class FlowState<T, C extends Cell<T>> {
 
 					if (index != null) {
 						int newIndex = index + change.size();
-						if (IntegerRange.inRangeOf(newIndex, newRange) && !change.hasChanged(newIndex)) {
+						if (IntegerRange.inRangeOf(newIndex, newRange) && !change.hasChanged(newIndex) && available.contains(newIndex)) {
 							mappings.put(index, new PartialMapping<>(newIndex));
 							available.remove(newIndex);
 							continue;
@@ -421,8 +410,8 @@ public class FlowState<T, C extends Cell<T>> {
 				} else if (!range.equals(newRange)) {
 					// If ranges are not the same there was an exceptional case
 					// as described by computePositions() documentation
-					// In such cases the old layout map is not valid
-					layoutMap.clear();
+					// In such cases the old positions are not valid
+					positions.clear();
 				}
 
 				newState.setCellsChanged(newState.cellsNum() != cellsNum);
@@ -470,10 +459,10 @@ public class FlowState<T, C extends Cell<T>> {
 						Map.Entry<Integer, C> next = it.next();
 						C cell = next.getValue();
 						cell.dispose();
-						layoutMap.values().remove(cell);
 						it.remove();
 					}
 					newState.setCellsChanged(true);
+					positions.clear();
 				}
 
 				return newState;
@@ -483,7 +472,7 @@ public class FlowState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * This is responsible for computing the layout map which will be used by the {@link OrientationHelper}
+	 * This is responsible for computing the positions {@code Set} which will be used by the {@link OrientationHelper}
 	 * to correctly position the cells in the viewport.
 	 * <p></p>
 	 * There are two cases in which the method won't execute:
@@ -513,8 +502,8 @@ public class FlowState<T, C extends Cell<T>> {
 	 * <p></p>
 	 * Then we have two separate cases.
 	 * <p> 1) The first one is pretty specific, it leads to the layout computation
-	 * only if the adjust flag is false, the type of state is {@link UpdateType#CHANGE} and the layout map size
-	 * is greater or equal to the {@link #getTargetSize()}.
+	 * only if the adjust flag is false, the type of state is {@link UpdateType#CHANGE} and the positions {@code Set}
+	 * size is greater or equal to the {@link #getTargetSize()}.
 	 * <p>
 	 * In this case we can use the old positions since some cell may have changed, in index, item or both, but the positions
 	 * (not considering which cell has the specific position) remain the same.
@@ -523,10 +512,11 @@ public class FlowState<T, C extends Cell<T>> {
 	 * adjust flag is true as {@code bottom -= cellSize}.
 	 * <p>
 	 * At this point we iterate from the end of the range to the start (so reverse order), each cell is put in the
-	 * layout map with the current bottom position, updated at each iteration as follows {@code bottom -= cellSize}.
+	 * positions {@code Set} with the current bottom position, updated at each iteration as
+	 * follows {@code bottom -= cellSize}.
 	 */
-	public Map<Double, C> computePositions() {
-		if (isEmpty()) return Map.of();
+	public Set<Double> computePositions() {
+		if (isEmpty()) return Set.of();
 		if (virtualFlow instanceof PaginatedVirtualFlow) {
 			return computePaginatedPositions();
 		}
@@ -537,27 +527,21 @@ public class FlowState<T, C extends Cell<T>> {
 		int last = first + helper.maxCells() - 1;
 		boolean adjust = last > virtualFlow.getItems().size() - 1 && isViewportFull();
 
-		if (!adjust && type == UpdateType.CHANGE && layoutMap.size() >= targetSize) {
-			Iterator<Double> it = new ArrayList<>(layoutMap.keySet()).iterator();
-			for (int i = range.getMax(); i >= range.getMin() && it.hasNext(); i--) {
-				C cell = cells.get(i);
-				double pos = it.next();
-				layoutMap.put(pos, cell);
-			}
-			return layoutMap;
+		if (!adjust && type == UpdateType.CHANGE && positions.size() >= targetSize) {
+			return positions;
 		}
 
+		positions.clear();
 		double bottom = (cells.size() - 1) * cellSize;
 		if (adjust) {
 			bottom -= cellSize;
 		}
 
 		for (int i = range.getMax(); i >= range.getMin(); i--) {
-			C cell = cells.get(i);
-			layoutMap.put(bottom, cell);
+			positions.add(bottom);
 			bottom -= cellSize;
 		}
-		return layoutMap;
+		return positions;
 	}
 
 	/**
@@ -566,7 +550,7 @@ public class FlowState<T, C extends Cell<T>> {
 	 * This is much simpler as there is no free scrolling, all cells will have a precise position at any time in the
 	 * page.
 	 * <p></p>
-	 * First we clear the layout map to ensure there's no garbage in it.
+	 * First we clear the positions {@code Set} to ensure there's no garbage in it.
 	 * <p>
 	 * Then we get a series of important parameters, such as:
 	 * <p> - The cells' size
@@ -579,8 +563,8 @@ public class FlowState<T, C extends Cell<T>> {
 	 * want to show 5 cells per page but because of the number of items, the last page can show only 2 items. The other 3
 	 * cells are not removed from the viewport, but they are hidden and not laid out.
 	 */
-	public Map<Double, C> computePaginatedPositions() {
-		layoutMap.clear();
+	public Set<Double> computePaginatedPositions() {
+		positions.clear();
 
 		PaginatedVirtualFlow pFlow = (PaginatedVirtualFlow) virtualFlow;
 		OrientationHelper helper = pFlow.getOrientationHelper();
@@ -592,8 +576,8 @@ public class FlowState<T, C extends Cell<T>> {
 		double pos;
 		for (int i = first; i <= last; i++) {
 			C cell = cells.get(i);
-			pos = layoutMap.size() * cellSize;
-			layoutMap.put(pos, cell);
+			pos = positions.size() * cellSize;
+			positions.add(pos);
 			cell.getNode().setVisible(true);
 		}
 
@@ -602,7 +586,7 @@ public class FlowState<T, C extends Cell<T>> {
 				.map(i -> cells.get(i).getNode())
 				.peek(node -> hidden = true)
 				.forEach(n -> n.setVisible(false));
-		return layoutMap;
+		return positions;
 	}
 
 	/**
@@ -692,6 +676,10 @@ public class FlowState<T, C extends Cell<T>> {
 				.orElse(range.getMax());
 	}
 
+	/**
+	 * @return converts the cells keySet to a {@link Deque}. For {@link PaginatedVirtualFlow}
+	 * extra care is needed since hidden cells must appear at the end of the deque
+	 */
 	protected Deque<Integer> getKeysDeque() {
 		if (virtualFlow instanceof PaginatedVirtualFlow && hidden) {
 			Deque<Integer> deque = new ArrayDeque<>();
@@ -708,6 +696,20 @@ public class FlowState<T, C extends Cell<T>> {
 			return deque;
 		}
 		return new ArrayDeque<>(cells.keySet());
+	}
+
+	/**
+	 * @return the expected number of items of the state
+	 */
+	protected int computeTargetSize(int expectedSize) {
+		if (virtualFlow instanceof PaginatedVirtualFlow) {
+			PaginatedVirtualFlow<T, C> pFlow = (PaginatedVirtualFlow<T, C>) virtualFlow;
+			if (pFlow.getCurrentPage() == pFlow.getMaxPage()) {
+				int remainder = pFlow.getItems().size() % pFlow.getCellsPerPage();
+				return (remainder != 0) ? remainder : expectedSize;
+			}
+		}
+		return Math.min(virtualFlow.getItems().size(), expectedSize);
 	}
 
 	/**
@@ -753,15 +755,15 @@ public class FlowState<T, C extends Cell<T>> {
 	/**
 	 * @return the Map containing the cells mapped by their position in the viewport
 	 */
-	protected Map<Double, C> getLayoutMap() {
-		return layoutMap;
+	protected Set<Double> getPositions() {
+		return positions;
 	}
 
 	/**
-	 * @return {@link #getLayoutMap()} but public and wrapped in an unmodifiable Map
+	 * @return {@link #getPositions()} but public and wrapped in an unmodifiable Map
 	 */
-	public Map<Double, C> getLayoutMapUnmodifiable() {
-		return Collections.unmodifiableMap(layoutMap);
+	public Set<Double> getPositionsUnmodifiable() {
+		return Collections.unmodifiableSet(positions);
 	}
 
 	/**

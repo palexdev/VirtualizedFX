@@ -14,7 +14,26 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
-## [NoVer] - 07-09-2022
+## [11.5.1] - 08-09-2022
+
+<h4>
+Note that the changelog for this version also includes the below "Commits".
+This to have a complete log of the changes that lead to this new version.
+</h4>
+
+## Changed
+
+- FlowState: I realized that there's no need to store cells' position is a map and keep them sorted when needed. Now
+  positions are kept in a TreeSet, the VirtualFlowSkin then uses two ListIterators to iterate at the same time on both
+  the cells and the positions (from bottom, so both iterators go in reverse)
+
+## Fixed
+
+- FlowState: further improve the new addition algorithm. Fixed a bunch of bugs related to the last index computation, to
+  the wrong computation of the targetSize for PaginatedVirtualFlows and to the wrong creation of PartialMappings when a
+  FullMapping was needed instead
+
+## [Commit] - 07-09-2022
 
 ## Changed
 
@@ -38,7 +57,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - FlowState: also fixed algorithm to handle replacements in the items list as it was misbehaving in some specific
   occasions
 
-## [NoVer] - 02-09-2022
+## [Commit] - 02-09-2022
 
 ## Added
 

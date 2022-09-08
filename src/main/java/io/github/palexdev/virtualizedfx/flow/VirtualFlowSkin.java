@@ -30,8 +30,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -95,12 +94,15 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 
 				if (state.getType() == UpdateType.CHANGE) helper.invalidatePos();
 
-				Map<Double, C> layoutMap = state.computePositions();
+				Map<Integer, C> cells = state.getCells();
+				Set<Double> positions = state.computePositions();
 				double mBreadth = 0.0; // Max breadth
 
-				for (Map.Entry<Double, ? extends Cell<?>> e : layoutMap.entrySet()) {
-					Cell<?> cell = e.getValue();
-					Double pos = e.getKey();
+				ListIterator<Double> pIt = new ArrayList<>(positions).listIterator(positions.size());
+				ListIterator<C> cIt = new ArrayList<>(cells.values()).listIterator(cells.size());
+				while (pIt.hasPrevious() && cIt.hasPrevious()) {
+					Cell<?> cell = cIt.previous();
+					Double pos = pIt.previous();
 					Node node = cell.getNode();
 					cell.beforeLayout();
 					double breadth = helper.computeBreadth(node);
@@ -108,6 +110,7 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 					helper.layout(node, pos, breadth);
 					cell.afterLayout();
 				}
+
 				maxBreadth.set(mBreadth);
 				virtualFlow.setNeedsViewportLayout(false);
 			}
