@@ -33,7 +33,6 @@ import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.ResourceManager;
 import io.github.palexdev.virtualizedfx.beans.VirtualBounds;
 import io.github.palexdev.virtualizedfx.cell.Cell;
-import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.controls.behavior.MFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VirtualScrollPaneSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
@@ -43,8 +42,6 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlow;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
-import io.github.palexdev.virtualizedfx.grid.GridHelper;
-import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -299,6 +296,7 @@ public class VirtualScrollPane extends Control {
 		);
 		return vsp;
 	}
+
 
 	/**
 	 * Sets the horizontal scroll speed for the given {@link VirtualScrollPane}.
