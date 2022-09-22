@@ -147,7 +147,7 @@ public class FlowState<T, C extends Cell<T>> {
 		// Ensure that no cells remains in the old state, also dispose them
 		// if that's the case
 		if (!cells.isEmpty())
-			disposeAndClearCells();
+			disposeAndClear();
 
 		return newState;
 	}
@@ -715,7 +715,7 @@ public class FlowState<T, C extends Cell<T>> {
 	/**
 	 * Shortcut to dispose all cells present in this state's cells map and then clear it.
 	 */
-	protected void disposeAndClearCells() {
+	protected void disposeAndClear() {
 		cells.values().forEach(C::dispose);
 		cells.clear();
 	}

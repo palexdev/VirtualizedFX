@@ -27,7 +27,6 @@ import io.github.palexdev.mfxcore.collections.ObservableGrid;
 import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.EnumUtils;
-import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.mfxcore.utils.fx.RegionUtils;
@@ -389,6 +388,7 @@ public class GridTestController implements Initializable {
 		private final VirtualGrid<Integer, ?> grid;
 		private Integer item;
 		private int index;
+		private Coordinate coordinates = Coordinate.of(-1, -1);
 
 		private final Label label = new Label();
 		private final MFXFontIcon icon = new MFXFontIcon();
@@ -413,7 +413,7 @@ public class GridTestController implements Initializable {
 		@Override
 		public void updateItem(Integer item) {
 			this.item = item;
-			label.setText(toString());
+			updateLabel();
 			icon.setDescription(EnumUtils.randomEnum(FontResources.class).getDescription());
 			icon.setColor(ColorUtils.getRandomColor());
 			SimpleGridCell.randBackground(this, 0.3f);
@@ -422,14 +422,29 @@ public class GridTestController implements Initializable {
 		@Override
 		public void updateIndex(int index) {
 			this.index = index;
-			label.setText(toString());
+			updateLabel();
+		}
+
+		@Override
+		public void updateCoordinates(int linearIndex) {
+			coordinates = Coordinate.linear(linearIndex, grid.getColumnsNum());
+			updateLabel();
+		}
+
+		@Override
+		public void updateCoordinates(int row, int column) {
+			coordinates = Coordinate.of(row, column);
+			updateLabel();
 		}
 
 		@Override
 		public String toString() {
-			Coordinate coordinate = GridUtils.indToSub(grid.getColumnsNum(), index, Coordinate::new);
 			return MessageFormat.format("Cell Item: {0}\nCell Index: [L{1}\\R{2}\\C{3}]",
-					item, index, coordinate.getRow(), coordinate.getColumn());
+					item, index, coordinates.getRow(), coordinates.getColumn());
+		}
+
+		public void updateLabel() {
+			label.setText(toString());
 		}
 	}
 }

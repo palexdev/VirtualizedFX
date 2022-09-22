@@ -217,6 +217,7 @@ public class ViewportManager<T, C extends Cell<T>> {
 	 * Clears the viewport. Sets the state to {@link FlowState#EMPTY}.
 	 */
 	public void clear() {
+		getState().disposeAndClear();
 		setState(FlowState.EMPTY);
 		OrientationHelper helper = virtualFlow.getOrientationHelper();
 		helper.computeEstimatedLength();

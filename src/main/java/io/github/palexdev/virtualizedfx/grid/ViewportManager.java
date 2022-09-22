@@ -241,7 +241,7 @@ public class ViewportManager<T, C extends GridCell<T>> {
 	 * Responsible for clearing the viewport and resetting the manager' state.
 	 */
 	public void clear() {
-		getState().disposeAndClear(); // TODO flow too!
+		getState().disposeAndClear();
 		setState(GridState.EMPTY);
 		GridHelper helper = virtualGrid.getGridHelper();
 		helper.computeEstimatedLength();
@@ -257,15 +257,6 @@ public class ViewportManager<T, C extends GridCell<T>> {
 	public void reset() {
 		clear();
 		init();
-	}
-
-	// TODO move to helpers, flow too!
-	protected T indexToItem(int index) {
-		return virtualGrid.getItems().getElement(index);
-	}
-
-	protected C itemToCell(T item) {
-		return virtualGrid.getCellFactory().apply(item);
 	}
 
 	/**

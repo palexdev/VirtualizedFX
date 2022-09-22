@@ -119,8 +119,7 @@ public class VirtualGrid<T, C extends GridCell<T>> extends Control {
 		@Override
 		protected void invalidated() {
 			GridHelper helper = get().get();
-			setGridHelper(helper); // TODO make protected
-
+			setGridHelper(helper);
 		}
 	};
 

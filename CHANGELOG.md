@@ -14,6 +14,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.6.1] - 22-09-2022
+
+## Changed
+
+- Addressed some TODOs
+
 ## [11.6.0] - 22-09-2022
 
 ## Added

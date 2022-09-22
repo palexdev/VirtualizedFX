@@ -86,7 +86,7 @@ public class LayoutRow<T, C extends GridCell<T>> {
 			T item = virtualGrid.getItems().getElement(linear);
 			C cell = virtualGrid.getCellFactory().apply(item);
 			cell.updateIndex(linear);
-			// TODO update coordinate
+			cell.updateCoordinates(index, column);
 			cells.put(column, cell);
 		}
 	}
@@ -105,7 +105,7 @@ public class LayoutRow<T, C extends GridCell<T>> {
 			T item = virtualGrid.getItems().getElement(linear);
 			cell.updateItem(item);
 			cell.updateIndex(linear);
-			// TODO update coordinate
+			cell.updateCoordinates(index, column);
 		}
 		this.index = index;
 		this.reusablePositions = true;
@@ -147,6 +147,7 @@ public class LayoutRow<T, C extends GridCell<T>> {
 					cell = virtualGrid.getCellFactory().apply(item);
 				}
 				cell.updateIndex(linear);
+				cell.updateCoordinates(index, column);
 				tmp.put(column, cell);
 			}
 		}
@@ -190,6 +191,7 @@ public class LayoutRow<T, C extends GridCell<T>> {
 		cells.forEach((column, cell) -> {
 			int linear = toLinear(index, column);
 			cell.updateIndex(linear);
+			cell.updateCoordinates(index, column);
 		});
 		this.index = index;
 		this.reusablePositions = true;
@@ -227,10 +229,9 @@ public class LayoutRow<T, C extends GridCell<T>> {
 
 		for (Integer c : columns) {
 			int linear = toLinear(index, c);
-			T item = virtualGrid.getItems().getElement(linear);
 			C cell = cells.get(c);
-			cell.updateItem(item); // TODO unnecessary
 			cell.updateIndex(linear);
+			cell.updateCoordinates(index, c);
 		}
 		this.reusablePositions = true;
 	}
@@ -263,8 +264,10 @@ public class LayoutRow<T, C extends GridCell<T>> {
 				}
 
 				C cell = next.getValue();
-				cell.updateIndex(c - 1);
-				tmp.put(c - 1, cell);
+				int newColumn = c - 1;
+				cell.updateIndex(newColumn);
+				cell.updateCoordinates(index, newColumn);
+				tmp.put(newColumn, cell);
 				it.remove();
 			}
 
@@ -278,6 +281,7 @@ public class LayoutRow<T, C extends GridCell<T>> {
 				C cell = cells.remove(column);
 				cell.updateItem(item);
 				cell.updateIndex(linear);
+				cell.updateCoordinates(index, newCol);
 				tmp.put(newCol, cell);
 			}
 
@@ -295,10 +299,12 @@ public class LayoutRow<T, C extends GridCell<T>> {
 		int from = Math.max(columns.getMin(), column);
 		int to = columns.getMax() - 1;
 		for (int i = from; i <= to; i++) {
-			int linear = toLinear(index, i + 1);
+			int newCol = i + 1;
+			int linear = toLinear(index, newCol);
 			C cell = cells.remove(i);
 			cell.updateIndex(linear);
-			tmp.put(i + 1, cell);
+			cell.updateCoordinates(index, newCol);
+			tmp.put(newCol, cell);
 		}
 
 		int linear = toLinear(index, column);
@@ -306,6 +312,7 @@ public class LayoutRow<T, C extends GridCell<T>> {
 		C cell = cells.remove(to + 1);
 		cell.updateItem(item);
 		cell.updateIndex(linear);
+		cell.updateCoordinates(index, column);
 		tmp.put(column, cell);
 
 		cells.putAll(tmp);
@@ -324,6 +331,7 @@ public class LayoutRow<T, C extends GridCell<T>> {
 			int linear = toLinear(getColumnsNum() + 1, index, c);
 			C cell = next.getValue();
 			cell.updateIndex(linear - offset);
+			cell.updateCoordinates(index, start);
 			tmp.put(start, cell);
 			it.remove();
 			start++;
@@ -336,6 +344,7 @@ public class LayoutRow<T, C extends GridCell<T>> {
 			C cell = cells.remove(column);
 			cell.updateItem(item);
 			cell.updateIndex(linear);
+			cell.updateCoordinates(index, range.getMax());
 			tmp.put(range.getMax(), cell);
 		}
 
