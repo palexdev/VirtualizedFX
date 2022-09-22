@@ -16,20 +16,13 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+package io.github.palexdev.virtualizedfx.cell;
 
-import javafx.application.Application;
+public interface GridCell<T> extends Cell<T> {
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(VirtualGridTest.class);
+	default void updateCoordinates(int linearIndex) {
+	}
 
+	default void updateCoordinates(int row, int column) {
 	}
 }

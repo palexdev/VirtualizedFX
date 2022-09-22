@@ -18,18 +18,30 @@
 
 package interactive;
 
+import interactive.controller.GridTestController;
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import org.scenicview.ScenicView;
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(VirtualGridTest.class);
+public class VirtualGridTest extends Application {
 
+	@Override
+	public void start(Stage primaryStage) throws Exception {
+		FXMLLoader loader = new FXMLLoader(Launcher.class.getResource("GridTest.fxml"));
+		loader.setControllerFactory(c -> new GridTestController(primaryStage));
+		Parent root = loader.load();
+		Scene scene = new Scene(root);
+		scene.setFill(Color.TRANSPARENT);
+		primaryStage.initStyle(StageStyle.TRANSPARENT);
+		primaryStage.setTitle("Pagination Test");
+		primaryStage.setScene(scene);
+		primaryStage.show();
+
+		ScenicView.show(scene);
 	}
 }

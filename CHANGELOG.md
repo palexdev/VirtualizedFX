@@ -14,6 +14,23 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.6.0] - 22-09-2022
+
+## Added
+
+- Introducing new virtualized control, VirtualGrid. Backed by the recently introduced ObservableGrid in MFXCore
+
+## [11.5.2] - 22-09-2022
+
+## Changed
+
+- Override equals() for VirtualBounds
+- FlowMapping: Move the oldIndex from the manage() method to a field
+- FlowState: adapt to above change
+- VirtualFlow: improve documentation for styleable properties, mentioning the new CSS
+- Moved dialogs to separate utility class
+- Adapt controllers to above change, also add new test to add at user input position
+
 ## [11.5.1] - 08-09-2022
 
 <h4>

@@ -33,6 +33,7 @@ import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.ResourceManager;
 import io.github.palexdev.virtualizedfx.beans.VirtualBounds;
 import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.controls.behavior.MFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VirtualScrollPaneSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
@@ -42,6 +43,8 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlow;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
+import io.github.palexdev.virtualizedfx.grid.GridHelper;
+import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -297,6 +300,101 @@ public class VirtualScrollPane extends Control {
 		return vsp;
 	}
 
+	/**
+	 * Does the hard job for you by creating a new {@code VirtualScrollPane} wrapping the
+	 * given {@link VirtualGrid}, initializing the needed bindings for the content bounds, the scrolling and the
+	 * orientation.
+	 * <p></p>
+	 * <b>NOTE:</b> once this is not needed anymore you should call {@link #disposeFor(VirtualScrollPane)}
+	 * to avoid memory leaks which may occur because of {@link BiBindingManager}
+	 */
+	public static <T, C extends GridCell<T>> VirtualScrollPane wrap(VirtualGrid<T, C> grid) {
+		VirtualScrollPane vsp = new VirtualScrollPane(grid);
+		BiBindingManager bindingManager = BiBindingManager.instance();
+
+		vsp.setOrientation(Orientation.VERTICAL);
+		vsp.contentBoundsProperty().bind(ObjectBindingBuilder.<VirtualBounds>build()
+				.setMapper(() -> {
+					double length = grid.getEstimatedLength();
+					double breadth = grid.getEstimatedBreadth();
+					return VirtualBounds.of(grid.getWidth(), grid.getHeight(), breadth, length);
+				})
+				.addSources(grid.widthProperty(), grid.heightProperty())
+				.addSources(grid.estimatedLengthProperty())
+				.addSources(grid.estimatedBreadthProperty())
+				.get()
+		);
+
+		BiBindingHelper<Number> vValHelper = new BiBindingHelper<>() {
+			{
+				When.onChanged(vsp.contentBoundsProperty())
+						.then((oldVal, newVal) -> {
+							if (oldVal.getHeight() != newVal.getHeight() ||
+									oldVal.getVirtualHeight() != newVal.getVirtualHeight()) {
+								grid.getGridHelper().invalidatePos();
+								invalidate();
+							}
+						})
+						.listen();
+			}
+
+			@Override
+			public void dispose() {
+				super.dispose();
+				When.disposeFor(vsp.contentBoundsProperty());
+			}
+		};
+		bindingManager.bindBidirectional(vsp.vValProperty())
+				.to(grid.vPosProperty(), (oldValue, newValue) -> {
+					GridHelper helper = grid.getGridHelper();
+					grid.setVPos(newValue.doubleValue() * helper.maxVScroll());
+				})
+				.with((oldValue, newValue) -> {
+					GridHelper helper = grid.getGridHelper();
+					double max = helper.maxVScroll();
+					double val = (max != 0) ? newValue.doubleValue() / max : 0;
+					vsp.setVVal(val);
+				})
+				.withHelper(vValHelper)
+				.override(true)
+				.create();
+
+		BiBindingHelper<Number> hValHelper = new BiBindingHelper<>() {
+			{
+				When.onChanged(vsp.contentBoundsProperty())
+						.then((oldVal, newVal) -> {
+							if (oldVal.getWidth() != newVal.getWidth() ||
+									oldVal.getVirtualWidth() != newVal.getVirtualWidth()) {
+								grid.getGridHelper().invalidatePos();
+								invalidate();
+							}
+						})
+						.listen();
+			}
+
+			@Override
+			public void dispose() {
+				super.dispose();
+				When.disposeFor(vsp.contentBoundsProperty());
+			}
+		};
+		bindingManager.bindBidirectional(vsp.hValProperty())
+				.to(grid.hPosProperty(), (oldValue, newValue) -> {
+					GridHelper helper = grid.getGridHelper();
+					grid.setHPos(newValue.doubleValue() * helper.maxHScroll());
+				})
+				.with((oldValue, newValue) -> {
+					GridHelper helper = grid.getGridHelper();
+					double max = helper.maxHScroll();
+					double val = (max != 0) ? newValue.doubleValue() / max : 0;
+					vsp.setHVal(val);
+				})
+				.withHelper(hValHelper)
+				.override(true)
+				.create();
+
+		return vsp;
+	}
 
 	/**
 	 * Sets the horizontal scroll speed for the given {@link VirtualScrollPane}.
@@ -367,7 +465,7 @@ public class VirtualScrollPane extends Control {
 	}
 
 	/**
-	 * Disposes the bindings created by {@link #wrap(VirtualFlow)} and {@link #wrap(PaginatedVirtualFlow)}.
+	 * Disposes the bindings created by the various {@code wrap()} methods
 	 */
 	public static void disposeFor(VirtualScrollPane vsp) {
 		BiBindingManager bindingManager = BiBindingManager.instance();
@@ -375,18 +473,12 @@ public class VirtualScrollPane extends Control {
 		bindingManager.disposeFor(vsp.hValProperty());
 
 		if (vsp.getContent() != null && vsp.getContent() instanceof PaginatedVirtualFlow) {
-			disposeFor((PaginatedVirtualFlow<?, ?>) vsp.getContent());
+			When.disposeFor(((PaginatedVirtualFlow<?, ?>) vsp.getContent()).orientationProperty());
 		}
-	}
 
-	/**
-	 * When using {@link #wrap(PaginatedVirtualFlow)} a special listener is added using the {@link When} utility
-	 * class. This method is responsible for disposing that listener. The preferred way though would be just using
-	 * {@link #disposeFor(VirtualScrollPane)} which will call this method is the scroll pane's content is not null
-	 * and instance of {@link PaginatedVirtualFlow}.
-	 */
-	public static void disposeFor(PaginatedVirtualFlow<?, ?> flow) {
-		When.disposeFor(flow.orientationProperty());
+		if (vsp.getContent() != null && vsp.getContent() instanceof VirtualGrid) {
+			When.disposeFor(vsp.contentBoundsProperty());
+		}
 	}
 
 	/**

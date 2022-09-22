@@ -25,10 +25,12 @@ module VirtualizedFX {
 
 	// Flow Package
 	exports io.github.palexdev.virtualizedfx.flow;
+	exports io.github.palexdev.virtualizedfx.flow.paginated;
+
+	// Grid Package
+	exports io.github.palexdev.virtualizedfx.grid;
 
 	// Deprecated Flow Package
 	exports io.github.palexdev.virtualizedfx.unused.base;
 	exports io.github.palexdev.virtualizedfx.unused.simple;
-	exports io.github.palexdev.virtualizedfx.flow.paginated;
-
 }
