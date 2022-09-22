@@ -68,6 +68,17 @@ public class VirtualBounds {
 	}
 
 	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		VirtualBounds that = (VirtualBounds) o;
+		return that.getWidth() == getWidth() &&
+				that.getHeight() == getHeight() &&
+				that.getVirtualWidth() == getVirtualWidth() &&
+				that.getVirtualHeight() == getVirtualHeight();
+	}
+
+	@Override
 	public String toString() {
 		return "VirtualBounds{" +
 				"width=" + width +

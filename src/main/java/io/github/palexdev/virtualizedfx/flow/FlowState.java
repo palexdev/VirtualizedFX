@@ -244,7 +244,7 @@ public class FlowState<T, C extends Cell<T>> {
 	 * In any of these two cases a {@link FullMapping} is built. The mapping will then decide if a new cell is needed,
 	 * or an old one must be updated.
 	 * <p>
-	 * Once the mappings have been created they are "executed" by calling {@link FlowMapping#manage(FlowState, FlowState, int)}
+	 * Once the mappings have been created they are "executed" by calling {@link FlowMapping#manage(FlowState, FlowState)}
 	 * for each of them.
 	 * <p></p>
 	 * Last steps depend on the flow implementation. For {@link VirtualFlow} we check if the old range and the new range
@@ -369,7 +369,7 @@ public class FlowState<T, C extends Cell<T>> {
 				Set<Integer> available = IntegerRange.expandRangeToSet(newRange);
 				Map<Integer, FlowMapping<T, C>> mappings = new HashMap<>();
 				for (int i = first; i < change.getFrom(); i++) {
-					mappings.put(i, new ValidMapping<>(i));
+					mappings.put(i, new ValidMapping<>(i, i));
 					available.remove(i);
 				}
 
@@ -384,7 +384,7 @@ public class FlowState<T, C extends Cell<T>> {
 					if (index != null) {
 						int newIndex = index + change.size();
 						if (IntegerRange.inRangeOf(newIndex, newRange) && !change.hasChanged(newIndex) && available.contains(newIndex)) {
-							mappings.put(index, new PartialMapping<>(newIndex));
+							mappings.put(index, new PartialMapping<>(index, newIndex));
 							available.remove(newIndex);
 							continue;
 						}
@@ -397,11 +397,11 @@ public class FlowState<T, C extends Cell<T>> {
 					} else {
 						fIndex = index;
 					}
-					mappings.put(fIndex, new FullMapping<>(from));
+					mappings.put(fIndex, new FullMapping<>(fIndex, from));
 					available.remove(from);
 					from++;
 				}
-				mappings.forEach((i, m) -> m.manage(this, newState, i));
+				mappings.values().forEach(m -> m.manage(this, newState));
 
 				if (virtualFlow instanceof PaginatedVirtualFlow) {
 					// Ensure that remaining cells in the old state are carried by the new state too

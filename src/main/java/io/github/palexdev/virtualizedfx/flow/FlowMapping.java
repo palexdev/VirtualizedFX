@@ -31,19 +31,28 @@ import io.github.palexdev.virtualizedfx.cell.Cell;
  * <p> {@link FullMapping}: a full mapping means that a cell should be removed from the old state and
  * copied to the new state only after both its index and item have been updated.
  * Often a {@code FullMapping} can also receive a negative index as the "oldIndex" parameter of
- * {@link #manage(FlowState, FlowState, int)}, this means that no cells are left in the old state and a new one
+ * {@link #manage(FlowState, FlowState)}, this means that no cells are left in the old state and a new one
  * must be created to reach {@link FlowState#getTargetSize()}
  */
 public interface FlowMapping<T, C extends Cell<T>> {
-	void manage(FlowState<T, C> oldState, FlowState<T, C> newState, int oldIndex);
+	void manage(FlowState<T, C> oldState, FlowState<T, C> newState);
+
+	int getOldIndex();
 
 	int getNewIndex();
 
 	abstract class AbstractMapping<T, C extends Cell<T>> implements FlowMapping<T, C> {
+		protected final int oldIndex;
 		protected final int newIndex;
 
-		public AbstractMapping(int newIndex) {
+		public AbstractMapping(int oldIndex, int newIndex) {
+			this.oldIndex = oldIndex;
 			this.newIndex = newIndex;
+		}
+
+		@Override
+		public int getOldIndex() {
+			return oldIndex;
 		}
 
 		@Override
@@ -54,24 +63,24 @@ public interface FlowMapping<T, C extends Cell<T>> {
 
 	class ValidMapping<T, C extends Cell<T>> extends AbstractMapping<T, C> {
 
-		public ValidMapping(int newIndex) {
-			super(newIndex);
+		public ValidMapping(int oldIndex, int newIndex) {
+			super(oldIndex, newIndex);
 		}
 
 		@Override
-		public void manage(FlowState<T, C> oldState, FlowState<T, C> newState, int oldIndex) {
+		public void manage(FlowState<T, C> oldState, FlowState<T, C> newState) {
 			newState.addCell(newIndex, oldState.getCells().remove(newIndex));
 		}
 	}
 
 	class PartialMapping<T, C extends Cell<T>> extends AbstractMapping<T, C> {
 
-		public PartialMapping(int newIndex) {
-			super(newIndex);
+		public PartialMapping(int oldIndex, int newIndex) {
+			super(oldIndex, newIndex);
 		}
 
 		@Override
-		public void manage(FlowState<T, C> oldState, FlowState<T, C> newState, int oldIndex) {
+		public void manage(FlowState<T, C> oldState, FlowState<T, C> newState) {
 			C cell = oldState.getCells().remove(oldIndex);
 			cell.updateIndex(newIndex);
 			newState.addCell(newIndex, cell);
@@ -80,13 +89,13 @@ public interface FlowMapping<T, C extends Cell<T>> {
 
 	class FullMapping<T, C extends Cell<T>> extends AbstractMapping<T, C> {
 
-		public FullMapping(int newIndex) {
-			super(newIndex);
+		public FullMapping(int oldIndex, int newIndex) {
+			super(oldIndex, newIndex);
 		}
 
 		@Override
-		public void manage(FlowState<T, C> oldState, FlowState<T, C> newState, int oldIndex) {
-			VirtualFlow<T, C> virtualFlow = oldState.getVirtualFlow();
+		public void manage(FlowState<T, C> oldState, FlowState<T, C> newState) {
+			VirtualFlow<T, C> virtualFlow = newState.getVirtualFlow();
 			T item = virtualFlow.getItems().get(newIndex);
 			C cell = oldState.getCells().remove(oldIndex);
 			if (cell != null) {

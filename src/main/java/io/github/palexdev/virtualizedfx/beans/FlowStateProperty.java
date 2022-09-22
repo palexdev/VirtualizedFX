@@ -22,7 +22,14 @@ import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.flow.FlowState;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
+/**
+ * Convenience property that extends {@link ReadOnlyObjectWrapper} for {@link FlowState}.
+ */
 public class FlowStateProperty<T, C extends Cell<T>> extends ReadOnlyObjectWrapper<FlowState<T, C>> {
+
+	//================================================================================
+	// Constructors
+	//================================================================================
 	public FlowStateProperty() {
 	}
 

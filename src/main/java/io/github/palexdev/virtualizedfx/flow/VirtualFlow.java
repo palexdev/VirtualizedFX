@@ -66,7 +66,7 @@ import java.util.function.Function;
  * the one already available
  * <p> It is possible to observe for changes o the estimated length and max breadth through {@link #estimatedLengthProperty()}
  * and {@link #maxBreadthProperty()}
- * <p> It is possible to manually tell the viewport to update its layout with {@link #requestViewportLayout()}
+ * <p> It is possible to programmatically tell the viewport to update its layout with {@link #requestViewportLayout()}
  * <p></p>
  * Before proceeding with reading the methods documentations note that this new implementation
  * uses the concepts of length and breadth, simply put:
@@ -90,7 +90,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 			super.set(val);
 		}
 	};
-	private final ObjectProperty<Function<T, C>> cellFactory = new SimpleObjectProperty<>();
+	private final FunctionProperty<T, C> cellFactory = new FunctionProperty<>();
 
 	private final DoubleProperty vPos = PropUtils.clampedDoubleProperty(
 			() -> 0.0,
@@ -265,7 +265,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	}
 
 	/**
-	 * Specifies the current range of displayed items by the viewport as an {@link IntegerRange}.
+	 * Specifies the last range of displayed items by the viewport as an {@link IntegerRange}.
 	 */
 	public ReadOnlyObjectProperty<NumberRange<Integer>> lastRangeProperty() {
 		return viewportManager.lastRangeProperty();
@@ -350,6 +350,8 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	/**
 	 * Specifies whether cells should be resized to be the same size of the viewport in the opposite
 	 * direction of the current {@link #orientationProperty()}.
+	 * <p>
+	 * It is also possible to set this property via CSS with the {@code "-fx-fit-to-breadth"} property.
 	 */
 	public StyleableBooleanProperty fitToBreadthProperty() {
 		return fitToBreadth;
@@ -367,6 +369,8 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	 * Specifies the cells' size:
 	 * <p> - Orientation.VERTICAL:   size -> height
 	 * <p> - Orientation.HORIZONTAL: size -> width
+	 * <p>
+	 * It is also possible to set this property via CSS with the {@code "-fx-cell-size"} property.
 	 */
 	public StyleableDoubleProperty cellSizeProperty() {
 		return cellSize;
@@ -382,6 +386,8 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 
 	/**
 	 * Specifies the orientation of the virtual flow.
+	 * <p>
+	 * It is also possible to set this property via CSS with the {@code "-fx-orientation"} property.
 	 */
 	public StyleableObjectProperty<Orientation> orientationProperty() {
 		return orientation;
@@ -408,6 +414,8 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	 * it round do not act like the border-radius or background-radius properties,
 	 * instead their value is usually 2 / 2.5 times the latter.
 	 * So for a border radius of 5 you want this value to be at least 10/13.
+	 * <p>
+	 * It is also possible to set this property via CSS with the {@code "-fx-clip-border-radius"} property.
 	 */
 	public StyleableDoubleProperty clipBorderRadiusProperty() {
 		return clipBorderRadius;
@@ -496,7 +504,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	/**
 	 * Specifies the function used to build the cells.
 	 */
-	public ObjectProperty<Function<T, C>> cellFactoryProperty() {
+	public FunctionProperty<T, C> cellFactoryProperty() {
 		return cellFactory;
 	}
 

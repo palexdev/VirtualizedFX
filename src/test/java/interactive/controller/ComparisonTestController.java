@@ -18,13 +18,11 @@
 
 package interactive.controller;
 
-import io.github.palexdev.materialfx.controls.*;
-import io.github.palexdev.materialfx.dialogs.MFXDialogs;
-import io.github.palexdev.materialfx.dialogs.MFXGenericDialog;
-import io.github.palexdev.materialfx.dialogs.MFXGenericDialogBuilder;
-import io.github.palexdev.materialfx.dialogs.MFXStageDialog;
+import io.github.palexdev.materialfx.controls.MFXCheckbox;
+import io.github.palexdev.materialfx.controls.MFXComboBox;
+import io.github.palexdev.materialfx.controls.MFXTextField;
+import io.github.palexdev.materialfx.controls.MFXTooltip;
 import io.github.palexdev.materialfx.enums.DialogType;
-import io.github.palexdev.materialfx.enums.FloatMode;
 import io.github.palexdev.mfxcore.animations.Animations;
 import io.github.palexdev.mfxcore.animations.Animations.SequentialBuilder;
 import io.github.palexdev.mfxcore.animations.ConsumerTransition;
@@ -59,18 +57,16 @@ import javafx.scene.control.TextFormatter;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import static interactive.controller.DialogUtils.*;
 import static interactive.model.Model.integers;
 
 @SuppressWarnings("deprecation")
@@ -288,6 +284,12 @@ public class ComparisonTestController implements Initializable {
 		ADD_AT_END((mode, oldImp, newImp) -> {
 			Runnable oAction = () -> oldImp.getItems().add(oldImp.getItems().size(), RandomUtils.random.nextInt(0, 9999));
 			Runnable nAction = () -> newImp.getItems().add(newImp.getItems().size(), RandomUtils.random.nextInt(0, 9999));
+			execute(mode, oAction, nAction);
+		}),
+		ADD_AT((mode, oldImp, newImp) -> {
+			int index = getIntFromUser(root, "Add at...", "Index to add at");
+			Runnable oAction = () -> oldImp.getItems().add(index, RandomUtils.random.nextInt(0, 9999));
+			Runnable nAction = () -> newImp.getItems().add(index, RandomUtils.random.nextInt(0, 9999));
 			execute(mode, oAction, nAction);
 		}),
 		ADD_MULTIPLE_AT_3((mode, oldImp, newImp) -> {
@@ -762,113 +764,5 @@ public class ComparisonTestController implements Initializable {
 				.add(ct1)
 				.add(ct2)
 				.getAnimation();
-	}
-
-	protected static double getSizeFromUser(Pane owner, String title, String fieldText) {
-		MFXTextField field = new MFXTextField("", "", fieldText);
-		field.setFloatMode(FloatMode.INLINE);
-		field.setPrefSize(240, 32);
-		StackPane content = new StackPane(field);
-		content.setAlignment(Pos.CENTER);
-
-		MFXStageDialog sd = MFXGenericDialogBuilder.build()
-				.setHeaderText(title)
-				.setShowAlwaysOnTop(false)
-				.setShowMinimize(false)
-				.setContent(content)
-				.toStageDialogBuilder()
-				.initModality(Modality.WINDOW_MODAL)
-				.initOwner(owner.getScene().getWindow())
-				.setOwnerNode(owner)
-				.setCenterInOwnerNode(true)
-				.setScrimOwner(true)
-				.get();
-
-		AtomicReference<Double> val = new AtomicReference<>((double) 0);
-		MFXButton okAction = new MFXButton("OK");
-		okAction.setOnAction(event -> {
-			try {
-				val.set(Double.parseDouble(field.getText()));
-				if (val.get() <= 0.0) {
-					field.setFloatingText("Invalid value, > 0");
-					return;
-				}
-				sd.close();
-			} catch (NumberFormatException ignored) {
-			}
-		});
-		MFXButton cancelAction = new MFXButton("Cancel");
-		cancelAction.setOnAction(event -> {
-			val.set(-1.0);
-			sd.close();
-		});
-		((MFXGenericDialog) sd.getContent()).addActions(okAction, cancelAction);
-		sd.showAndWait();
-		return val.get();
-	}
-
-	public static int getIntFromUser(Pane owner, String title, String fieldText) {
-		MFXTextField field = new MFXTextField("", "", fieldText);
-		field.setFloatMode(FloatMode.INLINE);
-		field.setPrefSize(240, 32);
-		StackPane content = new StackPane(field);
-		content.setAlignment(Pos.CENTER);
-
-		MFXStageDialog sd = MFXGenericDialogBuilder.build()
-				.setHeaderText(title)
-				.setShowAlwaysOnTop(false)
-				.setShowMinimize(false)
-				.setContent(content)
-				.toStageDialogBuilder()
-				.initModality(Modality.WINDOW_MODAL)
-				.initOwner(owner.getScene().getWindow())
-				.setOwnerNode(owner)
-				.setCenterInOwnerNode(true)
-				.setScrimOwner(true)
-				.get();
-
-		AtomicInteger val = new AtomicInteger(0);
-		MFXButton okAction = new MFXButton("OK");
-		okAction.setOnAction(event -> {
-			try {
-				val.set(Integer.parseInt(field.getText()));
-				if (val.get() <= 0) {
-					field.setFloatingText("Invalid value, > 0");
-					return;
-				}
-				sd.close();
-			} catch (NumberFormatException ignored) {
-			}
-		});
-		MFXButton cancelAction = new MFXButton("Cancel");
-		cancelAction.setOnAction(event -> {
-			val.set(-1);
-			sd.close();
-		});
-		((MFXGenericDialog) sd.getContent()).addActions(okAction, cancelAction);
-		sd.showAndWait();
-		return val.get();
-	}
-
-	public static void showDialog(Pane owner, DialogType type, String title, String details) {
-		MFXGenericDialogBuilder builder = switch (type) {
-			case ERROR -> MFXDialogs.error();
-			case WARNING -> MFXDialogs.warn();
-			case INFO -> MFXDialogs.info();
-			case GENERIC -> MFXGenericDialogBuilder.build();
-		};
-		MFXStageDialog sd = builder
-				.setHeaderText(title)
-				.setContentText(details)
-				.setShowAlwaysOnTop(false)
-				.setShowMinimize(false)
-				.toStageDialogBuilder()
-				.initModality(Modality.WINDOW_MODAL)
-				.initOwner(owner.getScene().getWindow())
-				.setOwnerNode(owner)
-				.setCenterInOwnerNode(true)
-				.setScrimOwner(true)
-				.get();
-		sd.showDialog();
 	}
 }

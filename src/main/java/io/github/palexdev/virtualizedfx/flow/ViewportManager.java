@@ -32,9 +32,10 @@ import java.util.Map;
 
 /**
  * The {@code ViewportManager} is responsible for managing the flow's viewport, the cells.
+ * <p>
  * It stores the current state of the viewport at any time with two properties:
  * <p> - The state property which holds an object of type {@link FlowState}
- * <p> - The last range property which holds the current range of displayed items, as a {@link IntegerRange}
+ * <p> - The last range property which holds the last range of displayed items, as a {@link IntegerRange}
  * <p></p>
  * This is responsible for initializing, update on scroll, update on any change on the items list,
  * clearing or resetting the viewport when needed.

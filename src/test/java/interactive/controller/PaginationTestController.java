@@ -54,8 +54,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static interactive.controller.ComparisonTestController.getIntFromUser;
-import static interactive.controller.ComparisonTestController.getSizeFromUser;
+import static interactive.controller.DialogUtils.getIntFromUser;
+import static interactive.controller.DialogUtils.getSizeFromUser;
 
 public class PaginationTestController implements Initializable {
 	private static Pane root;
@@ -227,6 +227,10 @@ public class PaginationTestController implements Initializable {
 			);
 			flow.getItems().addAll(3, integers);
 		})),
+		ADD_AT(flow -> {
+			int index = getIntFromUser(root, "Add at...", "Index to add at");
+			execute(() -> flow.getItems().add(index, RandomUtils.random.nextInt(0, 9999)));
+		}),
 		DELETE_AT_3(flow -> execute(() -> flow.getItems().remove(3))),
 		DELETE_SPARSE(flow -> execute(() -> flow.getItems().removeAll(
 				flow.getItems().get(2), flow.getItems().get(5),

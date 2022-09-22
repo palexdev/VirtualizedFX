@@ -40,8 +40,8 @@ import java.util.stream.Collectors;
  * the currently visible cells and scrolling "a little" (more info in {@link OrientationHelper}).
  * <p></p>
  * There are two approaches for the layout:
- * <p> 1) You can manage it manually and request it only when you think it's needed, this is the most performant
- * <p> 2) You can leave layout calls to the viewport, this is the most accurate. The performance difference should be
+ * <p> 1) It can be managed manually and request it only when you think it's needed, this is the most performant
+ * <p> 2) It can be left to the viewport, this is the most accurate. The performance difference should be
  * negligible though. This skin uses this approach.
  * <p>
  * The viewport is also clipped to avoid content leaking out of it.

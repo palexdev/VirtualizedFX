@@ -1,5 +1,10 @@
 <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="Launcher" type="Application" factoryName="Application" nameIsGenerated="true">
+        <envs>
+            <env name="__GLX_VENDOR_LIBRARY_NAME" value="nvidia"/>
+            <env name="__NV_PRIME_RENDER_OFFLOAD" value="0"/>
+            <env name="DRI_PRIME" value="0"/>
+        </envs>
         <option name="MAIN_CLASS_NAME" value="interactive.Launcher"/>
         <module name="VirtualizedFX.test"/>
         <extension name="coverage">
