@@ -14,6 +14,59 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.7.1] - 16-10-2022
+
+## Fixed
+
+- Quick fix, forgot to update the module-info.java and CHANGELOG.md
+
+## [11.7.0] - 16-10-2022
+
+## Added
+
+- Implemented paginated version of VirtualGrid: PaginatedVirtualGrid
+- Added tests for the PaginatedVirtualGrid
+
+## Changed
+
+- Upgrade JavaFX to version 19
+- Upgrade JavaFX plugin to version 0.0.13
+- Upgrade JUnit to version 5.9.0
+- Upgrade MFXCore to 11.1.2
+- VirtualScrollPane: moved wrap() methods to utility class VSPUtils
+- PaginatedHorizontalHelper: override scrollToPixel to be unsupported
+- PaginatedVirtualFlow: minor documentation fixes and code refactors
+- Major refactor of VirtualGrid and its components
+- LayoutRow is now GridRow and it's much more useful and reliable
+- GridHelper: convert estimated length and breadth properties to a single property, estimatedSize
+- GridHelper: make invalidatePos() return a boolean value indicating whether the invalidation occurred or not
+- AbstractGridHelper and DefaultGridHelper adapted to the aforementioned changes
+- DefaultGridHelper: refactor rowsRange() and columnsRange() to always return clamped ranges, check docs
+- Major refactor for GridState. It is now much more reliable on all core computations. Also, it is now able to correctly
+  compute the transition caused by any Change type (add/remove rows and columns changes were buggy). Implemented code to
+  layout rows for paginated grids.
+- ViewportManager: refactored init() method, it now returns a boolean value indicating whether the computation lead or
+  not to a layout request
+- Major refactor for VirtualGrid too. The two positions (vPos and hPos) are now stored in a single bean to simplify
+  things.
+- Major refactor for VirtualGridSkin too. Actions performed by the various listeners have been moved to separate
+  protected methods
+- Completely re-organized interactive tests
+
+## Removed
+
+- GridCell: removed updateCoordinates method with linear index, for performance reasons it's better to always use the
+  other one
+- Removed GridIterator
+- GridHelper: removed maxCells() method as unnecessary
+
+## Fixed
+
+- MFXScrollBarBehavior: fixed bug that was causing the thumb to bounce back when using the track to scroll, specifically
+  when holding the track
+- VirtualGrid: fixed onCellSizeChanged() not resizing cells in some specific cases due to ViewportManager.init() not
+  leading to a layout request
+
 ## [11.6.1] - 22-09-2022
 
 ## Changed
