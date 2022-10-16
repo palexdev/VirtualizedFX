@@ -16,32 +16,20 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+package interactive.grid;
 
-import interactive.controller.PaginationTestController;
+import interactive.Tests;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import org.scenicview.ScenicView;
 
-public class PaginationTest extends Application {
+public class PGridApp extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		FXMLLoader loader = new FXMLLoader(Launcher.class.getResource("PaginationTest.fxml"));
-		loader.setControllerFactory(o -> new PaginationTestController(primaryStage));
-		Parent root = loader.load();
-		Scene scene = new Scene(root);
-		scene.setFill(Color.TRANSPARENT);
-		primaryStage.initStyle(StageStyle.TRANSPARENT);
-		primaryStage.setTitle("Pagination Test");
+		Scene scene = new Scene(Tests.PGRID.load());
 		primaryStage.setScene(scene);
+		primaryStage.setTitle("Paginated VirtualGrid Test");
 		primaryStage.show();
-
-		ScenicView.show(scene);
 	}
 }

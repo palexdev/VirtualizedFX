@@ -16,7 +16,7 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive.controller;
+package interactive.others;
 
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXTextField;
@@ -27,6 +27,8 @@ import io.github.palexdev.materialfx.dialogs.MFXStageDialog;
 import io.github.palexdev.materialfx.enums.DialogType;
 import io.github.palexdev.materialfx.enums.FloatMode;
 import javafx.geometry.Pos;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
@@ -39,7 +41,7 @@ public class DialogUtils {
 	private DialogUtils() {
 	}
 
-	public static double getSizeFromUser(Pane owner, String title, String fieldText) {
+	public static double getSizeFromUser(Pane owner, String title, String fieldText, Constraint<Double> constraint) {
 		MFXTextField field = new MFXTextField("", "", fieldText);
 		field.setFloatMode(FloatMode.INLINE);
 		field.setPrefSize(240, 32);
@@ -59,13 +61,14 @@ public class DialogUtils {
 				.setScrimOwner(true)
 				.get();
 
-		AtomicReference<Double> val = new AtomicReference<>((double) 0);
+		AtomicReference<Double> val = new AtomicReference<>((double) -1);
 		MFXButton okAction = new MFXButton("OK");
 		okAction.setOnAction(event -> {
 			try {
-				val.set(Double.parseDouble(field.getText()));
-				if (val.get() <= 0.0) {
-					field.setFloatingText("Invalid value, > 0");
+				double parsed = Double.parseDouble(field.getText());
+				val.set(parsed);
+				if (!constraint.isValid(parsed)) {
+					field.setFloatingText(constraint.message());
 					return;
 				}
 				sd.close();
@@ -78,11 +81,18 @@ public class DialogUtils {
 			sd.close();
 		});
 		((MFXGenericDialog) sd.getContent()).addActions(okAction, cancelAction);
+		sd.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			if (event.getCode() == KeyCode.ENTER)
+				okAction.fire();
+
+			if (event.getCode() == KeyCode.ESCAPE)
+				cancelAction.fire();
+		});
 		sd.showAndWait();
 		return val.get();
 	}
 
-	public static int getIntFromUser(Pane owner, String title, String fieldText) {
+	public static int getIntFromUser(Pane owner, String title, String fieldText, Constraint<Integer> constraint) {
 		MFXTextField field = new MFXTextField("", "", fieldText);
 		field.setFloatMode(FloatMode.INLINE);
 		field.setPrefSize(240, 32);
@@ -102,13 +112,14 @@ public class DialogUtils {
 				.setScrimOwner(true)
 				.get();
 
-		AtomicInteger val = new AtomicInteger(0);
+		AtomicInteger val = new AtomicInteger(-1);
 		MFXButton okAction = new MFXButton("OK");
 		okAction.setOnAction(event -> {
 			try {
-				val.set(Integer.parseInt(field.getText()));
-				if (val.get() <= 0) {
-					field.setFloatingText("Invalid value, > 0");
+				int parsed = Integer.parseInt(field.getText());
+				val.set(parsed);
+				if (!constraint.isValid(parsed)) {
+					field.setFloatingText(constraint.message());
 					return;
 				}
 				sd.close();
@@ -121,6 +132,13 @@ public class DialogUtils {
 			sd.close();
 		});
 		((MFXGenericDialog) sd.getContent()).addActions(okAction, cancelAction);
+		sd.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			if (event.getCode() == KeyCode.ENTER)
+				okAction.fire();
+
+			if (event.getCode() == KeyCode.ESCAPE)
+				cancelAction.fire();
+		});
 		sd.showAndWait();
 		return val.get();
 	}

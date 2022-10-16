@@ -20,7 +20,6 @@ package io.github.palexdev.virtualizedfx.flow.paginated;
 
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper;
-import io.github.palexdev.virtualizedfx.flow.ViewportManager;
 
 /**
  * Small API extension of {@link OrientationHelper}, to be used exclusively with {@link PaginatedVirtualFlow}.
@@ -44,7 +43,7 @@ public interface PaginatedHelper extends OrientationHelper {
 	class PaginatedHorizontalHelper extends HorizontalHelper implements PaginatedHelper {
 		protected PaginatedVirtualFlow<?, ?> pFlow;
 
-		public PaginatedHorizontalHelper(PaginatedVirtualFlow<?, ?> virtualFlow, ViewportManager<?, ?> viewportManager) {
+		public PaginatedHorizontalHelper(PaginatedVirtualFlow<?, ?> virtualFlow) {
 			super(virtualFlow);
 			this.pFlow = virtualFlow;
 		}
@@ -99,6 +98,17 @@ public interface PaginatedHelper extends OrientationHelper {
 		}
 
 		/**
+		 * This is unsupported as the {@link PaginatedVirtualFlow} can only scroll to certain pixel values, given
+		 * by the pages.
+		 *
+		 * @throws UnsupportedOperationException
+		 */
+		@Override
+		public void scrollToPixel(double pixel) {
+			throw new UnsupportedOperationException("The paginated flow cannot scroll to any given pixel");
+		}
+
+		/**
 		 * Basically the same as {@link #goToPage(int)}, the index parameter is always clamped
 		 * between 1 and {@link PaginatedVirtualFlow#maxPageProperty()}.
 		 */
@@ -122,7 +132,7 @@ public interface PaginatedHelper extends OrientationHelper {
 	class PaginatedVerticalHelper extends VerticalHelper implements PaginatedHelper {
 		protected PaginatedVirtualFlow<?, ?> pFlow;
 
-		public PaginatedVerticalHelper(PaginatedVirtualFlow<?, ?> virtualFlow, ViewportManager<?, ?> viewportManager) {
+		public PaginatedVerticalHelper(PaginatedVirtualFlow<?, ?> virtualFlow) {
 			super(virtualFlow);
 			this.pFlow = virtualFlow;
 		}

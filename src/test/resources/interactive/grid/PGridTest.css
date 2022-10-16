@@ -16,20 +16,17 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+@import "../Common.css";
 
-import interactive.grid.PGridApp;
-import javafx.application.Application;
+.mfx-text-field {
+	-fx-border-color: -blue-light;
+}
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(PGridApp.class);
-	}
+#footer .mfx-icon-wrapper .mfx-ripple-generator {
+	-mfx-ripple-color: -blue-lighter;
+	-mfx-ripple-radius: 20;
+}
+
+#footer .mfx-icon-wrapper .mfx-font-icon {
+	-mfx-color: -blue;
 }

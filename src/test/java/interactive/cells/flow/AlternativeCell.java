@@ -16,32 +16,29 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+package interactive.cells.flow;
 
-import interactive.controller.GridTestController;
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
+import io.github.palexdev.mfxresources.font.MFXFontIcon;
+import javafx.scene.Node;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import org.scenicview.ScenicView;
 
-public class VirtualGridTest extends Application {
+public class AlternativeCell extends CommonCell {
+	private final MFXIconWrapper icon;
+
+	public AlternativeCell(Integer item) {
+		super(item);
+		icon = new MFXIconWrapper(randomIcon(), 32.0);
+		getChildren().setAll(icon, label);
+		setSpacing(20);
+	}
+
+	private Node randomIcon() {
+		return MFXFontIcon.getRandomIcon(18, Color.web("#35ce8f"));
+	}
 
 	@Override
-	public void start(Stage primaryStage) throws Exception {
-		FXMLLoader loader = new FXMLLoader(Launcher.class.getResource("GridTest.fxml"));
-		loader.setControllerFactory(c -> new GridTestController(primaryStage));
-		Parent root = loader.load();
-		Scene scene = new Scene(root);
-		scene.setFill(Color.TRANSPARENT);
-		primaryStage.initStyle(StageStyle.TRANSPARENT);
-		primaryStage.setTitle("Pagination Test");
-		primaryStage.setScene(scene);
-		primaryStage.show();
-
-		ScenicView.show(scene);
+	protected String dataToString() {
+		return "Data: " + item;
 	}
 }

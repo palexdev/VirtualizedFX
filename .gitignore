@@ -1,3 +1,6 @@
+# Fleet
+.fleet/
+
 # IntelliJ Idea
 .idea/
 build/

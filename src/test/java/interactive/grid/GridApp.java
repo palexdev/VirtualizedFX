@@ -16,20 +16,20 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+package interactive.grid;
 
-import interactive.grid.PGridApp;
+import interactive.Tests;
 import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(PGridApp.class);
+public class GridApp extends Application {
+
+	@Override
+	public void start(Stage primaryStage) throws Exception {
+		Scene scene = new Scene(Tests.GRID.load());
+		primaryStage.setScene(scene);
+		primaryStage.setTitle("VirtualGrid Test");
+		primaryStage.show();
 	}
 }

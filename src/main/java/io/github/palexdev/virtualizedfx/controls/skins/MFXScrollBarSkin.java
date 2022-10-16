@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.controls.skins;
 
-import io.github.palexdev.mfxcore.base.beans.PositionBean;
+import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.builders.bindings.BooleanBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
@@ -414,7 +414,7 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 				visibleAmountProperty().set(visibleAmount);
 			}
 
-			PositionBean position = LayoutUtils.computePosition(
+			Position position = LayoutUtils.computePosition(
 					sb, thumb,
 					x, y + decSize, w, thumbLength, 0,
 					Insets.EMPTY, HPos.CENTER, VPos.TOP,
@@ -433,7 +433,7 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 				visibleAmountProperty().set(visibleAmount);
 			}
 
-			PositionBean position = LayoutUtils.computePosition(
+			Position position = LayoutUtils.computePosition(
 					sb, thumb,
 					x + decSize, y, thumbLength, h, 0,
 					Insets.EMPTY, HPos.LEFT, VPos.CENTER,

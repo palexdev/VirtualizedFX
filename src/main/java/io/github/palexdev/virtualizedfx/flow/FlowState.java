@@ -547,7 +547,7 @@ public class FlowState<T, C extends Cell<T>> {
 	/**
 	 * This is the implementation of {@link #computePositions()} exclusively for {@link PaginatedVirtualFlow}s.
 	 * <p>
-	 * This is much simpler as there is no free scrolling, all cells will have a precise position at any time in the
+	 * This is much simpler as there is no "free" scrolling, all cells will have a precise position at any time in the
 	 * page.
 	 * <p></p>
 	 * First we clear the positions {@code Set} to ensure there's no garbage in it.

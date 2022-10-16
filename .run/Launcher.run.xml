@@ -7,6 +7,7 @@
         </envs>
         <option name="MAIN_CLASS_NAME" value="interactive.Launcher"/>
         <module name="VirtualizedFX.test"/>
+        <option name="VM_PARAMETERS" value="-Dglass.disableGrab=false"/>
         <extension name="coverage">
             <pattern>
                 <option name="PATTERN" value="interactive.*"/>

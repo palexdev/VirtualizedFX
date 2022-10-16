@@ -18,29 +18,38 @@
 
 package interactive;
 
-import interactive.controller.ComparisonTestController;
-import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
-public class ComparisonTest extends Application {
+import java.io.IOException;
+import java.net.URL;
 
-	@Override
-	public void start(Stage primaryStage) throws Exception {
-		FXMLLoader loader = new FXMLLoader(Launcher.class.getResource("ComparisonTest.fxml"));
-		loader.setControllerFactory(o -> new ComparisonTestController(primaryStage));
-		Parent root = loader.load();
-		Scene scene = new Scene(root);
-		scene.setFill(Color.TRANSPARENT);
-		primaryStage.initStyle(StageStyle.TRANSPARENT);
-		primaryStage.setTitle("VirtualizedFX: Comparison between the old and new implementation");
-		primaryStage.setScene(scene);
-		primaryStage.show();
+public enum Tests {
+	FLOW("flow/FlowTest.fxml"),
+	PFLOW("flow/PFlowTest.fxml"),
+	GRID("grid/GridTest.fxml"),
+	PGRID("grid/PGridTest.fxml");
 
-		//ScenicView.show(scene);
+	private final String fxml;
+
+	Tests(String fxml) {
+		this.fxml = fxml;
+	}
+
+	public String getFXML() {
+		return fxml;
+	}
+
+	public URL toUrl() {
+		return Tests.class.getResource(getFXML());
+	}
+
+	public String toExternalForm() {
+		return toUrl().toExternalForm();
+	}
+
+	public Parent load() throws IOException {
+		FXMLLoader loader = new FXMLLoader(toUrl());
+		return loader.load();
 	}
 }

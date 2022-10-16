@@ -196,9 +196,11 @@ public class MFXScrollBarBehavior extends BehaviorBase<MFXScrollBar> {
 		holdAnimation = PauseBuilder.build()
 				.setDuration(350)
 				.setOnFinished(event -> {
-					if (increment && getThumbPos() > position ||
-							!increment && getThumbPos() < position ||
-							sb.getValue() == sb.getMax()) return;
+					double thPos = getThumbPos() + (increment ? thumbLength() : 0.0);
+					boolean incAndGreater = increment && thPos > position;
+					boolean decAndLesser = !increment && thPos < position;
+					boolean isMax = sb.getValue() == sb.getMax();
+					if (incAndGreater || decAndLesser || isMax) return;
 
 					double target = increment ? posToVal(position - thumbLength()) : posToVal(position);
 					double delta = Math.abs(target - sb.getValue());

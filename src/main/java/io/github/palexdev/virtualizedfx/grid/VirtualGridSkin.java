@@ -20,23 +20,23 @@ package io.github.palexdev.virtualizedfx.grid;
 
 import io.github.palexdev.mfxcore.collections.ObservableGrid;
 import io.github.palexdev.mfxcore.collections.ObservableGrid.Change;
-import io.github.palexdev.mfxcore.enums.GridChangeType;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
-import io.github.palexdev.virtualizedfx.enums.UpdateType;
-import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Default skin implementation for {@link VirtualGrid}.
  * <p></p>
- * There is only one component which is the viewport. This is responsible for containing
- * the currently visible cells and scrolling "a little" (more info in {@link GridHelper} and {@link GridState}).
+ * There is only one component which is the viewport. This is responsible for containing the currently visible cells
+ * and scrolling "a little" to give the illusion of real scrolling, more info here: {@link GridHelper#xPosBinding()},
+ * {@link GridHelper#yPosBinding()}, {@link GridState#layoutRows()}.
  * <p></p>
  * There are two approaches for the layout:
  * <p> 1) It can be managed manually and request it only when you think it's needed, this is the most performant
@@ -45,25 +45,26 @@ import java.util.List;
  * <p>
  * The viewport is also clipped to avoid content leaking out of it.
  * <p></p>
- * The actual positioning and resizing of the cells is done by the {@link GridHelper} though, this allows you to create
- * custom implementation of the interface and setting it through the {@link VirtualGrid#gridHelperFactoryProperty()},
- * allowing to customize how cells are positioned and sized.
+ * The actual positioning and resizing of the cells is done by {@link GridHelper#layout(Node, double, double)} though,
+ * this allows the user to create custom implementations of the interface and set is as the grid's helper through
+ * {@link VirtualGrid#gridHelperSupplierProperty()}.
  * <p></p>
- * The position of the viewport is controlled through its translateX and translateY properties, two bindings
- * are created by the {@link GridHelper} to update the positions when needed.
+ * The position of the viewport is controlled through its translateX and translateY properties, two bindings are
+ * created by the {@link GridHelper} to update the positions when needed (linked above).
  */
 public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualGrid<T, C>> {
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final Pane viewport;
+	protected final Pane viewport;
 	private final Rectangle clip;
+	protected ViewportManager<T, C> manager;
 
 	private final double DEFAULT_SIZE = 100.0;
 
 	private ChangeListener<? super Change<T>> itemsChanged;
 	private ChangeListener<? super ObservableGrid<T>> gridChanged;
-	private InvalidationListener factoryChanged;
+	private ChangeListener<? super Function<T, C>> factoryChanged;
 	private ChangeListener<? super GridState<T, C>> stateChanged;
 	private ChangeListener<? super GridHelper> helperChanged;
 	private ChangeListener<? super Boolean> layoutRequestListener;
@@ -71,84 +72,47 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public VirtualGridSkin(VirtualGrid<T, C> virtualGrid) {
-		super(virtualGrid);
+	public VirtualGridSkin(VirtualGrid<T, C> grid) {
+		super(grid);
+		manager = grid.getViewportManager();
 
-		// Initialize Viewport
+		// Initialize the Viewport
 		viewport = new Pane() {
 			@Override
 			protected void layoutChildren() {
-				// TODO maybe layout may be avoided if children list changes
-				GridHelper helper = virtualGrid.getGridHelper();
+				GridHelper helper = grid.getGridHelper();
 				if (helper == null)
 					throw new IllegalStateException("GridHelper is null, cannot proceed with layout");
+				if (!grid.isNeedsViewportLayout()) return;
 
-				GridState<T, C> state = virtualGrid.getState();
-				if (state == GridState.EMPTY || state.isEmpty()) {
-					helper.invalidatePos();
+				if (helper.invalidatedPos()) {
 					return;
 				}
 
-				if (!virtualGrid.isNeedsViewportLayout()) return;
-				if (state.getType() == UpdateType.CHANGE) helper.invalidatePos();
-
+				GridState<T, C> state = grid.getState();
 				state.layoutRows();
-				virtualGrid.setNeedsViewportLayout(false);
+				grid.setNeedsViewportLayout(false);
 			}
 		};
 		viewport.getStyleClass().add("viewport");
 
 		clip = new Rectangle();
-		clip.widthProperty().bind(virtualGrid.widthProperty());
-		clip.heightProperty().bind(virtualGrid.heightProperty());
-		clip.arcWidthProperty().bind(virtualGrid.clipBorderRadiusProperty());
-		clip.arcHeightProperty().bind(virtualGrid.clipBorderRadiusProperty());
-		virtualGrid.setClip(clip);
+		clip.widthProperty().bind(grid.widthProperty());
+		clip.heightProperty().bind(grid.heightProperty());
+		clip.arcWidthProperty().bind(grid.clipBorderRadiusProperty());
+		clip.arcHeightProperty().bind(grid.clipBorderRadiusProperty());
+		grid.setClip(clip);
 
-		// Build listeners
-		ViewportManager<T, C> viewportManager = virtualGrid.getViewportManager();
-		itemsChanged = (observable, oldValue, newValue) -> {
-			GridHelper helper = virtualGrid.getGridHelper();
-			if (newValue.getType() != GridChangeType.CLEAR) {
-				helper.computeEstimatedLength();
-				helper.computeEstimatedBreadth();
-			}
-			viewportManager.onChange(newValue);
-		};
-
-		gridChanged = (observable, oldValue, newValue) -> {
-			if (oldValue != null) oldValue.removeListener(itemsChanged);
-			if (newValue != null) {
-				newValue.addListener(itemsChanged);
-				viewportManager.reset();
-			}
-		};
-
-		factoryChanged = invalidated -> viewportManager.reset();
-
-		stateChanged = (observable, oldValue, newValue) -> {
-			if (newValue == GridState.EMPTY) {
-				viewport.getChildren().clear();
-				return;
-			}
-
-			if (newValue.haveCellsChanged()) {
-				List<Node> nodes = newValue.getNodes();
-				viewport.getChildren().setAll(nodes);
-			}
-		};
-
-		helperChanged = (observable, oldValue, newValue) -> {
-			viewport.translateXProperty().bind(newValue.xPosBinding());
-			viewport.translateYProperty().bind(newValue.yPosBinding());
-		};
-
-		layoutRequestListener = (observable, oldValue, newValue) -> {
-			if (newValue) viewport.requestLayout();
-		};
+		// Build Listeners
+		gridChanged = (observable, oldValue, newValue) -> onGridChanged(oldValue, newValue);
+		itemsChanged = (observable, oldValue, newValue) -> onItemsChanged(newValue);
+		factoryChanged = (observable, oldValue, newValue) -> onFactoryChanged(newValue);
+		stateChanged = (observable, oldValue, newValue) -> onStateChanged(oldValue, newValue);
+		helperChanged = (observable, oldValue, newValue) -> onHelperChanged(newValue);
+		layoutRequestListener = (observable, oldValue, newValue) -> onLayoutRequest(newValue);
 
 		// Initialize Bindings
-		GridHelper helper = virtualGrid.getGridHelper();
+		GridHelper helper = grid.getGridHelper();
 		viewport.translateXProperty().bind(helper.xPosBinding());
 		viewport.translateYProperty().bind(helper.yPosBinding());
 
@@ -159,17 +123,12 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 
 	/**
 	 * Registers the following listeners:
-	 * <p> - A listener on the {@link VirtualGrid#getItems()} list which is responsible
-	 * for updating both the estimated length and breadth through the {@link GridHelper} and calling
-	 * {@link ViewportManager#onChange(Change)}
-	 * <p> - A listener on the {@link VirtualGrid#itemsProperty()} which is needed to register the aforementioned listener
-	 * on the new observable grid and call {@link ViewportManager#reset()}
-	 * <p> - A listener on the {@link VirtualGrid#cellFactoryProperty()} to call {@link ViewportManager#reset()}
-	 * <p> - A listener on the {@link VirtualGrid#stateProperty()} to update the viewport when cells change.
-	 * Keep in mind that cells only change when new ones are created or some are deleted, change index or item do not
-	 * account as a cell change
-	 * <p> - A listener on the {@link VirtualGrid#needsViewportLayoutProperty()} to request the layout of the cells in
-	 * the viewport
+	 * <p> - A listener on the {@link VirtualGrid#getItems()} list which calls {@link #onItemsChanged(Change)}
+	 * <p> - A listener on the {@link VirtualGrid#itemsProperty()} which calls {@link #onGridChanged(ObservableGrid, ObservableGrid)}
+	 * <p> - A listener on the {@link VirtualGrid#cellFactoryProperty()} which calls {@link #onFactoryChanged(Function)}
+	 * <p> - A listener on the {@link VirtualGrid#stateProperty()} which calls {@link #onStateChanged(GridState, GridState)}
+	 * <p> - A listener on the {@link VirtualGrid#gridHelperProperty()} which calls {@link #onHelperChanged(GridHelper)}
+	 * <p> - A listener on the {@link VirtualGrid#needsViewportLayoutProperty()} which calls {@link #onLayoutRequest(boolean)}
 	 */
 	private void addListeners() {
 		VirtualGrid<T, C> virtualGrid = getSkinnable();
@@ -180,6 +139,84 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 		virtualGrid.stateProperty().addListener(stateChanged);
 		virtualGrid.gridHelperProperty().addListener(helperChanged);
 		virtualGrid.needsViewportLayoutProperty().addListener(layoutRequestListener);
+	}
+
+	/**
+	 * The default implementation is responsible for telling the {@link ViewportManager} to process the occurred
+	 * {@link Change} and produce eventually a new state.
+	 * <p>
+	 * This also ensures after the change that the viewport's estimated size is correct by calling {@link GridHelper#computeEstimatedSize()}.
+	 */
+	protected void onItemsChanged(Change<T> change) {
+		VirtualGrid<T, C> grid = getSkinnable();
+		manager.onChange(change);
+
+		GridHelper helper = grid.getGridHelper();
+		helper.computeEstimatedSize();
+	}
+
+	/**
+	 * Tells the grid's components what to do when the items data structure changes.
+	 * By default, this causes the removal of the itemsChanged listener from the old structure,
+	 * which is then added to the new one. The estimated size is also recomputed and the viewport reset.
+	 */
+	protected void onGridChanged(ObservableGrid<T> oldValue, ObservableGrid<T> newValue) {
+		if (oldValue != null) oldValue.removeListener(itemsChanged);
+		if (newValue != null) {
+			newValue.addListener(itemsChanged);
+			manager.reset();
+		}
+	}
+
+	/**
+	 * The default implementation is responsible for resetting the viewport, {@link ViewportManager#reset()}, when
+	 * the function used to build the cells has been changed.
+	 *
+	 * @throws IllegalStateException if the new function is null
+	 */
+	protected void onFactoryChanged(Function<T, C> newValue) {
+		if (newValue == null)
+			throw new IllegalStateException("The new provided cell factory is null, you will encounter problems");
+		manager.reset();
+	}
+
+	/**
+	 * The default implementation is responsible for updating the viewport's children when the state changes.
+	 * The new state though must have the {@link GridState#haveCellsChanged()} flag set to true for this to happen.
+	 * The nodes are collected through {@link GridState#getNodes()}.
+	 */
+	protected void onStateChanged(GridState<T, C> oldValue, GridState<T, C> newValue) {
+		if (newValue == GridState.EMPTY) {
+			viewport.getChildren().clear();
+			return;
+		}
+
+		if (newValue.haveCellsChanged()) {
+			List<Node> nodes = newValue.getNodes();
+			viewport.getChildren().setAll(nodes);
+		}
+	}
+
+	/**
+	 * The default implementation is responsible for re-binding the viewport's translateX and translateY properties
+	 * to the bindings created by the new {@link GridHelper}.
+	 *
+	 * @throws IllegalStateException if the new helper is null
+	 */
+	protected void onHelperChanged(GridHelper newValue) {
+		if (newValue == null)
+			throw new IllegalStateException("The new provided GridHelper is null, you will encounter problems");
+
+		viewport.translateXProperty().bind(newValue.xPosBinding());
+		viewport.translateYProperty().bind(newValue.yPosBinding());
+	}
+
+	/**
+	 * The default implementation is responsible for calling {@link Parent#requestLayout()} on the viewport when
+	 * the {@link VirtualGrid#needsViewportLayoutProperty()} has been set to true.
+	 */
+	protected void onLayoutRequest(boolean newValue) {
+		if (newValue) viewport.requestLayout();
 	}
 
 	//================================================================================
@@ -210,8 +247,9 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 
 	@Override
 	public void dispose() {
-		super.dispose();
 		VirtualGrid<T, C> virtualGrid = getSkinnable();
+		manager = null;
+
 		virtualGrid.getItems().removeListener(itemsChanged);
 		virtualGrid.itemsProperty().removeListener(gridChanged);
 		virtualGrid.cellFactoryProperty().removeListener(factoryChanged);
@@ -225,5 +263,6 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 		stateChanged = null;
 		helperChanged = null;
 		layoutRequestListener = null;
+		super.dispose();
 	}
 }

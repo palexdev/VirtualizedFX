@@ -1,0 +1,167 @@
+/*
+ * Copyright (C) 2022 Parisi Alessandro
+ * This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX).
+ *
+ * VirtualizedFX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * VirtualizedFX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*--------------------------------------------------*/
+/* Root
+/*--------------------------------------------------*/
+* {
+	-bg-color: white;
+
+	-blue-lighter: rgba(93, 173, 236, 0.2);
+	-blue-light: rgba(93, 173, 236, 0.7);
+	-blue: rgb(93, 173, 236);
+
+	-green-lighter: rgba(49, 208, 76, 0.2);
+	-green-light: rgba(49, 208, 76, 0.7);
+	-green: rgb(49, 208, 76);
+}
+
+#rootPane {
+	-fx-background-color: -bg-color;
+}
+
+/*--------------------------------------------------*/
+/* Test Actions
+/*--------------------------------------------------*/
+#actionsBox {
+	-fx-border-color: -blue-light;
+	-fx-min-width: 200;
+}
+
+#actionsBox .mfx-font-icon {
+	-mfx-color: -blue;
+	-mfx-size: 14;
+}
+
+#actionsBox:focus-within {
+	-fx-border-color: -blue;
+}
+
+#actionsBox .caret .mfx-ripple-generator {
+	-mfx-ripple-color: -blue-lighter;
+}
+
+#actionsBox .floating-text {
+	-fx-background-color: transparent;
+	-fx-text-fill: -blue;
+}
+
+#actionsBox .virtual-flow .mfx-combo-box-cell {
+	-mfx-main: -blue;
+	-mfx-hover: -blue-lighter;
+	-mfx-selected: -blue-light;
+}
+
+#runIcon .mfx-font-icon {
+	-mfx-color: -green;
+	-mfx-size: 20;
+	-mfx-description: "mfx-caret-right";
+}
+
+#runIcon .mfx-ripple-generator {
+	-mfx-ripple-color: -green-lighter;
+}
+
+/*--------------------------------------------------*/
+/* Content
+/*--------------------------------------------------*/
+.virtual-grid,
+.virtual-flow {
+	-fx-background-color: -bg-color;
+	-fx-border-color: -blue-light;
+	-fx-border-radius: 5;
+	-fx-clip-border-radius: 10;
+}
+
+.virtual-flow .cell {
+	-fx-padding: 0 15 0 5;
+}
+
+.virtual-flow .cell:hover {
+	-fx-background-color: -blue-lighter;
+}
+
+.virtual-flow .cell .mfx-font-icon {
+	-mfx-color: -green;
+}
+
+.virtual-grid .altCell .label {
+	-fx-font-size: 11;
+}
+
+/* TODO improve this */
+.virtual-scroll-pane .mfx-scroll-bar:vertical {
+	-fx-padding: 0;
+	-fx-pref-width: 5;
+	-fx-min-width: 5;
+	-fx-max-width: 5;
+}
+
+.virtual-scroll-pane .mfx-scroll-bar:horizontal {
+	-fx-padding: 0;
+	-fx-pref-height: 5;
+	-fx-min-height: 5;
+	-fx-max-height: 5;
+}
+
+/*--------------------------------------------------*/
+/* Settings
+/*--------------------------------------------------*/
+.mfx-titled-pane {
+	-fx-border-color: -blue-light;
+	-fx-border-radius: 0;
+}
+
+.mfx-titled-pane .header-pane .mfx-icon-wrapper .mfx-font-icon {
+	-mfx-color: -blue-light;
+}
+
+.mfx-titled-pane:focused {
+	-fx-border-color: -blue;
+}
+
+.mfx-titled-pane:focused .header-pane .mfx-icon-wrapper .mfx-font-icon {
+	-mfx-color: -blue;
+}
+
+.mfx-titled-pane .header-pane .mfx-icon-wrapper .mfx-ripple-generator {
+	-mfx-ripple-color: -blue-lighter;
+}
+
+.mfx-titled-pane .content-pane {
+	-fx-border-color: -blue-light transparent transparent transparent;
+}
+
+.mfx-titled-pane:focused .content-pane {
+	-fx-border-color: -blue transparent transparent transparent;
+}
+
+/*--------------------------------------------------*/
+/* Components
+/*--------------------------------------------------*/
+.mfx-checkbox {
+	-mfx-main: -blue;
+}
+
+.mfx-checkbox .ripple-container .mfx-ripple-generator {
+	-mfx-ripple-color: -blue-lighter;
+}
+
+.mfx-text-field {
+	-mfx-main: -blue;
+}

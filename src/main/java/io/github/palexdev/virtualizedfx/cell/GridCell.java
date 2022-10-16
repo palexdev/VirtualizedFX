@@ -18,20 +18,28 @@
 
 package io.github.palexdev.virtualizedfx.cell;
 
-import io.github.palexdev.mfxcore.utils.GridUtils;
+import io.github.palexdev.mfxcore.collections.Grid;
 import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
 
 /**
  * Specialization of {@link Cell} specifically used by {@link VirtualGrid} and subclasses.
+ *
+ * @see #updateIndex(int)
+ * @see #updateCoordinates(int, int)
  */
 public interface GridCell<T> extends Cell<T> {
 
 	/**
-	 * Allows implementations to store the cell index as a pair of coordinates [row, column].
-	 * This method accepts the linear index of the cell. Implementations should use the
-	 * grid's properties and {@link GridUtils} to correctly compute the two coordinates.
+	 * {@inheritDoc}
+	 * <p></p>
+	 * For {@code GridCells} the given index is the {@code linear index} of the item,
+	 * to use the coordinates cells should rely on {@link #updateCoordinates(int, int)}.
+	 *
+	 * @see VirtualGrid
+	 * @see Grid
 	 */
-	default void updateCoordinates(int linearIndex) {
+	@Override
+	default void updateIndex(int index) {
 	}
 
 	/**

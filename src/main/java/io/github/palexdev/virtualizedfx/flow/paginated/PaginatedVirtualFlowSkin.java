@@ -42,6 +42,35 @@ public class PaginatedVirtualFlowSkin<T, C extends Cell<T>> extends VirtualFlowS
 	//================================================================================
 	// Methods
 	//================================================================================
+	/**
+	 * @return {@link #getSkinnable()} cast as {@link PaginatedVirtualFlow}
+	 */
+	protected PaginatedVirtualFlow<T, C> getFlow() {
+		return ((PaginatedVirtualFlow<T, C>) getSkinnable());
+	}
+
+	/**
+	 * Core method used by:
+	 * <p> When HORIZONTAL:
+	 * <p> {@link #computeMinWidth(double, double, double, double, double)}
+	 * <p> {@link #computePrefWidth(double, double, double, double, double)}
+	 * <p> {@link #computeMaxWidth(double, double, double, double, double)}
+	 * <p> When VERTICAL:
+	 * <p> {@link #computeMinHeight(double, double, double, double, double)}
+	 * <p> {@link #computePrefHeight(double, double, double, double, double)}
+	 * <p> {@link #computeMaxHeight(double, double, double, double, double)}
+	 * <p></p>
+	 * Computes the virtual flow's size as {@code cellsPerPage * cellSize}, in other terms the
+	 * size of every single page.
+	 */
+	protected double getLength() {
+		PaginatedVirtualFlow<T, C> flow = getFlow();
+		return flow.getCellsPerPage() * flow.getCellSize();
+	}
+
+	//================================================================================
+	// Overridden Methods
+	//================================================================================
 
 	/**
 	 * {@inheritDoc}
@@ -63,35 +92,6 @@ public class PaginatedVirtualFlowSkin<T, C extends Cell<T>> extends VirtualFlowS
 		super.onItemsChanged(c);
 	}
 
-	/**
-	 * @return {@link #getSkinnable()} cast as {@link PaginatedVirtualFlow}
-	 */
-	protected PaginatedVirtualFlow<T, C> getFlow() {
-		return ((PaginatedVirtualFlow<T, C>) getSkinnable());
-	}
-
-	/**
-	 * Core method used by:
-	 * <p> When HORIZONTAL:
-	 * <p> {@link #computeMinWidth(double, double, double, double, double)}
-	 * <p> {@link #computePrefWidth(double, double, double, double, double)}
-	 * <p> {@link #computeMaxWidth(double, double, double, double, double)}
-	 * <p> When VERTICAL:
-	 * <p> {@link #computeMinHeight(double, double, double, double, double)}
-	 * <p> {@link #computePrefHeight(double, double, double, double, double)}
-	 * <p> {@link #computeMaxHeight(double, double, double, double, double)}
-	 * <p></p>
-	 * Computes the virtual flow's size as {@code cellsPerPage * cellSize}, in other terms the
-	 * size of any single page.
-	 */
-	protected double getLength() {
-		PaginatedVirtualFlow<T, C> flow = getFlow();
-		return flow.getCellsPerPage() * flow.getCellSize();
-	}
-
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
 	@Override
 	protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
 		Orientation o = getSkinnable().getOrientation();

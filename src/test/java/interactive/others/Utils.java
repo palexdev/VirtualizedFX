@@ -16,20 +16,22 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+package interactive.others;
 
-import interactive.grid.PGridApp;
-import javafx.application.Application;
+import io.github.palexdev.mfxcore.utils.RandomUtils;
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(PGridApp.class);
+public class Utils {
+
+	private Utils() {
+	}
+
+	public static Integer[][] randMatrix(int rows, int columns) {
+		Integer[][] matrix = new Integer[rows][columns];
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < columns; j++) {
+				matrix[i][j] = RandomUtils.random.nextInt(100);
+			}
+		}
+		return matrix;
 	}
 }

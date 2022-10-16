@@ -18,18 +18,17 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
-import io.github.palexdev.mfxcore.base.beans.SizeBean;
+import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.collections.Grid.Coordinate;
-import io.github.palexdev.mfxcore.collections.ObservableGrid;
-import io.github.palexdev.mfxcore.utils.GridUtils;
-import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.mfxcore.collections.Grid.Coordinates;
+import io.github.palexdev.mfxcore.collections.ObservableGrid.Change;
+import io.github.palexdev.mfxcore.enums.GridChangeType;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.enums.UpdateType;
+import io.github.palexdev.virtualizedfx.grid.paginated.PaginatedVirtualGrid;
 import javafx.scene.Node;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -39,17 +38,15 @@ import java.util.stream.Collectors;
  * when the state doesn't need to be re-computed, so the old object is returned.
  * <p></p>
  * This offers information such as:
- * <p> - The range of rows contained in the state, {@link #getRowsRange()}. <b>Note</b> that sometimes this range doesn't
- * correspond to the needed range of rows. To always get a 100% accurate range use the {@link GridHelper}.
- * <p> - The range of columns contained in the state, {@link #getColumnsRange()}. <b>Note</b> that sometimes this range doesn't
- * correspond to the needed range of columns. To always get a 100% accurate range use the {@link GridHelper}.
- * <p> - The cells in the viewport. These are stored in {@link LayoutRow}s, each of these has a cell for each of the needed
- * columns. These are kept in a map rowIndex -> layoutRow.
- * <p> - The expected number of rows, {@link #getTargetSize()}.
+ * <p> - The range of rows contained in the state, {@link #getRowsRange()}
+ * <p> - The range of columns contained by each {@link GridRow} in the state, {@link #getColumnsRange()}
+ * <p> - The cells in the viewport. These are stored in {@link GridRow}s, each of these has a cell for each column.
+ * {@link GridRow}s are kept in a map: rowIndex -> gridRow
+ * <p> - The expected number of rows, {@link #getTargetSize()}. Note that this is computed by {@link GridHelper#maxRows()},
+ * so the result may be greater than the number of rows available in the data structure
  * <p> - The type of event that lead the old state to transition to the new one, see {@link UpdateType}
- * <p> - A flag to check if new cells were created or some were deleted, {@link #haveCellsChanged()}.
- * This is used by {@link VirtualGridSkin} since we want to update the viewport children only when the cells
- * changed.
+ * <p> -A flag to check if new cells were created or some were deleted, {@link #haveCellsChanged()}.
+ * This is used by {@link VirtualGridSkin} since we want to update the viewport children only when the cells change.
  * <p></p>
  * This also contains a particular global state, {@link #EMPTY}, typically used to indicate that the viewport
  * is empty, and no state can be created.
@@ -57,39 +54,36 @@ import java.util.stream.Collectors;
 @SuppressWarnings("rawtypes")
 public class GridState<T, C extends GridCell<T>> {
 	//================================================================================
-	// Static Properties
+	// Static Members
 	//================================================================================
-	public static final GridState EMPTY = new GridState<>();
+	public static final GridState EMPTY = new GridState();
 
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final VirtualGrid<T, C> virtualGrid;
+	private final VirtualGrid<T, C> grid;
+	private final Map<Integer, GridRow<T, C>> rows = new TreeMap<>();
 	private final IntegerRange rowsRange;
 	private final IntegerRange columnsRange;
-	private final Map<Integer, LayoutRow<T, C>> rows = new TreeMap<>();
 	private final int targetSize;
 	private UpdateType type = UpdateType.INIT;
-	private boolean cellsChanged = false;
+	private boolean cellsChanged;
 
 	//================================================================================
 	// Constructors
 	//================================================================================
-	private GridState() {
-		this.virtualGrid = null;
+	public GridState() {
+		this.grid = null;
 		this.rowsRange = IntegerRange.of(-1);
 		this.columnsRange = IntegerRange.of(-1);
 		this.targetSize = 0;
 	}
 
-	public GridState(VirtualGrid<T, C> virtualGrid, IntegerRange rowsRange, IntegerRange columnsRange) {
-		this.virtualGrid = virtualGrid;
+	public GridState(VirtualGrid<T, C> grid, IntegerRange rowsRange, IntegerRange columnsRange) {
+		this.grid = grid;
 		this.rowsRange = rowsRange;
 		this.columnsRange = columnsRange;
-		this.targetSize = Math.min(
-				virtualGrid.getGridHelper().maxRows(),
-				virtualGrid.getRowsNum()
-		);
+		this.targetSize = grid.getGridHelper().maxRows();
 	}
 
 	//================================================================================
@@ -97,114 +91,97 @@ public class GridState<T, C extends GridCell<T>> {
 	//================================================================================
 
 	/**
-	 * Instructs every rows present in the {@link #getRows()} map to initialize itself,
-	 * {@link LayoutRow#init()}.
+	 * Responsible for filling the viewport the needed amount of rows/cells. So this may supply or remove
+	 * cells according to the viewport size.
+	 * <p>
+	 * If the given ranges for rows and columns are the same as the ones of the state then the old state is returned.
+	 * <p>
+	 * This is used by {@link ViewportManager#init()}.
+	 *
+	 * @return a new {@code GridState} which is the result of transitioning from this state to
+	 * a new one given the new ranges for rows and columns
 	 */
-	protected void init() {
-		rows.values().forEach(LayoutRow::init);
-	}
+	protected GridState<T, C> init(IntegerRange rowsRange, IntegerRange columnsRange) {
+		if (this.rowsRange.equals(rowsRange) && this.columnsRange.equals(columnsRange)) return this;
 
-	/**
-	 * This is responsible for transitioning to a new state by adding/removing rows when {@link ViewportManager#init()}
-	 * is called and the old state is not empty.
-	 */
-	protected GridState<T, C> initTransition(IntegerRange rowsRange, IntegerRange columnsRange) {
-		//if (this.rowsRange.equals(rowsRange) && this.columnsRange.equals(columnsRange)) return this;
-		GridState<T, C> newState = new GridState<>(virtualGrid, rowsRange, columnsRange);
-
-		Set<Integer> available = IntegerRange.expandRangeToSet(rowsRange);
+		GridState<T, C> newState = new GridState<>(grid, rowsRange, columnsRange);
+		Set<Integer> range = IntegerRange.expandRangeToSet(rowsRange);
 		int targetSize = rowsRange.diff() + 1;
 
-		// Commons can be reused, make sure to update columns range always
-		Iterator<Map.Entry<Integer, LayoutRow<T, C>>> rIt = rows.entrySet().iterator();
-		while (rIt.hasNext() && !available.isEmpty()) {
-			Map.Entry<Integer, LayoutRow<T, C>> next = rIt.next();
-			Integer rIndex = next.getKey();
-			if (available.remove(rIndex)) {
-				LayoutRow<T, C> row = next.getValue();
-				row.updateColumns(columnsRange);
+		for (Integer rowIndex : rowsRange) {
+			GridRow<T, C> row = rows.remove(rowIndex);
+			if (row != null) {
+				row.onInit(columnsRange);
+				newState.addRow(rowIndex, row);
+				range.remove(rowIndex);
+			}
+		}
+
+		Deque<Integer> reusable = new ArrayDeque<>(rows.keySet());
+		Deque<Integer> remaining = new ArrayDeque<>(range);
+		while (newState.size() != targetSize) {
+			int rIndex = remaining.removeFirst();
+			Integer oIndex = reusable.poll();
+			if (oIndex != null) {
+				GridRow<T, C> row = rows.remove(oIndex);
+				row.updateIndex(rIndex);
 				newState.addRow(rIndex, row);
-				rIt.remove();
+			} else {
+				newState.addRow(rIndex);
 			}
 		}
-
-		// Remaining processing
-		if (newState.size() < targetSize) {
-			Deque<Integer> remaining = new ArrayDeque<>(rows.keySet());
-			for (Integer row : available) {
-				Integer rIndex = remaining.poll();
-				LayoutRow<T, C> lr;
-				if (rIndex != null) {
-					lr = rows.remove(rIndex);
-					lr.updateIndex(row);
-					lr.updateColumns(columnsRange);
-				} else {
-					lr = LayoutRow.of(virtualGrid, row, columnsRange);
-					lr.init();
-				}
-				newState.addRow(row, lr);
-			}
-		}
-
-		disposeAndClear();
 		return newState;
 	}
 
 	/**
-	 * This is responsible for transitioning to a new state when the vertical scrolling caused the viewport
-	 * to display a different range of rows.
-	 * <p></p>
-	 * Every common row (the old and new ranges intersection) is extracted from the old state and moved to the new state.
+	 * This is responsible for transitioning to a new state when the viewport scrolls vertically.
 	 * <p>
-	 * Every new index is put in a deque. Iterating over the remaining rows in the old state and with the indexes
-	 * extracted from the deque, rows are updated, {@link LayoutRow#updateIndex(int)}, and moved to the new state.
+	 * Used by {@link ViewportManager#onVScroll()}.
 	 */
-	public GridState<T, C> rowsTransition(IntegerRange newRange) {
-		if (newRange.equals(rowsRange)) return this;
+	protected GridState<T, C> vScroll(IntegerRange rowsRange) {
+		if (this.rowsRange.equals(rowsRange)) return this;
 
-		GridState<T, C> newState = new GridState<>(virtualGrid, newRange, columnsRange);
+		GridState<T, C> newState = new GridState<>(grid, rowsRange, columnsRange);
 		newState.type = UpdateType.SCROLL;
+		Set<Integer> range = IntegerRange.expandRangeToSet(rowsRange);
 
-		Deque<Integer> toUpdate = new ArrayDeque<>();
-		for (Integer row : newRange) {
-			LayoutRow<T, C> common = rows.remove(row);
-			if (common != null) {
-				newState.addRow(row, common);
-				continue;
+		for (Integer rowIndex : rowsRange) {
+			GridRow<T, C> row = rows.remove(rowIndex);
+			if (row != null) {
+				newState.addRow(rowIndex, row);
+				range.remove(rowIndex);
 			}
-			toUpdate.add(row);
 		}
 
-		Iterator<LayoutRow<T, C>> it = rows.values().iterator();
-		while (!toUpdate.isEmpty() && it.hasNext()) {
-			LayoutRow<T, C> next = it.next();
-			int index = toUpdate.removeFirst();
-			next.updateIndex(index);
-			newState.addRow(index, next);
-			next.setReusablePositions(false);
-			it.remove();
+		Deque<Integer> reusable = new ArrayDeque<>(rows.keySet());
+		Deque<Integer> remaining = new ArrayDeque<>(range);
+		while (!remaining.isEmpty()) {
+			int rIndex = remaining.removeFirst();
+			int oIndex = reusable.removeFirst();
+			GridRow<T, C> row = rows.remove(oIndex);
+			row.updateIndex(rIndex);
+			row.setReusablePositions(false);
+			newState.addRow(rIndex, row);
 		}
 		return newState;
 	}
 
 	/**
-	 * This is responsible for transitioning to a new state when the horizontal scrolling caused the viewport
-	 * to display a different range of columns.
-	 * <p></p>
-	 * Every row is updated with {@link LayoutRow#updateColumns(IntegerRange)}, and moved to the new state.
+	 * This is responsible for transitioning to a new state when the viewport scrolls horizontally.
+	 * <p>
+	 * Used by {@link ViewportManager#onHScroll()}.
 	 */
-	public GridState<T, C> columnsTransition(IntegerRange newRange) {
-		if (newRange.equals(columnsRange)) return this;
+	protected GridState<T, C> hScroll(IntegerRange columnsRange) {
+		if (this.columnsRange.equals(columnsRange)) return this;
 
-		GridState<T, C> newState = new GridState<>(virtualGrid, rowsRange, newRange);
+		GridState<T, C> newState = new GridState<>(grid, rowsRange, columnsRange);
 		newState.type = UpdateType.SCROLL;
-
-		Iterator<Map.Entry<Integer, LayoutRow<T, C>>> it = rows.entrySet().iterator();
+		Iterator<Map.Entry<Integer, GridRow<T, C>>> it = rows.entrySet().iterator();
 		while (it.hasNext()) {
-			Map.Entry<Integer, LayoutRow<T, C>> entry = it.next();
-			Integer index = entry.getKey();
-			LayoutRow<T, C> row = entry.getValue();
-			row.updateColumns(newRange);
+			Map.Entry<Integer, GridRow<T, C>> next = it.next();
+			Integer index = next.getKey();
+			GridRow<T, C> row = next.getValue();
+			row.onScroll(columnsRange);
 			newState.addRow(index, row);
 			it.remove();
 		}
@@ -212,248 +189,262 @@ public class GridState<T, C extends GridCell<T>> {
 	}
 
 	/**
-	 * This is responsible for transitioning to a new state when a change occurs in the items grid.
+	 * This is responsible for transitioning to a new state when a change occurs in the grid's items data structure.
+	 * <p>
+	 * Specifically this handles the following {@link GridChangeType}s:
 	 * <p></p>
-	 * <b>ELEMENT REPLACEMENT</b>
-	 * Simple case, from the number of columns and the linear index at which the change started we compute the coordinates
-	 * at which the change occurred using {@link GridUtils#indToSub(int, int, BiFunction)}.
-	 * If there is a row at the computed coordinates and also if there is a cell at the given coordinates we update
-	 * the cell's item. The new item is simply retrieved from the change's added list at position 0.
+	 * <b>REPLACE_ELEMENT</b>
+	 * Simple case, if the row at which the change occurred, {@link Change#getCoordinates()}, is in range of this state,
+	 * calls {@link GridRow#onReplace(int, Object)} on it.
 	 * <p>
 	 * Note that this type of change returns the old state.
 	 * <p></p>
-	 * <b>REPLACE DIAGONAL</b>
+	 * <b>REPLACE_DIAGONAL</b>
 	 * The new diagonal is given by the change's added list, we put these new items in a {@link Deque}.
 	 * <p>
-	 * For each row then we get an item from the deque with {@link Deque#poll()} and call {@link LayoutRow#onDiagonalUpdate(Object)}
+	 * For each row then we get an item from the deque with {@link Deque#poll()} and call {@link GridRow#onDiagReplace(Object)}.
 	 * <p>
 	 * Note that this type of change returns the old state.
 	 * <p></p>
-	 * <b>REPLACE ROW</b>
-	 * From the grid's number of columns and the linear index at which the change occurred we get the index
-	 * of the replaced row with {@link GridUtils#indToRow(int, int)}.
-	 * Then if the replaced row is present in this state we call {@link LayoutRow#onRowReplacement()}
+	 * <b>REPLACE_ROW</b>
+	 * Simple case, if the row at which the change occurred, {@link Change#getCoordinates()}, is in range of this state,
+	 * calls {@link GridRow#onReplace()} on it.
 	 * <p>
 	 * Note that this type of change returns the old state.
 	 * <p></p>
-	 * <b>COLUMN REPLACEMENT</b>
-	 * From the grid's number of column and the linear index at which the change occurred, we get the
-	 * column index at which the change occurred, for each row in the state we call {@link LayoutRow#onColumnReplacement(int)}.
+	 * <b>REPLACE_COLUMN</b>
+	 * The new column is given by the change's added list, we put these new items in a {@link Deque}.
+	 * Note though that since not all the column may be displayed in the viewport we get only the items in the columns range,
+	 * {@link #getColumnsRange()}.
+	 * <p>
+	 * For each row then we get an item from the deque with {@link Deque#poll()} and call {@link GridRow#onReplace(int, Object)}.
 	 * <p>
 	 * Note that this type of change returns the old state.
 	 * <p></p>
-	 * <b>ROW ADDITION</b>
-	 * From the grid's number of columns and the linear index at which the change occurred, we get the index
-	 * at which the row was added.
+	 * <b>ADD_ROW</b>
+	 * This is a more complex operation. Before starting the computation we get the index at which the row was added and
+	 * the rows range we expect with {@link GridHelper#rowsRange()}.
 	 * <p>
-	 * If the index is greater than the state's range and the viewport has all the needed rows, we make sure
-	 * that all rows will re-use the already computed positions for layout and then immediately exit, returning the
-	 * old state.
-	 * <p>
-	 * In any other case the computation begins. It is divided in two main phases:
-	 * <p> - The first step is to copy all the valid rows, those who come before the index at which the row
-	 * was added
-	 * <p> - The second step is to update all rows that come after the change. Some will only require a partial
-	 * update, only an index update. Others will need to be fully updated (both index and item) or even created if the
-	 * viewport was not full.
+	 * If the range is equal to the one in the state, the insertion index is greater than the range max and the viewport is filled,
+	 * {@link #rowsFilled()}, then the old state is returned. In any other case the computation can begin.
 	 * <p></p>
-	 * <b>COLUMN ADDITION</b>
-	 * Column addition is a quite expensive operation on a 2D structure like the grid since all the rows
-	 * need to be updated.
+	 * A {@link Set} will keep track of the rows we have re-used (to be precise it will contain the remaining ones).
 	 * <p>
-	 * For every row in the state we either call {@link LayoutRow#onColumnAdd(int)} or {@link LayoutRow#updateColumns(IntegerRange)}
-	 * depending on the new range of needed columns, if it's the same as in the old state that
-	 * the first is called, otherwise the latter is invoked.
+	 * The computation is divided in three main parts:
+	 * <p> - Valid rows: these are the ones that come before the insertion index
+	 * <p> - Partial rows: these are the ones that come after the insertion index but their index must be updated to be +1.
+	 * Rows that were valid are ignored. Rows for which the new index would be outside the expected range are also ignored.
+	 * <p> - Remaining rows: for insertions we always expect one row to be remaining at this point. If the viewport was full,
+	 * then this row is one of the ignored ones (not the valid ones though). If the viewport was not full then a new row needs
+	 * to be created
 	 * <p></p>
-	 * <b>ROW REMOVAL</b>
-	 * From the grid's number of columns and the linear index at which the change occurred we get the
-	 * index at which the removal occurred. If it happened after the state's rows range that exits immediately and
-	 * returns the old state.
-	 * <p></p>
-	 * The computation is divided in three main phases:
-	 * <p> - The first step is to move all the valid rows to the new state, those rows that come before the index at which
-	 * change occurred
-	 * <p> - The second step is to update all the rows that come after that index, these need a partial update
-	 * (only index), it's enough to call {@link LayoutRow#partialUpdate(int)}
-	 * <p> - The final step is to update those rows that need a full update (both index and item). If there are remaining
-	 * rows in the old state, these are reused by calling {@link LayoutRow#updateIndex(int)}, otherwise new rows are created
-	 * <p></p>
-	 * <b>COLUMN REMOVAL</b>
-	 * Column removal is a quite expensive operation on a 2D structure like the grid since all the rows
-	 * need to be updated.
+	 * <b>REMOVE_ROW</b>
+	 * This is a more complex operation. Before starting the computation we get the index at which the row was removed and
+	 * the rows range we expect with {@link GridHelper#rowsRange()}.
 	 * <p>
-	 * From the grid's number of columns and the linear index at which the change occurred we get the index of the removed
-	 * column with {@link GridUtils#indToCol(int, int)}, note that for the nColumns parameter it's important to use
-	 * the old number of columns so {@code nColumns + 1}.
+	 * If the range is equal to the one in the state and the removal index is greater than the range max, the old
+	 * state is returned. In any other case the computation can begin.
+	 * <p></p>
+	 * This time two {@link Set}s are used: one to keep track of the rows we have re-used (to be precise it will contain
+	 * the remaining ones), and another to keep track of the "covered" indexes of the expected range.
 	 * <p>
-	 * For each row in the old state, we call {@link LayoutRow#onColumnRemoval(int, IntegerRange)} and move it to the new state.
+	 * The computation is divided in three main parts:
+	 * <p> - Valid rows: these are the ones that come before the removal index. Note that the start index for the loop
+	 * is computes as the maximum between the state's range minimum and the expected range minimum, so
+	 * {@code Math.max(expRange.getMin(), stateRange.getMin())}.
+	 * <p> - Partial rows: these are the ones that come after the removal index but their index must be updated to be -1.
+	 * Rows that were valid are ignored. Rows for which the new index would be outside the expected range are also ignored.
+	 * <p> - Remaining rows: for removals this part is a bit different. Before proceeding, we must check if the {@link Set}
+	 * used to keep track of the "covered" indexes is empty, because in such case it means that we already have all the rows
+	 * needed to fill the viewport. In this case we call {@link #clear()} to make sure that remaining rows in the old state
+	 * are disposed and cleared, then exit the switch.
+	 * In case the {@link Set} is not empty then we always expect to have one remaining index in the second {@link Set},
+	 * while in the first {@link Set} there may be or not an index which will be a reusable row. In either cases, we need
+	 * another row to fill the viewport, so one is reused if available or created.
+	 * <p></p>
+	 * <b>ADD_COLUMN</b>
+	 * This is a more complex and costly operation. No matter where the change occurred, almost all the cells will
+	 * need either a partial (index only) or full (index and item) update.
+	 * <p>
+	 * Once we get the index at which the column has been added and the expected range with {@link GridHelper#columnsRange()},
+	 * on each row in the state we delegate the computation to {@link GridRow#onColumnAdd(int, IntegerRange)}, rows
+	 * are moved then to the new state.
+	 * <p></p>
+	 * <b>REMOVE_COLUMN</b>
+	 * This is a more complex and costly operation. No matter where the change occurred, almost all the cells will need
+	 * either a partial (index only) or full (index and item) update.
+	 * <p>
+	 * Once we get the index at which the column has been removed and the expected range with {@link GridHelper#columnsRange()},
+	 * on each row in the state we delegate the computation to {@link GridRow#onColumnRemove(int, IntegerRange)}, rows
+	 * are moved then to the new state.
+	 * <p></p>
+	 * <p></p>
+	 * Before returning the state which is the result of one of the above changes, we make sure to update the state's type,
+	 * which will be {@link UpdateType#CHANGE}, then we check if the total size of the new state ({@link #totalSize()}) is
+	 * different from the old state total size so that in such case we can also tell the new state that the viewport
+	 * will also need to update its children. Then we call {@link Change#endChange()} to dispose the current change and finally
+	 * return the state.
 	 */
-	public GridState<T, C> transition(ObservableGrid.Change<T> change) {
+	protected GridState<T, C> change(Change<T> change) {
 		int cellsNum = totalSize();
 		GridState<T, C> state = this;
 
 		switch (change.getType()) {
 			case REPLACE_ELEMENT: {
-				int nColumns = virtualGrid.getColumnsNum();
-				Coordinate coordinate = GridUtils.indToSub(nColumns, change.getStart(), Coordinate::new);
-				if (rows.containsKey(coordinate.getRow())) {
-					T item = change.getAdded().get(0);
-					LayoutRow<T, C> row = rows.get(coordinate.getRow());
-					Optional.ofNullable(row.getCells().get(coordinate.getColumn())).ifPresent(c -> c.updateItem(item));
-				}
+				Coordinates coordinates = change.getCoordinates();
+				Optional.ofNullable(rows.get(coordinates.getRow()))
+						.ifPresent(row -> row.onReplace(coordinates.getColumn(), change.getAdded().get(0)));
 				break;
 			}
 			case REPLACE_DIAGONAL: {
 				Deque<T> diag = new ArrayDeque<>(change.getAdded());
-				rows.values().forEach(row -> {
-					T item = diag.poll();
-					row.onDiagonalUpdate(item);
-				});
+				rows.values().forEach(row -> row.onDiagReplace(diag.poll()));
 				break;
 			}
 			case REPLACE_ROW: {
-				int nColumns = virtualGrid.getColumnsNum();
-				int row = GridUtils.indToRow(nColumns, change.getStart());
-				if (rows.containsKey(row)) {
-					rows.get(row).onRowReplacement();
-				}
+				int row = change.getCoordinates().getRow();
+				Optional.ofNullable(rows.get(row))
+						.ifPresent(GridRow::onReplace);
 				break;
 			}
 			case REPLACE_COLUMN: {
-				int nColumns = virtualGrid.getColumnsNum();
-				int column = GridUtils.indToCol(nColumns, change.getStart());
-				rows.values().forEach(row -> row.onColumnReplacement(column));
+				int index = change.getCoordinates().getColumn();
+				Deque<T> col = new ArrayDeque<>(change.getAdded().subList(columnsRange.getMin(), columnsRange.getMax()));
+				rows.values().forEach(row -> row.onReplace(index, col.poll()));
 				break;
 			}
 			case ADD_ROW: {
-				int nColumns = virtualGrid.getColumnsNum();
-				int addedRow = GridUtils.indToRow(nColumns, change.getStart());
-				if (addedRow > rowsRange.getMax() && rowsFilled()) {
-					rows.values().forEach(row -> row.setReusablePositions(true));
-					break;
-				}
-
-				GridHelper helper = virtualGrid.getGridHelper();
+				GridHelper helper = grid.getGridHelper();
+				int index = change.getCoordinates().getRow();
 				IntegerRange range = helper.rowsRange();
-				state = new GridState<>(virtualGrid, range, columnsRange);
+				if (range.equals(rowsRange) && index > rowsRange.getMax() && rowsFilled()) break;
 
-				Set<Integer> available = IntegerRange.expandRangeToSet(range);
-
-				// Valid rows
-				for (int i = range.getMin(); i < addedRow; i++) {
-					state.addRow(i, rows.remove(i));
-					available.remove(i);
-				}
-
-				// Partial and full updates
-				int from = Math.max(addedRow, range.getMin());
-				int targetSize = range.diff() + 1;
-				Deque<Integer> keys = new ArrayDeque<>(rows.keySet());
-				while (!available.isEmpty() || state.size() != targetSize) {
-					Integer key = keys.poll();
-					if (key != null) {
-						int newIndex = key + 1;
-						if (IntegerRange.inRangeOf(newIndex, range) && newIndex != addedRow && available.contains(newIndex)) {
-							LayoutRow<T, C> toUpdate = rows.remove(key);
-							toUpdate.partialUpdate(newIndex);
-							state.addRow(newIndex, toUpdate);
-							available.remove(newIndex);
-							continue;
-						}
-					}
-
-					LayoutRow<T, C> row;
-					if (key != null) {
-						row = rows.remove(key);
-						row.updateIndex(from);
-					} else {
-						row = LayoutRow.of(virtualGrid, from, columnsRange);
-						row.init();
-					}
-					state.addRow(from, row);
-					available.remove(from);
-					from++;
-				}
-				break;
-			}
-			case ADD_COLUMN: {
-				int nColumns = virtualGrid.getColumnsNum();
-				int addedColumn = GridUtils.indToCol(nColumns, change.getStart());
-				GridHelper helper = virtualGrid.getGridHelper();
-				IntegerRange range = helper.columnsRange();
-				state = new GridState<>(virtualGrid, rowsRange, columnsRange);
-
-				Iterator<Map.Entry<Integer, LayoutRow<T, C>>> it = rows.entrySet().iterator();
-				while (it.hasNext()) {
-					Map.Entry<Integer, LayoutRow<T, C>> next = it.next();
-					Integer index = next.getKey();
-					LayoutRow<T, C> row = next.getValue();
-					if (columnsRange.equals(range)) {
-						row.onColumnAdd(addedColumn);
-					} else {
-						row.updateColumns(range);
-					}
-					state.addRow(index, row);
-					it.remove();
-				}
-				break;
-			}
-			case REMOVE_ROW: {
-				int nColumns = virtualGrid.getColumnsNum();
-				int removedRow = GridUtils.indToRow(nColumns, change.getStart());
-				if (removedRow > rowsRange.getMax()) return this;
-
-				GridHelper helper = virtualGrid.getGridHelper();
-				IntegerRange range = helper.rowsRange();
-				state = new GridState<>(virtualGrid, range, columnsRange);
-
-				Set<Integer> available = IntegerRange.expandRangeToSet(range);
+				state = new GridState<>(grid, range, columnsRange);
+				Set<Integer> available = new HashSet<>(rows.keySet());
 
 				// Valid
-				for (int i = range.getMin(); i < removedRow; i++) {
-					state.addRow(i, rows.remove(i));
+				for (int i = range.getMin(); i < index; i++) {
+					GridRow<T, C> row = rows.remove(i);
+					row.setReusablePositions(true);
+					state.addRow(i, row);
 					available.remove(i);
 				}
 
 				// Partial
-				for (int i = removedRow + 1; i <= range.getMax(); i++) {
-					int newIndex = i - 1;
-					LayoutRow<T, C> row = rows.remove(i);
-					row.partialUpdate(newIndex);
-					state.addRow(newIndex, row);
-					available.remove(newIndex);
-				}
-
-				// Full
-				Deque<Integer> remaining = new ArrayDeque<>(rows.keySet());
-				for (Integer index : available) {
-					Integer rIndex = remaining.poll();
-					if (rIndex != null) {
-						LayoutRow<T, C> toUpdate = rows.remove(rIndex);
-						toUpdate.updateIndex(index);
-						state.addRow(index, toUpdate);
+				Iterator<Map.Entry<Integer, GridRow<T, C>>> it = rows.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry<Integer, GridRow<T, C>> next = it.next();
+					int rIndex = next.getKey();
+					int newIndex = rIndex + 1;
+					if (!IntegerRange.inRangeOf(newIndex, range) || (newIndex >= range.getMin() && newIndex < index)) {
 						continue;
 					}
 
-					LayoutRow<T, C> row = LayoutRow.of(virtualGrid, index, columnsRange);
-					row.init();
-					state.addRow(index, row);
+					GridRow<T, C> row = next.getValue();
+					row.onRowAdd(newIndex);
+					state.addRow(newIndex, row);
+					available.remove(rIndex);
+					it.remove();
+				}
+
+				// Remaining
+				Integer oIndex = new ArrayDeque<>(available).poll();
+				GridRow<T, C> row;
+				if (oIndex != null) {
+					row = rows.remove(oIndex);
+					row.updateIndex(index);
+				} else {
+					row = GridRow.of(grid, index, columnsRange).init();
+				}
+				state.addRow(index, row);
+				break;
+			}
+			case REMOVE_ROW: {
+				GridHelper helper = grid.getGridHelper();
+				int index = change.getCoordinates().getRow();
+				IntegerRange range = helper.rowsRange();
+				if (range.equals(rowsRange) && index > range.getMax()) break;
+
+				state = new GridState<>(grid, range, columnsRange);
+				Set<Integer> available = new HashSet<>(rows.keySet());
+				Set<Integer> rangeSet = IntegerRange.expandRangeToSet(range);
+
+				// Valid
+				int start = Math.max(range.getMin(), rowsRange.getMin());
+				for (int i = start; i < index; i++) {
+					GridRow<T, C> row = rows.remove(i);
+					row.setReusablePositions(true);
+					state.addRow(i, row);
+					available.remove(i);
+					rangeSet.remove(i);
+				}
+
+				// Partial
+				Iterator<Map.Entry<Integer, GridRow<T, C>>> it = rows.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry<Integer, GridRow<T, C>> next = it.next();
+					int rIndex = next.getKey();
+					int newIndex = rIndex - 1;
+					if (!IntegerRange.inRangeOf(newIndex, range) || (newIndex >= start && newIndex < index)) {
+						continue;
+					}
+
+					GridRow<T, C> row = next.getValue();
+					row.onRowRemove(newIndex);
+					state.addRow(newIndex, row);
+					available.remove(rIndex);
+					rangeSet.remove(newIndex);
+					it.remove();
+				}
+
+				// Remaining
+				if (rangeSet.isEmpty()) {
+					clear();
+					break;
+				}
+
+				Integer oIndex = new ArrayDeque<>(available).poll();
+				int nIndex = new ArrayDeque<>(rangeSet).removeFirst();
+				GridRow<T, C> row;
+				if (oIndex != null) {
+					row = rows.remove(oIndex);
+					row.updateIndex(nIndex);
+				} else {
+					row = GridRow.of(grid, nIndex, columnsRange).init();
+				}
+				state.addRow(nIndex, row);
+				break;
+			}
+			case ADD_COLUMN: {
+				GridHelper helper = grid.getGridHelper();
+				IntegerRange range = helper.columnsRange();
+				int index = change.getCoordinates().getColumn();
+
+				state = new GridState<>(grid, rowsRange, range);
+				Iterator<Map.Entry<Integer, GridRow<T, C>>> it = rows.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry<Integer, GridRow<T, C>> next = it.next();
+					int rIndex = next.getKey();
+					GridRow<T, C> row = next.getValue();
+					row.onColumnAdd(index, range);
+					state.addRow(rIndex, row);
+					it.remove();
 				}
 				break;
 			}
 			case REMOVE_COLUMN: {
-				int nColumns = virtualGrid.getColumnsNum();
-				int removedColumn = GridUtils.indToCol(nColumns + 1, change.getStart());
-
-				GridHelper helper = virtualGrid.getGridHelper();
+				GridHelper helper = grid.getGridHelper();
 				IntegerRange range = helper.columnsRange();
-				state = new GridState<>(virtualGrid, rowsRange, range);
+				int index = change.getCoordinates().getColumn();
 
-				Iterator<LayoutRow<T, C>> it = rows.values().iterator();
+				state = new GridState<>(grid, rowsRange, columnsRange);
+				Iterator<Map.Entry<Integer, GridRow<T, C>>> it = rows.entrySet().iterator();
 				while (it.hasNext()) {
-					LayoutRow<T, C> row = it.next();
-					row.onColumnRemoval(removedColumn, range);
-					state.addRow(row.getIndex(), row);
+					Map.Entry<Integer, GridRow<T, C>> next = it.next();
+					Integer rIndex = next.getKey();
+					GridRow<T, C> row = next.getValue();
+					row.onColumnRemove(index, range);
+					state.addRow(rIndex, row);
 					it.remove();
 				}
 				break;
@@ -461,51 +452,42 @@ public class GridState<T, C extends GridCell<T>> {
 		}
 
 		state.type = UpdateType.CHANGE;
-		state.setCellsChanged(state.totalSize() != cellsNum);
+		if (state.totalSize() != cellsNum) state.cellsChanged();
 		change.endChange();
 		return state;
 	}
 
 	/**
-	 * This is one of the main methods responsible for positioning and resizing the cells.
-	 * <p>
-	 * If the state is empty exits immediately.
+	 * This is responsible for laying out the rows in the viewport with the help of {@link GridHelper#layout(Node, double, double)}.
 	 * <p></p>
-	 * Before starting the computation we get a series of useful parameters such as:
-	 * <p> - The size of the cells, {@link VirtualGrid#getCellSize()}
-	 * <p> - The grid's number of rows and columns
-	 * <p> - The first visible row and column indexes
-	 * <p> - The last visible row and column indexes
-	 * <p> - Two special flags to check if rows or columns need to be positioned is a special way
-	 * (more on that below)
+	 * Before starting the actual layout computation there are a bunch of information required for it to work properly:
+	 * <p> - The cells' size, as well as the number of rows and columns of the grid
+	 * <p> - The rows and columns ranges. These are not computed with {@link GridHelper} because in some exceptional cases
+	 * they may differ
+	 * <p> - The computed ranges are needed to check for two exceptional cases. For how the viewport works we always have
+	 * one Cell of overscan/buffer whatever you want to call it. But when we are at the end (last column or last row, or both)
+	 * that one Cell will need to be moved to be the first cell of the range since there are no more items to the right/bottom.
+	 * Two boolean flags are used to detect such cases.
+	 * <p> - Cells are laid out from the bottom-right. The two positions are computed as follows:
+	 * <p> &#10240; &#x2800; - The bottom position for rows is given by: {@code rowsRange.diff() * cellHeight} or in the above exceptional case
+	 * by {@code (rowsRange.diff() - 1) * cellHeight}
+	 * <p> &#10240; &#x2800; - The right position for columns is given by: {@code columnsRange.diff() * cellWidth} or in the above exceptional case
+	 * by {@code (columnsRange.diff() - 1) * cellWidth}
 	 * <p></p>
-	 * {@code GridState} is only responsible for computing the position of the rows, the cells are actually
-	 * laid out by the {@link LayoutRow} objects. In fact, here we start from the vertical bottom position,
-	 * which is given by {@code rowsRange.diff() * cellHeight}, and then iterating over the grids
-	 * from the end to the start (reverse, with a {@link ListIterator}) we call {@link LayoutRow#layoutCells(double, boolean)}
-	 * by passing the computed row position and the special flag for the columns.
-	 * <p></p>
-	 * About the special flags.
-	 * <p>
-	 * Long story short. The way the {@link GridHelper} works is that the viewport cannot "scroll" beyond
-	 * {@link VirtualGrid#getCellSize()} and the virtual grid always has one row and one column of overscan/buffer
-	 * whatever you want to call it.
-	 * This means that when you reach the end of the viewport you always have that one row and column of overscan that needs
-	 * to be positioned above/before all the others, because of course you cannot add anything more at the end. This issue is
-	 * rather problematic and lead to this solution. These special flags are needed to check if we are dealing with
-	 * such special cases and the positions are shifted.
-	 * <p>
-	 * For rows the bottom position is shifted as {@code bottom -= cellHeight}.
-	 * <p>
-	 * For columns the right position is shifted as {@code right -= cellWidth}.
+	 * At this point rows are laid out from the bottom to the top, and each row is responsible for laying out its cells
+	 * with {@link GridRow#layoutCells(double, boolean)}.
 	 */
 	public void layoutRows() {
 		if (isEmpty()) return;
+		if (grid instanceof PaginatedVirtualGrid) {
+			layoutPaginatedRows();
+			return;
+		}
 
-		GridHelper helper = virtualGrid.getGridHelper();
-		SizeBean size = virtualGrid.getCellSize();
-		int gRows = virtualGrid.getRowsNum(); // Grid Rows
-		int gColumns = virtualGrid.getColumnsNum(); // Grid Columns
+		GridHelper helper = grid.getGridHelper();
+		Size size = grid.getCellSize();
+		int gRows = grid.getRowsNum(); // Grid Rows
+		int gColumns = grid.getColumnsNum(); // Grid Columns
 
 		int firstRow = helper.firstRow();
 		int lastRow = firstRow + helper.maxRows() - 1;
@@ -518,47 +500,147 @@ public class GridState<T, C extends GridCell<T>> {
 		double bottom = rowsRange.diff() * size.getHeight();
 		if (adjustRows) bottom -= size.getHeight();
 
-		List<LayoutRow<T, C>> tmp = new ArrayList<>(rows.values());
-		ListIterator<LayoutRow<T, C>> it = tmp.listIterator(tmp.size());
+		ListIterator<GridRow<T, C>> it = new ArrayList<>(rows.values()).listIterator(size());
 		while (it.hasPrevious()) {
-			LayoutRow<T, C> row = it.previous();
-			row.layoutCells((row.canReusePositions() ? row.getRowPos() : bottom), adjustColumns);
+			GridRow<T, C> row = it.previous();
+			row.layoutCells(bottom, adjustColumns);
 			bottom -= size.getHeight();
 		}
 	}
 
 	/**
-	 * Adds a new {@link LayoutRow} for the given index in the rows map. Note that
-	 * this new row will need to be initialized with {@link LayoutRow#init()}.
+	 * This is the implementation of {@link #layoutRows()} exclusively for {@link PaginatedVirtualGrid}s.
+	 * <p>
+	 * This is simpler as there is no "free" vertical scrolling, all cells will have a precise vertical position at any
+	 * time in the page.
+	 * <p></p>
+	 * Before starting the actual layout computation there are a bunch of information required for it to work properly:
+	 * <p> - The cells' size, as well as the number columns of the grid
+	 * <p> - The rows and columns ranges. These are not computed with {@link GridHelper} because in some exceptional cases
+	 * they may differ
+	 * <p> - The computed ranges are needed to check for two exceptional cases. For how the viewport works we always have
+	 * one Cell of overscan/buffer whatever you want to call it. But when we are at the end (last column or last row, or both)
+	 * that one Cell will need to be moved to be the first cell of the range since there are no more items to the right/bottom.
+	 * For {@link PaginatedVirtualGrid} we only need a boolean flag for the columns as there is no overscan for the rows.
+	 * <p> - Cells are laid out from the top-right. The two positions are computed as follows:
+	 * <p> &#10240; &#x2800; - The top position starts at 0 and increases by {@code cellHeight} at each loop iteration
+	 * <p> &#10240; &#x2800; - The right position for columns is given by: {@code columnsRange.diff() * cellWidth} or in the above exceptional case
+	 * by {@code (columnsRange.diff() - 1) * cellWidth}
+	 * <p></p>
+	 * At this point rows are laid out from the top to the bottom, and each row is responsible for laying out its cells
+	 * with {@link GridRow#layoutCells(double, boolean)}.
+	 * <p></p>
+	 * Last but not least, for {@link PaginatedVirtualGrid}s it may happen that there aren't enough rows to entirely
+	 * fill a page, in such case extra rows are still present in the viewport, but they need to be hidden with
+	 * {@link GridRow#setVisible(boolean)}.
 	 */
-	protected void addRow(int index) {
-		rows.put(index, LayoutRow.of(virtualGrid, index, columnsRange));
+	public void layoutPaginatedRows() {
+		PaginatedVirtualGrid pGrid = ((PaginatedVirtualGrid) grid);
+		GridHelper helper = pGrid.getGridHelper();
+		Size size = pGrid.getCellSize();
+		int gColumns = pGrid.getColumnsNum(); // Grid Columns
+
+		int firstRow = helper.firstRow();
+		int lastRow = Math.min(firstRow + helper.maxRows() - 1, pGrid.getRowsNum() - 1);
+		IntegerRange range = IntegerRange.of(firstRow, lastRow);
+
+		int firstColumn = helper.firstColumn();
+		int lastColumn = firstColumn + helper.maxColumns() - 1;
+		boolean adjustColumns = lastColumn > gColumns - 1 && columnsFilled();
+
+		double pos = 0;
+		for (int i = firstRow; i <= lastRow; i++) {
+			GridRow<T, C> row = rows.get(i);
+			row.layoutCells(pos, adjustColumns);
+			pos += size.getHeight();
+			row.setVisible(true);
+		}
+
+		// Hide extra rows that are not in range
+		rows.entrySet().stream()
+				.filter(e -> !IntegerRange.inRangeOf(e.getKey(), range))
+				.forEach(e -> e.getValue().setVisible(false));
 	}
 
 	/**
-	 * Adds the given {@link LayoutRow} at the given index in the rows map.
+	 * Creates a new {@link GridRow} with the given index and the state's columns range, initializes it with {@link GridRow#init()}
+	 * then adds it to the state's map.
 	 */
-	protected void addRow(int index, LayoutRow<T, C> row) {
+	protected void addRow(int index) {
+		rows.put(index, GridRow.of(grid, index, columnsRange).init());
+	}
+
+	/**
+	 * Adds the given {@link GridRow} to the state's map at the given index.
+	 */
+	protected void addRow(int index, GridRow<T, C> row) {
 		rows.put(index, row);
 	}
 
 	/**
-	 * Disposes all the rows in the state, also removes them from the map.
+	 * For every {@link GridRow} in the state's map calls {@link GridRow#clear()} then clears the map,
+	 * making the state empty.
 	 */
-	protected void disposeAndClear() {
-		Iterator<Map.Entry<Integer, LayoutRow<T, C>>> it = rows.entrySet().iterator();
-		while (it.hasNext()) {
-			LayoutRow<T, C> row = it.next().getValue();
-			row.clear();
-			it.remove();
-		}
+	protected void clear() {
+		rows.values().forEach(GridRow::clear);
+		rows.clear();
 	}
 
 	/**
-	 * @return whether the rows map is empty
+	 * By iterating over all the rows in the state (using Streams) this converts the cells contained in the rows
+	 * to a list of {@link Node}s, with {@link C#getNode()}
 	 */
-	public boolean isEmpty() {
-		return rows.isEmpty();
+	public List<Node> getNodes() {
+		return rows.values().stream()
+				.flatMap(row -> row.getCells().values().stream())
+				.map(C::getNode)
+				.collect(Collectors.toUnmodifiableList());
+	}
+
+	/**
+	 * By iterating over all the rows in the state (using Streams) this gathers all the cells contained in the rows
+	 * into one list.
+	 */
+	public List<C> getCells() {
+		return rows.values().stream()
+				.flatMap(row -> row.getCells().values().stream())
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * By iterating over all the rows in the state (using Streams) this gathers all the cells contained in the rows
+	 * in one map. Cells are mapped as follows: linearIndex -> Cell.
+	 * <p>
+	 * Note that since Cells are kept by their column index in the rows, we use flatMap on {@link GridRow#getLinearCells()}.
+	 */
+	public Map<Integer, C> getIndexedCells() {
+		return rows.values().stream()
+				.flatMap(row -> row.getLinearCells().entrySet().stream())
+				.collect(Collectors.toMap(
+						Map.Entry::getKey,
+						Map.Entry::getValue
+				));
+	}
+
+	/**
+	 * @return whether there are enough rows is this state to fill the viewport
+	 */
+	public boolean rowsFilled() {
+		if (grid instanceof PaginatedVirtualGrid) {
+			return rows.values().stream()
+					.allMatch(GridRow::isVisible);
+		}
+		return size() >= targetSize;
+	}
+
+	/**
+	 * @return whether there are enough columns in this state to fill the viewport
+	 */
+	public boolean columnsFilled() {
+		GridHelper helper = grid.getGridHelper();
+		int targetColumns = helper.maxColumns();
+		return rows.values().stream()
+				.allMatch(row -> row.size() >= targetColumns);
 	}
 
 	/**
@@ -569,113 +651,55 @@ public class GridState<T, C extends GridCell<T>> {
 	}
 
 	/**
-	 * @return the number of cells as the sum of the cells of every row in
-	 * this state
+	 * @return the total number of cells in this state, as the sum of all the cells of each individual {@link GridRow}
 	 */
 	public int totalSize() {
 		return rows.values().stream()
-				.mapToInt(LayoutRow::size)
+				.mapToInt(GridRow::size)
 				.sum();
 	}
 
 	/**
-	 * @return whether there are enough rows is this state to fill the viewport
+	 * @return whether the state is empty, no rows in it
 	 */
-	public boolean rowsFilled() {
-		GridHelper helper = virtualGrid.getGridHelper();
-		int targetRows = helper.maxRows();
-		return size() >= targetRows;
-	}
-
-	/**
-	 * @return whether there are enough columns in this state to fill the viewport
-	 */
-	public boolean columnsFilled() {
-		GridHelper helper = virtualGrid.getGridHelper();
-		int targetColumns = helper.maxColumns();
-		return rows.values().stream()
-				.allMatch(row -> row.size() >= targetColumns);
-	}
-
-	/**
-	 * @return whether both {@link #rowsFilled()} and {@link #columnsFilled()} are true
-	 */
-	public boolean isViewportFull() {
-		return rowsFilled() && columnsFilled();
+	public boolean isEmpty() {
+		return rows.isEmpty();
 	}
 
 	//================================================================================
-	// Getters Setters
+	// Getters/Setters
 	//================================================================================
 
 	/**
-	 * @return the {@link VirtualGrid} instance associated to this state
+	 * @return the map used to keep the {@link GridRow}s
 	 */
-	public VirtualGrid<T, C> getVirtualGrid() {
-		return virtualGrid;
+	protected Map<Integer, GridRow<T, C>> getRows() {
+		return rows;
 	}
 
 	/**
-	 * @return the range of rows the state should display
+	 * @return {@link #getRows()} as an unmodifiable map
+	 */
+	public Map<Integer, GridRow<T, C>> getRowsUnmodifiable() {
+		return Collections.unmodifiableMap(rows);
+	}
+
+	/**
+	 * @return the range of rows in the state
 	 */
 	public IntegerRange getRowsRange() {
 		return rowsRange;
 	}
 
 	/**
-	 * @return the range of columns the state should display
+	 * @return the range of columns of each {@link GridRow} in the state
 	 */
 	public IntegerRange getColumnsRange() {
 		return columnsRange;
 	}
 
 	/**
-	 * @return the rows map
-	 */
-	protected Map<Integer, LayoutRow<T, C>> getRows() {
-		return rows;
-	}
-
-	/**
-	 * @return the rows map an unmodifiable collection
-	 */
-	public Map<Integer, LayoutRow<T, C>> getRowsUnmodifiable() {
-		return Collections.unmodifiableMap(rows);
-	}
-
-	/**
-	 * @return a map containing all the cells of the state with their linear index as keys
-	 */
-	public Map<Integer, C> getIndexedCells() {
-		return rows.values().stream()
-				.flatMap(row -> row.getLinearMap().entrySet().stream())
-				.collect(Collectors.toMap(
-						Map.Entry::getKey,
-						Map.Entry::getValue
-				));
-	}
-
-	/**
-	 * @return a list containing all the cells of the state
-	 */
-	public List<C> getCells() {
-		return rows.values().stream()
-				.flatMap(row -> row.getCells().values().stream())
-				.collect(Collectors.toList());
-	}
-
-	/**
-	 * @return a list of all the nodes, converting the cells to nodes with {@link Cell#getNode()}
-	 */
-	public List<Node> getNodes() {
-		return rows.values().stream()
-				.flatMap(row -> row.getCells().values().stream())
-				.map(C::getNode)
-				.collect(Collectors.toList());
-	}
-
-	/**
-	 * @return the number of rows the state should have
+	 * @return the expected number of rows
 	 */
 	public int getTargetSize() {
 		return targetSize;
@@ -689,14 +713,17 @@ public class GridState<T, C extends GridCell<T>> {
 	}
 
 	/**
-	 * @return whether new cells were created or some removed
+	 * @return whether a change caused the total size of the new state to change compared to the old state
 	 */
 	public boolean haveCellsChanged() {
 		return cellsChanged;
 	}
 
-	protected void setCellsChanged(boolean cellsChanged) {
-		this.cellsChanged = cellsChanged;
+	/**
+	 * Sets the cellsChanged flag to true, causing {@link #haveCellsChanged()} to return true, which will tell the
+	 * viewport to update its children.
+	 */
+	protected void cellsChanged() {
+		this.cellsChanged = true;
 	}
-
 }

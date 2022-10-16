@@ -16,20 +16,17 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+package interactive.others;
 
-import interactive.grid.PGridApp;
-import javafx.application.Application;
+import java.util.function.Function;
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(PGridApp.class);
+public record Constraint<T>(String message, Function<T, Boolean> validator) {
+
+	public static <T> Constraint<T> of(String message, Function<T, Boolean> validator) {
+		return new Constraint<>(message, validator);
+	}
+
+	public boolean isValid(T val) {
+		return validator.apply(val);
 	}
 }

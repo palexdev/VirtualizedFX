@@ -18,22 +18,23 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
-import io.github.palexdev.mfxcore.base.beans.SizeBean;
+import io.github.palexdev.mfxcore.base.beans.Position;
+import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.collections.ObservableGrid;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
 /**
- * The {@code GridHelper} is a utility interface with oen concrete implementation {@link DefaultGridHelper}
- * used by the {@link VirtualGrid} and its subcomponents to separate common computations/operations.
+ * The {@code GridHelper} is a utility interface which collects a series of common computations/operations used by
+ * {@link VirtualGrid} and its subcomponents. Has one concrete implementation which is {@link DefaultGridHelper}
  */
 public interface GridHelper {
 
@@ -78,12 +79,6 @@ public interface GridHelper {
 	int maxColumns();
 
 	/**
-	 * @return the total number of cells the viewport can display. Usually the multiplication of
-	 * {@link #maxRows()} and {@link #maxColumns()}
-	 */
-	int maxCells();
-
-	/**
 	 * @return the maximum amount of pixels the viewport can scroll vertically
 	 */
 	double maxVScroll();
@@ -94,24 +89,14 @@ public interface GridHelper {
 	double maxHScroll();
 
 	/**
-	 * @return the virtual height of the grid
+	 * @return the total virtual size of the viewport
 	 */
-	double computeEstimatedLength();
+	Size computeEstimatedSize();
 
 	/**
-	 * @return the virtual width of the grid
+	 * Keeps the results of {@link #computeEstimatedSize()}.
 	 */
-	double computeEstimatedBreadth();
-
-	/**
-	 * Keeps the results of {@link #computeEstimatedLength()}.
-	 */
-	ReadOnlyDoubleProperty estimatedLengthProperty();
-
-	/**
-	 * Keeps the results of {@link #computeEstimatedBreadth()}.
-	 */
-	ReadOnlyDoubleProperty estimatedBreadthProperty();
+	ReadOnlyObjectProperty<Size> estimatedSizeProperty();
 
 	/**
 	 * This binding holds the horizontal position of the viewport.
@@ -124,10 +109,12 @@ public interface GridHelper {
 	DoubleBinding yPosBinding();
 
 	/**
-	 * Invalidates both {@link VirtualGrid#hPosProperty()} and {@link VirtualGrid#vPosProperty()} in case changes
-	 * occurred in the viewport and the current position are no longer valid.
+	 * Invalidates {@link VirtualGrid#positionProperty()} in case changes
+	 * occur in the viewport and the current position is no longer valid.
+	 *
+	 * @return true or false if the old position was invalid or not
 	 */
-	void invalidatePos();
+	boolean invalidatedPos();
 
 	/**
 	 * Scrolls the viewport to the given row index.
@@ -165,93 +152,105 @@ public interface GridHelper {
 	/**
 	 * Abstract implementation of {@link GridHelper}, base class for {@link DefaultGridHelper}.
 	 */
-	abstract class AbstractGridHelper implements GridHelper {
-		protected final VirtualGrid<?, ?> virtualGrid;
-		protected final ViewportManager<?, ?> viewportManager;
+	abstract class AbstractHelper implements GridHelper {
+		protected final VirtualGrid<?, ?> grid;
+		protected final ViewportManager<?, ?> manager;
 
-		protected final DoubleProperty estimatedLength = new SimpleDoubleProperty();
-		protected final DoubleProperty estimatedBreadth = new SimpleDoubleProperty();
+		protected final ObjectProperty<Size> estimatedSize = new SimpleObjectProperty<>(Size.of(0, 0));
 
-		public AbstractGridHelper(VirtualGrid<?, ?> virtualGrid) {
-			this.virtualGrid = virtualGrid;
-			this.viewportManager = virtualGrid.getViewportManager();
+		public AbstractHelper(VirtualGrid<?, ?> grid) {
+			this.grid = grid;
+			this.manager = grid.getViewportManager();
 		}
 
 		@Override
-		public void invalidatePos() {
-			double length = estimatedLength.get();
-			double breadth = estimatedBreadth.get();
-			virtualGrid.setVPos(Math.min(virtualGrid.getVPos(), length));
-			virtualGrid.setHPos(Math.min(virtualGrid.getHPos(), breadth));
+		public boolean invalidatedPos() {
+			Size size = estimatedSize.get();
+			double x = Math.min(size.getWidth(), grid.getHPos());
+			double y = Math.min(size.getHeight(), grid.getVPos());
+			Position pos = Position.of(x, y);
+			boolean invalid = !grid.getPosition().equals(pos);
+			grid.setPosition(Position.of(x, y));
+			return invalid;
 		}
 
 		@Override
-		public ReadOnlyDoubleProperty estimatedLengthProperty() {
-			return estimatedLength;
-		}
-
-		@Override
-		public ReadOnlyDoubleProperty estimatedBreadthProperty() {
-			return estimatedBreadth;
+		public ReadOnlyObjectProperty<Size> estimatedSizeProperty() {
+			return estimatedSize;
 		}
 	}
 
 	/**
-	 * Concrete implementation of {@link AbstractGridHelper} with default/expected behavior for a virtual grid.
+	 * Concrete implementation of {@link AbstractHelper} with default/expected behavior for a virtual grid.
 	 * <p></p>
 	 * This helper adds the following listeners:
 	 * <p> - A listener to the virtual grid's width to re-initialize the viewport, {@link ViewportManager#init()}
 	 * <p> - A listener to the virtual grid's height to re-initialize the viewport, {@link ViewportManager#init()}
-	 * <p> - A listener on the virtual grid's vPos property to process the scroll, {@link ViewportManager#onVScroll()}
-	 * <p> - A listener on the virtual grid's hPos property to process the scroll, {@link ViewportManager#onHScroll()}
+	 * <p> - A listener on the virtual grid's position property to process the scroll
+	 * <p></p>
+	 * More info on the last listener:
+	 * <p>
+	 * The scroll computation is done only if no changes occurred in the grid's items data structure.
+	 * <p> {@link ViewportManager#onHScroll()} is called only if the horizontal position has changed
+	 * <p> {@link ViewportManager#onVScroll()} is called only if the vertical position has changed
+	 * <p> If both positions have changed than both methods are called in the listed order.
 	 */
-	class DefaultGridHelper extends AbstractGridHelper {
+	class DefaultGridHelper extends AbstractHelper {
 		private ChangeListener<? super Number> widthListener;
 		private ChangeListener<? super Number> heightListener;
-		private InvalidationListener hPosListener;
-		private InvalidationListener vPosListener;
+		private ChangeListener<? super Position> positionListener;
 
-		public DefaultGridHelper(VirtualGrid<?, ?> virtualGrid) {
-			super(virtualGrid);
+		public DefaultGridHelper(VirtualGrid<?, ?> grid) {
+			super(grid);
 
 			widthListener = (observable, oldValue, newValue) -> {
 				double val = newValue.doubleValue();
-				if (val > 0 && virtualGrid.getHeight() > 0)
-					viewportManager.init();
+				if (val > 0 && grid.getHeight() > 0)
+					manager.init();
 			};
 			heightListener = (observable, oldValue, newValue) -> {
+				invalidatedPos();
+
 				double val = newValue.doubleValue();
-				if (val > 0 && virtualGrid.getWidth() > 0)
-					viewportManager.init();
+				if (val > 0 && grid.getWidth() > 0)
+					manager.init();
+			};
+			positionListener = (observable, oldValue, newValue) -> {
+				ObservableGrid.Change<?> change = grid.getItems().getChange();
+				if (change != null && change != ObservableGrid.Change.EMPTY) {
+					return;
+				}
+
+				if (oldValue.getX() != newValue.getX()) {
+					manager.onHScroll();
+				}
+				if (oldValue.getY() != newValue.getY()) {
+					manager.onVScroll();
+				}
 			};
 
-			hPosListener = invalidated -> viewportManager.onHScroll();
-			vPosListener = invalidated -> viewportManager.onVScroll();
+			grid.widthProperty().addListener(widthListener);
+			grid.heightProperty().addListener(heightListener);
+			grid.positionProperty().addListener(positionListener);
 
-			virtualGrid.widthProperty().addListener(widthListener);
-			virtualGrid.heightProperty().addListener(heightListener);
-			virtualGrid.hPosProperty().addListener(hPosListener);
-			virtualGrid.vPosProperty().addListener(vPosListener);
-
-			((DoubleProperty) virtualGrid.estimatedLengthProperty()).bind(estimatedLengthProperty());
-			((DoubleProperty) virtualGrid.estimatedBreadthProperty()).bind(estimatedBreadthProperty());
+			((ObjectProperty<Size>) grid.estimatedSizeProperty()).bind(estimatedSizeProperty());
 		}
 
 		@Override
 		public int firstRow() {
 			return NumberUtils.clamp(
-					(int) Math.floor(virtualGrid.getVPos() / virtualGrid.getCellSize().getHeight()),
+					(int) Math.floor(grid.getVPos() / grid.getCellSize().getHeight()),
 					0,
-					virtualGrid.getItems().getRowsNum() - 1
+					grid.getRowsNum() - 1
 			);
 		}
 
 		@Override
 		public int firstColumn() {
 			return NumberUtils.clamp(
-					(int) Math.floor(virtualGrid.getHPos() / virtualGrid.getCellSize().getWidth()),
+					(int) Math.floor(grid.getHPos() / grid.getCellSize().getWidth()),
 					0,
-					virtualGrid.getItems().getColumnsNum() - 1
+					grid.getColumnsNum() - 1
 			);
 		}
 
@@ -260,7 +259,7 @@ public interface GridHelper {
 			return NumberUtils.clamp(
 					firstRow() + maxRows() - 1,
 					0,
-					virtualGrid.getItems().getRowsNum() - 1
+					grid.getRowsNum() - 1
 			);
 		}
 
@@ -269,21 +268,33 @@ public interface GridHelper {
 			return NumberUtils.clamp(
 					firstColumn() + maxColumns() - 1,
 					0,
-					virtualGrid.getItems().getColumnsNum() - 1
+					grid.getColumnsNum() - 1
 			);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 * <p>
+		 * Note that the result given by {@link #maxRows()} to compute the index of the first row,
+		 * is clamped so that it will never be greater then the number of rows in the data structure.
+		 */
 		@Override
 		public IntegerRange rowsRange() {
-			int rNum = maxRows();
+			int rNum = Math.min(maxRows(), grid.getRowsNum());
 			int last = lastRow();
 			int first = Math.max(last - rNum + 1, 0);
 			return IntegerRange.of(first, last);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 * <p>
+		 * Note that the result given by {@link #maxColumns()} to compute the index of the first column,
+		 * is clamped so that it will never be greater then the number of columns in the data structure.
+		 */
 		@Override
 		public IntegerRange columnsRange() {
-			int cNum = maxColumns();
+			int cNum = Math.min(maxColumns(), grid.getColumnsNum());
 			int last = lastColumn();
 			int first = Math.max(last - cNum + 1, 0);
 			return IntegerRange.of(first, last);
@@ -291,60 +302,49 @@ public interface GridHelper {
 
 		@Override
 		public int maxRows() {
-			return (int) (Math.ceil(virtualGrid.getHeight() / virtualGrid.getCellSize().getHeight()) + 1);
+			return (int) (Math.ceil(grid.getHeight() / grid.getCellSize().getHeight()) + 1);
 		}
 
 		@Override
 		public int maxColumns() {
-			return (int) (Math.ceil(virtualGrid.getWidth() / virtualGrid.getCellSize().getWidth()) + 1);
-		}
-
-		@Override
-		public int maxCells() {
-			return maxRows() * maxColumns();
+			return (int) (Math.ceil(grid.getWidth() / grid.getCellSize().getWidth()) + 1);
 		}
 
 		/**
 		 * {@inheritDoc}
 		 * <p>
-		 * The value is given by: {@cde estimatedLength - virtualFlow.getHeight()}
+		 * The value is given by: {@cde estimatedSize.getHeight() - virtualFlow.getHeight()}
 		 */
 		@Override
 		public double maxVScroll() {
-			return estimatedLengthProperty().get() - virtualGrid.getHeight();
+			return estimatedSize.get().getHeight() - grid.getHeight();
 		}
 
 		/**
 		 * {@inheritDoc}
 		 * <p>
-		 * The value is given by: {@cde estimatedBreadth - virtualFlow.getWidth()}
+		 * The value is given by: {@cde estimatedSize.getWidth() - virtualFlow.getWidth()}
 		 */
 		@Override
 		public double maxHScroll() {
-			return estimatedBreadthProperty().get() - virtualGrid.getWidth();
+			return estimatedSize.get().getWidth() - grid.getWidth();
 		}
 
 		@Override
-		public double computeEstimatedLength() {
-			double cHeight = virtualGrid.getCellSize().getHeight();
-			double val = virtualGrid.getItems().getRowsNum() * cHeight;
-			estimatedLength.set(val);
-			return val;
-		}
-
-		@Override
-		public double computeEstimatedBreadth() {
-			double cWidth = virtualGrid.getCellSize().getWidth();
-			double val = virtualGrid.getItems().getColumnsNum() * cWidth;
-			estimatedBreadth.set(val);
-			return val;
+		public Size computeEstimatedSize() {
+			Size cellSize = grid.getCellSize();
+			double width = grid.getColumnsNum() * cellSize.getWidth();
+			double height = grid.getRowsNum() * cellSize.getHeight();
+			Size size = Size.of(width, height);
+			estimatedSize.set(size);
+			return size;
 		}
 
 		/**
 		 * {@inheritDoc}
 		 * <p>
 		 * This is the direction along the estimated breath. However, the implementation
-		 * makes it so that the position of the viewport is virtual. This binding which depends on both {@link VirtualGrid#hPosProperty()}
+		 * makes it so that the position of the viewport is virtual. This binding which depends on both {@link VirtualGrid#positionProperty()}
 		 * and {@link VirtualGrid#cellSizeProperty()} will always return a value that is greater or equal to 0 and lesser
 		 * than the cell size.
 		 * <p>
@@ -362,8 +362,8 @@ public interface GridHelper {
 		@Override
 		public DoubleBinding xPosBinding() {
 			return Bindings.createDoubleBinding(
-					() -> -virtualGrid.getHPos() % virtualGrid.getCellSize().getWidth(),
-					virtualGrid.hPosProperty(), virtualGrid.cellSizeProperty()
+					() -> -grid.getHPos() % grid.getCellSize().getWidth(),
+					grid.positionProperty(), grid.cellSizeProperty()
 			);
 		}
 
@@ -371,11 +371,11 @@ public interface GridHelper {
 		 * {@inheritDoc}
 		 * <p>
 		 * This is the direction along the estimated length. However, the implementation
-		 * makes it so that the position of the viewport is virtual. This binding which depends on both {@link VirtualGrid#vPosProperty()}
+		 * makes it so that the position of the viewport is virtual. This binding which depends on both {@link VirtualGrid#positionProperty()}
 		 * and {@link VirtualGrid#cellSizeProperty()} will always return a value that is greater or equal to 0 and lesser
 		 * than the cell size.
 		 * <p>
-		 * This is the formula: {@code -virtualGrid.getHPos() % virtualGrid.getCellSize().getHeight()}.
+		 * This is the formula: {@code -virtualGrid.getVPos() % virtualGrid.getCellSize().getHeight()}.
 		 * <p>
 		 * Think about this. We have cells of height 64. and we scroll 15px on each gesture. When we reach 60px, we can still
 		 * see the cell for 4px, but once we scroll again it makes to sense to go to 75px because the first cell won't be
@@ -389,33 +389,33 @@ public interface GridHelper {
 		@Override
 		public DoubleBinding yPosBinding() {
 			return Bindings.createDoubleBinding(
-					() -> -virtualGrid.getVPos() % virtualGrid.getCellSize().getHeight(),
-					virtualGrid.vPosProperty(), virtualGrid.cellSizeProperty()
+					() -> -grid.getVPos() % grid.getCellSize().getHeight(),
+					grid.positionProperty(), grid.cellSizeProperty()
 			);
 		}
 
 		@Override
 		public void scrollToRow(int index) {
-			double val = index * virtualGrid.getCellSize().getHeight();
+			double val = index * grid.getCellSize().getHeight();
 			double clampedVal = NumberUtils.clamp(val, 0, maxVScroll());
-			virtualGrid.setVPos(clampedVal);
+			grid.setVPos(clampedVal);
 		}
 
 		@Override
 		public void scrollToColumn(int index) {
-			double val = index * virtualGrid.getCellSize().getWidth();
+			double val = index * grid.getCellSize().getWidth();
 			double clampedVal = NumberUtils.clamp(val, 0, maxHScroll());
-			virtualGrid.setHPos(clampedVal);
+			grid.setHPos(clampedVal);
 		}
 
 		@Override
 		public void scrollBy(double pixels, Orientation orientation) {
 			if (orientation == Orientation.VERTICAL) {
-				double newVal = NumberUtils.clamp(virtualGrid.getVPos() + pixels, 0, maxVScroll());
-				virtualGrid.setVPos(newVal);
+				double newVal = NumberUtils.clamp(grid.getVPos() + pixels, 0, maxVScroll());
+				grid.setVPos(newVal);
 			} else {
-				double newVal = NumberUtils.clamp(virtualGrid.getHPos() + pixels, 0, maxHScroll());
-				virtualGrid.setHPos(newVal);
+				double newVal = NumberUtils.clamp(grid.getHPos() + pixels, 0, maxHScroll());
+				grid.setHPos(newVal);
 			}
 		}
 
@@ -423,10 +423,10 @@ public interface GridHelper {
 		public void scrollTo(double pixel, Orientation orientation) {
 			if (orientation == Orientation.VERTICAL) {
 				double clampedVal = NumberUtils.clamp(pixel, 0, maxVScroll());
-				virtualGrid.setVPos(clampedVal);
+				grid.setVPos(clampedVal);
 			} else {
 				double clampedVal = NumberUtils.clamp(pixel, 0, maxHScroll());
-				virtualGrid.setHPos(clampedVal);
+				grid.setHPos(clampedVal);
 			}
 		}
 
@@ -439,21 +439,19 @@ public interface GridHelper {
 		 */
 		@Override
 		public void layout(Node node, double x, double y) {
-			SizeBean size = virtualGrid.getCellSize();
-			node.resizeRelocate(x, y, size.getWidth(), size.getHeight());
+			Size cellSize = grid.getCellSize();
+			node.resizeRelocate(x, y, cellSize.getWidth(), cellSize.getHeight());
 		}
 
 		@Override
 		public void dispose() {
-			virtualGrid.widthProperty().removeListener(widthListener);
-			virtualGrid.heightProperty().removeListener(heightListener);
-			virtualGrid.hPosProperty().removeListener(hPosListener);
-			virtualGrid.vPosProperty().removeListener(vPosListener);
+			grid.widthProperty().removeListener(widthListener);
+			grid.heightProperty().removeListener(heightListener);
+			grid.positionProperty().removeListener(positionListener);
 
 			widthListener = null;
 			heightListener = null;
-			hPosListener = null;
-			vPosListener = null;
+			positionListener = null;
 		}
 	}
 }

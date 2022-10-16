@@ -16,20 +16,28 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+package interactive.cells.flow;
 
-import interactive.grid.PGridApp;
-import javafx.application.Application;
+public class GlobalCellParameters {
+	private static double animationDuration;
+	private static boolean animEnabled;
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(PGridApp.class);
+	private GlobalCellParameters() {
+	}
+
+	public static double getAnimationDuration() {
+		return animationDuration;
+	}
+
+	public static void setAnimationDuration(double animationDuration) {
+		GlobalCellParameters.animationDuration = animationDuration;
+	}
+
+	public static boolean isAnimEnabled() {
+		return animEnabled;
+	}
+
+	public static void setAnimEnabled(boolean animEnabled) {
+		GlobalCellParameters.animEnabled = animEnabled;
 	}
 }

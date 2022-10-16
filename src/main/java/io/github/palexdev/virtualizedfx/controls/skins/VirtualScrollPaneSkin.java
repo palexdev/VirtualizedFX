@@ -21,7 +21,7 @@ package io.github.palexdev.virtualizedfx.controls.skins;
 import io.github.palexdev.mfxcore.animations.Animations;
 import io.github.palexdev.mfxcore.animations.Animations.KeyFrames;
 import io.github.palexdev.mfxcore.animations.Animations.TimelineBuilder;
-import io.github.palexdev.mfxcore.base.beans.PositionBean;
+import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.builders.bindings.BooleanBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
@@ -81,8 +81,8 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 	private final double DEFAULT_SIZE = 100.0;
 	private Node content;
 
-	private PositionBean initValues = PositionBean.of(0, 0);
-	private PositionBean dragStart = PositionBean.of(-1, -1);
+	private Position initValues = Position.of(0, 0);
+	private Position dragStart = Position.of(-1, -1);
 
 	private static final PseudoClass COMPACT_MODE_PSEUDO_CLASS = PseudoClass.getPseudoClass("compact");
 	private static final PseudoClass DRAG_TO_SCROLL_PSEUDO_CLASS = PseudoClass.getPseudoClass("drag-to-scroll");
@@ -355,13 +355,13 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 		container.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
 			if (vBar.isDragging() || hBar.isDragging()) return;
 			if (!sp.isDragToScroll()) {
-				dragStart = PositionBean.of(-1, -1);
-				initValues = PositionBean.of(0, 0);
+				dragStart = Position.of(-1, -1);
+				initValues = Position.of(0, 0);
 				return;
 			}
 
-			dragStart = PositionBean.of(event.getX(), event.getY());
-			initValues = PositionBean.of(hBar.getValue(), vBar.getValue());
+			dragStart = Position.of(event.getX(), event.getY());
+			initValues = Position.of(hBar.getValue(), vBar.getValue());
 		});
 
 		container.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {

@@ -16,20 +16,33 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package interactive;
+@import "../Common.css";
 
-import interactive.grid.PGridApp;
-import javafx.application.Application;
+/*--------------------------------------------------*/
+/* Actions Pane
+/*--------------------------------------------------*/
+#switchIcon .mfx-font-icon {
+	-mfx-color: -blue;
+	-mfx-size: 12;
+}
 
-public class Launcher {
-	public static void main(String[] args) {
-		//System.setProperty("prism.order", "sw");
-		//System.setProperty("prism.text", "t2k");
-		//System.setProperty("prism.lcdtext", "false");
-		//System.setProperty("prism.vsync", "false");
-		//System.setProperty("prism.showdirty", "true");
-		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(PGridApp.class);
-	}
+#switchIcon .mfx-ripple-generator {
+	-mfx-ripple-color: -blue-lighter;
+}
+
+/*--------------------------------------------------*/
+/* Comparison Pane
+/*--------------------------------------------------*/
+.split-pane {
+	-fx-background-color: transparent;
+	-fx-border-color: transparent;
+}
+
+.split-pane .split-pane-divider {
+	-fx-padding: 1;
+	-fx-background-color: rgba(128, 128, 128, 0.1);
+}
+
+.split-pane StackPane {
+	-fx-padding: 7 5 7 5;
 }
