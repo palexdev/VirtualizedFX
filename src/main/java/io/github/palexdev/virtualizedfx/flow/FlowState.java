@@ -28,8 +28,10 @@ import io.github.palexdev.virtualizedfx.flow.FlowMapping.FullMapping;
 import io.github.palexdev.virtualizedfx.flow.FlowMapping.PartialMapping;
 import io.github.palexdev.virtualizedfx.flow.FlowMapping.ValidMapping;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
+import javafx.scene.Node;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Class used by the {@link ViewportManager} to represent the state of the viewport at a given time.
@@ -750,6 +752,16 @@ public class FlowState<T, C extends Cell<T>> {
 	 */
 	public Map<Integer, C> getCellsUnmodifiable() {
 		return Collections.unmodifiableMap(cells);
+	}
+
+	/**
+	 * By iterating over all the cells in the state (using Streams) this converts them to a list of {@link Node}s,
+	 * with {@link C#getNode()}
+	 */
+	public List<Node> getNodes() {
+		return cells.values().stream()
+				.map(C::getNode)
+				.collect(Collectors.toList());
 	}
 
 	/**

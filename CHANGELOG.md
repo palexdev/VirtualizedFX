@@ -14,6 +14,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.7.3] - 21-11-2022
+
+## Added
+
+- FlowState: added method to get all Nodes from the state's cells
+
+## Changed
+
+- Addressed some TODOs
+- VirtualFlowSkin: moved all listeners operations to protected methods.
+- VirtualGridSkin: ensure estimated size initialization in skin
+
 ## [11.7.2] - 21-11-2022
 
 ## Added

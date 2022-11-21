@@ -115,6 +115,7 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 		viewport.translateYProperty().bind(helper.yPosBinding());
 
 		// End Initialization
+		helper.computeEstimatedSize();
 		getChildren().setAll(viewport);
 		addListeners();
 	}
@@ -169,6 +170,8 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 	/**
 	 * The default implementation is responsible for resetting the viewport, {@link ViewportManager#reset()}, when
 	 * the function used to build the cells has been changed.
+	 * <p></p>
+	 * Also makes sure to reset the last range properties of {@link ViewportManager}.
 	 *
 	 * @throws IllegalStateException if the new function is null
 	 */
@@ -232,7 +235,6 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 		return topInset + DEFAULT_SIZE + bottomInset;
 	}
 
-	// TODO should implement for flow too?
 	@Override
 	protected double computeMaxWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
 		VirtualGrid<T, C> virtualGrid = getSkinnable();
@@ -248,7 +250,6 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 	@Override
 	public void dispose() {
 		VirtualGrid<T, C> virtualGrid = getSkinnable();
-		manager = null; // TODO at the end or NullPointerException, check all!!
 
 		virtualGrid.getItems().removeListener(itemsChanged);
 		virtualGrid.itemsProperty().removeListener(gridChanged);
@@ -263,6 +264,7 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 		stateChanged = null;
 		helperChanged = null;
 		layoutRequestListener = null;
+		manager = null;
 		super.dispose();
 	}
 }

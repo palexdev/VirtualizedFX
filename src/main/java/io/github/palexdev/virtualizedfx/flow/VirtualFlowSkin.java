@@ -27,12 +27,12 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Default skin implementation for {@link VirtualFlow}.
@@ -61,6 +61,7 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 	private final Pane viewport;
 	private final Rectangle clip;
 
+	private ViewportManager<T, C> manager;
 	private final double DEFAULT_SIZE = 100.0;
 
 	private ListChangeListener<? super T> itemsChanged;
@@ -75,6 +76,7 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 	//================================================================================
 	public VirtualFlowSkin(VirtualFlow<T, C> virtualFlow) {
 		super(virtualFlow);
+		this.manager = virtualFlow.getViewportManager();
 
 		// Initialize Viewport
 		viewport = new Pane() {
@@ -125,38 +127,13 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		clip.arcHeightProperty().bind(virtualFlow.clipBorderRadiusProperty());
 		virtualFlow.setClip(clip);
 
-		// TODO move these to protected methods
 		// Build listeners
-		ViewportManager<T, C> viewportManager = virtualFlow.getViewportManager();
 		itemsChanged = this::onItemsChanged;
 		listChanged = (observable, oldValue, newValue) -> onListChanged(oldValue, newValue);
-		factoryChanged = invalidated -> {
-			viewportManager.reset();
-			viewportManager.setLastRange(IntegerRange.of(-1));
-		};
-
-		stateChanged = (observable, oldValue, newValue) -> {
-			if (newValue == FlowState.EMPTY) {
-				viewport.getChildren().clear();
-				return;
-			}
-
-			if (newValue.haveCellsChanged()) {
-				List<Node> nodes = newValue.getCells().values().stream()
-						.map(C::getNode)
-						.collect(Collectors.toList());
-				viewport.getChildren().setAll(nodes);
-			}
-		};
-
-		orientationChanged = (observable, oldValue, newValue) -> {
-			viewport.translateXProperty().bind(newValue.xPosBinding());
-			viewport.translateYProperty().bind(newValue.yPosBinding());
-		};
-
-		layoutRequestListener = (observable, oldValue, newValue) -> {
-			if (newValue) viewport.requestLayout();
-		};
+		factoryChanged = invalidated -> onFactoryChanged();
+		stateChanged = (observable, oldValue, newValue) -> onStateChanged(oldValue, newValue);
+		orientationChanged = (observable, oldValue, newValue) -> onOrientationChanged(oldValue, newValue);
+		layoutRequestListener = (observable, oldValue, newValue) -> onLayoutRequest(newValue);
 
 		// Initialize bindings
 		OrientationHelper helper = virtualFlow.getOrientationHelper();
@@ -164,7 +141,7 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		viewport.translateYProperty().bind(helper.yPosBinding());
 
 		// End initialization
-		helper.computeEstimatedLength(); // TODO check all others, check if right place
+		helper.computeEstimatedLength();
 		getChildren().setAll(viewport);
 		addListeners();
 	}
@@ -223,6 +200,53 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		viewportManager.onListChange(c);
 	}
 
+	/**
+	 * Tells the {@link ViewportManager} to {@link ViewportManager#reset()} the viewport,
+	 * also resets the last range property of the {@link ViewportManager}.
+	 */
+	protected void onFactoryChanged() {
+		manager.reset();
+		manager.setLastRange(IntegerRange.of(-1));
+	}
+
+	/**
+	 * The default implementation is responsible for updating the viewport's children when the state changes.
+	 * The new state though must have the {@link FlowState#haveCellsChanged()} flag set to true for this to happen.
+	 * The nodes are collected through {@link FlowState#getNodes()}.
+	 */
+	protected void onStateChanged(FlowState<T, C> oldValue, FlowState<T, C> newValue) {
+		if (newValue == FlowState.EMPTY) {
+			viewport.getChildren().clear();
+			return;
+		}
+
+		if (newValue.haveCellsChanged()) {
+			List<Node> nodes = newValue.getNodes();
+			viewport.getChildren().setAll(nodes);
+		}
+	}
+
+	/**
+	 * The default implementation is responsible for re-binding the viewport's translateX and translateY properties
+	 * to the bindings created by the new {@link OrientationHelper}.
+	 *
+	 * @throws IllegalStateException if the new helper is null
+	 */
+	protected void onOrientationChanged(OrientationHelper oldValue, OrientationHelper newValue) {
+		if (newValue == null)
+			throw new IllegalStateException("The new provided OrientationHelper is null, you will encounter problems");
+		viewport.translateXProperty().bind(newValue.xPosBinding());
+		viewport.translateYProperty().bind(newValue.yPosBinding());
+	}
+
+	/**
+	 * The default implementation is responsible for calling {@link Parent#requestLayout()} on the viewport when
+	 * the {@link VirtualFlow#needsViewportLayoutProperty()} has been set to true.
+	 */
+	protected void onLayoutRequest(Boolean newValue) {
+		if (newValue) viewport.requestLayout();
+	}
+
 	//================================================================================
 	// Overridden Methods
 	//================================================================================
@@ -238,8 +262,8 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 
 	@Override
 	public void dispose() {
-		super.dispose();
 		VirtualFlow<T, C> virtualFlow = getSkinnable();
+
 		virtualFlow.getItems().removeListener(itemsChanged);
 		virtualFlow.itemsProperty().removeListener(listChanged);
 		virtualFlow.cellFactoryProperty().removeListener(factoryChanged);
@@ -253,5 +277,7 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		stateChanged = null;
 		orientationChanged = null;
 		layoutRequestListener = null;
+		manager = null;
+		super.dispose();
 	}
 }
