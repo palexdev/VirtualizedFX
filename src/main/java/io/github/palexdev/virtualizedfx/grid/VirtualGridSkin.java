@@ -18,6 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
+import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.collections.ObservableGrid;
 import io.github.palexdev.mfxcore.collections.ObservableGrid.Change;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
@@ -84,10 +85,7 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 				if (helper == null)
 					throw new IllegalStateException("GridHelper is null, cannot proceed with layout");
 				if (!grid.isNeedsViewportLayout()) return;
-
-				if (helper.invalidatedPos()) {
-					return;
-				}
+				if (helper.invalidatedPos()) return;
 
 				GridState<T, C> state = grid.getState();
 				state.layoutRows();
@@ -178,6 +176,8 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 		if (newValue == null)
 			throw new IllegalStateException("The new provided cell factory is null, you will encounter problems");
 		manager.reset();
+		manager.setLastRowsRange(IntegerRange.of(-1));
+		manager.setLastColumnsRange(IntegerRange.of(-1));
 	}
 
 	/**
@@ -248,7 +248,7 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 	@Override
 	public void dispose() {
 		VirtualGrid<T, C> virtualGrid = getSkinnable();
-		manager = null;
+		manager = null; // TODO at the end or NullPointerException, check all!!
 
 		virtualGrid.getItems().removeListener(itemsChanged);
 		virtualGrid.itemsProperty().removeListener(gridChanged);

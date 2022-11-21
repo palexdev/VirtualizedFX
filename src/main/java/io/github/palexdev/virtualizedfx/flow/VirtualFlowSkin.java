@@ -18,6 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.flow;
 
+import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.enums.UpdateType;
 import javafx.beans.InvalidationListener;
@@ -124,11 +125,15 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		clip.arcHeightProperty().bind(virtualFlow.clipBorderRadiusProperty());
 		virtualFlow.setClip(clip);
 
+		// TODO move these to protected methods
 		// Build listeners
 		ViewportManager<T, C> viewportManager = virtualFlow.getViewportManager();
 		itemsChanged = this::onItemsChanged;
 		listChanged = (observable, oldValue, newValue) -> onListChanged(oldValue, newValue);
-		factoryChanged = invalidated -> viewportManager.reset();
+		factoryChanged = invalidated -> {
+			viewportManager.reset();
+			viewportManager.setLastRange(IntegerRange.of(-1));
+		};
 
 		stateChanged = (observable, oldValue, newValue) -> {
 			if (newValue == FlowState.EMPTY) {
@@ -159,6 +164,7 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		viewport.translateYProperty().bind(helper.yPosBinding());
 
 		// End initialization
+		helper.computeEstimatedLength(); // TODO check all others, check if right place
 		getChildren().setAll(viewport);
 		addListeners();
 	}

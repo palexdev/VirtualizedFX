@@ -170,7 +170,7 @@ public interface GridHelper {
 			double y = Math.min(size.getHeight(), grid.getVPos());
 			Position pos = Position.of(x, y);
 			boolean invalid = !grid.getPosition().equals(pos);
-			grid.setPosition(Position.of(x, y));
+			grid.setPosition(pos);
 			return invalid;
 		}
 
@@ -209,8 +209,6 @@ public interface GridHelper {
 					manager.init();
 			};
 			heightListener = (observable, oldValue, newValue) -> {
-				invalidatedPos();
-
 				double val = newValue.doubleValue();
 				if (val > 0 && grid.getWidth() > 0)
 					manager.init();

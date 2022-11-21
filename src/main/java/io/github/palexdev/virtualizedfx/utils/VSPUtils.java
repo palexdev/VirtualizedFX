@@ -97,7 +97,7 @@ public class VSPUtils {
 				.addInvalidatingSource(ExternalSource.of(flow.estimatedLengthProperty(), (o, n) -> {
 					if (flow.getOrientation() != Orientation.VERTICAL) return;
 					flow.getOrientationHelper().invalidatePos();
-					bindings.invTarget(vsp.vValProperty());
+					bindings.biInvalidate(vsp.vValProperty());
 				})).get();
 
 		MappingSource<Number, Number> hSource = new MappingSource<Number, Number>(flow.hPosProperty())
@@ -115,7 +115,7 @@ public class VSPUtils {
 				.addInvalidatingSource(ExternalSource.of(flow.estimatedLengthProperty(), (o, n) -> {
 					if (flow.getOrientation() != Orientation.HORIZONTAL) return;
 					flow.getOrientationHelper().invalidatePos();
-					bindings.invTarget(vsp.hValProperty());
+					bindings.biInvalidate(vsp.hValProperty());
 				})).get();
 		return vsp;
 	}
@@ -317,6 +317,7 @@ public class VSPUtils {
 					Orientation o = vsp.getOrientation();
 					VirtualBounds cBounds = vsp.getContentBounds();
 					double viewL = cBounds.getWidth();
+					// TODO this absolutely needs testing on other virtual controls as the contentL should be independent of the orientation
 					double contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
 					double pixels = vsp.isSmoothScroll() ? smoothUnit : unitIncrement;
 					return Math.max(0, pixels / (contentL - viewL));

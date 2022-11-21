@@ -130,6 +130,7 @@ public class GridState<T, C extends GridCell<T>> {
 				newState.addRow(rIndex);
 			}
 		}
+		clear();
 		return newState;
 	}
 
@@ -157,7 +158,11 @@ public class GridState<T, C extends GridCell<T>> {
 		Deque<Integer> remaining = new ArrayDeque<>(range);
 		while (!remaining.isEmpty()) {
 			int rIndex = remaining.removeFirst();
-			int oIndex = reusable.removeFirst();
+			Integer oIndex = reusable.poll();
+			if (oIndex == null) {
+				grid.requestViewportLayout();
+				continue;
+			}
 			GridRow<T, C> row = rows.remove(oIndex);
 			row.updateIndex(rIndex);
 			row.setReusablePositions(false);

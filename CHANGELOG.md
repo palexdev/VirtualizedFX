@@ -14,6 +14,32 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.7.2] - 21-11-2022
+
+## Added
+
+- VirtualScrollPane: introduce new property to shift the positions of the scroll bars (will be useful for VirtualTable)
+
+## Changed
+
+- Flow Viewport Manager: lastRange property must be reset during clear()
+- GridState: it may rarely happen that after the init() computation some rows are still present in the old state, make
+  sure to clean up
+- Grid ViewportManager: reset last ranges properties during clear()
+
+## Fixed
+
+- Emergency fix for some regressions and newfound nasty bugs
+- Flow ViewportManager: do not init() if the items list is empty. Could occur in some very rare cases
+- VirtualFlowSkin: discovered a rare bug which caused the cells to not being laid out properly if the viewport was all
+  the way down and the cell factory was being switched (yes very specific situation)
+- GridHelper: removed invalidatedPos() call that was causing incorrect state computation in very specific occasions
+- Grid ViewportManager: improper state object was being used in onChange() computation
+- VirtualGridSkin: discovered a rare bug which caused the cells to not being laid out properly if the viewport was all
+  the way down and the cell factory was being switched (yes very specific situation)
+- VSPUtils: fixed bindings for VirtualFlow wrapping, invalidation must be invoked through biInvalidate() since the
+  binding is bidirectional
+
 ## [11.7.1] - 16-10-2022
 
 ## Fixed

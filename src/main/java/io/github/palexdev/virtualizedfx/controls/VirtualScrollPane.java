@@ -207,6 +207,20 @@ public class VirtualScrollPane extends Control {
 			Insets.EMPTY
 	);
 
+	private final StyleableDoubleProperty hBarOffset = new StyleableDoubleProperty(
+			StyleableProperties.HBAR_OFFSET,
+			this,
+			"hBarOffset",
+			0.0
+	);
+
+	private final StyleableDoubleProperty vBarOffset = new StyleableDoubleProperty(
+			StyleableProperties.VBAR_OFFSET,
+			this,
+			"vBarOffset",
+			0.0
+	);
+
 	private final StyleableBooleanProperty dragToScroll = new StyleableBooleanProperty(
 			StyleableProperties.DRAG_TO_SCROLL,
 			this,
@@ -398,6 +412,46 @@ public class VirtualScrollPane extends Control {
 
 	public void setVBarPadding(Insets vBarPadding) {
 		this.vBarPadding.set(vBarPadding);
+	}
+
+	public double getHBarOffset() {
+		return hBarOffset.get();
+	}
+
+	/**
+	 * Specifies a value by which the horizontal scroll bar will be "shifted" on the x-axis.
+	 * <p>
+	 * Note that as a consequence this will also reduce the width of the bar.
+	 * <p>
+	 * This can be useful if wrapping content which has headers or extra nodes of some sort and the
+	 * bar ends up covering them.
+	 */
+	public StyleableDoubleProperty hBarOffsetProperty() {
+		return hBarOffset;
+	}
+
+	public void setHBarOffset(double hBarOffset) {
+		this.hBarOffset.set(hBarOffset);
+	}
+
+	public double getVBarOffset() {
+		return vBarOffset.get();
+	}
+
+	/**
+	 * Specifies a value by which the vertical scroll bar will be "shifted" on the y-axis.
+	 * <p>
+	 * Note that as a consequence this will also reduce the height of the bar.
+	 * <p>
+	 * This can be useful if wrapping content which has headers or extra nodes of some sort and the
+	 * bar ends up covering them.
+	 */
+	public StyleableDoubleProperty vBarOffsetProperty() {
+		return vBarOffset;
+	}
+
+	public void setVBarOffset(double vBarOffset) {
+		this.vBarOffset.set(vBarOffset);
 	}
 
 	public boolean isDragToScroll() {
@@ -633,6 +687,20 @@ public class VirtualScrollPane extends Control {
 						Insets.EMPTY
 				);
 
+		private static final CssMetaData<VirtualScrollPane, Number> HBAR_OFFSET =
+				FACTORY.createSizeCssMetaData(
+						"-fx-hbar-offset",
+						VirtualScrollPane::hBarOffsetProperty,
+						0.0
+				);
+
+		private static final CssMetaData<VirtualScrollPane, Number> VBAR_OFFSET =
+				FACTORY.createSizeCssMetaData(
+						"-fx-vbar-offset",
+						VirtualScrollPane::vBarOffsetProperty,
+						0.0
+				);
+
 		private static final CssMetaData<VirtualScrollPane, Boolean> DRAG_TO_SCROLL =
 				FACTORY.createBooleanCssMetaData(
 						"-fx-drag-to-scroll",
@@ -707,7 +775,7 @@ public class VirtualScrollPane extends Control {
 			cssMetaDataList = StyleUtils.cssMetaDataList(
 					Control.getClassCssMetaData(),
 					LAYOUT_MODE, HBAR_POLICY, VBAR_POLICY, HBAR_POS, VBAR_POS,
-					HBAR_PADDING, VBAR_PADDING,
+					HBAR_PADDING, VBAR_PADDING, HBAR_OFFSET, VBAR_OFFSET,
 					AUTO_HIDE_BARS, DRAG_TO_SCROLL,
 					BUTTONS_VISIBLE, BUTTONS_GAP,
 					H_TRACK_INCREMENT, H_UNIT_INCREMENT, V_TRACK_INCREMENT, V_UNIT_INCREMENT,

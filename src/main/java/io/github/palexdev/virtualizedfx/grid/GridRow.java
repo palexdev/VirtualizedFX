@@ -113,7 +113,6 @@ public class GridRow<T, C extends GridCell<T>> {
 		Set<Integer> range = IntegerRange.expandRangeToSet(columns);
 		int targetSize = columns.diff() + 1;
 
-
 		for (Integer column : columns) {
 			if (cells.containsKey(column)) {
 				tmp.put(column, cells.remove(column));

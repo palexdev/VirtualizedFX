@@ -103,7 +103,7 @@ public class ViewportManager<T, C extends Cell<T>> {
 	 * and {@link VirtualFlow#requestViewportLayout()} is called.
 	 */
 	public void init() {
-		if (virtualFlow.getCellFactory() == null) return;
+		if (itemsEmpty() || virtualFlow.getCellFactory() == null) return;
 
 		// Compute the range of items to display
 		OrientationHelper helper = virtualFlow.getOrientationHelper();
@@ -219,6 +219,7 @@ public class ViewportManager<T, C extends Cell<T>> {
 	public void clear() {
 		getState().disposeAndClear();
 		setState(FlowState.EMPTY);
+		setLastRange(IntegerRange.of(-1));
 		OrientationHelper helper = virtualFlow.getOrientationHelper();
 		helper.computeEstimatedLength();
 		virtualFlow.requestViewportLayout(); // To invalidate the positions

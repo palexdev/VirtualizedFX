@@ -249,7 +249,8 @@ public class ViewportManager<T, C extends GridCell<T>> {
 			return;
 		}
 
-		setState(state.change(change));
+		state = state.change(change);
+		setState(state);
 		grid.requestViewportLayout();
 		setLastRowsRange(state.getRowsRange());
 		setLastColumnsRange(state.getColumnsRange());
@@ -261,6 +262,8 @@ public class ViewportManager<T, C extends GridCell<T>> {
 	public void clear() {
 		getState().clear();
 		setState(GridState.EMPTY);
+		setLastRowsRange(IntegerRange.of(-1));
+		setLastColumnsRange(IntegerRange.of(-1));
 		GridHelper helper = grid.getGridHelper();
 		helper.computeEstimatedSize();
 		helper.invalidatedPos();

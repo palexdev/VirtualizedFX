@@ -500,9 +500,11 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 		ScrollBarPolicy vBarPolicy = sp.getVBarPolicy();
 		ScrollBarPolicy hBarPolicy = sp.getHBarPolicy();
 
+		double vBarOffset = sp.getVBarOffset();
 		Insets vBarPadding = sp.getVBarPadding();
 		double hPadding = snappedLeftInset() + snappedRightInset();
 
+		double hBarOffset = sp.getHBarOffset();
 		Insets hBarPadding = sp.getHBarPadding();
 		double vPadding = snappedTopInset() + snappedBottomInset();
 
@@ -510,13 +512,13 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 		double totalHeight = h + vPadding;
 
 		double vBarW = LayoutUtils.boundWidth(vBar);
-		double vBarH = totalHeight - vBarPadding.getBottom() - vBarPadding.getTop();
+		double vBarH = totalHeight - vBarPadding.getBottom() - vBarPadding.getTop() - vBarOffset;
 		double vBarX = (vBarPos == HPos.LEFT) ? vBarPadding.getLeft() : totalWidth - vBarW - vBarPadding.getRight();
-		double vBarY = vBarPadding.getTop();
+		double vBarY = vBarPadding.getTop() + vBarOffset;
 
-		double hBarW = totalWidth - hBarPadding.getLeft() - hBarPadding.getRight();
+		double hBarW = totalWidth - hBarPadding.getLeft() - hBarPadding.getRight() - hBarOffset;
 		double hBarH = LayoutUtils.boundHeight(hBar);
-		double hBarX = hBarPadding.getLeft();
+		double hBarX = hBarPadding.getLeft() + hBarOffset;
 		double hBarY = (hBarPos == VPos.TOP) ? hBarPadding.getTop() : totalHeight - hBarH - hBarPadding.getBottom();
 
 		if (layoutMode != LayoutMode.COMPACT ||
