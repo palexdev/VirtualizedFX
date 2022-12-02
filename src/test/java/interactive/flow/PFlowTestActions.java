@@ -21,6 +21,7 @@ package interactive.flow;
 import interactive.cells.flow.AlternativeCell;
 import interactive.cells.flow.DetailedCell;
 import interactive.others.Constraint;
+import interactive.others.Utils;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import io.github.palexdev.virtualizedfx.cell.Cell;
@@ -42,7 +43,7 @@ public enum PFlowTestActions {
 	ADD_AT_0((p, f) -> run(() -> f.getItems().add(0, RandomUtils.random.nextInt(0, 9999)))),
 	ADD_AT_END((p, f) -> run(() -> f.getItems().add(f.getItems().size(), RandomUtils.random.nextInt(0, 9999)))),
 	ADD_AT((p, f) -> {
-		int index = getIntFromUser(p.getRoot(), "Add at...", "Index to add at", Constraint.of("Invalid!", i -> i >= 0 && i <= f.getItems().size()));
+		int index = getIntFromUser(p.getRoot(), "Add at...", "Index to add at", Constraint.listIndexConstraint(f.getItems(), true));
 		run(() -> f.getItems().add(index, RandomUtils.random.nextInt(0, 9999)));
 	}),
 	ADD_MULTIPLE_AT_3((p, f) -> {
@@ -56,9 +57,7 @@ public enum PFlowTestActions {
 	}),
 	DELETE_AT_3((p, f) -> run(() -> f.getItems().remove(3))),
 	DELETE_SPARSE((p, f) -> run(() -> f.getItems().removeAll(
-			f.getItems().get(2), f.getItems().get(5),
-			f.getItems().get(6), f.getItems().get(8),
-			f.getItems().get(25), f.getItems().get(53)
+			Utils.listGetAll(f.getItems(), 2, 5, 6, 8, 25, 53)
 	))),
 	DELETE_FIRST((p, f) -> run(() -> f.getItems().remove(0))),
 	DELETE_LAST((p, f) -> run(() -> f.getItems().remove(f.getItems().size() - 1))),

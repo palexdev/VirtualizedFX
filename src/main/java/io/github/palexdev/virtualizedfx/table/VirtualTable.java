@@ -22,6 +22,7 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
+import io.github.palexdev.mfxcore.base.properties.PositionProperty;
 import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.BiFunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
@@ -42,6 +43,7 @@ import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
 import io.github.palexdev.virtualizedfx.table.TableHelper.FixedTableHelper;
 import io.github.palexdev.virtualizedfx.table.TableHelper.VariableTableHelper;
 import io.github.palexdev.virtualizedfx.table.defaults.DefaultTableRow;
+import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -58,8 +60,6 @@ import javafx.scene.shape.Rectangle;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-
-// TODO updateItems should be last op, for all cells
 
 /**
  * Implementation of a virtual table to virtualize the display of tabular data.
@@ -80,7 +80,7 @@ import java.util.function.Supplier;
  * settable via CSS
  * <p> - There's also a property to specify the size of the columns, {@link #columnSizeProperty()}, which is also
  * settable via CSS, see {@link StyleableSizeProperty}
- * <p> - You can programmatically set the position of the viewport through a series of public methods // TODO implement
+ * <p> - You can programmatically set the position of the viewport through a series of public methods
  * <p> - It is possible to retrieve the current shown/built cells as well as other information regarding the state of
  * the viewport through the {@link #stateProperty()}
  * <p> - It is possible to observe for changes to the estimated size of the viewport through the {@link #estimatedSizeProperty()}
@@ -140,12 +140,12 @@ import java.util.function.Supplier;
  *
  * @param <T> the type of objects to represent
  */
-public class VirtualTable<T> extends Control {
+public class VirtualTable<T> extends Control implements VirtualScrollPane.Wrappable {
 	//================================================================================
 	// Properties
 	//================================================================================
 	private final String STYLE_CLASS = "virtual-table";
-	private final ViewportManager<T> manager = new ViewportManager<>(this);
+	private final TableManager<T> manager = new TableManager<>(this);
 	private final TableCache<T> cache = new TableCache<>(this);
 
 	private final ObjectProperty<ObservableList<T>> items = PropUtils.mappedObjectProperty(val ->
@@ -159,26 +159,25 @@ public class VirtualTable<T> extends Control {
 		}
 	};
 
-	// TODO add position property to MFXCore
-	private final ObjectProperty<Position> position = new SimpleObjectProperty<>(Position.of(0, 0)) {
+	private final PositionProperty position = new PositionProperty(Position.of(0, 0)) {
 		@Override
-		public void set(Position val) {
-			if (val == null) {
+		public void set(Position newValue) {
+			if (newValue == null) {
 				super.set(Position.of(0, 0));
 				return;
 			}
 
 			TableHelper helper = getTableHelper();
 			if (helper == null) {
-				super.set(val);
+				super.set(newValue);
 				return;
 			}
 
-			double x = NumberUtils.clamp(val.getX(), 0, helper.maxHScroll());
-			double y = NumberUtils.clamp(val.getY(), 0, helper.maxVScroll());
-			val.setX(x);
-			val.setY(y);
-			super.set(val);
+			double x = NumberUtils.clamp(newValue.getX(), 0, helper.maxHScroll());
+			double y = NumberUtils.clamp(newValue.getY(), 0, helper.maxVScroll());
+			newValue.setX(x);
+			newValue.setY(y);
+			super.set(newValue);
 		}
 	};
 
@@ -294,7 +293,7 @@ public class VirtualTable<T> extends Control {
 
 	/**
 	 * This method is called every time the {@link #columnSizeProperty()} changes, and is responsible
-	 * for resetting the viewport with {@link ViewportManager#reset()}
+	 * for resetting the viewport with {@link TableManager#reset()}
 	 * <p></p>
 	 * The default behavior uses a "better safe than sorry" strategy by resetting the viewport rather than
 	 * trying to transition to a valid state. Different implementations may take different approaches as how to do this.
@@ -352,7 +351,7 @@ public class VirtualTable<T> extends Control {
 	 * Columns that change their cell factory at runtime should call this method to transition to a
 	 * new valid state.
 	 *
-	 * @see ViewportManager#onColumnChangedFactory(TableColumn)
+	 * @see TableManager#onColumnChangedFactory(TableColumn)
 	 * @see TableState#columnChangedFactory(TableColumn)
 	 */
 	public void onColumnChangedFactory(TableColumn<T, ? extends TableCell<T>> column) {
@@ -363,7 +362,7 @@ public class VirtualTable<T> extends Control {
 	 * This can be used to forcefully update all the currently visualized cells in the table by calling
 	 * {@link TableCell#updateItem(Object)}.
 	 * <p></p>
-	 * Optionally with the "reset" flag set to true, the table's viewport can also be reset, {@link ViewportManager#reset()},
+	 * Optionally with the "reset" flag set to true, the table's viewport can also be reset, {@link TableManager#reset()},
 	 * this will work only if the table has already been laid out at least once and its skin is not null.
 	 */
 	public void updateTable(boolean reset) {
@@ -431,7 +430,7 @@ public class VirtualTable<T> extends Control {
 	}
 
 	/**
-	 * Specifies whether a change is being processed by {@link ViewportManager#onChange(ListChangeListener.Change)}.
+	 * Specifies whether a change is being processed by {@link TableManager#onChange(ListChangeListener.Change)}.
 	 */
 	public boolean isProcessingChange() {
 		return manager.isProcessingChange();
@@ -508,6 +507,11 @@ public class VirtualTable<T> extends Control {
 	@Override
 	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
 		return getClassCssMetaData();
+	}
+
+	@Override
+	public VirtualScrollPane wrap() {
+		return VSPUtils.wrap(this);
 	}
 
 	//================================================================================
@@ -747,9 +751,9 @@ public class VirtualTable<T> extends Control {
 	//================================================================================
 
 	/**
-	 * @return the {@link ViewportManager} instance for this {@code VirtualTable}
+	 * @return the {@link TableManager} instance for this {@code VirtualTable}
 	 */
-	protected ViewportManager<T> getViewportManager() {
+	protected TableManager<T> getViewportManager() {
 		return manager;
 	}
 
@@ -867,7 +871,7 @@ public class VirtualTable<T> extends Control {
 	 * Specifies the current position of the viewport as a {@link Position} object which has
 	 * both the x and y positions.
 	 */
-	public ObjectProperty<Position> positionProperty() {
+	public PositionProperty positionProperty() {
 		return position;
 	}
 

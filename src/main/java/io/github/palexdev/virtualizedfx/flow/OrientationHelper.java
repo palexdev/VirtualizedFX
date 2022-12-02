@@ -134,14 +134,14 @@ public interface OrientationHelper {
 	 */
 	abstract class AbstractOrientationHelper implements OrientationHelper {
 		protected final VirtualFlow<?, ?> virtualFlow;
-		protected final ViewportManager<?, ?> viewportManager;
+		protected final FlowManager<?, ?> manager;
 
 		protected final DoubleProperty estimatedLength = new SimpleDoubleProperty();
 		protected final DoubleProperty maxBreadth = new SimpleDoubleProperty();
 
 		public AbstractOrientationHelper(VirtualFlow<?, ?> virtualFlow) {
 			this.virtualFlow = virtualFlow;
-			this.viewportManager = virtualFlow.getViewportManager();
+			this.manager = virtualFlow.getViewportManager();
 		}
 
 		@Override
@@ -160,23 +160,26 @@ public interface OrientationHelper {
 	 * is HORIZONTAL.
 	 * <p></p>
 	 * This helper adds the following listeners:
-	 * <p> - A listener to the virtual flow's width to re-initialize the viewport, {@link ViewportManager#init()}
+	 * <p> - A listener to the virtual flow's width to re-initialize the viewport, {@link FlowManager#init()}
 	 * <p> - A listener to the virtual flow's height to re-layout, {@link VirtualFlow#requestViewportLayout()}
-	 * <p> - A listener on the virtual flow's hPos property to process the scroll, {@link ViewportManager#onScroll()}
+	 * <p> - A listener on the virtual flow's hPos property to process the scroll, {@link FlowManager#onScroll()}
 	 */
 	class HorizontalHelper extends AbstractOrientationHelper {
 		private ChangeListener<? super Number> widthListener;
 		private InvalidationListener heightListener;
 		private InvalidationListener hPosListener;
 
+		private DoubleBinding xPosBinding;
+		private DoubleBinding yPosBinding;
+
 		public HorizontalHelper(VirtualFlow<?, ?> virtualFlow) {
 			super(virtualFlow);
 
 			widthListener = (observable, oldValue, newValue) -> {
-				if (newValue.doubleValue() > 0) viewportManager.init();
+				if (newValue.doubleValue() > 0) manager.init();
 			};
 			heightListener = invalidated -> virtualFlow.requestViewportLayout();
-			hPosListener = invalidated -> viewportManager.onScroll();
+			hPosListener = invalidated -> manager.onScroll();
 
 			virtualFlow.widthProperty().addListener(widthListener);
 			virtualFlow.heightProperty().addListener(heightListener);
@@ -266,10 +269,13 @@ public interface OrientationHelper {
 		 */
 		@Override
 		public DoubleBinding xPosBinding() {
-			return Bindings.createDoubleBinding(
-					() -> -virtualFlow.getHPos() % virtualFlow.getCellSize(),
-					virtualFlow.hPosProperty(), virtualFlow.cellSizeProperty()
-			);
+			if (xPosBinding == null) {
+				xPosBinding = Bindings.createDoubleBinding(
+						() -> -virtualFlow.getHPos() % virtualFlow.getCellSize(),
+						virtualFlow.hPosProperty(), virtualFlow.cellSizeProperty()
+				);
+			}
+			return xPosBinding;
 		}
 
 		/**
@@ -282,10 +288,13 @@ public interface OrientationHelper {
 		 */
 		@Override
 		public DoubleBinding yPosBinding() {
-			return Bindings.createDoubleBinding(
-					() -> -NumberUtils.clamp(virtualFlow.getVPos(), 0.0, maxBreadth.get() - virtualFlow.getHeight()),
-					virtualFlow.vPosProperty(), virtualFlow.heightProperty(), maxBreadth
-			);
+			if (yPosBinding == null) {
+				yPosBinding = Bindings.createDoubleBinding(
+						() -> -NumberUtils.clamp(virtualFlow.getVPos(), 0.0, maxBreadth.get() - virtualFlow.getHeight()),
+						virtualFlow.vPosProperty(), virtualFlow.heightProperty(), maxBreadth
+				);
+			}
+			return yPosBinding;
 		}
 
 		@Override
@@ -337,6 +346,11 @@ public interface OrientationHelper {
 			widthListener = null;
 			heightListener = null;
 			hPosListener = null;
+
+			if (xPosBinding != null) xPosBinding.dispose();
+			if (yPosBinding != null) yPosBinding.dispose();
+			xPosBinding = null;
+			yPosBinding = null;
 		}
 	}
 
@@ -345,23 +359,26 @@ public interface OrientationHelper {
 	 * is VERTICAL.
 	 * <p></p>
 	 * This helper adds the following listeners:
-	 * <p> - A listener to the virtual flow's height to re-initialize the viewport, {@link ViewportManager#init()}
+	 * <p> - A listener to the virtual flow's height to re-initialize the viewport, {@link FlowManager#init()}
 	 * <p> - A listener to the virtual flow's width to re-layout, {@link VirtualFlow#requestViewportLayout()}
-	 * <p> - A listener on the virtual flow's vPos property to process the scroll, {@link ViewportManager#onScroll()}
+	 * <p> - A listener on the virtual flow's vPos property to process the scroll, {@link FlowManager#onScroll()}
 	 */
 	class VerticalHelper extends AbstractOrientationHelper {
 		private ChangeListener<? super Number> heightListener;
 		private InvalidationListener widthListener;
 		private InvalidationListener vPosListener;
 
+		private DoubleBinding xPosBinding;
+		private DoubleBinding yPosBinding;
+
 		public VerticalHelper(VirtualFlow<?, ?> virtualFlow) {
 			super(virtualFlow);
 
 			heightListener = (observable, oldValue, newValue) -> {
-				if (newValue.doubleValue() > 0) viewportManager.init();
+				if (newValue.doubleValue() > 0) manager.init();
 			};
 			widthListener = invalidated -> virtualFlow.requestViewportLayout();
-			vPosListener = invalidated -> viewportManager.onScroll();
+			vPosListener = invalidated -> manager.onScroll();
 
 			virtualFlow.heightProperty().addListener(heightListener);
 			virtualFlow.widthProperty().addListener(widthListener);
@@ -440,10 +457,13 @@ public interface OrientationHelper {
 		 */
 		@Override
 		public DoubleBinding xPosBinding() {
-			return Bindings.createDoubleBinding(
-					() -> -NumberUtils.clamp(virtualFlow.getHPos(), 0.0, maxBreadth.get() - virtualFlow.getWidth()),
-					virtualFlow.hPosProperty(), virtualFlow.widthProperty(), maxBreadth
-			);
+			if (xPosBinding == null) {
+				xPosBinding = Bindings.createDoubleBinding(
+						() -> -NumberUtils.clamp(virtualFlow.getHPos(), 0.0, maxBreadth.get() - virtualFlow.getWidth()),
+						virtualFlow.hPosProperty(), virtualFlow.widthProperty(), maxBreadth
+				);
+			}
+			return xPosBinding;
 		}
 
 		/**
@@ -467,10 +487,13 @@ public interface OrientationHelper {
 		 */
 		@Override
 		public DoubleBinding yPosBinding() {
-			return Bindings.createDoubleBinding(
-					() -> -virtualFlow.getVPos() % virtualFlow.getCellSize(),
-					virtualFlow.vPosProperty(), virtualFlow.cellSizeProperty()
-			);
+			if (yPosBinding == null) {
+				yPosBinding = Bindings.createDoubleBinding(
+						() -> -virtualFlow.getVPos() % virtualFlow.getCellSize(),
+						virtualFlow.vPosProperty(), virtualFlow.cellSizeProperty()
+				);
+			}
+			return yPosBinding;
 		}
 
 		@Override
@@ -522,6 +545,11 @@ public interface OrientationHelper {
 			heightListener = null;
 			widthListener = null;
 			vPosListener = null;
+
+			if (xPosBinding != null) xPosBinding.dispose();
+			if (yPosBinding != null) yPosBinding.dispose();
+			xPosBinding = null;
+			yPosBinding = null;
 		}
 	}
 }

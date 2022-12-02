@@ -224,7 +224,6 @@ public enum TableTestActions {
 		);
 		if (fIndex == -1 || sIndex == -1) return;
 
-		// TODO mention this issue in documentation, causes exception if swap used on ObsList
 		List<TableColumn<User, ? extends TableCell<User>>> tmp = new ArrayList<>(t.getColumns());
 		Collections.swap(tmp, fIndex, sIndex);
 		t.getColumns().setAll(tmp);

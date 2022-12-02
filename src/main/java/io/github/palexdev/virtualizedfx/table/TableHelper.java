@@ -202,13 +202,12 @@ public interface TableHelper {
 	 */
 	abstract class AbstractHelper implements TableHelper {
 		protected final VirtualTable<?> table;
-		protected final ViewportManager<?> manager;
+		protected final TableManager<?> manager;
 
 		protected ChangeListener<? super Number> widthListener;
 		protected ChangeListener<? super Number> heightListener;
 		protected ChangeListener<? super Position> positionListener;
 
-		// TODO cache bindings for others too!
 		protected final SizeProperty estimatedSize = new SizeProperty(Size.of(0, 0));
 		protected DoubleBinding xPosBinding;
 		protected DoubleBinding yPosBinding;
@@ -229,7 +228,7 @@ public interface TableHelper {
 		}
 
 		/**
-		 * Executed when the table's width changes. Re-initializes the viewport with {@link ViewportManager#init()}
+		 * Executed when the table's width changes. Re-initializes the viewport with {@link TableManager#init()}
 		 */
 		protected void onWidthChanged(Number ov, Number nv) {
 			double val = nv.doubleValue();
@@ -238,7 +237,7 @@ public interface TableHelper {
 		}
 
 		/**
-		 * Executed when the table's height changes. Re-initializes the viewport with {@link ViewportManager#init()}.
+		 * Executed when the table's height changes. Re-initializes the viewport with {@link TableManager#init()}.
 		 */
 		protected void onHeightChanged(Number ov, Number nv) {
 			double val = nv.doubleValue();
@@ -248,7 +247,7 @@ public interface TableHelper {
 
 		/**
 		 * Executed when the {@link VirtualTable#positionProperty()} changes, responsible for invoking
-		 * {@link ViewportManager#onHScroll()} (if x pos changed( and {@link ViewportManager#onVScroll()} (if y pos changed)
+		 * {@link TableManager#onHScroll()} (if x pos changed( and {@link TableManager#onVScroll()} (if y pos changed)
 		 */
 		protected void onPositionChanged(Position ov, Position nv) {
 			if (manager.isProcessingChange())
@@ -957,7 +956,7 @@ public interface TableHelper {
 					TableColumn<?, ? extends TableCell<?>> column = table.getColumn(cIndex);
 					Region region = column.getRegion();
 					xPositions.add(pos);
-					double colW = Math.max(region.getWidth(), table.getColumnSize().getWidth());
+					double colW = Math.max(LayoutUtils.boundWidth(region), table.getColumnSize().getWidth());
 					pos += colW;
 				}
 			}
@@ -1024,7 +1023,7 @@ public interface TableHelper {
 			for (Integer cIndex : columnsRange) {
 				TableColumn<?, ? extends TableCell<?>> column = table.getColumn(cIndex);
 				Region region = column.getRegion();
-				double colW = Math.max(region.getWidth(), table.getColumnSize().getWidth());
+				double colW = Math.max(LayoutUtils.boundWidth(region), table.getColumnSize().getWidth());
 				Double xPos = xPositions.get(xI);
 				totalW += colW;
 

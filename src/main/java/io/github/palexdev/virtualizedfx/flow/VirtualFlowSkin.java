@@ -61,7 +61,7 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 	private final Pane viewport;
 	private final Rectangle clip;
 
-	private ViewportManager<T, C> manager;
+	private FlowManager<T, C> manager;
 	private final double DEFAULT_SIZE = 100.0;
 
 	private ListChangeListener<? super T> itemsChanged;
@@ -149,10 +149,10 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 	/**
 	 * Registers the following listeners:
 	 * <p> - A listener on the {@link VirtualFlow#getItems()} list which is responsible
-	 * for calling {@link OrientationHelper#computeEstimatedLength()} and {@link ViewportManager#onListChange(ListChangeListener.Change)}
+	 * for calling {@link OrientationHelper#computeEstimatedLength()} and {@link FlowManager#onListChange(ListChangeListener.Change)}
 	 * <p> - A listener on the {@link VirtualFlow#itemsProperty()} which is needed to register the aforementioned listener
-	 * on the new observable list and call both {@link OrientationHelper#computeEstimatedLength()} and {@link ViewportManager#reset()}
-	 * <p> - A listener on the {@link VirtualFlow#cellFactoryProperty()} to call {@link ViewportManager#reset()}
+	 * on the new observable list and call both {@link OrientationHelper#computeEstimatedLength()} and {@link FlowManager#reset()}
+	 * <p> - A listener on the {@link VirtualFlow#cellFactoryProperty()} to call {@link FlowManager#reset()}
 	 * <p> - A listener on the {@link VirtualFlow#stateProperty()} to update the viewport when cells change.
 	 * Keep in mind that cells only change when new ones are created or some are deleted, change index or item do not
 	 * account as a cell change
@@ -180,11 +180,11 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 		if (oldList != null) oldList.removeListener(itemsChanged);
 
 		VirtualFlow<T, C> virtualFlow = getSkinnable();
-		ViewportManager<T, C> viewportManager = virtualFlow.getViewportManager();
+		FlowManager<T, C> manager = virtualFlow.getViewportManager();
 		if (newList != null) {
 			newList.addListener(itemsChanged);
 			virtualFlow.getOrientationHelper().computeEstimatedLength();
-			viewportManager.reset();
+			manager.reset();
 		}
 	}
 
@@ -202,8 +202,8 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 	}
 
 	/**
-	 * Tells the {@link ViewportManager} to {@link ViewportManager#reset()} the viewport,
-	 * also resets the last range property of the {@link ViewportManager}.
+	 * Tells the {@link FlowManager} to {@link FlowManager#reset()} the viewport,
+	 * also resets the last range property of the {@link FlowManager}.
 	 */
 	protected void onFactoryChanged() {
 		manager.reset();

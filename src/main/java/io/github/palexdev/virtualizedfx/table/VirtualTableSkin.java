@@ -19,7 +19,6 @@
 package io.github.palexdev.virtualizedfx.table;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
-import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import javafx.beans.value.ChangeListener;
@@ -72,7 +71,7 @@ public class VirtualTableSkin<T> extends SkinBase<VirtualTable<T>> {
 	private final Pane rContainer;
 	private final Rectangle rClip;
 
-	protected ViewportManager<T> manager;
+	protected TableManager<T> manager;
 	protected final double DEFAULT_SIZE = 100.0;
 
 	private ListChangeListener<? super T> itemsChanged;
@@ -207,7 +206,7 @@ public class VirtualTableSkin<T> extends SkinBase<VirtualTable<T>> {
 	}
 
 	/**
-	 * The default implementation is responsible for telling the {@link ViewportManager} to process the occurred
+	 * The default implementation is responsible for telling the {@link TableManager} to process the occurred
 	 * {@link Change} and produce eventually a new state.
 	 * <p>
 	 * This also ensures after the change that the viewport's estimated size is correct by calling {@link TableHelper#computeEstimatedSize()}.
@@ -308,16 +307,16 @@ public class VirtualTableSkin<T> extends SkinBase<VirtualTable<T>> {
 	@Override
 	protected void layoutChildren(double x, double y, double w, double h) {
 		VirtualTable<T> table = getSkinnable();
-		Insets lrInset = InsetsBuilder.of(
-				0, snappedRightInset(),
-				0, snappedLeftInset()
-		);
 		Position vPos = LayoutUtils.computePosition(
 				table, viewport,
 				0, 0, w, h, 0,
-				lrInset, HPos.LEFT, VPos.TOP
+				Insets.EMPTY, HPos.LEFT, VPos.TOP
 		);
-		viewport.resizeRelocate(vPos.getX(), vPos.getY(), w, h + snappedTopInset() + snappedBottomInset());
+		viewport.resizeRelocate(
+				vPos.getX(), vPos.getY(),
+				w + snappedLeftInset() + snappedRightInset(),
+				h + snappedTopInset() + snappedBottomInset()
+		);
 	}
 
 	@Override

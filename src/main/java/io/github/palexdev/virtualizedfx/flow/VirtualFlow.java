@@ -31,6 +31,7 @@ import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
+import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -76,12 +77,12 @@ import java.util.function.Function;
  * @param <T> the type of objects to represent
  * @param <C> the type of {@code Cell} to use
  */
-public class VirtualFlow<T, C extends Cell<T>> extends Control {
+public class VirtualFlow<T, C extends Cell<T>> extends Control implements VirtualScrollPane.Wrappable {
 	//================================================================================
 	// Properties
 	//================================================================================
 	private final String STYLE_CLASS = "virtual-flow";
-	private final ViewportManager<T, C> viewportManager = new ViewportManager<>(this);
+	private final FlowManager<T, C> manager = new FlowManager<>(this);
 
 	private final ObjectProperty<ObservableList<T>> items = new SimpleObjectProperty<>(FXCollections.observableArrayList()) {
 		@Override
@@ -168,7 +169,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 		helper.computeEstimatedLength();
 
 		if (getWidth() != 0.0 && getHeight() != 0.0) { // TODO test with w and h = 0 initially
-			viewportManager.init();
+			manager.init();
 			scrollToPixel(0);
 		}
 	}
@@ -247,7 +248,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	}
 
 	public FlowState<T, C> getState() {
-		return viewportManager.getState();
+		return manager.getState();
 	}
 
 	/**
@@ -255,25 +256,25 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	 * to listen to any change happening in the viewport.
 	 */
 	public ReadOnlyObjectProperty<FlowState<T, C>> stateProperty() {
-		return viewportManager.stateProperty();
+		return manager.stateProperty();
 	}
 
 	public NumberRange<Integer> getLastRange() {
-		return viewportManager.getLastRange();
+		return manager.getLastRange();
 	}
 
 	/**
 	 * Specifies the last range of displayed items by the viewport as an {@link IntegerRange}.
 	 */
 	public ReadOnlyObjectProperty<NumberRange<Integer>> lastRangeProperty() {
-		return viewportManager.lastRangeProperty();
+		return manager.lastRangeProperty();
 	}
 
 	/**
 	 * Delegate method for {@link FlowState#getCells()}.
 	 */
 	public Map<Integer, C> getIndexedCells() {
-		return viewportManager.getState().getCells();
+		return manager.getState().getCells();
 	}
 
 	//================================================================================
@@ -287,6 +288,11 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	@Override
 	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
 		return getClassCssMetaData();
+	}
+
+	@Override
+	public VirtualScrollPane wrap() {
+		return VSPUtils.wrap(this);
 	}
 
 	//================================================================================
@@ -330,7 +336,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 			Orientation orientation = get();
 			OrientationHelper helper = getOrientationHelperFactory().apply(orientation);
 			setOrientationHelper(helper);
-			viewportManager.reset();
+			manager.reset();
 		}
 	};
 
@@ -474,8 +480,8 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
-	protected ViewportManager<T, C> getViewportManager() {
-		return viewportManager;
+	protected FlowManager<T, C> getViewportManager() {
+		return manager;
 	}
 
 	public ObservableList<T> getItems() {

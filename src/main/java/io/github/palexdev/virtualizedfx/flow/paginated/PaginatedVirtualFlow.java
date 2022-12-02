@@ -23,11 +23,13 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProp
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cell.Cell;
+import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.flow.FlowState;
 import io.github.palexdev.virtualizedfx.flow.OrientationHelper;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlow;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedHelper.PaginatedHorizontalHelper;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedHelper.PaginatedVerticalHelper;
+import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
@@ -246,6 +248,11 @@ public class PaginatedVirtualFlow<T, C extends Cell<T>> extends VirtualFlow<T, C
 	@Override
 	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
 		return getClassCssMetaData();
+	}
+
+	@Override
+	public VirtualScrollPane wrap() {
+		return VSPUtils.wrap(this);
 	}
 
 	//================================================================================

@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The {@code ViewportManager} is responsible for managing the flow's viewport, the cells.
+ * The {@code FlowManager} is responsible for managing the flow's viewport, the cells.
  * <p>
  * It stores the current state of the viewport at any time with two properties:
  * <p> - The state property which holds an object of type {@link FlowState}
@@ -44,7 +44,7 @@ import java.util.Map;
  * @param <C> the type of cell used
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class ViewportManager<T, C extends Cell<T>> {
+public class FlowManager<T, C extends Cell<T>> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -55,7 +55,7 @@ public class ViewportManager<T, C extends Cell<T>> {
 	//================================================================================
 	// Constructors
 	//================================================================================
-	ViewportManager(VirtualFlow<T, C> virtualFlow) {
+	FlowManager(VirtualFlow<T, C> virtualFlow) {
 		this.virtualFlow = virtualFlow;
 	}
 

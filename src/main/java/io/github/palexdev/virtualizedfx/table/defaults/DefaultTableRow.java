@@ -71,8 +71,8 @@ public class DefaultTableRow<T> extends TableRow<T> {
 	 * <p></p>
 	 * This is responsible for supplying of removing cells according to the new given columns range.
 	 * <p>
-	 * This is used by {@link ViewportManager#init()}. If the given range is equal to the current one no operation
-	 * is done. But can also be used when scrolling horizontally, {@link ViewportManager#onHScroll()}.
+	 * This is used by {@link TableManager#init()}. If the given range is equal to the current one no operation
+	 * is done. But can also be used when scrolling horizontally, {@link TableManager#onHScroll()}.
 	 */
 	@Override
 	protected void updateColumns(IntegerRange columns) {

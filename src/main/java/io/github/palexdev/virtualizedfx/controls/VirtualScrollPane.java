@@ -32,6 +32,7 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
+import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -962,5 +963,21 @@ public class VirtualScrollPane extends Control {
 
 	public void setVBarBehavior(Function<MFXScrollBar, MFXScrollBarBehavior> vBarBehavior) {
 		this.vBarBehavior.set(vBarBehavior);
+	}
+
+	//================================================================================
+	// Internal Classes
+	//================================================================================
+
+	/**
+	 * Interface to indicate that a virtualized control is supported by this scroll pane through
+	 * {@link VSPUtils}
+	 */
+	public interface Wrappable {
+
+		/**
+		 * Wraps this in a {@link VirtualScrollPane}
+		 */
+		VirtualScrollPane wrap();
 	}
 }

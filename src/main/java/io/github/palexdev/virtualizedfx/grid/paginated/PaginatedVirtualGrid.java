@@ -24,11 +24,13 @@ import io.github.palexdev.mfxcore.collections.ObservableGrid;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
+import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.grid.GridHelper;
 import io.github.palexdev.virtualizedfx.grid.GridRow;
 import io.github.palexdev.virtualizedfx.grid.GridState;
 import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
 import io.github.palexdev.virtualizedfx.grid.paginated.PaginatedHelper.PaginatedGridHelper;
+import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
@@ -260,6 +262,11 @@ public class PaginatedVirtualGrid<T, C extends GridCell<T>> extends VirtualGrid<
 	@Override
 	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
 		return getClassCssMetaData();
+	}
+
+	@Override
+	public VirtualScrollPane wrap() {
+		return VSPUtils.wrap(this);
 	}
 
 	//================================================================================

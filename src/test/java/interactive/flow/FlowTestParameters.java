@@ -89,6 +89,7 @@ public class FlowTestParameters {
 
 	public void switchMode() {
 		Mode newMode = EnumUtils.next(Mode.class, getMode());
+		if (newMode == Mode.BOTH) newMode = EnumUtils.next(Mode.class, newMode);
 		setMode(newMode);
 	}
 }

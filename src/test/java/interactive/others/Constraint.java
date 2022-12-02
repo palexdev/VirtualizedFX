@@ -27,7 +27,6 @@ public record Constraint<T>(String message, Function<T, Boolean> validator) {
 		return new Constraint<>(message, validator);
 	}
 
-	// TODO replace everywhere
 	public static Constraint<Integer> listIndexConstraint(List<?> list, boolean isAdd) {
 		return new Constraint<>(
 				"Invalid Index",

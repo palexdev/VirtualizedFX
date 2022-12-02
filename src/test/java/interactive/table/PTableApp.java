@@ -9,6 +9,7 @@ import org.scenicview.ScenicView;
 public class PTableApp extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		System.setProperty("prism.lcdtext", "false");
 		Scene scene = new Scene(Tests.PTABLE.load());
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Paginated VirtualTable Test");

@@ -67,7 +67,7 @@ public class GridTestController implements Initializable {
 		RegionUtils.makeRegionCircular(runIcon);
 
 		// Init Content Pane
-		VirtualScrollPane vsp = VSPUtils.wrap(grid);
+		VirtualScrollPane vsp = grid.wrap();
 		vsp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
 		vsp.setAutoHideBars(true);
 		vsp.setMinHeight(500);

@@ -443,8 +443,12 @@ public class VSPUtils {
 					Orientation o = vsp.getOrientation();
 					VirtualBounds cBounds = vsp.getContentBounds();
 					double viewL = cBounds.getWidth();
-					// TODO this absolutely needs testing on other virtual controls as the contentL should be independent of the orientation
-					double contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
+					double contentL;
+					if (vsp.getContent() != null && vsp.getContent() instanceof VirtualFlow) {
+						contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
+					} else {
+						contentL = cBounds.getVirtualWidth();
+					}
 					double pixels = vsp.isSmoothScroll() ? smoothUnit : unitIncrement;
 					return Math.max(0, pixels / (contentL - viewL));
 				})
@@ -478,7 +482,12 @@ public class VSPUtils {
 					Orientation o = vsp.getOrientation();
 					VirtualBounds cBounds = vsp.getContentBounds();
 					double viewL = cBounds.getHeight();
-					double contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
+					double contentL;
+					if (vsp.getContent() != null && vsp.getContent() instanceof VirtualFlow) {
+						contentL = (o == Orientation.VERTICAL) ? cBounds.getVirtualHeight() : cBounds.getVirtualWidth();
+					} else {
+						contentL = cBounds.getVirtualHeight();
+					}
 					double pixels = vsp.isSmoothScroll() ? smoothUnit : unitIncrement;
 					return Math.max(0, pixels / (contentL - viewL));
 				})

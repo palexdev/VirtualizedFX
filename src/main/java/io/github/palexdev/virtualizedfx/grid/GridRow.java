@@ -103,7 +103,7 @@ public class GridRow<T, C extends GridCell<T>> {
 	/**
 	 * This is responsible for supplying of removing cells according to the new given columns range.
 	 * <p>
-	 * This is used by {@link ViewportManager#init()}. If the given range is equal to the current one no operation
+	 * This is used by {@link GridManager#init()}. If the given range is equal to the current one no operation
 	 * is done.
 	 */
 	protected void onInit(IntegerRange columns) {

@@ -102,12 +102,12 @@ public class FlowTestController implements Initializable {
 		RegionUtils.makeRegionCircular(switchIcon);
 
 		// Init Content Pane
-		VirtualScrollPane vsp = VSPUtils.wrap(rFlow);
+		VirtualScrollPane vsp = rFlow.wrap();
 		vsp.setLayoutMode(LayoutMode.COMPACT);
 		vsp.setAutoHideBars(true);
 		Runnable speedAction = () -> {
-			VSPUtils.setVSpeed(vsp, 15, rFlow.getCellSize() * 1.5, 15);
-			VSPUtils.setHSpeed(vsp, 15, rFlow.getCellSize() * 1.5, 15);
+			VSPUtils.setVSpeed(vsp, 15, rFlow.getCellSize() * 2, 15);
+			VSPUtils.setHSpeed(vsp, 15, rFlow.getCellSize() * 2, 15);
 		};
 		When.onInvalidated(rFlow.cellSizeProperty())
 				.then(i -> speedAction.run())

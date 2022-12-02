@@ -59,7 +59,7 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 	//================================================================================
 	protected final Pane viewport;
 	private final Rectangle clip;
-	protected ViewportManager<T, C> manager;
+	protected GridManager<T, C> manager;
 
 	private final double DEFAULT_SIZE = 100.0;
 
@@ -141,7 +141,7 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 	}
 
 	/**
-	 * The default implementation is responsible for telling the {@link ViewportManager} to process the occurred
+	 * The default implementation is responsible for telling the {@link GridManager} to process the occurred
 	 * {@link Change} and produce eventually a new state.
 	 * <p>
 	 * This also ensures after the change that the viewport's estimated size is correct by calling {@link GridHelper#computeEstimatedSize()}.
@@ -168,10 +168,10 @@ public class VirtualGridSkin<T, C extends GridCell<T>> extends SkinBase<VirtualG
 	}
 
 	/**
-	 * The default implementation is responsible for resetting the viewport, {@link ViewportManager#reset()}, when
+	 * The default implementation is responsible for resetting the viewport, {@link GridManager#reset()}, when
 	 * the function used to build the cells has been changed.
 	 * <p></p>
-	 * Also makes sure to reset the last range properties of {@link ViewportManager}.
+	 * Also makes sure to reset the last range properties of {@link GridManager}.
 	 *
 	 * @throws IllegalStateException if the new function is null
 	 */

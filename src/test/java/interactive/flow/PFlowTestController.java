@@ -33,7 +33,6 @@ import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
-import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -74,7 +73,7 @@ public class PFlowTestController implements Initializable {
 		RegionUtils.makeRegionCircular(runIcon);
 
 		// Init Content Pane
-		VirtualScrollPane vsp = VSPUtils.wrap(flow);
+		VirtualScrollPane vsp = flow.wrap();
 		vsp.setLayoutMode(LayoutMode.COMPACT);
 		vsp.setAutoHideBars(true);
 

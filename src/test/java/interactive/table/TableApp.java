@@ -28,11 +28,11 @@ public class TableApp extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		System.setProperty("prism.lcdtext", "false");
 		Scene scene = new Scene(Tests.TABLE.load());
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("VirtualTable Test");
 		primaryStage.show();
-
 		ScenicView.show(scene);
 	}
 }

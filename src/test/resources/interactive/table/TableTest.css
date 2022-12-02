@@ -20,7 +20,7 @@
 @import "../Common.css";
 
 .virtual-scroll-pane {
-	-fx-clip-border-radius: 0;
+	-fx-clip-border-radius: 10;
 	-fx-background-radius: 5;
 	-fx-layout-mode: compact;
 	-fx-autohide-bars: true;
@@ -43,7 +43,6 @@
 .virtual-table {
 	-fx-border-color: -blue-light;
 	-fx-border-radius: 5;
-	-fx-clip-border-radius: 10;
 }
 
 .virtual-table .table-column {

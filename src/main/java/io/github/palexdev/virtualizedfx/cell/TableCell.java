@@ -38,8 +38,6 @@ public interface TableCell<T> extends Cell<T> {
 	default void updateColumn(TableColumn<T, ? extends TableCell<T>> column) {
 	}
 
-	// TODO mention in docs that even if row may be equal, index may be not
-
 	/**
 	 * This is a way for cells to obtain and perhaps hold the reference of the row which contains
 	 * the cell. The given rIndex is the index of the given row.

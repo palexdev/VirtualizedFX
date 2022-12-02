@@ -34,17 +34,12 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit"
 
-    // TODO fully migrate to gradle.properties
-    testImplementation "org.testfx:testfx-core:4.0.16-alpha"
-    testImplementation "org.testfx:testfx-junit5:4.0.16-alpha"
+    testImplementation "org.testfx:testfx-core:$testfx"
+    testImplementation "org.testfx:testfx-junit5:$testfx"
+    testImplementation "fr.brouillard.oss:cssfx:$cssfx"
+    testImplementation "net.datafaker:datafaker:$faker"
     testImplementation name: 'scenicview'
     testImplementation name: "materialfx"
-    testImplementation 'org.fxmisc.flowless:flowless:0.6.9'
-    testImplementation 'org.kordamp.ikonli:ikonli-core:12.3.0'
-    testImplementation 'org.kordamp.ikonli:ikonli-javafx:12.3.0'
-    testImplementation 'org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.0'
-    testImplementation 'net.datafaker:datafaker:1.6.0'
-    testImplementation 'fr.brouillard.oss:cssfx:11.5.1'
 
     api "io.github.palexdev:mfxcore:$mfxcore"
     api "io.github.palexdev:mfxresources:$mfxresources"

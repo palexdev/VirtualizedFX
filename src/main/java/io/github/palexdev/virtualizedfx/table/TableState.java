@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * Class used by the {@link ViewportManager} to represent the state of the viewport at a given time.
+ * Class used by the {@link TableManager} to represent the state of the viewport at a given time.
  * <p>
  * The idea is to have an immutable state so that each state is a different object, with some exceptional cases
  * when the state doesn't need to be re-computed, so the old object is returned.
@@ -99,7 +99,7 @@ public class TableState<T> {
 	 * <p>
 	 * If the given ranges for rows and columns are the same as the ones of the state then the old state is returned.
 	 * <p>
-	 * This is used by {@link ViewportManager#init()}.
+	 * This is used by {@link TableManager#init()}.
 	 *
 	 * @return a new {@code TableState} which is the result of transitioning from this state to
 	 * a new one given the new ranges for rows and columns
@@ -143,7 +143,7 @@ public class TableState<T> {
 	/**
 	 * This is responsible for transitioning to a new state when the viewport scrolls vertically.
 	 * <p>
-	 * Used by {@link ViewportManager#onVScroll()}.
+	 * Used by {@link TableManager#onVScroll()}.
 	 */
 	protected TableState<T> vScroll(IntegerRange rowsRange) {
 		if (this.rowsRange.equals(rowsRange)) return this;
@@ -182,7 +182,7 @@ public class TableState<T> {
 	/**
 	 * This is responsible for transitioning to a new state when the viewport scrolls horizontally.
 	 * <p>
-	 * Used by {@link ViewportManager#onHScroll()}.
+	 * Used by {@link TableManager#onHScroll()}.
 	 */
 	protected TableState<T> hScroll(IntegerRange columnsRange) {
 		if (this.columnsRange.equals(columnsRange)) return this;

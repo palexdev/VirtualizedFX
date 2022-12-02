@@ -154,7 +154,7 @@ public interface GridHelper {
 	 */
 	abstract class AbstractHelper implements GridHelper {
 		protected final VirtualGrid<?, ?> grid;
-		protected final ViewportManager<?, ?> manager;
+		protected final GridManager<?, ?> manager;
 
 		protected final ObjectProperty<Size> estimatedSize = new SimpleObjectProperty<>(Size.of(0, 0));
 
@@ -184,21 +184,24 @@ public interface GridHelper {
 	 * Concrete implementation of {@link AbstractHelper} with default/expected behavior for a virtual grid.
 	 * <p></p>
 	 * This helper adds the following listeners:
-	 * <p> - A listener to the virtual grid's width to re-initialize the viewport, {@link ViewportManager#init()}
-	 * <p> - A listener to the virtual grid's height to re-initialize the viewport, {@link ViewportManager#init()}
+	 * <p> - A listener to the virtual grid's width to re-initialize the viewport, {@link GridManager#init()}
+	 * <p> - A listener to the virtual grid's height to re-initialize the viewport, {@link GridManager#init()}
 	 * <p> - A listener on the virtual grid's position property to process the scroll
 	 * <p></p>
 	 * More info on the last listener:
 	 * <p>
 	 * The scroll computation is done only if no changes occurred in the grid's items data structure.
-	 * <p> {@link ViewportManager#onHScroll()} is called only if the horizontal position has changed
-	 * <p> {@link ViewportManager#onVScroll()} is called only if the vertical position has changed
+	 * <p> {@link GridManager#onHScroll()} is called only if the horizontal position has changed
+	 * <p> {@link GridManager#onVScroll()} is called only if the vertical position has changed
 	 * <p> If both positions have changed than both methods are called in the listed order.
 	 */
 	class DefaultGridHelper extends AbstractHelper {
 		private ChangeListener<? super Number> widthListener;
 		private ChangeListener<? super Number> heightListener;
 		private ChangeListener<? super Position> positionListener;
+
+		private DoubleBinding xPosBinding;
+		private DoubleBinding yPosBinding;
 
 		public DefaultGridHelper(VirtualGrid<?, ?> grid) {
 			super(grid);
@@ -359,10 +362,13 @@ public interface GridHelper {
 		 */
 		@Override
 		public DoubleBinding xPosBinding() {
-			return Bindings.createDoubleBinding(
-					() -> -grid.getHPos() % grid.getCellSize().getWidth(),
-					grid.positionProperty(), grid.cellSizeProperty()
-			);
+			if (xPosBinding == null) {
+				xPosBinding = Bindings.createDoubleBinding(
+						() -> -grid.getHPos() % grid.getCellSize().getWidth(),
+						grid.positionProperty(), grid.cellSizeProperty()
+				);
+			}
+			return xPosBinding;
 		}
 
 		/**
@@ -386,10 +392,13 @@ public interface GridHelper {
 		 */
 		@Override
 		public DoubleBinding yPosBinding() {
-			return Bindings.createDoubleBinding(
-					() -> -grid.getVPos() % grid.getCellSize().getHeight(),
-					grid.positionProperty(), grid.cellSizeProperty()
-			);
+			if (yPosBinding == null) {
+				yPosBinding = Bindings.createDoubleBinding(
+						() -> -grid.getVPos() % grid.getCellSize().getHeight(),
+						grid.positionProperty(), grid.cellSizeProperty()
+				);
+			}
+			return yPosBinding;
 		}
 
 		@Override
@@ -450,6 +459,11 @@ public interface GridHelper {
 			widthListener = null;
 			heightListener = null;
 			positionListener = null;
+
+			if (xPosBinding != null) xPosBinding.dispose();
+			if (yPosBinding != null) yPosBinding.dispose();
+			xPosBinding = null;
+			yPosBinding = null;
 		}
 	}
 }

@@ -22,6 +22,7 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
+import io.github.palexdev.mfxcore.base.properties.PositionProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
@@ -36,6 +37,7 @@ import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.grid.GridHelper.DefaultGridHelper;
+import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
@@ -84,12 +86,12 @@ import java.util.function.Supplier;
  * @param <T> the type of objects to represent
  * @param <C> the type of {@code GridCell} to use
  */
-public class VirtualGrid<T, C extends GridCell<T>> extends Control {
+public class VirtualGrid<T, C extends GridCell<T>> extends Control implements VirtualScrollPane.Wrappable {
 	//================================================================================
 	// Properties
 	//================================================================================
 	private final String STYLE_CLASS = "virtual-grid";
-	private final ViewportManager<T, C> manager = new ViewportManager<>(this);
+	private final GridManager<T, C> manager = new GridManager<>(this);
 
 	private final ObjectProperty<ObservableGrid<T>> items = new SimpleObjectProperty<>(new ObservableGrid<>()) {
 		@Override
@@ -99,7 +101,7 @@ public class VirtualGrid<T, C extends GridCell<T>> extends Control {
 	};
 	private final FunctionProperty<T, C> cellFactory = new FunctionProperty<>();
 
-	private final ObjectProperty<Position> position = new SimpleObjectProperty<>(Position.of(0, 0)) {
+	private final PositionProperty position = new PositionProperty(Position.of(0, 0)) {
 		@Override
 		public void set(Position newValue) {
 			if (newValue == null) {
@@ -389,6 +391,11 @@ public class VirtualGrid<T, C extends GridCell<T>> extends Control {
 		return getClassCssMetaData();
 	}
 
+	@Override
+	public VirtualScrollPane wrap() {
+		return VSPUtils.wrap(this);
+	}
+
 	//================================================================================
 	// Styleable Properties
 	//================================================================================
@@ -502,9 +509,9 @@ public class VirtualGrid<T, C extends GridCell<T>> extends Control {
 	//================================================================================
 
 	/**
-	 * @return the {@link ViewportManager} instance for this {@code VirtualGrid}
+	 * @return the {@link GridManager} instance for this {@code VirtualGrid}
 	 */
-	protected ViewportManager<T, C> getViewportManager() {
+	protected GridManager<T, C> getViewportManager() {
 		return manager;
 	}
 
@@ -578,7 +585,7 @@ public class VirtualGrid<T, C extends GridCell<T>> extends Control {
 	 * Specifies the current position of the viewport as a {@link Position} object which has
 	 * both the x and y positions.
 	 */
-	public ObjectProperty<Position> positionProperty() {
+	public PositionProperty positionProperty() {
 		return position;
 	}
 

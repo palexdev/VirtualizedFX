@@ -34,7 +34,6 @@ import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import io.github.palexdev.virtualizedfx.grid.paginated.PaginatedVirtualGrid;
-import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -73,7 +72,7 @@ public class PGridTestController implements Initializable {
 		RegionUtils.makeRegionCircular(runIcon);
 
 		// Init Content Pane
-		VirtualScrollPane vsp = VSPUtils.wrap(grid);
+		VirtualScrollPane vsp = grid.wrap();
 		vsp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
 		vsp.setAutoHideBars(true);
 

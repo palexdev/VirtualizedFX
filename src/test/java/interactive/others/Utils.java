@@ -38,7 +38,6 @@ public class Utils {
 		return matrix;
 	}
 
-	// TODO replace everywhere
 	public static <T> List<T> listGetAll(List<T> in, Integer... indexes) {
 		List<T> l = new ArrayList<>();
 		for (int index : indexes) {

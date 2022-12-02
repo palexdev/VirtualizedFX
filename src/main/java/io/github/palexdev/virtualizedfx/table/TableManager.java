@@ -16,48 +16,52 @@
  * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.palexdev.virtualizedfx.grid;
+package io.github.palexdev.virtualizedfx.table;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
-import io.github.palexdev.mfxcore.collections.ObservableGrid.Change;
-import io.github.palexdev.mfxcore.enums.GridChangeType;
-import io.github.palexdev.virtualizedfx.beans.GridStateProperty;
-import io.github.palexdev.virtualizedfx.cell.GridCell;
+import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper;
+import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper.Change;
+import io.github.palexdev.virtualizedfx.beans.TableStateProperty;
+import io.github.palexdev.virtualizedfx.cell.TableCell;
+import io.github.palexdev.virtualizedfx.flow.FlowState;
+import javafx.collections.ListChangeListener;
+
+import java.util.List;
 
 /**
- * The {@code ViewportManager} is responsible for managing the grid's viewport, track its current {@link GridState}
+ * The {@code FlowManager} is responsible for managing the table's viewport, track its current {@link TableState}
  * and trigger states transitions.
  * <p>
  * It stores the state of the viewport at any given time with three properties:
- * <p> - the main one is the {@link #stateProperty()} which holds the {@link GridState} object representing the current state
- * of the viewport
+ * <p> - the main one is the {@link #stateProperty()} which holds the {@link TableState} object representing the current
+ * state of the viewport
  * <p> - the last rows range property, which holds the last range of displayed rows as a {@link IntegerRange}
- * <p> - the last columns range property which holds the last range of displayed columns as a {@link IntegerRange}
+ * <p> - the last columns range property, which holds the last range of displayed columns as a {@link IntegerRange}
  * <p></p>
  * As mentioned above this is also responsible for handling states transitions when: initializations occur (cells supply
- * and removals when the viewport size changes); vertical and horizontal scrolling; changes occurred in the data structure;
- * clear and reset the viewport when needed.
+ * and removals when the viewport size changes); vertical and horizontal scrolling; changes occurred in the items list,
+ * as well as clear and reset of the viewport when needed
  *
  * @param <T> the type of items
- * @param <C> the type of cell used
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
-public class ViewportManager<T, C extends GridCell<T>> {
+@SuppressWarnings({"unchecked"})
+public class TableManager<T> {
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final VirtualGrid<T, C> grid;
-	private final GridStateProperty<T, C> state = new GridStateProperty<>(GridState.EMPTY);
+	private final VirtualTable<T> table;
+	private final TableStateProperty<T> state = new TableStateProperty<T>(TableState.EMPTY);
 	private final IntegerRangeProperty lastRowsRange = new IntegerRangeProperty();
 	private final IntegerRangeProperty lastColumnsRange = new IntegerRangeProperty();
+	private boolean processingChange = false;
 
 	//================================================================================
 	// Constructors
 	//================================================================================
-	ViewportManager(VirtualGrid<T, C> grid) {
-		this.grid = grid;
+	TableManager(VirtualTable<T> table) {
+		this.table = table;
 	}
 
 	//================================================================================
@@ -70,63 +74,63 @@ public class ViewportManager<T, C extends GridCell<T>> {
 	 * size changes and cells may need to be added or removed.
 	 * <p></p>
 	 * The first step is to gather a series of useful information such as:
-	 * <p> - the expected range of rows, {@link GridHelper#rowsRange()}
-	 * <p> - the expected range of columns, {@link GridHelper#columnsRange()}
+	 * <p> - the expected range of rows, {@link TableHelper#rowsRange()}
+	 * <p> - the expected range of columns, {@link TableHelper#columnsRange()}
 	 * <p> - the old/current state, {@link #stateProperty()}
 	 * <p>
-	 * We also ensure that the estimated size of the viewport is correct by calling {@link GridHelper#computeEstimatedSize()}.
+	 * We also ensure that the estimated size of the viewport is correct by calling {@link TableHelper#computeEstimatedSize()}.
 	 * <p></p>
 	 * The second step is to distinguish between two cases:
-	 * <p> 1) The old/current state is {@link GridState#EMPTY}
+	 * <p> 1) The old/current state is {@link TableState#EMPTY}
 	 * <p> 2) The old/current state is a valid state
 	 * <p></p>
 	 * In the first case it means that the viewport is empty. For each row in the expected rows range we add a row
-	 * to the new state with {@link GridState#addRow(int)}. Since the viewport is empty we also need to call
-	 * {@link GridState#cellsChanged()}. Last but not least we update all the properties of the manager, and then
-	 * request the viewport layout with {@link VirtualGrid#requestViewportLayout()}.
+	 * to the new state with {@link TableState#addRow(int)}. Since the viewport is empty we also need to call
+	 * {@link TableState#rowsChanged()}. Last but not least we update all the properties of the manager, and then
+	 * request the viewport layout with {@link VirtualTable#requestViewportLayout()}.
 	 * <p></p>
-	 * In the second case we call {@link GridState#init(IntegerRange, IntegerRange)} on the old/current state so that
+	 * In the second case we call {@link TableState#init(IntegerRange, IntegerRange)} on the old/current state so that
 	 * a new state, which reuses when possible the current already present rows, can be computed. At this point a special
 	 * check is needed, the aforementioned method could also return the old/current state for whatever reason, in such case
 	 * there's no need to proceed and the method exits immediately. Otherwise, same as above, update all the properties,
-	 * call {@link GridState#cellsChanged()} and then {@link VirtualGrid#requestViewportLayout()}.
+	 * call {@link TableState#rowsChanged()} and then {@link VirtualTable#requestViewportLayout()}.
 	 *
 	 * @return in addition to the various computations made in this method, it also returns a boolean value to indicate
-	 * whether computations lead to a layout request or not, {@link VirtualGrid#requestViewportLayout()}
+	 * whether computations lead to a layout request or not, {@link VirtualTable#requestViewportLayout()}
 	 */
 	public boolean init() {
-		if (grid.getCellFactory() == null || itemsEmpty()) return false;
+		if (itemsEmpty() || columnsEmpty()) return false;
 
-		// Pre-computation
-		GridHelper helper = grid.getGridHelper();
+		// Pre-Computation
+		TableHelper helper = table.getTableHelper();
 		IntegerRange rowsRange = helper.rowsRange();
 		IntegerRange columnsRange = helper.columnsRange();
 		helper.computeEstimatedSize();
 
 		// Check old state
-		GridState<T, C> oldState = getState();
-		GridState<T, C> newState = new GridState<>(grid, rowsRange, columnsRange);
+		TableState<T> oldState = getState();
+		TableState<T> newState = new TableState<>(table, rowsRange, columnsRange);
 
-		if (oldState == GridState.EMPTY) {
+		if (oldState == TableState.EMPTY) {
 			for (Integer row : rowsRange) {
 				newState.addRow(row);
 			}
-			newState.cellsChanged();
+			newState.rowsChanged();
 			setState(newState);
 			setLastRowsRange(rowsRange);
 			setLastColumnsRange(columnsRange);
-			grid.requestViewportLayout();
+			table.requestViewportLayout();
 			return true;
 		}
 
 		// Transition from old state to new state
 		newState = oldState.init(rowsRange, columnsRange);
 		if (newState == oldState) return false;
-		newState.cellsChanged();
+		newState.rowsChanged();
 		setState(newState);
 		setLastRowsRange(rowsRange);
 		setLastColumnsRange(columnsRange);
-		grid.requestViewportLayout();
+		table.requestViewportLayout();
 		return true;
 	}
 
@@ -139,19 +143,19 @@ public class ViewportManager<T, C extends GridCell<T>> {
 	 * we must check some parameters.
 	 * <p>
 	 * First we compute the rows range and if that is not equal to the range of the current state then
-	 * we call {@link GridState#vScroll(IntegerRange)} to create a new state which will contain
+	 * we call {@link TableState#vScroll(IntegerRange)} to create a new state which will contain
 	 * all the needed rows for the new range
 	 * <p>
 	 * The layout instead uses a different range and is compared against the last rows range, if they are not
-	 * equal then {@link VirtualGrid#requestViewportLayout()} is invoked.
+	 * equal then {@link VirtualTable#requestViewportLayout()} is invoked.
 	 * <p>
 	 * At the end the last rows range property is updated.
 	 */
 	public void onVScroll() {
-		GridState<T, C> state = getState();
-		if (state == GridState.EMPTY || state.isEmpty() || grid.isEmpty()) return;
+		TableState<T> state = getState();
+		if (state == TableState.EMPTY || state.isEmpty() || itemsEmpty()) return;
 
-		GridHelper helper = grid.getGridHelper();
+		TableHelper helper = table.getTableHelper();
 		int rows = helper.maxRows();
 
 		// State Computation
@@ -167,7 +171,7 @@ public class ViewportManager<T, C extends GridCell<T>> {
 		// Layout Computation
 		IntegerRange lRange = IntegerRange.of(sFirstRow, sLastRow);
 		if (!lRange.equals(getLastRowsRange())) {
-			grid.requestViewportLayout();
+			table.requestViewportLayout();
 		}
 
 		setLastRowsRange(lRange);
@@ -182,19 +186,19 @@ public class ViewportManager<T, C extends GridCell<T>> {
 	 * we must check some parameters.
 	 * <p>
 	 * First we compute the columns range and if that is not equal to the range of the current state then
-	 * we call {@link GridState#hScroll(IntegerRange)} to create a new state which will contain
+	 * we call {@link TableState#hScroll(IntegerRange)} to create a new state which will contain
 	 * all the needed columns for the new range
 	 * <p>
 	 * The layout instead uses a different range and is compared against the last columns range, if they are not
-	 * equal then {@link VirtualGrid#requestViewportLayout()} is invoked.
+	 * equal then {@link VirtualTable#requestViewportLayout()} is invoked.
 	 * <p>
 	 * At the end the last columns range property is updated.
 	 */
 	public void onHScroll() {
-		GridState<T, C> state = getState();
-		if (state == GridState.EMPTY || state.isEmpty()) return;
+		TableState<T> state = getState();
+		if (state == TableState.EMPTY || state.isEmpty()) return;
 
-		GridHelper helper = grid.getGridHelper();
+		TableHelper helper = table.getTableHelper();
 		int columns = helper.maxColumns();
 
 		// State Computation
@@ -210,68 +214,76 @@ public class ViewportManager<T, C extends GridCell<T>> {
 		// Layout Computation
 		IntegerRange lRange = IntegerRange.of(sFirstColumn, sLastColumn);
 		if (!lRange.equals(getLastColumnsRange())) {
-			grid.requestViewportLayout();
+			table.requestViewportLayout();
 		}
 
 		setLastColumnsRange(lRange);
 	}
 
 	/**
-	 * This is responsible for handling changes occurring in the grid's items data structure.
+	 * This is responsible for updating the viewport state whenever a change occurs in the items list.
 	 * <p></p>
-	 * Before transitioning to a new state, there are three special cases that need to be covered:
-	 * <p> - if there are no items in the data structure (was cleared), we invoke {@link #clear()}
-	 * <p> - if the current state is the {@link GridState#EMPTY} state than we must call {@link #init()}
-	 * <p> - if the change is of type {@link GridChangeType#TRANSPOSE} then we {@link #reset()} the viewport
-	 * <p></p>
-	 * In any other case we can call {@link GridState#change(Change)} on the current state
-	 * to produce a new state that reflects the changes occurred in the data structure.
-	 * At the end a layout request is sent to the grid, {@link VirtualGrid#requestViewportLayout()} and
-	 * both the last rows and columns ranges are updated.
+	 * There are three separate situations:
+	 * <p> 1) The items list is empty, calls {@link #clear()} and exits
+	 * <p> 2) The current state is {@link TableState#EMPTY}, calls {@link #init()} and exits
+	 * <p> 3) The given change is processed by using the {@link ListChangeHelper} utility class,
+	 * then the new state is computed by using {@link TableState#processChange(Change)}, finally
+	 * {@link VirtualTable#requestViewportLayout()} is called and the last range property is updated.
 	 */
-	public void onChange(Change<T> change) {
-		GridState<T, C> state = getState();
-		if (itemsEmpty()) {
-			clear();
-			change.endChange();
-			return;
-		}
+	public void onChange(ListChangeListener.Change<? extends T> change) {
+		try {
+			processingChange = true;
+			TableState<T> oState = getState();
+			if (itemsEmpty()) {
+				clear();
+				return;
+			}
 
-		if (state == GridState.EMPTY) {
-			init();
-			change.endChange();
-			return;
-		}
+			if (oState == TableState.EMPTY) {
+				init();
+				return;
+			}
 
-		if (change.getType() == GridChangeType.TRANSPOSE) {
-			reset();
-			change.endChange();
-			return;
+			List<Change> changes = ListChangeHelper.instance().processChange(change);
+			TableState<T> nState = oState.change(changes);
+			if (nState != oState) {
+				setState(nState);
+				table.requestViewportLayout();
+				setLastRowsRange(nState.getRowsRange());
+				setLastColumnsRange(nState.getColumnsRange());
+			}
+		} catch (RuntimeException ex) {
+			ex.printStackTrace();
+		} finally {
+			processingChange = false;
 		}
-
-		state = state.change(change);
-		setState(state);
-		grid.requestViewportLayout();
-		setLastRowsRange(state.getRowsRange());
-		setLastColumnsRange(state.getColumnsRange());
 	}
 
 	/**
-	 * Responsible for clearing the viewport and resetting the manager' state.
+	 * This is responsible for transitioning to a new valid state when a cell factory ahs changed
+	 * for a certain column. The state is computed with {@link TableState#columnChangedFactory(TableColumn)}.
+	 * <p>
+	 * At the end {@link VirtualTable#requestViewportLayout()} is invoked.
+	 */
+	public void onColumnChangedFactory(TableColumn<T, ? extends TableCell<T>> column) {
+		TableState<T> state = getState();
+		setState(state.columnChangedFactory(column));
+		table.requestViewportLayout();
+	}
+
+	/**
+	 * Clears the viewport. Sets the state to {@link FlowState#EMPTY}.
 	 */
 	public void clear() {
 		getState().clear();
-		setState(GridState.EMPTY);
-		setLastRowsRange(IntegerRange.of(-1));
-		setLastColumnsRange(IntegerRange.of(-1));
-		GridHelper helper = grid.getGridHelper();
+		setState(TableState.EMPTY);
+		TableHelper helper = table.getTableHelper();
 		helper.computeEstimatedSize();
 		helper.invalidatedPos();
 	}
 
 	/**
-	 * Responsible for resetting the viewport. First it calls {@link #clear()}
-	 * then {@link #init()}.
+	 * Resets the viewport by first calling {@link #clear()}, then {@link #init()}.
 	 */
 	public void reset() {
 		clear();
@@ -279,27 +291,34 @@ public class ViewportManager<T, C extends GridCell<T>> {
 	}
 
 	/**
-	 * @return whether the data structure is empty
+	 * @return whether the items list is empty
 	 */
-	protected boolean itemsEmpty() {
-		return grid.isEmpty();
+	private boolean itemsEmpty() {
+		return table.getItems().isEmpty();
+	}
+
+	/**
+	 * @return whether the columns list is empty
+	 */
+	private boolean columnsEmpty() {
+		return table.getColumns().isEmpty();
 	}
 
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
-	public GridState<T, C> getState() {
+	public TableState<T> getState() {
 		return state.get();
 	}
 
 	/**
-	 * Keeps the {@link GridState} object which represents the current state of the viewport.
+	 * Specifies the current state of the viewport as a {@link TableState} object.
 	 */
-	public GridStateProperty<T, C> stateProperty() {
+	public TableStateProperty<T> stateProperty() {
 		return state;
 	}
 
-	protected void setState(GridState<T, C> state) {
+	protected void setState(TableState<T> state) {
 		this.state.set(state);
 	}
 
@@ -314,7 +333,7 @@ public class ViewportManager<T, C extends GridCell<T>> {
 		return lastRowsRange;
 	}
 
-	public void setLastRowsRange(NumberRange<Integer> lastRowsRange) {
+	protected void setLastRowsRange(NumberRange<Integer> lastRowsRange) {
 		this.lastRowsRange.set(lastRowsRange);
 	}
 
@@ -329,7 +348,14 @@ public class ViewportManager<T, C extends GridCell<T>> {
 		return lastColumnsRange;
 	}
 
-	public void setLastColumnsRange(NumberRange<Integer> lastColumnsRange) {
+	protected void setLastColumnsRange(NumberRange<Integer> lastColumnsRange) {
 		this.lastColumnsRange.set(lastColumnsRange);
+	}
+
+	/**
+	 * @return whether a change is being processed by {@link #onChange(ListChangeListener.Change)}
+	 */
+	public boolean isProcessingChange() {
+		return processingChange;
 	}
 }

@@ -21,6 +21,7 @@ package interactive.flow;
 import interactive.cells.flow.AlternativeCell;
 import interactive.cells.flow.DetailedCell;
 import interactive.others.Constraint;
+import interactive.others.Utils;
 import io.github.palexdev.materialfx.enums.DialogType;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
@@ -84,14 +85,10 @@ public enum FlowTestActions {
 	}),
 	DELETE_SPARSE((p, o, n) -> {
 		Runnable oAction = () -> o.getItems().removeAll(
-				o.getItems().get(2), o.getItems().get(5),
-				o.getItems().get(6), o.getItems().get(8),
-				o.getItems().get(25), o.getItems().get(53)
+				Utils.listGetAll(o.getItems(), 2, 5, 6, 8, 25, 53)
 		);
 		Runnable nAction = () -> n.getItems().removeAll(
-				n.getItems().get(2), n.getItems().get(5),
-				n.getItems().get(6), n.getItems().get(8),
-				n.getItems().get(25), n.getItems().get(53)
+				Utils.listGetAll(n.getItems(), 2, 5, 6, 8, 25, 53)
 		);
 		run(p, oAction, nAction);
 	}),

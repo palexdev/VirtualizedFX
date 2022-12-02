@@ -10,6 +10,7 @@ import io.github.palexdev.materialfx.utils.NodeUtils;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
 import io.github.palexdev.mfxcore.builders.nodes.IconWrapperBuilder;
 import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
+import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.RegionUtils;
 import io.github.palexdev.mfxresources.builders.IconBuilder;
 import io.github.palexdev.virtualizedfx.cell.TableCell;
@@ -73,13 +74,10 @@ public class PTableTestController implements Initializable {
 		RegionUtils.makeRegionCircular(runIcon);
 
 		// Init Content Pane
-		VirtualScrollPane vsp = VSPUtils.wrap(table);
+		VirtualScrollPane vsp = table.wrap();
 		vsp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
 		vsp.setAutoHideBars(true);
-		VSPUtils.setVSpeed(vsp, 15.0, 32.0, 32.0);
-
-		// TODO must fix wrap method first
-/*		Runnable speedAction = () -> {
+		Runnable speedAction = () -> {
 			double ch = table.getCellHeight();
 			double cw = table.getColumnSize().getWidth();
 			VSPUtils.setVSpeed(vsp, ch / 3, ch / 2, ch / 2);
@@ -92,7 +90,7 @@ public class PTableTestController implements Initializable {
 		When.onInvalidated(table.columnSizeProperty())
 				.then(i -> speedAction.run())
 				.executeNow()
-				.listen();*/
+				.listen();
 
 		contentPane.getChildren().add(vsp);
 

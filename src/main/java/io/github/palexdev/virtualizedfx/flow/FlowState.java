@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Class used by the {@link ViewportManager} to represent the state of the viewport at a given time.
+ * Class used by the {@link FlowManager} to represent the state of the viewport at a given time.
  * <p>
  * The idea is to have an immutable state so each state is a different object, with some exceptional cases
  * when the state doesn't need to be re-computed, so the old object is returned.
