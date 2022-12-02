@@ -20,6 +20,9 @@ package interactive.others;
 
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Utils {
 
 	private Utils() {
@@ -33,5 +36,17 @@ public class Utils {
 			}
 		}
 		return matrix;
+	}
+
+	// TODO replace everywhere
+	public static <T> List<T> listGetAll(List<T> in, Integer... indexes) {
+		List<T> l = new ArrayList<>();
+		for (int index : indexes) {
+			try {
+				l.add(in.get(index));
+			} catch (Exception ignored) {
+			}
+		}
+		return l;
 	}
 }

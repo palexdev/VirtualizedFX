@@ -14,6 +14,33 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.8.0] - 02-12-2022
+
+## Added
+
+- Implemented virtualized table as VirtualTable as well as its paginated version as PaginatedVirtualTable
+- Imported BoundLabel from MaterialFX as it was needed to implement DefaultTableColumnSkin
+- Added new bean to test the table, using Faker to generate random data
+- Added convenient method to Constraint class to generate a constraint on a list
+- Added new dialog to get a generic choice from the user
+- Added new method to Utils to get all the items at the given indexes from a given list
+
+## Changed
+
+- Upgraded MFXCore to version 11.1.4
+- Minor refactors to FlowState and ViewportManager
+- VirtualFlowSkin: process items change before computing the new estimated size
+- Minor fixes to documentation here and there
+- Common.css: make combo popups taller
+
+## Removed
+
+- Remove tests on viewport sizes for paginated variants
+
+## Fixed
+
+- GridTest.fxml: remove minHeight constraint from HBox as it was causing weird issues with layout
+
 ## [11.7.3] - 21-11-2022
 
 ## Added

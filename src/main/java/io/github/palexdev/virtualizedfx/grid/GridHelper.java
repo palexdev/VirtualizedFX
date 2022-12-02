@@ -311,7 +311,7 @@ public interface GridHelper {
 		/**
 		 * {@inheritDoc}
 		 * <p>
-		 * The value is given by: {@cde estimatedSize.getHeight() - virtualFlow.getHeight()}
+		 * The value is given by: {@cde estimatedSize.getHeight() - grid.getHeight()}
 		 */
 		@Override
 		public double maxVScroll() {
@@ -321,7 +321,7 @@ public interface GridHelper {
 		/**
 		 * {@inheritDoc}
 		 * <p>
-		 * The value is given by: {@cde estimatedSize.getWidth() - virtualFlow.getWidth()}
+		 * The value is given by: {@cde estimatedSize.getWidth() - grid.getWidth()}
 		 */
 		@Override
 		public double maxHScroll() {
@@ -344,12 +344,12 @@ public interface GridHelper {
 		 * This is the direction along the estimated breath. However, the implementation
 		 * makes it so that the position of the viewport is virtual. This binding which depends on both {@link VirtualGrid#positionProperty()}
 		 * and {@link VirtualGrid#cellSizeProperty()} will always return a value that is greater or equal to 0 and lesser
-		 * than the cell size.
+		 * than the cell size. (the value is made negative as this is how scrolling works)
 		 * <p>
 		 * This is the formula: {@code -virtualGrid.getHPos() % virtualGrid.getCellSize().getWidth()}.
 		 * <p>
 		 * Think about this. We have cells of width 64. and we scroll 15px on each gesture. When we reach 60px, we can still
-		 * see the cell for 4px, but once we scroll again it makes to sense to go to 75px because the first cell won't be
+		 * see the cell for 4px, but once we scroll again it makes no sense to go to 75px because the first cell won't be
 		 * visible anymore, so we go back at 11px. Now the top cell will be visible for 53px. Keep in mind that cells
 		 * are always positioned from the end to 0 (exceptions documented here {@link GridState#layoutRows()}).
 		 * <p>
@@ -376,7 +376,7 @@ public interface GridHelper {
 		 * This is the formula: {@code -virtualGrid.getVPos() % virtualGrid.getCellSize().getHeight()}.
 		 * <p>
 		 * Think about this. We have cells of height 64. and we scroll 15px on each gesture. When we reach 60px, we can still
-		 * see the cell for 4px, but once we scroll again it makes to sense to go to 75px because the first cell won't be
+		 * see the cell for 4px, but once we scroll again it makes no sense to go to 75px because the first cell won't be
 		 * visible anymore, so we go back at 11px. Now the top cell will be visible for 53px. Keep in mind that cells
 		 * are always positioned from the end to 0 (exceptions documented here {@link GridState#layoutRows()}).
 		 * <p>

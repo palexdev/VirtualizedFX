@@ -31,6 +31,11 @@ module VirtualizedFX {
 	exports io.github.palexdev.virtualizedfx.grid;
 	exports io.github.palexdev.virtualizedfx.grid.paginated;
 
+	// Table Package
+	exports io.github.palexdev.virtualizedfx.table;
+	exports io.github.palexdev.virtualizedfx.table.paginated;
+	exports io.github.palexdev.virtualizedfx.table.defaults;
+
 	// Utils
 	exports io.github.palexdev.virtualizedfx.utils;
 

@@ -53,7 +53,7 @@ public class SimpleGridCell extends HBox implements GridCell<Integer> {
 	public void updateItem(Integer item) {
 		this.item = item;
 		label.setText(toString());
-		CellsDebugger.randBackground(this, 0.5f, item, 1, 0);
+		CellsDebugger.randBackground(this, 0.5, item, 1, 0);
 	}
 
 	@Override

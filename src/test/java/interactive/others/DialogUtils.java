@@ -19,6 +19,7 @@
 package interactive.others;
 
 import io.github.palexdev.materialfx.controls.MFXButton;
+import io.github.palexdev.materialfx.controls.MFXFilterComboBox;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import io.github.palexdev.materialfx.dialogs.MFXDialogs;
 import io.github.palexdev.materialfx.dialogs.MFXGenericDialog;
@@ -33,6 +34,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -129,6 +131,51 @@ public class DialogUtils {
 		MFXButton cancelAction = new MFXButton("Cancel");
 		cancelAction.setOnAction(event -> {
 			val.set(-1);
+			sd.close();
+		});
+		((MFXGenericDialog) sd.getContent()).addActions(okAction, cancelAction);
+		sd.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			if (event.getCode() == KeyCode.ENTER)
+				okAction.fire();
+
+			if (event.getCode() == KeyCode.ESCAPE)
+				cancelAction.fire();
+		});
+		sd.showAndWait();
+		return val.get();
+	}
+
+	public static <T> T getChoice(Pane owner, String title, String comboText, Collection<T> choices) {
+		MFXFilterComboBox<T> combo = new MFXFilterComboBox<>();
+		combo.getItems().addAll(choices);
+		combo.setFloatMode(FloatMode.INLINE);
+		combo.setFloatingText(comboText);
+		combo.setPrefSize(240, 32);
+		StackPane content = new StackPane(combo);
+		combo.setAlignment(Pos.CENTER);
+
+		MFXStageDialog sd = MFXGenericDialogBuilder.build()
+				.setHeaderText(title)
+				.setShowAlwaysOnTop(false)
+				.setShowMinimize(false)
+				.setContent(content)
+				.toStageDialogBuilder()
+				.initModality(Modality.WINDOW_MODAL)
+				.initOwner(owner.getScene().getWindow())
+				.setOwnerNode(owner)
+				.setCenterInOwnerNode(true)
+				.setScrimOwner(true)
+				.get();
+
+		AtomicReference<T> val = new AtomicReference<>(null);
+		MFXButton okAction = new MFXButton("OK");
+		okAction.setOnAction(event -> {
+			val.set(combo.getSelectedItem());
+			sd.close();
+		});
+		MFXButton cancelAction = new MFXButton("Cancel");
+		cancelAction.setOnAction(event -> {
+			val.set(null);
 			sd.close();
 		});
 		((MFXGenericDialog) sd.getContent()).addActions(okAction, cancelAction);

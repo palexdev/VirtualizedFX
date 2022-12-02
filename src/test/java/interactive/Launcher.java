@@ -18,7 +18,7 @@
 
 package interactive;
 
-import interactive.grid.PGridApp;
+import interactive.table.PTableApp;
 import javafx.application.Application;
 
 public class Launcher {
@@ -29,7 +29,7 @@ public class Launcher {
 		//System.setProperty("prism.vsync", "false");
 		//System.setProperty("prism.showdirty", "true");
 		//System.setProperty("prism.forceGPU","true");
-		System.setProperty("prism.verbose", "true");
-		Application.launch(PGridApp.class);
+		//System.setProperty("prism.verbose", "true");
+		Application.launch(PTableApp.class);
 	}
 }

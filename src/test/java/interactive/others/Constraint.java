@@ -18,12 +18,21 @@
 
 package interactive.others;
 
+import java.util.List;
 import java.util.function.Function;
 
 public record Constraint<T>(String message, Function<T, Boolean> validator) {
 
 	public static <T> Constraint<T> of(String message, Function<T, Boolean> validator) {
 		return new Constraint<>(message, validator);
+	}
+
+	// TODO replace everywhere
+	public static Constraint<Integer> listIndexConstraint(List<?> list, boolean isAdd) {
+		return new Constraint<>(
+				"Invalid Index",
+				i -> i >= 0 && i < list.size() + ((isAdd) ? 1 : 0)
+		);
 	}
 
 	public boolean isValid(T val) {

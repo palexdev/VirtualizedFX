@@ -22,6 +22,7 @@ import interactive.Tests;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.scenicview.ScenicView;
 
 public class PGridApp extends Application {
 
@@ -31,5 +32,6 @@ public class PGridApp extends Application {
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Paginated VirtualGrid Test");
 		primaryStage.show();
+		ScenicView.show(scene);
 	}
 }

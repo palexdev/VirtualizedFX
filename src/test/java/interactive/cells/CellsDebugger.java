@@ -47,7 +47,7 @@ public class CellsDebugger {
 		));
 	}
 
-	public static Color getColor(Integer item, float opacity) {
+	public static Color getColor(Integer item, double opacity) {
 		return dColors.computeIfAbsent(item, i -> Color.color(
 				RandomUtils.random.nextFloat(),
 				RandomUtils.random.nextFloat(),
@@ -60,11 +60,11 @@ public class CellsDebugger {
 		dColors.clear();
 	}
 
-	public static void randBackground(Region r, float opacity, Integer item) {
+	public static void randBackground(Region r, double opacity, Integer item) {
 		StyleUtils.setBackground(r, getColor(item, opacity));
 	}
 
-	public static void randBackground(Region r, float opacity, Integer item, double radius, double inset) {
+	public static void randBackground(Region r, double opacity, Integer item, double radius, double inset) {
 		StyleUtils.setBackground(r, getColor(item, opacity), CornerRadiusFactory.all(radius), InsetsFactory.all(inset));
 	}
 

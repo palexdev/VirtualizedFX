@@ -38,6 +38,9 @@ import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
 import io.github.palexdev.virtualizedfx.grid.GridHelper;
 import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
 import io.github.palexdev.virtualizedfx.grid.paginated.PaginatedVirtualGrid;
+import io.github.palexdev.virtualizedfx.table.TableHelper;
+import io.github.palexdev.virtualizedfx.table.VirtualTable;
+import io.github.palexdev.virtualizedfx.table.paginated.PaginatedVirtualTable;
 import javafx.beans.property.Property;
 import javafx.geometry.Orientation;
 
@@ -296,6 +299,129 @@ public class VSPUtils {
 		bindings.bindBidirectional(vsp.hValProperty())
 				.addSources(hSource)
 				.addTargetInvalidatingSource(grid.widthProperty())
+				.get();
+		return vsp;
+	}
+
+	//================================================================================
+	// VirtualTable
+	//================================================================================
+	public static <T> VirtualScrollPane wrap(VirtualTable<T> table) {
+		VirtualScrollPane vsp = new VirtualScrollPane(table);
+		MFXBindings bindings = MFXBindings.instance();
+
+		vsp.setOrientation(Orientation.VERTICAL);
+		vsp.vBarOffsetProperty().bind(table.columnSizeProperty().map(Size::getHeight));
+		vsp.contentBoundsProperty().bind(ObjectBindingBuilder.<VirtualBounds>build()
+				.setMapper(() -> {
+					Size eSize = table.getEstimatedSize();
+					double vH = Math.max(0, eSize.getHeight() + table.getColumnSize().getHeight());
+					return VirtualBounds.of(table.getWidth(), table.getHeight(), eSize.getWidth(), vH);
+				})
+				.addSources(table.widthProperty(), table.heightProperty(), table.columnSizeProperty(), table.estimatedSizeProperty())
+				.get()
+		);
+
+		MappingSource<Position, Number> vSource = MappingSource.<Position, Number>of(table.positionProperty())
+				.setTargetUpdater(Mapper.of(val -> {
+					TableHelper helper = table.getTableHelper();
+					double max = helper.maxVScroll();
+					return (max != 0) ? val.getY() / max : 0;
+				}), (o, n) -> vsp.setVVal(n.doubleValue()))
+				.setSourceUpdater(Mapper.of(val -> {
+					TableHelper helper = table.getTableHelper();
+					Position currPos = table.getPosition();
+					return Position.of(currPos.getX(), val.doubleValue() * helper.maxVScroll());
+				}), (o, n) -> table.setPosition(n));
+		bindings.bindBidirectional(vsp.vValProperty())
+				.addSources(vSource)
+				.addTargetInvalidatingSource(table.heightProperty())
+				.addInvalidatingSource(ExternalSource.of(table.estimatedSizeProperty(), (o, n) -> {
+					if (o.getHeight() != n.getHeight()) {
+						table.getTableHelper().invalidatedPos();
+						bindings.biInvalidate(vsp.vValProperty());
+					}
+				}))
+				.get();
+
+		MappingSource<Position, Number> hSource = MappingSource.<Position, Number>of(table.positionProperty())
+				.setTargetUpdater(Mapper.of(val -> {
+					TableHelper helper = table.getTableHelper();
+					double max = helper.maxHScroll();
+					return (max != 0) ? val.getX() / max : 0;
+				}), (o, n) -> vsp.setHVal(n.doubleValue()))
+				.setSourceUpdater(Mapper.of(val -> {
+					TableHelper helper = table.getTableHelper();
+					Position currPos = table.getPosition();
+					return Position.of(val.doubleValue() * helper.maxHScroll(), currPos.getY());
+				}), (o, n) -> table.setPosition(n));
+		bindings.bindBidirectional(vsp.hValProperty())
+				.addSources(hSource)
+				.addTargetInvalidatingSource(table.widthProperty())
+				.addInvalidatingSource(ExternalSource.of(table.estimatedSizeProperty(), (o, n) -> {
+					if (o.getWidth() != n.getWidth()) {
+						table.getTableHelper().invalidatedPos();
+						bindings.biInvalidate(vsp.hValProperty());
+					}
+				}))
+				.get();
+		return vsp;
+	}
+
+	public static <T> VirtualScrollPane wrap(PaginatedVirtualTable<T> table) {
+		MFXBindings bindings = MFXBindings.instance();
+		VirtualScrollPane vsp = new VirtualScrollPane(table) {
+			@Override
+			protected double computeMinHeight(double width) {
+				return computePrefHeight(width);
+			}
+
+			@Override
+			protected double computePrefHeight(double width) {
+				return super.computePrefHeight(width);
+			}
+
+			@Override
+			protected double computeMaxHeight(double width) {
+				return computePrefHeight(width);
+			}
+
+			@Override
+			protected double computeMaxWidth(double height) {
+				return table.maxWidth(height);
+			}
+		};
+		vsp.setOrientation(Orientation.VERTICAL);
+
+		vsp.contentBoundsProperty().bind(ObjectBindingBuilder.<VirtualBounds>build()
+				.setMapper(() -> {
+					Size eSize = table.getEstimatedSize();
+					return VirtualBounds.of(table.getWidth(), table.getHeight(), eSize.getWidth(), 0);
+				})
+				.addSources(table.widthProperty(), table.heightProperty(), table.estimatedSizeProperty())
+				.get()
+		);
+
+		MappingSource<Position, Number> hSource = MappingSource.<Position, Number>of(table.positionProperty())
+				.setTargetUpdater(Mapper.of(val -> {
+					TableHelper helper = table.getTableHelper();
+					double max = helper.maxHScroll();
+					return (max != 0) ? val.getX() / max : 0;
+				}), (o, n) -> vsp.setHVal(n.doubleValue()))
+				.setSourceUpdater(Mapper.of(val -> {
+					TableHelper helper = table.getTableHelper();
+					Position currPos = table.getPosition();
+					return Position.of(val.doubleValue() * helper.maxHScroll(), currPos.getY());
+				}), (o, n) -> table.setPosition(n));
+		bindings.bindBidirectional(vsp.hValProperty())
+				.addSources(hSource)
+				.addTargetInvalidatingSource(table.widthProperty())
+				.addInvalidatingSource(ExternalSource.of(table.estimatedSizeProperty(), (o, n) -> {
+					if (o.getWidth() != n.getWidth()) {
+						table.getTableHelper().invalidatedPos();
+						bindings.biInvalidate(vsp.hValProperty());
+					}
+				}))
 				.get();
 		return vsp;
 	}

@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 public class Model {
 	public static final ObservableList<Integer> integers;
 	public static final ObservableList<String> strings;
+	public static final ObservableList<User> users;
 
 	static {
 		integers = IntStream.rangeClosed(0, 200)
@@ -34,6 +35,7 @@ public class Model {
 		strings = IntStream.rangeClosed(0, 200)
 				.mapToObj(i -> "String " + i)
 				.collect(FXCollectors.toList());
+		users = User.randObsList(200);
 	}
 
 	private Model() {

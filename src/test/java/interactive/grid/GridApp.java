@@ -22,6 +22,7 @@ import interactive.Tests;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.scenicview.ScenicView;
 
 public class GridApp extends Application {
 
@@ -31,5 +32,6 @@ public class GridApp extends Application {
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("VirtualGrid Test");
 		primaryStage.show();
+		ScenicView.show(scene);
 	}
 }

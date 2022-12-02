@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
  * <p>
  * Note that pages start from index 1.
  * <p></p>
- * This flow also has its own skin, which is basically the same as {@code VirtualFlow} but adapted to
+ * This grid also has its own skin, which is basically the same as {@link VirtualGrid} but adapted to
  * resize the control depending on the {@link #rowsPerPageProperty()}.
  * <p></p>
  * Little tips and <b>warnings</b>:
@@ -266,7 +266,7 @@ public class PaginatedVirtualGrid<T, C extends GridCell<T>> extends VirtualGrid<
 	// Styleable Properties
 	//================================================================================
 	private final StyleableIntegerProperty rowsPerPage = new StyleableIntegerProperty(
-			PaginatedVirtualGrid.StyleableProperties.ROWS_PER_PAGE,
+			StyleableProperties.ROWS_PER_PAGE,
 			this,
 			"rowsPerPage",
 			5
@@ -287,6 +287,8 @@ public class PaginatedVirtualGrid<T, C extends GridCell<T>> extends VirtualGrid<
 	 * Specifies the number of rows to display per page.
 	 * <p></p>
 	 * Note that this, combined with {@link #cellSizeProperty()}, determines the height of the virtual grid.
+	 * <p></p>
+	 * This is settable via CSS with the "-fx-rows-per-page" property.
 	 */
 	public StyleableIntegerProperty rowsPerPageProperty() {
 		return rowsPerPage;

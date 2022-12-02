@@ -229,7 +229,7 @@ public enum GridTestActions {
 		action.accept(parameters, grid);
 	}
 
-	public static Region getRegion(Control control) {
+	private static Region getRegion(Control control) {
 		assert control != null;
 		Parent parent = control;
 		Set<String> classes;

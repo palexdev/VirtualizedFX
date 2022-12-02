@@ -27,7 +27,6 @@ import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.collections.ObservableGrid;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
-import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.grid.paginated.PaginatedVirtualGrid;
 import javafx.geometry.Orientation;
 import javafx.scene.Parent;
@@ -77,7 +76,7 @@ public enum PGridTestActions {
 	}),
 	REPLACE_ROW((p, grid) -> {
 		int rNum = grid.getRowsNum();
-		int row = getIntFromUser(p.getRoot(), "Row Replacement", "Input row index", Constraint.of("Invalid, [%d...%d]".formatted(0, rNum - 1), i -> i >= 0 && i < rNum));
+		int row = getIntFromUser(p.getRoot(), "TableRow Replacement", "Input row index", Constraint.of("Invalid, [%d...%d]".formatted(0, rNum - 1), i -> i >= 0 && i < rNum));
 		if (row > rNum - 1) return;
 
 		List<Integer> nRow = IntStream.range(0, grid.getColumnsNum())
@@ -97,7 +96,7 @@ public enum PGridTestActions {
 	}),
 	ADD_ROW((p, grid) -> {
 		int rNum = grid.getRowsNum();
-		int index = getIntFromUser(p.getRoot(), "Add Row at...", "Input insertion index", Constraint.of("Invalid, [%d...%d]".formatted(0, rNum), i -> i >= 0 && i <= rNum));
+		int index = getIntFromUser(p.getRoot(), "Add TableRow at...", "Input insertion index", Constraint.of("Invalid, [%d...%d]".formatted(0, rNum), i -> i >= 0 && i <= rNum));
 		if (index == -1) return;
 
 		List<Integer> nRow = IntStream.range(0, grid.getColumnsNum())
@@ -109,7 +108,7 @@ public enum PGridTestActions {
 		int rNum = grid.getRowsNum();
 		if (rNum == 0) return;
 
-		int index = getIntFromUser(p.getRoot(), "Remove Row at...", "Input removal index", Constraint.of("Invalid, [%d...%d]".formatted(0, rNum - 1), i -> i >= 0 && i < rNum));
+		int index = getIntFromUser(p.getRoot(), "Remove TableRow at...", "Input removal index", Constraint.of("Invalid, [%d...%d]".formatted(0, rNum - 1), i -> i >= 0 && i < rNum));
 		if (index == -1) return;
 		grid.getItems().removeRow(index);
 	}),
@@ -151,25 +150,15 @@ public enum PGridTestActions {
 		grid.setItems(newGrid);
 	}),
 	CLEAR_ITEMS((p, grid) -> grid.clear()),
-	CHANGE_VIEWPORT_SIZE((p, grid) -> {
-		Region region = getRegion(grid);
-		double width = getSizeFromUser(p.getRoot(), "Change Width To...", "Current Width: " + region.getWidth(), Constraint.of("Invalid!", i -> i > 0));
-		double height = getSizeFromUser(p.getRoot(), "Change Height To...", "Current Height: " + region.getHeight(), Constraint.of("Invalid!", i -> i > 0));
-
-		if (width != -1.0) {
-			region.setPrefWidth(width);
-			region.setMaxWidth(Region.USE_PREF_SIZE);
-		}
-
-		if (height != -1.0) {
-			region.setPrefHeight(height);
-			region.setMaxHeight(Region.USE_PREF_SIZE);
-		}
-	}),
-	RESET_VIEWPORT_SIZE((p, grid) -> {
-		VirtualScrollPane vsp = (VirtualScrollPane) grid.getParent().getParent();
-		vsp.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
-		vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+	CHANGE_ROWS_PER_PAGE((p, grid) -> {
+		int rpp = getIntFromUser(
+				p.getRoot(),
+				"Change Rows Per Page",
+				"Rows Number",
+				Constraint.of("Invalid number", i -> i >= 0)
+		);
+		if (rpp == -1) return;
+		grid.setRowsPerPage(rpp);
 	}),
 	CHANGE_CELL_SIZE((p, grid) -> {
 		Size cellSize = grid.getCellSize();

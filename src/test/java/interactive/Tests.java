@@ -28,7 +28,9 @@ public enum Tests {
 	FLOW("flow/FlowTest.fxml"),
 	PFLOW("flow/PFlowTest.fxml"),
 	GRID("grid/GridTest.fxml"),
-	PGRID("grid/PGridTest.fxml");
+	PGRID("grid/PGridTest.fxml"),
+	TABLE("table/TableTest.fxml"),
+	PTABLE("table/PTableTest.fxml");
 
 	private final String fxml;
 

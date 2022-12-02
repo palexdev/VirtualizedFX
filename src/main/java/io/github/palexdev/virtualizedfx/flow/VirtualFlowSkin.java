@@ -195,9 +195,10 @@ public class VirtualFlowSkin<T, C extends Cell<T>> extends SkinBase<VirtualFlow<
 	 */
 	protected void onItemsChanged(ListChangeListener.Change<? extends T> c) {
 		VirtualFlow<T, C> virtualFlow = getSkinnable();
-		ViewportManager<T, C> viewportManager = virtualFlow.getViewportManager();
-		virtualFlow.getOrientationHelper().computeEstimatedLength();
-		viewportManager.onListChange(c);
+		manager.onListChange(c);
+
+		OrientationHelper helper = virtualFlow.getOrientationHelper();
+		helper.computeEstimatedLength();
 	}
 
 	/**

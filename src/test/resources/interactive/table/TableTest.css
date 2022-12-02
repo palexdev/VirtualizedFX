@@ -1,0 +1,85 @@
+/*
+ * Copyright (C) 2022 Parisi Alessandro
+ * This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX).
+ *
+ * VirtualizedFX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * VirtualizedFX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with VirtualizedFX.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+@import "../MFXColors.css";
+@import "../Common.css";
+
+.virtual-scroll-pane {
+	-fx-clip-border-radius: 0;
+	-fx-background-radius: 5;
+	-fx-layout-mode: compact;
+	-fx-autohide-bars: true;
+}
+
+.virtual-scroll-pane .mfx-scroll-bar:vertical {
+	-fx-padding: 0;
+	-fx-pref-width: 5;
+	-fx-min-width: 5;
+	-fx-max-width: 5;
+}
+
+.virtual-scroll-pane .mfx-scroll-bar:horizontal {
+	-fx-padding: 0;
+	-fx-pref-height: 5;
+	-fx-min-height: 5;
+	-fx-max-height: 5;
+}
+
+.virtual-table {
+	-fx-border-color: -blue-light;
+	-fx-border-radius: 5;
+	-fx-clip-border-radius: 10;
+}
+
+.virtual-table .table-column {
+	-fx-padding: 0 10 0 10;
+	-fx-border-color: transparent transparent -blue-light transparent;
+	-fx-font-family: "Open Sans SemiBold";
+	-fx-text-fill: -mfx-text-he;
+	-fx-enable-overlay: false;
+}
+
+.virtual-table .table-column .overlay {
+	visibility: hidden;
+}
+
+.vtable-cell .table-column .text {
+	-fx-font-smoothing-type: lcd;
+}
+
+.virtual-table .table-column:hover {
+	-fx-border-color: transparent -blue-light -blue-light transparent;
+}
+
+.virtual-table .table-column:hover .overlay {
+	visibility: visible;
+	-fx-background-color: -blue-lightest;
+}
+
+.virtual-table .table-row:hover {
+	-fx-background-color: -blue-lighter;
+}
+
+.virtual-table .table-row:selected {
+	-fx-background-color: -blue-light;
+}
+
+.virtual-table .table-row .vtable-cell {
+	-fx-border-color: transparent;
+	-fx-padding: 0 10 0 10;
+}

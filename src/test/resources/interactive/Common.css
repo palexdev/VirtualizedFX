@@ -22,6 +22,7 @@
 * {
 	-bg-color: white;
 
+	-blue-lightest: rgba(93, 173, 236, 0.1);
 	-blue-lighter: rgba(93, 173, 236, 0.2);
 	-blue-light: rgba(93, 173, 236, 0.7);
 	-blue: rgb(93, 173, 236);
@@ -59,6 +60,10 @@
 #actionsBox .floating-text {
 	-fx-background-color: transparent;
 	-fx-text-fill: -blue;
+}
+
+#actionsBox .virtual-flow {
+	-fx-min-height: 300;
 }
 
 #actionsBox .virtual-flow .mfx-combo-box-cell {

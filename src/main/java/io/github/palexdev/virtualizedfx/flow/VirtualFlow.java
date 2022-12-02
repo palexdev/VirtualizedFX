@@ -165,9 +165,7 @@ public class VirtualFlow<T, C extends Cell<T>> extends Control {
 
 	protected void cellSizeChanged() {
 		OrientationHelper helper = getOrientationHelper();
-		if (helper != null) {
-			helper.computeEstimatedLength();
-		}
+		helper.computeEstimatedLength();
 
 		if (getWidth() != 0.0 && getHeight() != 0.0) { // TODO test with w and h = 0 initially
 			viewportManager.init();

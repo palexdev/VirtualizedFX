@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * <p> - The expected number of rows, {@link #getTargetSize()}. Note that this is computed by {@link GridHelper#maxRows()},
  * so the result may be greater than the number of rows available in the data structure
  * <p> - The type of event that lead the old state to transition to the new one, see {@link UpdateType}
- * <p> -A flag to check if new cells were created or some were deleted, {@link #haveCellsChanged()}.
+ * <p> - A flag to check if new cells were created or some were deleted, {@link #haveCellsChanged()}.
  * This is used by {@link VirtualGridSkin} since we want to update the viewport children only when the cells change.
  * <p></p>
  * This also contains a particular global state, {@link #EMPTY}, typically used to indicate that the viewport

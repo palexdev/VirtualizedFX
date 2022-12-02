@@ -148,8 +148,10 @@ public class FlowState<T, C extends Cell<T>> {
 
 		// Ensure that no cells remains in the old state, also dispose them
 		// if that's the case
-		if (!cells.isEmpty())
-			disposeAndClear();
+		if (!cells.isEmpty()) {
+			clear();
+			newState.setCellsChanged(true);
+		}
 
 		return newState;
 	}
@@ -267,12 +269,12 @@ public class FlowState<T, C extends Cell<T>> {
 	 * then we remove from the Set all the indexes at which the removal occurred. Before looping on these indexes we
 	 * also convert the {@link Change#getIndexes()} to an array of primitives.
 	 * <p>
-	 * In the loop we extract the cell at index i and to update its index we must first compute the shift. We do this
-	 * by using binary search(it needs the previous array).
-	 * The new index will be: {@code int newIndex = index - findShift(array, index)}, see {@link #findShift(int[], int)}.
+	 * In the loop we extract the cell at index "i" and to update its index we must first compute the shift. We do this
+	 * by using binary search, {@link Collections#binarySearch(List, Object)}.
+	 * The new index will be: {@code int newIndex = index - findShift(list, index)}, see {@link #findShift(List, int)}.
 	 * <p>
 	 * If the new index is below the range min the update is skipped and the loop goes to the next index, otherwise,
-	 * the index is updated and the cell added to the new state.
+	 * the index is updated and the cell moved to the new state.
 	 * <p>
 	 * The next step is to update those cells which need a full update (both item and index). First we compute their
 	 * indexes by expanding the new state's range to a Set and then removing from it all the cells that have already been
@@ -430,10 +432,9 @@ public class FlowState<T, C extends Cell<T>> {
 				Set<Integer> pUpdate = IntegerRange.expandRangeToSet(range);
 				pUpdate.removeAll(change.getIndexes());
 
-				int[] changeIndexes = change.getIndexes().stream()
+				List<Integer> changeIndexes = change.getIndexes().stream()
 						.sorted()
-						.mapToInt(Integer::intValue)
-						.toArray();
+						.collect(Collectors.toList());
 				for (Integer index : pUpdate) {
 					int newIndex = index - findShift(changeIndexes, index);
 					if (newIndex < range.getMin()) continue;
@@ -583,23 +584,22 @@ public class FlowState<T, C extends Cell<T>> {
 			cell.getNode().setVisible(true);
 		}
 
-		cells.keySet().stream()
-				.filter(i -> !IntegerRange.inRangeOf(i, range))
-				.map(i -> cells.get(i).getNode())
-				.peek(node -> hidden = true)
-				.forEach(n -> n.setVisible(false));
+		cells.entrySet().stream()
+				.filter(e -> !IntegerRange.inRangeOf(e.getKey(), range))
+				.peek(e -> hidden = true)
+				.forEach(e -> e.getValue().getNode().setVisible(false));
 		return positions;
 	}
 
 	/**
-	 * Given an ordered array of indexes and the index to find, returns
+	 * Given an ordered list of indexes and the index to find, returns
 	 * the index at which resides. If the index is not present, returns
 	 * the index at which it would be located.
 	 *
-	 * @see Arrays#binarySearch(int[], int)
+	 * @see Collections#binarySearch(List, Object)
 	 */
-	protected int findShift(int[] indexes, int index) {
-		int shift = Arrays.binarySearch(indexes, index);
+	protected int findShift(List<Integer> indexes, int index) {
+		int shift = Collections.binarySearch(indexes, index);
 		return shift > -1 ? shift : -(shift + 1);
 	}
 
@@ -717,7 +717,7 @@ public class FlowState<T, C extends Cell<T>> {
 	/**
 	 * Shortcut to dispose all cells present in this state's cells map and then clear it.
 	 */
-	protected void disposeAndClear() {
+	protected void clear() {
 		cells.values().forEach(C::dispose);
 		cells.clear();
 	}

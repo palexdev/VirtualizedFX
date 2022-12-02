@@ -31,13 +31,13 @@ import io.github.palexdev.virtualizedfx.cell.GridCell;
  * and trigger states transitions.
  * <p>
  * It stores the state of the viewport at any given time with three properties:
- * <p> - the main one is the {@link #stateProperty()} which olds the {@link GridState} object representing the current state
+ * <p> - the main one is the {@link #stateProperty()} which holds the {@link GridState} object representing the current state
  * of the viewport
- * <p> - the last row range property, which holds the last range of displayed rows as a {@link IntegerRange}
+ * <p> - the last rows range property, which holds the last range of displayed rows as a {@link IntegerRange}
  * <p> - the last columns range property which holds the last range of displayed columns as a {@link IntegerRange}
  * <p></p>
  * As mentioned above this is also responsible for handling states transitions when: initializations occur (cells supply
- * and removals when the viewport size changes; vertical and horizontal scrolling; changes occurred in the data structure;
+ * and removals when the viewport size changes); vertical and horizontal scrolling; changes occurred in the data structure;
  * clear and reset the viewport when needed.
  *
  * @param <T> the type of items

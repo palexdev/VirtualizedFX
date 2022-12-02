@@ -280,7 +280,7 @@ public class VirtualGrid<T, C extends GridCell<T>> extends Control {
 	}
 
 	/**
-	 * Carries the last {@link GridState} object which represents the current state of the viewport.
+	 * Carries the {@link GridState} object which represents the current state of the viewport.
 	 * This property is useful to catch any change happening in the viewport, and carries valuable information.
 	 */
 	public ReadOnlyObjectProperty<GridState<T, C>> stateProperty() {

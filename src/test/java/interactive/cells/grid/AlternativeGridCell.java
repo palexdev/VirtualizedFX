@@ -64,7 +64,7 @@ public class AlternativeGridCell extends VBox implements GridCell<Integer> {
 		updateLabel();
 		icon.setDescription(EnumUtils.randomEnum(FontResources.class).getDescription());
 		icon.setColor(ColorUtils.getRandomColor());
-		CellsDebugger.randBackground(this, 0.3f, item, 1, 0);
+		CellsDebugger.randBackground(this, 0.3, item, 1, 0);
 	}
 
 	@Override

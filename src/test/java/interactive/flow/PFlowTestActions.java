@@ -24,11 +24,9 @@ import interactive.others.Constraint;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import io.github.palexdev.virtualizedfx.cell.Cell;
-import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
-import javafx.scene.layout.Region;
 
 import java.util.Comparator;
 import java.util.List;
@@ -78,27 +76,17 @@ public enum PFlowTestActions {
 	}),
 	REVERSE_SORT((p, f) -> run(() -> f.getItems().sort((o1, o2) -> Comparator.<Integer>reverseOrder().compare(o1, o2)))),
 	CLEAR_LIST((p, f) -> run(() -> f.getItems().clear())),
-	CHANGE_VIEWPORT_SIZE_TO((p, f) -> run(() -> {
-		VirtualScrollPane vsp = (VirtualScrollPane) f.getParent().getParent();
-		String fText = (f.getOrientation() == Orientation.VERTICAL) ?
-				"Current height: " + vsp.getHeight() :
-				"Current width: " + vsp.getWidth();
-		double value = getSizeFromUser(p.getRoot(), "Change Viewport Size To...", fText, Constraint.of("Invalid!", i -> i > 0));
-		if (value == -1.0) return;
-
-		if (f.getOrientation() == Orientation.VERTICAL) {
-			vsp.setPrefHeight(value);
-			vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE);
-		} else {
-			vsp.setPrefWidth(value);
-			vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE);
-		}
-	})),
-	RESET_VIEWPORT_SIZE((p, f) -> run(() -> {
-		VirtualScrollPane vsp = (VirtualScrollPane) f.getParent().getParent();
-		vsp.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
-		vsp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
-	})),
+	CHANGE_CELLS_PER_PAGE((p, f) -> {
+		int cpp = getIntFromUser(
+				p.getRoot(),
+				"Change Cells Per Page",
+				"Cells Number",
+				Constraint.of(
+						"Invalid number", i -> i >= 0)
+		);
+		if (cpp == -1) return;
+		f.setCellsPerPage(cpp);
+	}),
 	CHANGE_CELLS_SIZE_TO((p, f) -> run(() -> {
 		double value = getSizeFromUser(p.getRoot(), "Change Cells Size To...", "Current Size: " + f.getCellSize(), Constraint.of("Invalid!", i -> i > 0));
 		if (value == -1.0) return;
