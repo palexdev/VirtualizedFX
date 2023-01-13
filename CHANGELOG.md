@@ -14,6 +14,40 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.8.2] - 13-01-2023
+
+## Fixed
+
+- TableHelper: fixed NPE occurring specifically when the state was empty and the columns layout mode was set to VARIABLE
+
+## [11.8.1] - 03-12-2022
+
+## Added
+
+- Implemented Wrappable interface, virtualized control now have a wrap() method to wrap themselves in a
+  VirtualScrollPane
+
+## Changed
+
+- Completely switched to gradle.properties for dependencies and plugins versions
+- Upgraded JUnit to version 5.9.1
+- Upgraded MFXCore to version 11.1.5
+- Addressed some TODOs
+- Renamed all ViewportManagers to distinguish them
+- OrientationHelper and GridHelper: now caching both x and y positions bindings
+- Make use of the new PositionProperty provided by MFXCore
+- VirtualTableSkin: minor change to layout
+
+## Removed
+
+- Removed dependencies: Flowless and Ikonli
+
+## Fixed
+
+- VSPUtils: Fix both setHSpeed() and setVSpeed()
+- Enable "prism.lcdtext=false" for table tests as text is being badly rendered when using round corners for the clips
+- FlowTestParameters: fix switchMode() method to never return BOTH
+
 ## [11.8.0] - 02-12-2022
 
 ## Added

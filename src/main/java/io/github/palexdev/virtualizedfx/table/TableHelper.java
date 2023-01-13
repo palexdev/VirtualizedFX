@@ -944,6 +944,7 @@ public interface TableHelper {
 		 */
 		@Override
 		public Map<Orientation, List<Double>> computePositions(TableState<?> state, boolean forceXComputation, boolean forceYComputation) {
+			if (state == TableState.EMPTY || state.isEmpty()) return positions;
 			IntegerRange rowsRange = state.getRowsRange();
 			IntegerRange columnsRange = state.getColumnsRange();
 			double cellH = table.getCellHeight();

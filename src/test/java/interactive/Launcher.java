@@ -18,7 +18,7 @@
 
 package interactive;
 
-import interactive.table.PTableApp;
+import interactive.table.TableApp;
 import javafx.application.Application;
 
 public class Launcher {
@@ -30,6 +30,6 @@ public class Launcher {
 		//System.setProperty("prism.showdirty", "true");
 		//System.setProperty("prism.forceGPU","true");
 		//System.setProperty("prism.verbose", "true");
-		Application.launch(PTableApp.class);
+		Application.launch(TableApp.class);
 	}
 }
