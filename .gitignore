@@ -15,3 +15,5 @@ out/
 #Others
 scenicView.properties
 logs
+/target/
+/nbproject/
