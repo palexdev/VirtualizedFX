@@ -99,11 +99,11 @@ public class TableManager<T> {
 	 * whether computations lead to a layout request or not, {@link VirtualTable#requestViewportLayout()}
 	 */
 	public boolean init() {
-		if (itemsEmpty() || columnsEmpty()) return false;
+		if (itemsEmpty() && columnsEmpty()) return false;
 
 		// Pre-Computation
 		TableHelper helper = table.getTableHelper();
-		IntegerRange rowsRange = helper.rowsRange();
+		IntegerRange rowsRange = (itemsEmpty()) ? IntegerRange.of(-1) : helper.rowsRange();
 		IntegerRange columnsRange = helper.columnsRange();
 		helper.computeEstimatedSize();
 
