@@ -5,12 +5,12 @@
             <env name="__NV_PRIME_RENDER_OFFLOAD" value="0"/>
             <env name="DRI_PRIME" value="0"/>
         </envs>
-        <option name="MAIN_CLASS_NAME" value="interactive.Launcher"/>
+        <option name="MAIN_CLASS_NAME" value="app.Launcher"/>
         <module name="VirtualizedFX.test"/>
         <option name="VM_PARAMETERS" value="-Dglass.disableGrab=false"/>
         <extension name="coverage">
             <pattern>
-                <option name="PATTERN" value="interactive.*"/>
+                <option name="PATTERN" value="app.*"/>
                 <option name="ENABLED" value="true"/>
             </pattern>
         </extension>
