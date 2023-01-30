@@ -63,9 +63,9 @@ public class TableState<T> {
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final VirtualTable<T> table;
+	private VirtualTable<T> table;
 	private final IntegerRange rowsRange;
-	private final IntegerRange columnsRange;
+	private IntegerRange columnsRange;
 	private final Map<Integer, TableRow<T>> rows = new TreeMap<>();
 	private final int targetSize;
 	private UpdateType type = UpdateType.INIT;
@@ -644,6 +644,10 @@ public class TableState<T> {
 		return table;
 	}
 
+	protected void setTable(VirtualTable<T> table) {
+		this.table = table;
+	}
+
 	/**
 	 * @return the rows map
 	 */
@@ -682,6 +686,10 @@ public class TableState<T> {
 	 */
 	public IntegerRange getColumnsRange() {
 		return columnsRange;
+	}
+
+	protected void setColumnsRange(IntegerRange columnsRange) {
+		this.columnsRange = columnsRange;
 	}
 
 	/**

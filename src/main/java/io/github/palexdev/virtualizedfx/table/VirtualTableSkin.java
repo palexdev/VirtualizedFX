@@ -19,6 +19,7 @@
 package io.github.palexdev.virtualizedfx.table;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
+import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import javafx.beans.value.ChangeListener;
@@ -31,11 +32,9 @@ import javafx.geometry.VPos;
 import javafx.scene.Parent;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Default skin implementation for {@link VirtualTable}.
@@ -246,17 +245,16 @@ public class VirtualTableSkin<T> extends SkinBase<VirtualTable<T>> {
 	 */
 	protected void onStateChanged(TableState<T> oldValue, TableState<T> newValue) {
 		if (newValue == TableState.EMPTY) {
-			cContainer.getChildren().clear();
 			rContainer.getChildren().clear();
-			return;
 		}
 
-		if (!oldValue.getColumnsRange().equals(newValue.getColumnsRange())) {
-			List<Region> columns = newValue.getColumnsAsNodes();
-			cContainer.getChildren().setAll(columns);
+		if (IntegerRange.of(-1).equals(newValue.getColumnsRange())) {
+			cContainer.getChildren().clear();
+		} else if (!oldValue.getColumnsRange().equals(newValue.getColumnsRange()) || cContainer.getChildren().isEmpty()) {
+			cContainer.getChildren().setAll(newValue.getColumnsAsNodes());
 		}
 
-		if (newValue.haveRowsChanged()) {
+		if (!newValue.isEmpty() && newValue.haveRowsChanged()) {
 			Collection<TableRow<T>> rows = newValue.getRows().values();
 			rContainer.getChildren().setAll(rows);
 		}

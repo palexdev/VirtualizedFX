@@ -950,7 +950,7 @@ public interface TableHelper {
 			double cellH = table.getCellHeight();
 
 			List<Double> xPositions = positions.computeIfAbsent(Orientation.HORIZONTAL, o -> new ArrayList<>());
-			if (forceXComputation || xPositions.isEmpty()) {
+			if (forceXComputation || xPositions.isEmpty() || xPositions.size() != columnsRange.diff() + 1) {
 				xPositions.clear();
 				double pos = 0;
 				for (Integer cIndex : columnsRange) {

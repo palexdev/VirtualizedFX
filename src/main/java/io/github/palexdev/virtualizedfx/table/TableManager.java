@@ -52,7 +52,15 @@ public class TableManager<T> {
 	// Properties
 	//================================================================================
 	private final VirtualTable<T> table;
-	private final TableStateProperty<T> state = new TableStateProperty<T>(TableState.EMPTY);
+	private final TableStateProperty<T> state = new TableStateProperty<T>(TableState.EMPTY) {
+/*		@Override
+		public void set(TableState<T> newValue) {
+			TableState<T> oldValue = get();
+			super.set(newValue);
+			if (newValue == TableState.EMPTY && oldValue == TableState.EMPTY && !oldValue.getColumnsRange().equals(newValue.getColumnsRange()))
+				fireValueChangedEvent();
+		}*/
+	};
 	private final IntegerRangeProperty lastRowsRange = new IntegerRangeProperty();
 	private final IntegerRangeProperty lastColumnsRange = new IntegerRangeProperty();
 	private boolean processingChange = false;
@@ -99,7 +107,16 @@ public class TableManager<T> {
 	 * whether computations lead to a layout request or not, {@link VirtualTable#requestViewportLayout()}
 	 */
 	public boolean init() {
-		if (itemsEmpty() || columnsEmpty()) return false;
+		if (columnsEmpty()) return false;
+		if (itemsEmpty()) {
+			if (!columnsEmpty()) {
+				TableHelper helper = table.getTableHelper();
+				TableState.EMPTY.setColumnsRange(helper.columnsRange());
+				setState(TableState.EMPTY);
+				table.requestViewportLayout();
+			}
+			return false;
+		}
 
 		// Pre-Computation
 		TableHelper helper = table.getTableHelper();
@@ -275,9 +292,16 @@ public class TableManager<T> {
 	 * Clears the viewport. Sets the state to {@link FlowState#EMPTY}.
 	 */
 	public void clear() {
-		getState().clear();
-		setState(TableState.EMPTY);
 		TableHelper helper = table.getTableHelper();
+		TableState<T> state = getState();
+		state.clear();
+		if (columnsEmpty()) {
+			TableState.EMPTY.setColumnsRange(IntegerRange.of(-1));
+		} else {
+			TableState.EMPTY.setColumnsRange(helper.columnsRange());
+		}
+		state.setTable(table);
+		setState(TableState.EMPTY);
 		helper.computeEstimatedSize();
 		helper.invalidatedPos();
 	}
