@@ -56,16 +56,11 @@ import java.util.stream.IntStream;
  */
 public class TableState<T> {
 	//================================================================================
-	// Static Members
-	//================================================================================
-	public static final TableState EMPTY = new TableState();
-
-	//================================================================================
 	// Properties
 	//================================================================================
-	private VirtualTable<T> table;
+	private final VirtualTable<T> table;
 	private final IntegerRange rowsRange;
-	private IntegerRange columnsRange;
+	private final IntegerRange columnsRange;
 	private final Map<Integer, TableRow<T>> rows = new TreeMap<>();
 	private final int targetSize;
 	private UpdateType type = UpdateType.INIT;
@@ -621,6 +616,10 @@ public class TableState<T> {
 		return rows.isEmpty();
 	}
 
+	public boolean isEmptyAll() {
+		return rows.isEmpty() && IntegerRange.of(-1).equals(columnsRange);
+	}
+
 	public boolean anyHidden() {
 		if (hidden == null) {
 			TableHelper helper = table.getTableHelper();
@@ -633,6 +632,14 @@ public class TableState<T> {
 		return hidden;
 	}
 
+	public static <T> TableState<T> empty() {
+		return new TableState<>();
+	}
+
+	public static <T> TableState<T> emptyItems(VirtualTable<T> table) {
+		return new TableState<>(table, IntegerRange.of(-1), table.getTableHelper().columnsRange());
+	}
+
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
@@ -642,10 +649,6 @@ public class TableState<T> {
 	 */
 	public VirtualTable<T> getTable() {
 		return table;
-	}
-
-	protected void setTable(VirtualTable<T> table) {
-		this.table = table;
 	}
 
 	/**
@@ -686,10 +689,6 @@ public class TableState<T> {
 	 */
 	public IntegerRange getColumnsRange() {
 		return columnsRange;
-	}
-
-	protected void setColumnsRange(IntegerRange columnsRange) {
-		this.columnsRange = columnsRange;
 	}
 
 	/**

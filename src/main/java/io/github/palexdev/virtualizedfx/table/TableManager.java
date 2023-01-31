@@ -46,21 +46,12 @@ import java.util.List;
  *
  * @param <T> the type of items
  */
-@SuppressWarnings({"unchecked"})
 public class TableManager<T> {
 	//================================================================================
 	// Properties
 	//================================================================================
 	private final VirtualTable<T> table;
-	private final TableStateProperty<T> state = new TableStateProperty<T>(TableState.EMPTY) {
-/*		@Override
-		public void set(TableState<T> newValue) {
-			TableState<T> oldValue = get();
-			super.set(newValue);
-			if (newValue == TableState.EMPTY && oldValue == TableState.EMPTY && !oldValue.getColumnsRange().equals(newValue.getColumnsRange()))
-				fireValueChangedEvent();
-		}*/
-	};
+	private final TableStateProperty<T> state = new TableStateProperty<>(TableState.empty());
 	private final IntegerRangeProperty lastRowsRange = new IntegerRangeProperty();
 	private final IntegerRangeProperty lastColumnsRange = new IntegerRangeProperty();
 	private boolean processingChange = false;
@@ -107,15 +98,14 @@ public class TableManager<T> {
 	 * whether computations lead to a layout request or not, {@link VirtualTable#requestViewportLayout()}
 	 */
 	public boolean init() {
-		if (columnsEmpty()) return false;
-		if (itemsEmpty()) {
-			if (!columnsEmpty()) {
-				TableHelper helper = table.getTableHelper();
-				TableState.EMPTY.setColumnsRange(helper.columnsRange());
-				setState(TableState.EMPTY);
-				table.requestViewportLayout();
-			}
+		if (columnsEmpty()) {
+			setState(TableState.empty());
 			return false;
+		}
+		if (itemsEmpty()) {
+			setState(TableState.emptyItems(table));
+			table.requestViewportLayout();
+			return true;
 		}
 
 		// Pre-Computation
@@ -128,7 +118,7 @@ public class TableManager<T> {
 		TableState<T> oldState = getState();
 		TableState<T> newState = new TableState<>(table, rowsRange, columnsRange);
 
-		if (oldState == TableState.EMPTY) {
+		if (oldState.isEmpty()) {
 			for (Integer row : rowsRange) {
 				newState.addRow(row);
 			}
@@ -170,7 +160,7 @@ public class TableManager<T> {
 	 */
 	public void onVScroll() {
 		TableState<T> state = getState();
-		if (state == TableState.EMPTY || state.isEmpty() || itemsEmpty()) return;
+		if (state.isEmpty() || itemsEmpty()) return;
 
 		TableHelper helper = table.getTableHelper();
 		int rows = helper.maxRows();
@@ -213,7 +203,7 @@ public class TableManager<T> {
 	 */
 	public void onHScroll() {
 		TableState<T> state = getState();
-		if (state == TableState.EMPTY || state.isEmpty()) return;
+		if (columnsEmpty()) return;
 
 		TableHelper helper = table.getTableHelper();
 		int columns = helper.maxColumns();
@@ -256,7 +246,7 @@ public class TableManager<T> {
 				return;
 			}
 
-			if (oState == TableState.EMPTY) {
+			if (oState == null || oState.isEmpty()) {
 				init();
 				return;
 			}
@@ -293,15 +283,8 @@ public class TableManager<T> {
 	 */
 	public void clear() {
 		TableHelper helper = table.getTableHelper();
-		TableState<T> state = getState();
-		state.clear();
-		if (columnsEmpty()) {
-			TableState.EMPTY.setColumnsRange(IntegerRange.of(-1));
-		} else {
-			TableState.EMPTY.setColumnsRange(helper.columnsRange());
-		}
-		state.setTable(table);
-		setState(TableState.EMPTY);
+		getState().clear();
+		setState(TableState.emptyItems(table));
 		helper.computeEstimatedSize();
 		helper.invalidatedPos();
 	}

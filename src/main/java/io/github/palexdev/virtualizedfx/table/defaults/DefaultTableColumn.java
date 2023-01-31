@@ -140,7 +140,7 @@ public class DefaultTableColumn<T, C extends TableCell<T>> extends Labeled imple
 
 					if (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) {
 						TableState<T> state = table.getState();
-						if (state == TableState.EMPTY) return false;
+						if (state.isEmptyAll()) return false;
 
 						int index = table.getIndexedColumns().getOrDefault(this, -2);
 						return IntegerRange.inRangeOf(index, state.getColumnsRange());

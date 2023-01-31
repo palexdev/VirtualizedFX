@@ -244,7 +244,7 @@ public class VirtualTableSkin<T> extends SkinBase<VirtualTable<T>> {
 	 * {@link TableState#getRows()}
 	 */
 	protected void onStateChanged(TableState<T> oldValue, TableState<T> newValue) {
-		if (newValue == TableState.EMPTY) {
+		if (newValue.isEmpty()) {
 			rContainer.getChildren().clear();
 		}
 
