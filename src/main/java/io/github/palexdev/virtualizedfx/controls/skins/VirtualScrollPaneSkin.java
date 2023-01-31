@@ -246,7 +246,9 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 	 * Adds the following listeners:
 	 * <p> - A listener to the {@link VirtualScrollPane#contentProperty()} to update
 	 * the content container
-	 * <p> A listener to the {@link VirtualScrollPane#layoutModeProperty()} to change the state
+	 * <p> - A listener to the {@link VirtualScrollPane#contentBoundsProperty()} to show the horizontal or vertical
+	 * scroll bars when the virtual width or height change, if the {@link VirtualScrollPane#autoHideBarsProperty()} feature is on
+	 * <p> - A listener to the {@link VirtualScrollPane#layoutModeProperty()} to change the state
 	 * of the ":compact" PseudoClass and update the layout
 	 * <p> - A listener to the bars policy properties, tha bars position properties and the bars
 	 * padding properties to update the layout
@@ -275,6 +277,16 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 			if (newValue != null) {
 				content = newValue;
 				container.getChildren().setAll(content);
+			}
+		});
+
+		sp.contentBoundsProperty().addListener((observable, oldValue, newValue) -> {
+			if (!sp.isAutoHideBars()) return;
+			if (oldValue.getVirtualWidth() != newValue.getVirtualHeight()) {
+				hShow.playFromStart();
+			}
+			if (oldValue.getVirtualHeight() != newValue.getVirtualHeight()) {
+				vShow.playFromStart();
 			}
 		});
 

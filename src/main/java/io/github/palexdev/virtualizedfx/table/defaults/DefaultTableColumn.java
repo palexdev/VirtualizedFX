@@ -39,12 +39,14 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.css.CssMetaData;
+import javafx.css.PseudoClass;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Bounds;
 import javafx.geometry.HPos;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.Skin;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 
 import java.util.List;
@@ -124,13 +126,7 @@ public class DefaultTableColumn<T, C extends TableCell<T>> extends Labeled imple
 	private void initialize() {
 		getStyleClass().setAll(STYLE_CLASS);
 		defaultCellFactory();
-
-		RegionDragResizer rdr = new RegionDragResizer(this, (node, x, y, w, h) -> {
-			node.setPrefWidth(w);
-			table.requestViewportLayout();
-		});
-		rdr.setAllowedZones(Zone.CENTER_RIGHT);
-		rdr.makeResizable();
+		setupRegionDragResizer();
 
 		MFXBindings bindings = MFXBindings.instance();
 		MappingSource<TableState<T>, Boolean> mainSource = MappingSource.<TableState<T>, Boolean>of(table.stateProperty())
@@ -181,8 +177,50 @@ public class DefaultTableColumn<T, C extends TableCell<T>> extends Labeled imple
 	/**
 	 * Sets the default cell factory. Produces cells of type {@link SimpleTableCell}.
 	 */
+	@SuppressWarnings("unchecked")
 	public void defaultCellFactory() {
 		setCellFactory(t -> (C) new SimpleTableCell<>(t, e -> e));
+	}
+
+	/**
+	 * Initializes the 'controller' responsible for resizing this column when {@link VirtualTable#columnsLayoutModeProperty()}
+	 * is set to {@link ColumnsLayoutMode#VARIABLE}.
+	 * <p></p>
+	 * By overriding this you can specify your own {@link RegionDragResizer}.
+	 */
+	protected void setupRegionDragResizer() {
+		PseudoClass dragged = PseudoClass.getPseudoClass("dragged");
+		RegionDragResizer rdr = new RegionDragResizer(this, (node, x, y, w, h) -> {
+			node.setPrefWidth(w);
+			table.requestViewportLayout();
+		}) {
+			@Override
+			protected void handleDragged(MouseEvent event) {
+				if (table == null || table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) return;
+				super.handleDragged(event);
+				pseudoClassStateChanged(dragged, true);
+			}
+
+			@Override
+			protected void handleMoved(MouseEvent event) {
+				if (table == null || table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) return;
+				super.handleMoved(event);
+			}
+
+			@Override
+			protected void handlePressed(MouseEvent event) {
+				if (table == null || table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) return;
+				super.handlePressed(event);
+			}
+
+			@Override
+			protected void handleReleased(MouseEvent event) {
+				super.handleReleased(event);
+				pseudoClassStateChanged(dragged, false);
+			}
+		};
+		rdr.setAllowedZones(Zone.CENTER_RIGHT);
+		rdr.makeResizable();
 	}
 
 	//================================================================================

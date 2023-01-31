@@ -14,6 +14,31 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.8.4] - 31-01-2023
+
+## Changed
+
+- DefaultTableColumn: improve overlay display by adding a new CSS PseudoClass ":dragged" that is enabled by the
+  RegionDragResizer when the column is being resized. Previously the resize was causing the overlay to "flicker" because
+  it was only shown when the mouse was hover the column header
+- DefaultTableColumn: moved RegionDragResizer setup to separate protected method, allowing custom implementation to
+  change it
+- VirtualScrollPaneSkin: add listener to the content bounds property to show the scroll bars when the virtual bounds
+  change
+
+## [11.8.3] - 31-01-2023
+
+## Changed
+
+- Upgraded Gradle to version 7.6
+- Re-arranged tests structure
+- Minor refactors
+- Update documentation
+
+## Fixed
+
+- Fixed issue #5, columns being removed when TableState was TableState.EMPTY
+
 ## [11.8.2] - 13-01-2023
 
 ## Fixed

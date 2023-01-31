@@ -61,10 +61,12 @@
 	-fx-font-smoothing-type: lcd;
 }
 
+.virtual-table .table-column:dragged,
 .virtual-table .table-column:hover {
 	-fx-border-color: transparent -blue-light -blue-light transparent;
 }
 
+.virtual-table .table-column:dragged .overlay,
 .virtual-table .table-column:hover .overlay {
 	visibility: visible;
 	-fx-background-color: -blue-lightest;
