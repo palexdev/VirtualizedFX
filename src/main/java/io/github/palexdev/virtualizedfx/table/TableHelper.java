@@ -416,6 +416,8 @@ public interface TableHelper {
 		 * <p>
 		 * Note that the result given by {@link #maxColumns()} to compute the index of the first column,
 		 * is clamped so that it will never be greater then the number of columns in the table.
+		 * <p></p>
+		 * Will return a range of (-1, -1) if the table has no columns.
 		 */
 		@Override
 		public IntegerRange columnsRange() {
@@ -631,7 +633,7 @@ public interface TableHelper {
 		 * The layout makes use of the current table' state, {@link VirtualTable#stateProperty()}, and the positions
 		 * computed by {@link #computePositions(TableState, boolean, boolean)}, this is invoked without forcing the re-computation.
 		 * <p>
-		 * Exits immediately if the state is {@link TableState#EMPTY}, if {@link #invalidatedPos()} returns true,
+		 * Exits immediately if the state is completely empty, {@link TableState#isEmptyAll()}, if {@link #invalidatedPos()} returns true,
 		 * or if {@link VirtualTable#needsViewportLayoutProperty()} is false.
 		 * <p></p>
 		 * Before proceeding with layout retrieves the following parameters:
@@ -655,6 +657,8 @@ public interface TableHelper {
 		 * <p></p>
 		 * For each row in the loop it also lays out the their cells. Each cell is relocated at the extracted X position
 		 * and at Y 0; and resized to the previously gathered cell height. The width is the same of the corresponding column.
+		 * <p></p>
+		 * Note that the rows layout process won't even start if the current state is half-empty, {@link TableState#empty()}.
 		 */
 		@Override
 		public void layout() {
@@ -768,7 +772,8 @@ public interface TableHelper {
 		}
 
 		/**
-		 * @return an {@link IntegerRange} made from the values of {@link #firstColumn()} and {@link #lastColumn()}
+		 * @return an {@link IntegerRange} made from the values of {@link #firstColumn()} and {@link #lastColumn()}.
+		 * Will return a range of (-1, -1) if the table has no columns
 		 */
 		@Override
 		public IntegerRange columnsRange() {
@@ -853,7 +858,7 @@ public interface TableHelper {
 		 * <p></p>
 		 * To accomplish this we need the current state of the table, {@link VirtualTable#stateProperty()},
 		 * and the index of the given column, {@link VirtualTable#getColumnIndex(TableColumn)}.
-		 * (if the state is {@link TableState#EMPTY} exits immediately).
+		 * (if the state is completely empty, {@link TableState#isEmptyAll()}, exits immediately).
 		 * <p>
 		 * We get the rows from the state and then use {@link TableRow#getWidthOf(int)} to get the preferred width
 		 * of the cell at index (same index of column). From these results we get the maximum value and this will be
@@ -986,7 +991,7 @@ public interface TableHelper {
 		 * The layout makes use of the current table' state, {@link VirtualTable#stateProperty()}, and the positions
 		 * computed by {@link #computePositions(TableState, boolean, boolean)}, this is invoked without forcing the re-computation.
 		 * <p>
-		 * Exits immediately if the state is {@link TableState#EMPTY}, if {@link #invalidatedPos()} returns true,
+		 * Exits immediately if the state is completely empty, {@link TableState#isEmptyAll()}, if {@link #invalidatedPos()} returns true,
 		 * or if {@link VirtualTable#needsViewportLayoutProperty()} is false.
 		 * <p></p>
 		 * Before proceeding with layout retrieves the following parameters:
@@ -1010,6 +1015,8 @@ public interface TableHelper {
 		 * <p></p>
 		 * For each row in the loop it also lays out their cells. Each cell is relocated at the extracted X position
 		 * and at Y 0; and resized to the previously gathered cell height. The width is the same of the corresponding column.
+		 * <p></p>
+		 * Note that the rows layout process won't even start if the current state is half-empty, {@link TableState#empty()}.
 		 */
 		@Override
 		public void layout() {
