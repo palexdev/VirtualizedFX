@@ -19,6 +19,7 @@
 package io.github.palexdev.virtualizedfx.table;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
+import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import javafx.beans.value.ChangeListener;
@@ -31,11 +32,9 @@ import javafx.geometry.VPos;
 import javafx.scene.Parent;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Default skin implementation for {@link VirtualTable}.
@@ -238,25 +237,26 @@ public class VirtualTableSkin<T> extends SkinBase<VirtualTable<T>> {
 	/**
 	 * The default implementation is responsible for updating the cContainer and rContainer children lists.
 	 * <p></p>
-	 * Columns are updated only if the range of columns of the new state is not equal to the one in the old state.
-	 * Columns are retrieved as nodes with {@link TableState#getColumnsAsNodes()}
+	 * Columns are updated only if:
+	 * <p> - The new state is completely empty, {@link TableState#isEmptyAll()}, in this case the columns container must be cleaned
+	 * <p> - The columns ranges of the two states (old and new) are not equal, in this case the columns container will
+	 * contain all the columns given by {@link TableState#getColumnsAsNodes()}
 	 * <p>
-	 * Rows are updated only if {@link TableState#haveRowsChanged()} is true, rows are retrieved with
-	 * {@link TableState#getRows()}
+	 * Rows are updated when:
+	 * <p> - The new state is empty, {@link TableState#isEmpty()}, in such case the rows container is cleared
+	 * <p> - The new state's flag indicating rows changes, {@link TableState#haveRowsChanged()}, is true, in such case the
+	 * rows container will contain all the rows given by {@link TableState#getRows()}
 	 */
 	protected void onStateChanged(TableState<T> oldValue, TableState<T> newValue) {
-		if (newValue == TableState.EMPTY) {
+		if (IntegerRange.of(-1).equals(newValue.getColumnsRange())) {
 			cContainer.getChildren().clear();
+		} else if (!oldValue.getColumnsRange().equals(newValue.getColumnsRange()) || cContainer.getChildren().isEmpty()) {
+			cContainer.getChildren().setAll(newValue.getColumnsAsNodes());
+		}
+
+		if (newValue.isEmpty()) {
 			rContainer.getChildren().clear();
-			return;
-		}
-
-		if (!oldValue.getColumnsRange().equals(newValue.getColumnsRange())) {
-			List<Region> columns = newValue.getColumnsAsNodes();
-			cContainer.getChildren().setAll(columns);
-		}
-
-		if (newValue.haveRowsChanged()) {
+		} else if (newValue.haveRowsChanged()) {
 			Collection<TableRow<T>> rows = newValue.getRows().values();
 			rContainer.getChildren().setAll(rows);
 		}

@@ -373,7 +373,7 @@ public class VirtualTable<T> extends Control implements VirtualScrollPane.Wrappa
 				manager.reset();
 			} else {
 				TableState<T> state = getState();
-				if (state == TableState.EMPTY || state.isEmpty()) return;
+				if (state.isEmpty()) return;
 				state.getRowsUnmodifiable().values().forEach(TableRow::updateItem);
 			}
 		} finally {

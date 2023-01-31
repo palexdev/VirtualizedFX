@@ -51,15 +51,14 @@ import java.util.stream.IntStream;
  * <p> - A flag specifically for the {@link PaginatedVirtualTable} to indicate whether the state also contains some
  * rows that are hidden in the viewport, {@link #anyHidden()}
  * <p></p>
- * This also contains a particular global state, {@link #EMPTY}, typically used to indicate that the viewport
- * is empty, and no state can be created.
+ * The state can be {@code empty} in two different ways:
+ * <p> 1) The table has no items
+ * <p> 2) The table has no items and no columns
+ * <p> 2a) The table has no columns
+ * For this reason there are two different methods to check the state of the viewport in such cases:
+ * {@link #isEmpty()} and {@link #isEmptyAll()}.
  */
 public class TableState<T> {
-	//================================================================================
-	// Static Members
-	//================================================================================
-	public static final TableState EMPTY = new TableState();
-
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -615,12 +614,26 @@ public class TableState<T> {
 	}
 
 	/**
-	 * @return whether the state is empty, no rows in it
+	 * @return whether the state is empty, no rows in it. Note that this will return true also when
+	 * the state is completely empty, see {@link #isEmptyAll()}
 	 */
 	public boolean isEmpty() {
 		return rows.isEmpty();
 	}
 
+	/**
+	 * @return whether the state is empty (no rows) AND the columns range is (-1, -1) (no columns).
+	 * Note that this is not an OR evaluation, as the {@code TableManager} won't create a state which has rows/items
+	 * if the table has no columns. Cells cannot be created and rendered if there isn't a column that instructs the viewport
+	 * how to build them
+	 */
+	public boolean isEmptyAll() {
+		return rows.isEmpty() && IntegerRange.of(-1).equals(columnsRange);
+	}
+
+	/**
+	 * @return whether there are hidden rows in the viewport
+	 */
 	public boolean anyHidden() {
 		if (hidden == null) {
 			TableHelper helper = table.getTableHelper();
@@ -631,6 +644,26 @@ public class TableState<T> {
 					.anyMatch(i -> !IntegerRange.inRangeOf(i, range));
 		}
 		return hidden;
+	}
+
+	//================================================================================
+	// Static Methods
+	//================================================================================
+
+	/**
+	 * Convenience method to create a completely empty state, {@link #isEmptyAll()} will return true, the
+	 * table reference is 'null'.
+	 */
+	static <T> TableState<T> empty() {
+		return new TableState<>();
+	}
+
+	/**
+	 * Convenience method to create a half-empty state, {@link #isEmpty()} will return true but {@link #isEmptyAll()}
+	 * will return false. Only the rows range is set to (-1, -1), the columns range is computed by the {@link TableHelper}.
+	 */
+	static <T> TableState<T> emptyItems(VirtualTable<T> table) {
+		return new TableState<>(table, IntegerRange.of(-1), table.getTableHelper().columnsRange());
 	}
 
 	//================================================================================

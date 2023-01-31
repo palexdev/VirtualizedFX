@@ -25,7 +25,6 @@ import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper;
 import io.github.palexdev.mfxcore.utils.fx.ListChangeHelper.Change;
 import io.github.palexdev.virtualizedfx.beans.TableStateProperty;
 import io.github.palexdev.virtualizedfx.cell.TableCell;
-import io.github.palexdev.virtualizedfx.flow.FlowState;
 import javafx.collections.ListChangeListener;
 
 import java.util.List;
@@ -46,13 +45,12 @@ import java.util.List;
  *
  * @param <T> the type of items
  */
-@SuppressWarnings({"unchecked"})
 public class TableManager<T> {
 	//================================================================================
 	// Properties
 	//================================================================================
 	private final VirtualTable<T> table;
-	private final TableStateProperty<T> state = new TableStateProperty<T>(TableState.EMPTY);
+	private final TableStateProperty<T> state = new TableStateProperty<>(TableState.empty());
 	private final IntegerRangeProperty lastRowsRange = new IntegerRangeProperty();
 	private final IntegerRangeProperty lastColumnsRange = new IntegerRangeProperty();
 	private boolean processingChange = false;
@@ -73,6 +71,11 @@ public class TableManager<T> {
 	 * So, it is a bit more than just an initialization method since this is also called for example when the viewport
 	 * size changes and cells may need to be added or removed.
 	 * <p></p>
+	 * Before any computation, there are two cases which cause this method to exit with different consequences:
+	 * <p> 1) If the table has no columns, ensures that the state is set to {@link TableState#empty()} and returns false
+	 * <p> 2) If the table has no items, ensures that the state is set to {@link TableState#emptyItems(VirtualTable)},
+	 * requests layout processing and returns true
+	 * <p></p>
 	 * The first step is to gather a series of useful information such as:
 	 * <p> - the expected range of rows, {@link TableHelper#rowsRange()}
 	 * <p> - the expected range of columns, {@link TableHelper#columnsRange()}
@@ -81,7 +84,7 @@ public class TableManager<T> {
 	 * We also ensure that the estimated size of the viewport is correct by calling {@link TableHelper#computeEstimatedSize()}.
 	 * <p></p>
 	 * The second step is to distinguish between two cases:
-	 * <p> 1) The old/current state is {@link TableState#EMPTY}
+	 * <p> 1) The old/current state is empty, {@link TableState#isEmpty()}
 	 * <p> 2) The old/current state is a valid state
 	 * <p></p>
 	 * In the first case it means that the viewport is empty. For each row in the expected rows range we add a row
@@ -99,7 +102,15 @@ public class TableManager<T> {
 	 * whether computations lead to a layout request or not, {@link VirtualTable#requestViewportLayout()}
 	 */
 	public boolean init() {
-		if (itemsEmpty() || columnsEmpty()) return false;
+		if (columnsEmpty()) {
+			setState(TableState.empty());
+			return false;
+		}
+		if (itemsEmpty()) {
+			setState(TableState.emptyItems(table));
+			table.requestViewportLayout();
+			return true;
+		}
 
 		// Pre-Computation
 		TableHelper helper = table.getTableHelper();
@@ -111,7 +122,7 @@ public class TableManager<T> {
 		TableState<T> oldState = getState();
 		TableState<T> newState = new TableState<>(table, rowsRange, columnsRange);
 
-		if (oldState == TableState.EMPTY) {
+		if (oldState.isEmpty()) {
 			for (Integer row : rowsRange) {
 				newState.addRow(row);
 			}
@@ -153,7 +164,7 @@ public class TableManager<T> {
 	 */
 	public void onVScroll() {
 		TableState<T> state = getState();
-		if (state == TableState.EMPTY || state.isEmpty() || itemsEmpty()) return;
+		if (state.isEmpty() || itemsEmpty()) return;
 
 		TableHelper helper = table.getTableHelper();
 		int rows = helper.maxRows();
@@ -180,7 +191,9 @@ public class TableManager<T> {
 	/**
 	 * This is responsible for handling horizontal scrolling.
 	 * <p>
-	 * If the current state is empty exits immediately.
+	 * The method exits immediately only if the table has no columns, since we can also have a half-empty state
+	 * (a state with no rows but with a valid columns range), we want to still allow horizontal scrolling even if no
+	 * rows are present in the viewport.
 	 * <p></p>
 	 * Before transitioning to a new state and eventually requesting a layout computation to the grid,
 	 * we must check some parameters.
@@ -196,7 +209,7 @@ public class TableManager<T> {
 	 */
 	public void onHScroll() {
 		TableState<T> state = getState();
-		if (state == TableState.EMPTY || state.isEmpty()) return;
+		if (columnsEmpty()) return;
 
 		TableHelper helper = table.getTableHelper();
 		int columns = helper.maxColumns();
@@ -225,7 +238,7 @@ public class TableManager<T> {
 	 * <p></p>
 	 * There are three separate situations:
 	 * <p> 1) The items list is empty, calls {@link #clear()} and exits
-	 * <p> 2) The current state is {@link TableState#EMPTY}, calls {@link #init()} and exits
+	 * <p> 2) The current state is empty, calls {@link #init()} and exits
 	 * <p> 3) The given change is processed by using the {@link ListChangeHelper} utility class,
 	 * then the new state is computed by using {@link TableState#processChange(Change)}, finally
 	 * {@link VirtualTable#requestViewportLayout()} is called and the last range property is updated.
@@ -239,7 +252,7 @@ public class TableManager<T> {
 				return;
 			}
 
-			if (oState == TableState.EMPTY) {
+			if (oState.isEmpty()) {
 				init();
 				return;
 			}
@@ -272,12 +285,12 @@ public class TableManager<T> {
 	}
 
 	/**
-	 * Clears the viewport. Sets the state to {@link FlowState#EMPTY}.
+	 * Clears the viewport. Sets the state to {@link TableState#emptyItems(VirtualTable)}.
 	 */
 	public void clear() {
-		getState().clear();
-		setState(TableState.EMPTY);
 		TableHelper helper = table.getTableHelper();
+		getState().clear();
+		setState(TableState.emptyItems(table));
 		helper.computeEstimatedSize();
 		helper.invalidatedPos();
 	}

@@ -150,7 +150,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   things.
 - Major refactor for VirtualGridSkin too. Actions performed by the various listeners have been moved to separate
   protected methods
-- Completely re-organized interactive tests
+- Completely re-organized app tests
 
 ## Removed
 
@@ -316,7 +316,7 @@ This to have a complete log of the changes that lead to this new version.
 - Upgraded Gradle to version 7.5.1
 - Move dependencies and plugins versions to gradle.properties
 - Moved SimpleVirtualFlow and all its components to the "unused" package (for testing and comparisons)
-- The test module now is divided in two main packages. The "interactive" package contains UI tests that the user can
+- The test module now is divided in two main packages. The "app" package contains UI tests that the user can
   interact with. The "unit" package contains traditional unit tests
 
 ## Removed

@@ -416,9 +416,12 @@ public interface TableHelper {
 		 * <p>
 		 * Note that the result given by {@link #maxColumns()} to compute the index of the first column,
 		 * is clamped so that it will never be greater then the number of columns in the table.
+		 * <p></p>
+		 * Will return a range of (-1, -1) if the table has no columns.
 		 */
 		@Override
 		public IntegerRange columnsRange() {
+			if (table.getColumns().isEmpty()) return IntegerRange.of(-1);
 			int cNum = Math.min(maxColumns(), table.getColumns().size());
 			int last = lastColumn();
 			int first = Math.max(0, last - cNum + 1);
@@ -630,7 +633,7 @@ public interface TableHelper {
 		 * The layout makes use of the current table' state, {@link VirtualTable#stateProperty()}, and the positions
 		 * computed by {@link #computePositions(TableState, boolean, boolean)}, this is invoked without forcing the re-computation.
 		 * <p>
-		 * Exits immediately if the state is {@link TableState#EMPTY}, if {@link #invalidatedPos()} returns true,
+		 * Exits immediately if the state is completely empty, {@link TableState#isEmptyAll()}, if {@link #invalidatedPos()} returns true,
 		 * or if {@link VirtualTable#needsViewportLayoutProperty()} is false.
 		 * <p></p>
 		 * Before proceeding with layout retrieves the following parameters:
@@ -654,12 +657,13 @@ public interface TableHelper {
 		 * <p></p>
 		 * For each row in the loop it also lays out the their cells. Each cell is relocated at the extracted X position
 		 * and at Y 0; and resized to the previously gathered cell height. The width is the same of the corresponding column.
+		 * <p></p>
+		 * Note that the rows layout process won't even start if the current state is half-empty, {@link TableState#empty()}.
 		 */
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state == TableState.EMPTY) return;
-
+			if (state.isEmptyAll()) return;
 			if (!table.isNeedsViewportLayout()) return;
 			if (invalidatedPos()) return;
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
@@ -671,6 +675,7 @@ public interface TableHelper {
 			List<Double> xPositions = positions.get(Orientation.HORIZONTAL);
 			int xI = xPositions.size() - 1;
 
+			// Columns layout
 			double totalW = 0.0;
 			for (Integer cIndex : columnsRange) {
 				totalW += colW;
@@ -686,27 +691,30 @@ public interface TableHelper {
 				xI--;
 			}
 
-			double cellH = table.getCellHeight();
-			double yOffset = verticalOffset();
-			List<Double> yPositions = positions.get(Orientation.VERTICAL);
-			int yI = yPositions.size() - 1;
-			for (TableRow<?> row : state.getRows().values()) {
-				xI = xPositions.size() - 1;
-				Double yPos = yPositions.get(yI);
-				double rowW = Math.max(row.size() * colW, table.getWidth());
-				row.resizeRelocate(xOffset, yPos + yOffset, rowW, cellH);
+			// Cells layout
+			if (!state.isEmpty()) {
+				double cellH = table.getCellHeight();
+				double yOffset = verticalOffset();
+				List<Double> yPositions = positions.get(Orientation.VERTICAL);
+				int yI = yPositions.size() - 1;
+				for (TableRow<?> row : state.getRows().values()) {
+					xI = xPositions.size() - 1;
+					Double yPos = yPositions.get(yI);
+					double rowW = Math.max(row.size() * colW, table.getWidth());
+					row.resizeRelocate(xOffset, yPos + yOffset, rowW, cellH);
 
-				List<TableCell<?>> cells = new ArrayList<>(row.getCells().values());
-				for (int i = 0; i < cells.size(); i++) {
-					TableCell<?> cell = cells.get(i);
-					TableColumn<?, ? extends TableCell<?>> column = table.getColumn(i);
-					Node node = cell.getNode();
-					cell.beforeLayout();
-					node.resizeRelocate(xPositions.get(xI), 0, column.getRegion().getWidth(), cellH);
-					cell.afterLayout();
-					xI--;
+					List<TableCell<?>> cells = new ArrayList<>(row.getCells().values());
+					for (int i = 0; i < cells.size(); i++) {
+						TableCell<?> cell = cells.get(i);
+						TableColumn<?, ? extends TableCell<?>> column = table.getColumn(i);
+						Node node = cell.getNode();
+						cell.beforeLayout();
+						node.resizeRelocate(xPositions.get(xI), 0, column.getRegion().getWidth(), cellH);
+						cell.afterLayout();
+						xI--;
+					}
+					yI--;
 				}
-				yI--;
 			}
 		}
 
@@ -764,10 +772,12 @@ public interface TableHelper {
 		}
 
 		/**
-		 * @return an {@link IntegerRange} made from the values of {@link #firstColumn()} and {@link #lastColumn()}
+		 * @return an {@link IntegerRange} made from the values of {@link #firstColumn()} and {@link #lastColumn()}.
+		 * Will return a range of (-1, -1) if the table has no columns
 		 */
 		@Override
 		public IntegerRange columnsRange() {
+			if (table.getColumns().isEmpty()) return IntegerRange.of(-1);
 			return IntegerRange.of(firstColumn(), lastColumn());
 		}
 
@@ -848,7 +858,7 @@ public interface TableHelper {
 		 * <p></p>
 		 * To accomplish this we need the current state of the table, {@link VirtualTable#stateProperty()},
 		 * and the index of the given column, {@link VirtualTable#getColumnIndex(TableColumn)}.
-		 * (if the state is {@link TableState#EMPTY} exits immediately).
+		 * (if the state is completely empty, {@link TableState#isEmptyAll()}, exits immediately).
 		 * <p>
 		 * We get the rows from the state and then use {@link TableRow#getWidthOf(int)} to get the preferred width
 		 * of the cell at index (same index of column). From these results we get the maximum value and this will be
@@ -861,7 +871,7 @@ public interface TableHelper {
 		@Override
 		public void autosizeColumn(TableColumn<?, ? extends TableCell<?>> column) {
 			TableState<?> state = table.getState();
-			if (state == TableState.EMPTY) return;
+			if (state.isEmptyAll()) return;
 
 			Region region = column.getRegion();
 			ObservableList<? extends TableColumn<?, ? extends TableCell<?>>> columns = table.getColumns();
@@ -944,13 +954,13 @@ public interface TableHelper {
 		 */
 		@Override
 		public Map<Orientation, List<Double>> computePositions(TableState<?> state, boolean forceXComputation, boolean forceYComputation) {
-			if (state == TableState.EMPTY || state.isEmpty()) return positions;
+			if (state.isEmptyAll()) return positions;
 			IntegerRange rowsRange = state.getRowsRange();
 			IntegerRange columnsRange = state.getColumnsRange();
 			double cellH = table.getCellHeight();
 
 			List<Double> xPositions = positions.computeIfAbsent(Orientation.HORIZONTAL, o -> new ArrayList<>());
-			if (forceXComputation || xPositions.isEmpty()) {
+			if (forceXComputation || xPositions.isEmpty() || xPositions.size() != columnsRange.diff() + 1) {
 				xPositions.clear();
 				double pos = 0;
 				for (Integer cIndex : columnsRange) {
@@ -964,7 +974,7 @@ public interface TableHelper {
 
 			List<Double> yPositions = positions.computeIfAbsent(Orientation.VERTICAL, o -> new ArrayList<>());
 			Integer rRangeDiff = rowsRange.diff();
-			if (forceYComputation || yPositions.isEmpty() || yPositions.size() != rRangeDiff + 1) {
+			if (!state.isEmpty() && (forceYComputation || yPositions.isEmpty() || yPositions.size() != rRangeDiff + 1)) {
 				yPositions.clear();
 				yPositions.addAll(DoubleStream.iterate(rRangeDiff * cellH, x -> x - cellH)
 						.limit(rRangeDiff + 1)
@@ -981,7 +991,7 @@ public interface TableHelper {
 		 * The layout makes use of the current table' state, {@link VirtualTable#stateProperty()}, and the positions
 		 * computed by {@link #computePositions(TableState, boolean, boolean)}, this is invoked without forcing the re-computation.
 		 * <p>
-		 * Exits immediately if the state is {@link TableState#EMPTY}, if {@link #invalidatedPos()} returns true,
+		 * Exits immediately if the state is completely empty, {@link TableState#isEmptyAll()}, if {@link #invalidatedPos()} returns true,
 		 * or if {@link VirtualTable#needsViewportLayoutProperty()} is false.
 		 * <p></p>
 		 * Before proceeding with layout retrieves the following parameters:
@@ -1005,12 +1015,13 @@ public interface TableHelper {
 		 * <p></p>
 		 * For each row in the loop it also lays out their cells. Each cell is relocated at the extracted X position
 		 * and at Y 0; and resized to the previously gathered cell height. The width is the same of the corresponding column.
+		 * <p></p>
+		 * Note that the rows layout process won't even start if the current state is half-empty, {@link TableState#empty()}.
 		 */
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state == TableState.EMPTY) return;
-
+			if (state.isEmptyAll()) return;
 			if (!table.isNeedsViewportLayout()) return;
 			if (invalidatedPos()) return;
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
@@ -1020,6 +1031,7 @@ public interface TableHelper {
 			List<Double> xPositions = positions.get(Orientation.HORIZONTAL);
 			int xI = 0;
 
+			// Columns layout
 			double totalW = 0.0;
 			for (Integer cIndex : columnsRange) {
 				TableColumn<?, ? extends TableCell<?>> column = table.getColumn(cIndex);
@@ -1036,27 +1048,29 @@ public interface TableHelper {
 				xI++;
 			}
 
-			double cellH = table.getCellHeight();
-			double yOffset = verticalOffset();
-			List<Double> yPositions = positions.get(Orientation.VERTICAL);
-			int yI = yPositions.size() - 1;
-			for (TableRow<?> row : state.getRows().values()) {
-				xI = 0;
-				Double yPos = yPositions.get(yI);
-				double rowW = Math.max(LayoutUtils.boundWidth(row) + table.getColumnSize().getWidth(), table.getWidth());
-				row.resizeRelocate(0, yPos + yOffset, rowW, cellH);
+			if (!state.isEmpty()) {
+				double cellH = table.getCellHeight();
+				double yOffset = verticalOffset();
+				List<Double> yPositions = positions.get(Orientation.VERTICAL);
+				int yI = yPositions.size() - 1;
+				for (TableRow<?> row : state.getRows().values()) {
+					xI = 0;
+					Double yPos = yPositions.get(yI);
+					double rowW = Math.max(LayoutUtils.boundWidth(row) + table.getColumnSize().getWidth(), table.getWidth());
+					row.resizeRelocate(0, yPos + yOffset, rowW, cellH);
 
-				List<TableCell<?>> cells = new ArrayList<>(row.getCells().values());
-				for (int i = 0; i < cells.size(); i++) {
-					TableCell<?> cell = cells.get(i);
-					TableColumn<?, ? extends TableCell<?>> column = table.getColumn(i);
-					Node node = cell.getNode();
-					cell.beforeLayout();
-					node.resizeRelocate(xPositions.get(xI), 0, column.getRegion().getWidth(), cellH);
-					cell.afterLayout();
-					xI++;
+					List<TableCell<?>> cells = new ArrayList<>(row.getCells().values());
+					for (int i = 0; i < cells.size(); i++) {
+						TableCell<?> cell = cells.get(i);
+						TableColumn<?, ? extends TableCell<?>> column = table.getColumn(i);
+						Node node = cell.getNode();
+						cell.beforeLayout();
+						node.resizeRelocate(xPositions.get(xI), 0, column.getRegion().getWidth(), cellH);
+						cell.afterLayout();
+						xI++;
+					}
+					yI--;
 				}
-				yI--;
 			}
 		}
 	}

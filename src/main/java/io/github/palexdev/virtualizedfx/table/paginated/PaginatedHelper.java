@@ -177,8 +177,7 @@ public interface PaginatedHelper extends TableHelper {
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state == TableState.EMPTY) return;
-
+			if (state.isEmptyAll()) return;
 			if (!table.isNeedsViewportLayout()) return;
 			if (invalidatedPos()) return;
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
@@ -190,6 +189,7 @@ public interface PaginatedHelper extends TableHelper {
 			List<Double> xPositions = positions.get(Orientation.HORIZONTAL);
 			int xI = xPositions.size() - 1;
 
+			// Columns layout
 			double totalW = 0.0;
 			for (Integer cIndex : columnsRange) {
 				totalW += colW;
@@ -205,29 +205,32 @@ public interface PaginatedHelper extends TableHelper {
 				xI--;
 			}
 
-			double cellH = table.getCellHeight();
-			double yOffset = verticalOffset();
-			List<Double> yPositions = positions.get(Orientation.VERTICAL);
-			int yI = yPositions.size() - 1;
-			Collection<? extends TableRow<?>> rows = state.getRowsUnmodifiable().values();
-			for (TableRow<?> row : rows) {
-				if (!row.isVisible()) continue;
-				xI = xPositions.size() - 1;
-				Double yPos = yPositions.get(yI);
-				double rowW = Math.max(row.size() * colW, table.getWidth());
-				row.resizeRelocate(xOffset, yPos + yOffset, rowW, cellH);
+			// Cells layout
+			if (!state.isEmpty()) {
+				double cellH = table.getCellHeight();
+				double yOffset = verticalOffset();
+				List<Double> yPositions = positions.get(Orientation.VERTICAL);
+				int yI = yPositions.size() - 1;
+				Collection<? extends TableRow<?>> rows = state.getRowsUnmodifiable().values();
+				for (TableRow<?> row : rows) {
+					if (!row.isVisible()) continue;
+					xI = xPositions.size() - 1;
+					Double yPos = yPositions.get(yI);
+					double rowW = Math.max(row.size() * colW, table.getWidth());
+					row.resizeRelocate(xOffset, yPos + yOffset, rowW, cellH);
 
-				List<TableCell<?>> cells = new ArrayList<>(row.getCellsUnmodifiable().values());
-				for (int i = 0; i < cells.size(); i++) {
-					TableCell<?> cell = cells.get(i);
-					TableColumn<?, ? extends TableCell<?>> column = table.getColumn(i);
-					Node node = cell.getNode();
-					cell.beforeLayout();
-					node.resizeRelocate(xPositions.get(xI), 0, column.getRegion().getWidth(), cellH);
-					cell.afterLayout();
-					xI--;
+					List<TableCell<?>> cells = new ArrayList<>(row.getCellsUnmodifiable().values());
+					for (int i = 0; i < cells.size(); i++) {
+						TableCell<?> cell = cells.get(i);
+						TableColumn<?, ? extends TableCell<?>> column = table.getColumn(i);
+						Node node = cell.getNode();
+						cell.beforeLayout();
+						node.resizeRelocate(xPositions.get(xI), 0, column.getRegion().getWidth(), cellH);
+						cell.afterLayout();
+						xI--;
+					}
+					yI--;
 				}
-				yI--;
 			}
 		}
 
@@ -384,8 +387,7 @@ public interface PaginatedHelper extends TableHelper {
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state == TableState.EMPTY) return;
-
+			if (state.isEmptyAll()) return;
 			if (!table.isNeedsViewportLayout()) return;
 			if (invalidatedPos()) return;
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
@@ -395,6 +397,7 @@ public interface PaginatedHelper extends TableHelper {
 			List<Double> xPositions = positions.get(Orientation.HORIZONTAL);
 			int xI = 0;
 
+			// Columns layout
 			double totalW = 0.0;
 			for (Integer cIndex : columnsRange) {
 				TableColumn<?, ? extends TableCell<?>> column = table.getColumn(cIndex);
@@ -411,29 +414,32 @@ public interface PaginatedHelper extends TableHelper {
 				xI++;
 			}
 
-			double cellH = table.getCellHeight();
-			double yOffset = verticalOffset();
-			List<Double> yPositions = positions.get(Orientation.VERTICAL);
-			int yI = yPositions.size() - 1;
-			Collection<? extends TableRow<?>> rows = state.getRowsUnmodifiable().values();
-			for (TableRow<?> row : rows) {
-				if (!row.isVisible()) continue;
-				xI = 0;
-				Double yPos = yPositions.get(yI);
-				double rowW = Math.max(LayoutUtils.boundWidth(row) + table.getColumnSize().getWidth(), table.getWidth());
-				row.resizeRelocate(0, yPos + yOffset, rowW, cellH);
+			// Cells layout
+			if (!state.isEmpty()) {
+				double cellH = table.getCellHeight();
+				double yOffset = verticalOffset();
+				List<Double> yPositions = positions.get(Orientation.VERTICAL);
+				int yI = yPositions.size() - 1;
+				Collection<? extends TableRow<?>> rows = state.getRowsUnmodifiable().values();
+				for (TableRow<?> row : rows) {
+					if (!row.isVisible()) continue;
+					xI = 0;
+					Double yPos = yPositions.get(yI);
+					double rowW = Math.max(LayoutUtils.boundWidth(row) + table.getColumnSize().getWidth(), table.getWidth());
+					row.resizeRelocate(0, yPos + yOffset, rowW, cellH);
 
-				List<TableCell<?>> cells = new ArrayList<>(row.getCellsUnmodifiable().values());
-				for (int i = 0; i < cells.size(); i++) {
-					TableCell<?> cell = cells.get(i);
-					TableColumn<?, ? extends TableCell<?>> column = table.getColumn(i);
-					Node node = cell.getNode();
-					cell.beforeLayout();
-					node.resizeRelocate(xPositions.get(xI), 0, column.getRegion().getWidth(), cellH);
-					cell.afterLayout();
-					xI++;
+					List<TableCell<?>> cells = new ArrayList<>(row.getCellsUnmodifiable().values());
+					for (int i = 0; i < cells.size(); i++) {
+						TableCell<?> cell = cells.get(i);
+						TableColumn<?, ? extends TableCell<?>> column = table.getColumn(i);
+						Node node = cell.getNode();
+						cell.beforeLayout();
+						node.resizeRelocate(xPositions.get(xI), 0, column.getRegion().getWidth(), cellH);
+						cell.afterLayout();
+						xI++;
+					}
+					yI--;
 				}
-				yI--;
 			}
 		}
 
