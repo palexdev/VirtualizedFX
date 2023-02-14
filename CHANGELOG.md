@@ -22,7 +22,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Changed
 
-- Improve fix introduced by #8, avoid unnecessary computation if both ranges are equal but target size must be updated
+- Merge fix from [#8](https://github.com/palexdev/VirtualizedFX/pull/8) and improve it to avoid unnecessary computation if both ranges are equal but target size must be updated
 
 ## [11.8.4] - 31-01-2023
 
