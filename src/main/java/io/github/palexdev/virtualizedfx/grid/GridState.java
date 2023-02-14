@@ -94,7 +94,7 @@ public class GridState<T, C extends GridCell<T>> {
 	 * Responsible for filling the viewport the needed amount of rows/cells. So this may supply or remove
 	 * cells according to the viewport size.
 	 * <p>
-	 * If the given ranges for rows and columns are the same as the ones of the state then the old state is returned.
+	 * If the given ranges for rows and columns and viewport sizes are the same as the ones of the state then the old state is returned.
 	 * <p>
 	 * This is used by {@link GridManager#init()}.
 	 *
@@ -102,7 +102,8 @@ public class GridState<T, C extends GridCell<T>> {
 	 * a new one given the new ranges for rows and columns
 	 */
 	protected GridState<T, C> init(IntegerRange rowsRange, IntegerRange columnsRange) {
-		if (this.rowsRange.equals(rowsRange) && this.columnsRange.equals(columnsRange)) return this;
+		int maxRows = grid.getGridHelper().maxRows();
+		if (this.rowsRange.equals(rowsRange) && this.columnsRange.equals(columnsRange) && targetSize == maxRows) return this;
 
 		GridState<T, C> newState = new GridState<>(grid, rowsRange, columnsRange);
 		Set<Integer> range = IntegerRange.expandRangeToSet(rowsRange);
