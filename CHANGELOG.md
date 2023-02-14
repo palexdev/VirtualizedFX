@@ -14,6 +14,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.8.5] - 14-02-2023
+
+## Added
+
+- Introduce tests for Grid to avoid regressions
+
+## Changed
+
+- Improve fix introduced by #8, avoid unnecessary computation if both ranges are equal but target size must be updated
+
 ## [11.8.4] - 31-01-2023
 
 ## Changed
