@@ -58,7 +58,7 @@ tabular data in some way.
 
 <h3 align="center">VirtualTable</h3>
 VirtualTable is the basic implementation of a virtualized Table offered by VirtualizedFX. This is the
-idea control to display tabular data. Even though the basics are the same as VirtualFlow, the table's
+ideal control to display tabular data. Even though the basics are the same as VirtualFlow, the table's
 structure and mechanism is actually more complex.
 
 - Just like for VirtualFlow, Cells are just dumb objects. The cell system is the same but the API
@@ -127,7 +127,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'io.github.palexdev:virtualizedfx:11.8.4'
+  implementation 'io.github.palexdev:virtualizedfx:11.8.5'
 }
 ```
 
@@ -138,7 +138,7 @@ dependencies {
 <dependency>
     <groupId>io.github.palexdev</groupId>
   <artifactId>virtualizedfx</artifactId>
-  <version>11.8.4</version>
+  <version>11.8.5</version>
 </dependency>
 ```
 
