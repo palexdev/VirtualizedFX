@@ -4,7 +4,7 @@ module VirtualizedFX {
 	requires transitive javafx.controls;
 
 	requires transitive MFXCore;
-	requires transitive MFXResources;
+	requires transitive mfx.resources;
 
 	// Base Package
 	exports io.github.palexdev.virtualizedfx;

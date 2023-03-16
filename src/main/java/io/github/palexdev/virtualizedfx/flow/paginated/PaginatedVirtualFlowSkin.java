@@ -18,6 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.flow.paginated;
 
+import io.github.palexdev.mfxcore.utils.fx.NodeUtils;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.flow.VirtualFlowSkin;
 import javafx.collections.ListChangeListener;
@@ -37,6 +38,7 @@ public class PaginatedVirtualFlowSkin<T, C extends Cell<T>> extends VirtualFlowS
 	//================================================================================
 	public PaginatedVirtualFlowSkin(PaginatedVirtualFlow<T, C> virtualFlow) {
 		super(virtualFlow);
+		NodeUtils.waitForSkin(virtualFlow, virtualFlow::updateMaxPage, false, true);
 	}
 
 	//================================================================================

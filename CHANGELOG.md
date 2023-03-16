@@ -14,6 +14,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.9.0] - 16-03-2023
+
+## Changed
+
+- Upgrade MFXResources to version 11.2.0. This should fix issues when using newer versions of VirtualizedFX in
+  combination with MaterialFX
+
+## Fixed
+
+- PaginatedVirtualFlow was not reporting the correct number of pages at init because of a missed init line in the skin
+
 ## [11.8.5] - 14-02-2023
 
 ## Added
@@ -22,7 +33,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Changed
 
-- Merge fix from [#8](https://github.com/palexdev/VirtualizedFX/pull/8) and improve it to avoid unnecessary computation if both ranges are equal but target size must be updated
+- Merge fix from [#8](https://github.com/palexdev/VirtualizedFX/pull/8) and improve it to avoid unnecessary computation
+  if both ranges are equal but target size must be updated
 
 ## [11.8.4] - 31-01-2023
 

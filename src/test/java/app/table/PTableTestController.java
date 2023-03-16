@@ -97,28 +97,28 @@ public class PTableTestController implements Initializable {
 		// Footer
 		// TODO spinner models are absolute garbage
 		MFXIconWrapper goFirst = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().setDescription("mfx-step-backward").setSize(16).get())
+				.setIcon(IconBuilder.build().setDescription("fas-backward-step").setSize(16).get())
 				.setSize(32)
 				.defaultRippleGeneratorBehavior()
 				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> table.goToFirstPage()).getNode();
 		NodeUtils.makeRegionCircular(goFirst);
 
 		MFXIconWrapper goBack = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().setDescription("mfx-caret-left").setSize(16).get())
+				.setIcon(IconBuilder.build().setDescription("fas-caret-left").setSize(16).get())
 				.setSize(32)
 				.defaultRippleGeneratorBehavior()
 				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> table.setCurrentPage(Math.max(1, table.getCurrentPage() - 1))).getNode();
 		NodeUtils.makeRegionCircular(goBack);
 
 		MFXIconWrapper goForward = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().setDescription("mfx-caret-right").setSize(16).get())
+				.setIcon(IconBuilder.build().setDescription("fas-caret-right").setSize(16).get())
 				.setSize(32)
 				.defaultRippleGeneratorBehavior()
 				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> table.setCurrentPage(table.getCurrentPage() + 1)).getNode();
 		NodeUtils.makeRegionCircular(goForward);
 
 		MFXIconWrapper goLast = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().setDescription("mfx-step-forward").setSize(16).get())
+				.setIcon(IconBuilder.build().setDescription("fas-forward-step").setSize(16).get())
 				.setSize(32)
 				.defaultRippleGeneratorBehavior()
 				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> table.goToLastPage()).getNode();

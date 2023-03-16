@@ -22,7 +22,7 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.builders.nodes.IconWrapperBuilder;
 import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
-import io.github.palexdev.mfxresources.font.MFXFontIcon;
+import io.github.palexdev.mfxresources.fonts.IconsProviders;
 import javafx.geometry.HPos;
 import javafx.geometry.VPos;
 import javafx.scene.paint.Color;
@@ -38,7 +38,7 @@ public class DetailedCell extends CommonCell {
 		super(item);
 
 		icon = IconWrapperBuilder.build()
-				.setIcon(MFXFontIcon.getRandomIcon(12, Color.LAWNGREEN))
+				.setIcon(IconsProviders.FONTAWESOME_SOLID.randomIcon(12, Color.LAWNGREEN))
 				.setSize(16)
 				.setManaged(false)
 				.getNode();

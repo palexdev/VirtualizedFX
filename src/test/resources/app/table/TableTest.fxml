@@ -22,7 +22,7 @@
 <?import io.github.palexdev.materialfx.controls.MFXFilterComboBox?>
 <?import io.github.palexdev.materialfx.controls.MFXTitledPane?>
 <?import io.github.palexdev.mfxcore.controls.MFXIconWrapper?>
-<?import io.github.palexdev.mfxresources.font.MFXFontIcon?>
+<?import io.github.palexdev.mfxresources.fonts.MFXFontIcon?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.*?>
 <StackPane id="rootPane" fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"

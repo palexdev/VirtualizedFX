@@ -73,9 +73,9 @@
 }
 
 #runIcon .mfx-font-icon {
-	-mfx-color: -green;
-	-mfx-size: 20;
-	-mfx-description: "mfx-caret-right";
+  -mfx-color: -green;
+  -mfx-size: 20;
+  -mfx-description: "fas-caret-right";
 }
 
 #runIcon .mfx-ripple-generator {

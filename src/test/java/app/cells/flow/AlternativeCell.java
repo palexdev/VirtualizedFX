@@ -19,7 +19,7 @@
 package app.cells.flow;
 
 import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
-import io.github.palexdev.mfxresources.font.MFXFontIcon;
+import io.github.palexdev.mfxresources.fonts.IconsProviders;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 
@@ -34,7 +34,7 @@ public class AlternativeCell extends CommonCell {
 	}
 
 	private Node randomIcon() {
-		return MFXFontIcon.getRandomIcon(18, Color.web("#35ce8f"));
+		return IconsProviders.FONTAWESOME_SOLID.randomIcon(18, Color.web("#35ce8f"));
 	}
 
 	@Override

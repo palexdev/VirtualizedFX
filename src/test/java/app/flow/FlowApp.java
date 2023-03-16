@@ -19,6 +19,7 @@
 package app.flow;
 
 import app.Tests;
+import fr.brouillard.oss.cssfx.CSSFX;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -28,6 +29,7 @@ public class FlowApp extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		CSSFX.start();
 		Scene scene = new Scene(Tests.FLOW.load());
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("VirtualFlow Comparison Test");

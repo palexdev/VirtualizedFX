@@ -20,7 +20,7 @@
 
 <?import io.github.palexdev.materialfx.controls.MFXFilterComboBox?>
 <?import io.github.palexdev.mfxcore.controls.MFXIconWrapper?>
-<?import io.github.palexdev.mfxresources.font.MFXFontIcon?>
+<?import io.github.palexdev.mfxresources.fonts.MFXFontIcon?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.*?>
 <StackPane id="rootPane" fx:id="rootPane" stylesheets="@PFlowTest.css" xmlns="http://javafx.com/javafx/18"
@@ -33,7 +33,7 @@
             <MFXFilterComboBox fx:id="actionsBox" floatingText="Action"/>
             <MFXIconWrapper fx:id="runIcon" size="27.0">
                 <icon>
-                    <MFXFontIcon description="mfx-caret-right" size="24.0"/>
+                    <MFXFontIcon description="fas-caret-right" size="24.0"/>
                 </icon>
                 <HBox.margin>
                     <Insets left="5.0"/>

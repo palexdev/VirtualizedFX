@@ -68,17 +68,17 @@
 }
 
 .mfx-scroll-bar:vertical .decrement-icon .mfx-font-icon {
-	-mfx-description: "mfx-angle-up";
+	-mfx-description: "fas-angle-up";
 }
 
 .mfx-scroll-bar:vertical .increment-icon .mfx-font-icon {
-	-mfx-description: "mfx-angle-down";
+	-mfx-description: "fas-angle-down";
 }
 
 .mfx-scroll-bar:horizontal .decrement-icon .mfx-font-icon {
-	-mfx-description: "mfx-angle-left";
+	-mfx-description: "fas-angle-left";
 }
 
 .mfx-scroll-bar:horizontal .increment-icon .mfx-font-icon {
-	-mfx-description: "mfx-angle-right";
+	-mfx-description: "fas-angle-right";
 }

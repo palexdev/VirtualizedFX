@@ -20,11 +20,11 @@ package app.cells.grid;
 
 import app.cells.CellsDebugger;
 import io.github.palexdev.materialfx.factories.InsetsFactory;
-import io.github.palexdev.materialfx.font.FontResources;
 import io.github.palexdev.mfxcore.collections.Grid;
 import io.github.palexdev.mfxcore.utils.EnumUtils;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
-import io.github.palexdev.mfxresources.font.MFXFontIcon;
+import io.github.palexdev.mfxresources.fonts.MFXFontIcon;
+import io.github.palexdev.mfxresources.fonts.fontawesome.FontAwesomeSolid;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -62,7 +62,7 @@ public class AlternativeGridCell extends VBox implements GridCell<Integer> {
 	public void updateItem(Integer item) {
 		this.item = item;
 		updateLabel();
-		icon.setDescription(EnumUtils.randomEnum(FontResources.class).getDescription());
+		icon.setDescription(EnumUtils.randomEnum(FontAwesomeSolid.class).getDescription());
 		icon.setColor(ColorUtils.getRandomColor());
 		CellsDebugger.randBackground(this, 0.3, item, 1, 0);
 	}

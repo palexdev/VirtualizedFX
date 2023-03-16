@@ -23,7 +23,7 @@
 <?import io.github.palexdev.materialfx.controls.MFXTextField?>
 <?import io.github.palexdev.materialfx.controls.MFXTitledPane?>
 <?import io.github.palexdev.mfxcore.controls.MFXIconWrapper?>
-<?import io.github.palexdev.mfxresources.font.MFXFontIcon?>
+<?import io.github.palexdev.mfxresources.fonts.MFXFontIcon?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.SplitPane?>
@@ -44,7 +44,7 @@
             <MFXFilterComboBox id="actionsBox" fx:id="actionsBox" floatMode="DISABLED" scrollOnOpen="true"/>
             <MFXIconWrapper id="runIcon" fx:id="runIcon" size="27.0">
                 <icon>
-                    <MFXFontIcon description="mfx-caret-right" size="24.0"/>
+                    <MFXFontIcon description="fas-caret-right" size="24.0"/>
                 </icon>
                 <HBox.margin>
                     <Insets left="5.0"/>
@@ -52,7 +52,7 @@
             </MFXIconWrapper>
             <MFXIconWrapper id="switchIcon" fx:id="switchIcon" size="27.0">
                 <icon>
-                    <MFXFontIcon description="mfx-sync" size="15.0"/>
+                    <MFXFontIcon description="fas-rotate" size="15.0"/>
                 </icon>
                 <HBox.margin>
                     <Insets left="5.0"/>
