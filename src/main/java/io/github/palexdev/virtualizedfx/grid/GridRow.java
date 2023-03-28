@@ -130,7 +130,7 @@ public class GridRow<T, C extends GridCell<T>> {
 			T item = grid.getItems().getElement(linear);
 			C cell;
 			if (oIndex != null) {
-				cell = cells.remove(rIndex);
+				cell = cells.remove(oIndex);
 				cell.updateItem(item);
 			} else {
 				cell = grid.getCellFactory().apply(item);

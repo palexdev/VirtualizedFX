@@ -10,6 +10,7 @@ import io.github.palexdev.virtualizedfx.grid.GridRow;
 import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -28,8 +29,7 @@ import org.testfx.framework.junit5.Start;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(ApplicationExtension.class)
 public class GridTests {
@@ -39,6 +39,45 @@ public class GridTests {
 	void start(Stage stage) {
 		GridTests.stage = stage;
 		stage.show();
+	}
+
+	@Test
+	void testDoesntBreakOnZoom(FxRobot robot) {
+		double width = 640;
+		double height = 480;
+		DoubleProperty scale = new SimpleDoubleProperty(1.0);
+
+		List<Color> colors = IntStream.range(0, 40)
+				.mapToObj(i -> ColorUtils.getRandomColor())
+				.toList();
+		ObservableGrid<Color> data = ObservableGrid.fromList(colors, 5);
+		VirtualGrid<Color, ScalingCell> grid = new VirtualGrid<>(
+				data,
+				c -> new ScalingCell(c, width, height, scale)
+		);
+		grid.setCellSize(Size.of(width, height));
+		scale.addListener(i -> grid.setCellSize(Size.of(
+				width * scale.get(),
+				height * scale.get()
+		)));
+
+
+		Button btn0 = new Button("-");
+		Button btn1 = new Button("+");
+		btn0.setOnAction(e -> scale.set(scale.get() / 1.15));
+		btn1.setOnAction(e -> scale.set(10));
+		BorderPane root = new BorderPane(grid, null, btn1, null, btn0);
+		setupStage(root, new Size(500, 400));
+
+
+		robot.clickOn(btn1);
+
+		grid.scrollToColumn(2);
+		grid.scrollBy(200, Orientation.HORIZONTAL);
+
+		while (scale.getValue() > 7) {
+			assertDoesNotThrow(() -> robot.clickOn(btn0));
+		}
 	}
 
 	@Test
