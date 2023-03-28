@@ -81,6 +81,44 @@ public class GridTests {
 	}
 
 	@Test
+	void testKeepPositionOnZoom(FxRobot robot) {
+		double width = 640;
+		double height = 480;
+		DoubleProperty scale = new SimpleDoubleProperty(1.0);
+
+		List<Color> colors = IntStream.range(0, 40)
+				.mapToObj(i -> ColorUtils.getRandomColor())
+				.toList();
+		ObservableGrid<Color> data = ObservableGrid.fromList(colors, 5);
+		VirtualGrid<Color, ScalingCell> grid = new VirtualGrid<>(
+				data,
+				c -> new ScalingCell(c, width, height, scale)
+		);
+		grid.setCellSize(Size.of(width, height));
+		scale.addListener(i -> grid.setCellSize(Size.of(
+				width * scale.get(),
+				height * scale.get()
+		)));
+
+
+		Button btn0 = new Button("-");
+		btn0.setOnAction(e -> scale.set(scale.get() / 1.15));
+		BorderPane root = new BorderPane(grid, null, null, null, btn0);
+		setupStage(root, new Size(500, 400));
+
+		grid.scrollToColumn(2);
+		grid.scrollBy(200, Orientation.HORIZONTAL);
+
+		int initialFirstColumn = grid.getGridHelper().firstColumn();
+		int initialLastColumn = grid.getGridHelper().lastColumn();
+
+		robot.clickOn(btn0);
+
+		assertEquals(initialFirstColumn, grid.getGridHelper().firstColumn());
+		assertEquals(initialLastColumn, grid.getGridHelper().lastColumn());
+	}
+
+	@Test
 	void testCorrectLayoutWithScale(FxRobot robot) {
 		double width = 595.50;
 		double height = 446.629;
