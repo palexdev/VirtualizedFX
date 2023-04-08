@@ -20,11 +20,11 @@ package app.cells;
 
 import io.github.palexdev.materialfx.factories.CornerRadiusFactory;
 import io.github.palexdev.materialfx.factories.InsetsFactory;
-import io.github.palexdev.mfxcore.animations.Animations;
-import io.github.palexdev.mfxcore.animations.ConsumerTransition;
-import io.github.palexdev.mfxcore.animations.Interpolators;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
+import io.github.palexdev.mfxeffects.animations.Animations;
+import io.github.palexdev.mfxeffects.animations.ConsumerTransition;
+import io.github.palexdev.mfxeffects.enums.Interpolators;
 import javafx.animation.Animation;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;

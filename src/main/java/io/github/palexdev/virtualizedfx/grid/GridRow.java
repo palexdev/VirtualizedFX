@@ -130,7 +130,7 @@ public class GridRow<T, C extends GridCell<T>> {
 			T item = grid.getItems().getElement(linear);
 			C cell;
 			if (oIndex != null) {
-				cell = cells.remove(rIndex);
+				cell = cells.remove(oIndex);
 				cell.updateItem(item);
 			} else {
 				cell = grid.getCellFactory().apply(item);
@@ -571,109 +571,109 @@ public class GridRow<T, C extends GridCell<T>> {
 	//================================================================================
 	// Ignore
 	//================================================================================
-	/*
-	// This is the old onColumnsAdd() algorithm implementation before refactoring to a common
-	// solution for both index = 0 and index > 0
-	protected void onColumnAdd(int column, IntegerRange range) {
-		Map<Integer, C> processed = new HashMap<>();
-		Set<Integer> available = new HashSet<>(cells.keySet());
-		int targetSize = columns.diff() + 1;
-		Iterator<Map.Entry<Integer, C>> it;
+    /*
+    // This is the old onColumnsAdd() algorithm implementation before refactoring to a common
+    // solution for both index = 0 and index > 0
+    protected void onColumnAdd(int column, IntegerRange range) {
+        Map<Integer, C> processed = new HashMap<>();
+        Set<Integer> available = new HashSet<>(cells.keySet());
+        int targetSize = columns.diff() + 1;
+        Iterator<Map.Entry<Integer, C>> it;
 
-		if (index == 0) {
-			// Before change index
-			for (int i = columns.getMin(); i < column; i++) {
-				processed.put(i, cells.remove(i));
-				available.remove(i);
-			}
+        if (index == 0) {
+            // Before change index
+            for (int i = columns.getMin(); i < column; i++) {
+                processed.put(i, cells.remove(i));
+                available.remove(i);
+            }
 
-			// After change index
-			it = cells.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<Integer, C> next = it.next();
-				int cIndex = next.getKey();
-				int newIndex = cIndex + 1;
-				if (!IntegerRange.inRangeOf(newIndex, columns) || (newIndex >= columns.getMin() && newIndex < column)) {
-					continue;
-				}
+            // After change index
+            it = cells.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Integer, C> next = it.next();
+                int cIndex = next.getKey();
+                int newIndex = cIndex + 1;
+                if (!IntegerRange.inRangeOf(newIndex, columns) || (newIndex >= columns.getMin() && newIndex < column)) {
+                    continue;
+                }
 
-				C cell = next.getValue();
-				cell.updateIndex(newIndex); // For row 0, linear and coordinate are the same
-				cell.updateCoordinates(index, newIndex);
-				processed.put(newIndex, cell);
-				available.remove(cIndex);
-				it.remove();
-			}
+                C cell = next.getValue();
+                cell.updateIndex(newIndex); // For row 0, linear and coordinate are the same
+                cell.updateCoordinates(index, newIndex);
+                processed.put(newIndex, cell);
+                available.remove(cIndex);
+                it.remove();
+            }
 
-			// Remaining
-			if (processed.size() != targetSize) {
-				Integer oIndex = new ArrayDeque<>(available).poll();
-				C cell;
-				T item = grid.getItems().getElement(column); // For row 0, linear and coordinate are the same
-				if (oIndex != null) {
-					cell = cells.remove(oIndex);
-					cell.updateItem(item);
-				} else {
-					cell = grid.getCellFactory().apply(item);
-				}
-				cell.updateIndex(column);
-				cell.updateCoordinates(index, column);
-				processed.put(column, cell);
-			}
+            // Remaining
+            if (processed.size() != targetSize) {
+                Integer oIndex = new ArrayDeque<>(available).poll();
+                C cell;
+                T item = grid.getItems().getElement(column); // For row 0, linear and coordinate are the same
+                if (oIndex != null) {
+                    cell = cells.remove(oIndex);
+                    cell.updateItem(item);
+                } else {
+                    cell = grid.getCellFactory().apply(item);
+                }
+                cell.updateIndex(column);
+                cell.updateCoordinates(index, column);
+                processed.put(column, cell);
+            }
 
-			clear();
-			cells.putAll(processed);
-			this.columns = columns;
-			return;
-		}
+            clear();
+            cells.putAll(processed);
+            this.columns = columns;
+            return;
+        }
 
-		// Before change index
-		for (int i = columns.getMin(); i < column; i++) {
-			int linear = toLinear(index, i);
-			C cell = cells.remove(i);
-			cell.updateIndex(linear);
-			processed.put(i, cell);
-			available.remove(i);
-		}
+        // Before change index
+        for (int i = columns.getMin(); i < column; i++) {
+            int linear = toLinear(index, i);
+            C cell = cells.remove(i);
+            cell.updateIndex(linear);
+            processed.put(i, cell);
+            available.remove(i);
+        }
 
-		// After change index
-		it = cells.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry<Integer, C> next = it.next();
-			int cIndex = next.getKey();
-			int newIndex = cIndex + 1;
-			if (!IntegerRange.inRangeOf(newIndex, columns) || (newIndex >= columns.getMin() && newIndex < column)) {
-				continue;
-			}
+        // After change index
+        it = cells.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Integer, C> next = it.next();
+            int cIndex = next.getKey();
+            int newIndex = cIndex + 1;
+            if (!IntegerRange.inRangeOf(newIndex, columns) || (newIndex >= columns.getMin() && newIndex < column)) {
+                continue;
+            }
 
-			C cell = next.getValue();
-			cell.updateIndex(toLinear(index, newIndex));
-			cell.updateCoordinates(index, newIndex);
-			processed.put(newIndex, cell);
-			available.remove(cIndex);
-			it.remove();
-		}
+            C cell = next.getValue();
+            cell.updateIndex(toLinear(index, newIndex));
+            cell.updateCoordinates(index, newIndex);
+            processed.put(newIndex, cell);
+            available.remove(cIndex);
+            it.remove();
+        }
 
-		// Remaining
-		if (processed.size() != targetSize) {
-			Integer oIndex = new ArrayDeque<>(available).poll();
-			int linear = toLinear(index, column);
-			T item = grid.getItems().getElement(linear);
-			C cell;
-			if (oIndex != null) {
-				cell = cells.remove(oIndex);
-				cell.updateItem(item);
-			} else {
-				cell = grid.getCellFactory().apply(item);
-			}
-			cell.updateIndex(linear);
-			cell.updateCoordinates(index, column);
-			processed.put(column, cell);
-		}
+        // Remaining
+        if (processed.size() != targetSize) {
+            Integer oIndex = new ArrayDeque<>(available).poll();
+            int linear = toLinear(index, column);
+            T item = grid.getItems().getElement(linear);
+            C cell;
+            if (oIndex != null) {
+                cell = cells.remove(oIndex);
+                cell.updateItem(item);
+            } else {
+                cell = grid.getCellFactory().apply(item);
+            }
+            cell.updateIndex(linear);
+            cell.updateCoordinates(index, column);
+            processed.put(column, cell);
+        }
 
-		clear();
-		cells.putAll(processed);
-		this.columns = columns;
-	}
-	*/
+        clear();
+        cells.putAll(processed);
+        this.columns = columns;
+    }
+    */
 }

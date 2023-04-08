@@ -20,16 +20,14 @@
 
 <?import io.github.palexdev.materialfx.controls.MFXCheckbox?>
 <?import io.github.palexdev.materialfx.controls.MFXFilterComboBox?>
-<?import io.github.palexdev.materialfx.controls.MFXTextField?>
 <?import io.github.palexdev.materialfx.controls.MFXTitledPane?>
-<?import io.github.palexdev.mfxcore.controls.MFXIconWrapper?>
+<?import io.github.palexdev.materialfx.controls.MFXTextField?>
 <?import io.github.palexdev.mfxresources.fonts.MFXFontIcon?>
+<?import io.github.palexdev.mfxresources.fonts.MFXIconWrapper?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.layout.*?>
-
-<StackPane id="rootPane" fx:id="rootPane" stylesheets="@FlowTest.css" xmlns="http://javafx.com/javafx/19"
+<?import javafx.scene.layout.*?><StackPane id="rootPane" fx:id="rootPane" stylesheets="@FlowTest.css" xmlns="http://javafx.com/javafx/19"
            xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.flow.FlowTestController">
     <VBox prefHeight="900.0" prefWidth="1440.0">
         <HBox id="actionsPane" alignment="CENTER" minHeight="60.0" spacing="15.0">

@@ -19,8 +19,8 @@
 package app.cells.flow;
 
 import app.cells.CellsDebugger;
-import io.github.palexdev.mfxcore.animations.Animations;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
+import io.github.palexdev.mfxeffects.animations.Animations;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import javafx.animation.Animation;
 import javafx.geometry.Pos;
@@ -32,77 +32,77 @@ import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
 
 public abstract class CommonCell extends HBox implements Cell<Integer> {
-	protected final Label label;
-	protected Integer item;
-	protected int index;
-	protected Animation bAnimation;
+    protected final Label label;
+    protected Integer item;
+    protected int index;
+    protected Animation bAnimation;
 
-	public CommonCell(Integer item) {
-		this.item = item;
-		label = new Label(dataToString());
-		label.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    public CommonCell(Integer item) {
+        this.item = item;
+        label = new Label(dataToString());
+        label.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-		setPrefSize(64, 64);
-		setAlignment(Pos.CENTER_LEFT);
-		setHgrow(label, Priority.ALWAYS);
-		getStyleClass().add("cell");
-		getChildren().setAll(label);
+        setPrefSize(64, 64);
+        setAlignment(Pos.CENTER_LEFT);
+        setHgrow(label, Priority.ALWAYS);
+        getStyleClass().add("cell");
+        getChildren().setAll(label);
 
-		StyleUtils.setBackground(this, Color.TRANSPARENT);
+        StyleUtils.setBackground(this, Color.TRANSPARENT);
 
-		addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-			updateItem(item);
-			Animations.PauseBuilder.build()
-					.setDuration(GlobalCellParameters.getAnimationDuration())
-					.setOnFinished(end -> {
-						if (bAnimation != null && Animations.isStopped(bAnimation))
-							StyleUtils.setBackground(this, Color.TRANSPARENT);
-					})
-					.getAnimation()
-					.play();
-		});
+        addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            updateItem(item);
+            Animations.PauseBuilder.build()
+                    .setDuration(GlobalCellParameters.getAnimationDuration())
+                    .setOnFinished(end -> {
+                        if (bAnimation != null && Animations.isStopped(bAnimation))
+                            StyleUtils.setBackground(this, Color.TRANSPARENT);
+                    })
+                    .getAnimation()
+                    .play();
+        });
 
-		addEventFilter(MouseEvent.MOUSE_EXITED, event -> {
-			if (bAnimation != null && !Animations.isPlaying(bAnimation))
-				StyleUtils.setBackground(this, Color.TRANSPARENT);
-		});
-	}
+        addEventFilter(MouseEvent.MOUSE_EXITED, event -> {
+            if (bAnimation != null && !Animations.isPlaying(bAnimation))
+                StyleUtils.setBackground(this, Color.TRANSPARENT);
+        });
+    }
 
-	@Override
-	public Node getNode() {
-		return this;
-	}
+    @Override
+    public Node getNode() {
+        return this;
+    }
 
-	@Override
-	public void updateIndex(int index) {
-		this.index = index;
-		label.setText(dataToString());
-	}
+    @Override
+    public void updateIndex(int index) {
+        this.index = index;
+        label.setText(dataToString());
+    }
 
-	@Override
-	public void updateItem(Integer item) {
-		this.item = item;
-		label.setText(dataToString());
+    @Override
+    public void updateItem(Integer item) {
+        this.item = item;
+        label.setText(dataToString());
 
-		if (bAnimation != null && Animations.isPlaying(bAnimation)) {
-			bAnimation.stop();
-			StyleUtils.setBackground(this, Color.TRANSPARENT);
-		}
+        if (bAnimation != null && Animations.isPlaying(bAnimation)) {
+            bAnimation.stop();
+            StyleUtils.setBackground(this, Color.TRANSPARENT);
+        }
 
-		if (GlobalCellParameters.isAnimEnabled()) {
-			bAnimation = CellsDebugger.animateBackground(this, GlobalCellParameters.getAnimationDuration());
-			bAnimation.play();
-		}
-	}
+        if (GlobalCellParameters.isAnimEnabled()) {
+            bAnimation = CellsDebugger.animateBackground(this, GlobalCellParameters.getAnimationDuration());
+            bAnimation.play();
+        }
+    }
 
-	protected abstract String dataToString();
+    protected abstract String dataToString();
 
-	@Override
-	public void dispose() {
-		if (bAnimation != null) {
-			bAnimation.stop();
-			bAnimation = null;
-			StyleUtils.setBackground(this, Color.TRANSPARENT);
-		}
-	}
+    @Override
+    public void dispose() {
+        if (bAnimation != null) {
+            bAnimation.stop();
+            bAnimation = null;
+            StyleUtils.setBackground(this, Color.TRANSPARENT);
+        }
+    }
 }

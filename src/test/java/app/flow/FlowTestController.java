@@ -27,9 +27,9 @@ import io.github.palexdev.materialfx.controls.MFXFilterComboBox;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import io.github.palexdev.materialfx.controls.MFXTooltip;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
-import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.RegionUtils;
+import io.github.palexdev.mfxresources.fonts.MFXIconWrapper;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
@@ -49,106 +49,117 @@ import java.util.ResourceBundle;
 
 public class FlowTestController implements Initializable {
 
-	@FXML private StackPane rootPane;
-	@FXML private Label selectionLabel;
-	@FXML private StackPane leftPane;
-	@FXML private StackPane rightPane;
-	@FXML private MFXFilterComboBox<FlowTestActions> actionsBox;
-	@FXML private MFXIconWrapper runIcon;
-	@FXML private MFXIconWrapper switchIcon;
-	@FXML private MFXCheckbox ssCheck;
-	@FXML private MFXCheckbox modeCheck;
-	@FXML private MFXCheckbox animCheck;
-	@FXML private MFXTextField durationField;
+    @FXML
+    private StackPane rootPane;
+    @FXML
+    private Label selectionLabel;
+    @FXML
+    private StackPane leftPane;
+    @FXML
+    private StackPane rightPane;
+    @FXML
+    private MFXFilterComboBox<FlowTestActions> actionsBox;
+    @FXML
+    private MFXIconWrapper runIcon;
+    @FXML
+    private MFXIconWrapper switchIcon;
+    @FXML
+    private MFXCheckbox ssCheck;
+    @FXML
+    private MFXCheckbox modeCheck;
+    @FXML
+    private MFXCheckbox animCheck;
+    @FXML
+    private MFXTextField durationField;
 
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
-		// Init Parameters
-		FlowTestParameters parameters = new FlowTestParameters(rootPane, DetailedCell.class);
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        // Init Parameters
+        FlowTestParameters parameters = new FlowTestParameters(rootPane, DetailedCell.class);
 
-		// Flow Initializations
-		SimpleVirtualFlow<Integer, Cell<Integer>> lFlow = new SimpleVirtualFlow<>(
-				FXCollections.observableArrayList(Model.integers),
-				DetailedCell::new,
-				Orientation.VERTICAL
-		);
+        // Flow Initializations
+        SimpleVirtualFlow<Integer, Cell<Integer>> lFlow = new SimpleVirtualFlow<>(
+                FXCollections.observableArrayList(Model.integers),
+                DetailedCell::new,
+                Orientation.VERTICAL
+        );
 
-		VirtualFlow<Integer, Cell<Integer>> rFlow = new VirtualFlow<>(
-				FXCollections.observableArrayList(Model.integers),
-				DetailedCell::new
-		);
-		rFlow.setCellSize(64);
+        VirtualFlow<Integer, Cell<Integer>> rFlow = new VirtualFlow<>(
+                FXCollections.observableArrayList(Model.integers),
+                DetailedCell::new
+        );
+        rFlow.setCellSize(64);
 
-		// Init Actions
-		selectionLabel.textProperty().bind(StringBindingBuilder.build()
-				.setMapper(() -> {
-					Mode mode = parameters.getMode();
-					return "Action Target: " + mode;
-				})
-				.addSources(parameters.modeProperty())
-				.get()
-		);
-		actionsBox.setItems(FXCollections.observableArrayList(FlowTestActions.values()));
-		actionsBox.selectFirst();
+        // Init Actions
+        selectionLabel.textProperty().bind(StringBindingBuilder.build()
+                .setMapper(() -> {
+                    Mode mode = parameters.getMode();
+                    return "Action Target: " + mode;
+                })
+                .addSources(parameters.modeProperty())
+                .get()
+        );
+        actionsBox.setItems(FXCollections.observableArrayList(FlowTestActions.values()));
+        actionsBox.selectFirst();
 
-		runIcon.setOnMouseClicked(event -> actionsBox.getSelectedItem().run(parameters, lFlow, rFlow));
-		switchIcon.setOnMouseClicked(event -> {
-			if (modeCheck.isSelected()) return;
-			parameters.switchMode();
-		});
-		runIcon.defaultRippleGeneratorBehavior();
-		switchIcon.defaultRippleGeneratorBehavior();
-		RegionUtils.makeRegionCircular(runIcon);
-		RegionUtils.makeRegionCircular(switchIcon);
+        runIcon.setOnMouseClicked(event -> actionsBox.getSelectedItem().run(parameters, lFlow, rFlow));
+        switchIcon.setOnMouseClicked(event -> {
+            if (modeCheck.isSelected()) return;
+            parameters.switchMode();
+        });
+        runIcon.enableRippleGenerator(true);
+        switchIcon.enableRippleGenerator(true);
+        RegionUtils.makeRegionCircular(runIcon);
+        RegionUtils.makeRegionCircular(switchIcon);
 
-		// Init Content Pane
-		VirtualScrollPane vsp = rFlow.wrap();
-		vsp.setLayoutMode(LayoutMode.COMPACT);
-		vsp.setAutoHideBars(true);
-		Runnable speedAction = () -> {
-			VSPUtils.setVSpeed(vsp, 15, rFlow.getCellSize() * 2, 15);
-			VSPUtils.setHSpeed(vsp, 15, rFlow.getCellSize() * 2, 15);
-		};
-		When.onInvalidated(rFlow.cellSizeProperty())
-				.then(i -> speedAction.run())
-				.executeNow()
-				.listen();
+        // Init Content Pane
+        VirtualScrollPane vsp = rFlow.wrap();
+        vsp.setLayoutMode(LayoutMode.COMPACT);
+        vsp.setAutoHideBars(true);
+        Runnable speedAction = () -> {
+            VSPUtils.setVSpeed(vsp, 15, rFlow.getCellSize() * 2, 15);
+            VSPUtils.setHSpeed(vsp, 15, rFlow.getCellSize() * 2, 15);
+        };
+        When.onInvalidated(rFlow.cellSizeProperty())
+                .then(i -> speedAction.run())
+                .executeNow()
+                .listen();
 
-		leftPane.getChildren().setAll(lFlow);
-		rightPane.getChildren().setAll(vsp);
+        leftPane.getChildren().setAll(lFlow);
+        rightPane.getChildren().setAll(vsp);
 
-		// Init Settings
-		ssCheck.selectedProperty().addListener((ob, o, n) -> {
-			if (n) {
-				lFlow.features().enableSmoothScrolling(1);
-			} else {
-				lFlow.features().disableSmoothScrolling();
-			}
-			vsp.setSmoothScroll(n);
-			vsp.setTrackSmoothScroll(n);
-		});
-		MFXTooltip tooltip = MFXTooltip.of(ssCheck,
-				"""
-						Notice how in the new implementation
-						the smooth scrolling is much more reliable thanks to the new MFXScrollbar.
-						Check the documentation and source code to know more about it.
-						"""
-		).install();
-		MFXTooltip.fixPosition(tooltip, true);
-		modeCheck.selectedProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue) {
-				parameters.setMode(Mode.BOTH);
-			} else {
-				parameters.setMode(Mode.NEW_IMP);
-			}
-		});
+        // Init Settings
+        ssCheck.selectedProperty().addListener((ob, o, n) -> {
+            if (n) {
+                lFlow.features().enableSmoothScrolling(1);
+            } else {
+                lFlow.features().disableSmoothScrolling();
+            }
+            vsp.setSmoothScroll(n);
+            vsp.setTrackSmoothScroll(n);
+        });
+        MFXTooltip tooltip = MFXTooltip.of(ssCheck,
+                """
+                        Notice how in the new implementation
+                        the smooth scrolling is much more reliable thanks to the new MFXScrollbar.
+                        Check the documentation and source code to know more about it.
+                        """
+        ).install();
+        MFXTooltip.fixPosition(tooltip, true);
+        modeCheck.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                parameters.setMode(Mode.BOTH);
+            } else {
+                parameters.setMode(Mode.NEW_IMP);
+            }
+        });
 
-		durationField.delegateSetTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("[0-9]*") ? change : null));
-		durationField.textProperty().addListener(invalidated -> GlobalCellParameters.setAnimationDuration(Double.parseDouble(durationField.getText())));
+        durationField.delegateSetTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("[0-9]*") ? change : null));
+        durationField.textProperty().addListener(invalidated -> GlobalCellParameters.setAnimationDuration(Double.parseDouble(durationField.getText())));
 
-		When.onChanged(animCheck.selectedProperty())
-				.then((oldValue, newValue) -> GlobalCellParameters.setAnimEnabled(newValue))
-				.executeNow()
-				.listen();
-	}
+        When.onChanged(animCheck.selectedProperty())
+                .then((oldValue, newValue) -> GlobalCellParameters.setAnimEnabled(newValue))
+                .executeNow()
+                .listen();
+    }
 }

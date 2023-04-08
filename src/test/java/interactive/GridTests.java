@@ -66,6 +66,7 @@ public class GridTests {
 		Button btn1 = new Button("+");
 		btn0.setOnAction(e -> scale.set(scale.get() / 1.15));
 		btn1.setOnAction(e -> scale.set(scale.get() * 1.15));
+
 		BorderPane root = new BorderPane(grid, null, btn1, null, btn0);
 		setupStage(root, new Size(1440, 900));
 
@@ -112,13 +113,10 @@ public class GridTests {
 			this.height = height;
 			this.scale = scale;
 			this.rt = new Rectangle(width, height, color);
-			When.onInvalidated(scale)
-					.then(s -> {
-						rt.setWidth(ScalingCell.this.width * s.doubleValue());
-						rt.setHeight(ScalingCell.this.height * s.doubleValue());
-					})
-					.executeNow()
-					.listen();
+			scale.addListener(i -> {
+				rt.setWidth(ScalingCell.this.width * scale.get());
+				rt.setHeight(ScalingCell.this.height * scale.get());
+			});
 		}
 
 		@Override

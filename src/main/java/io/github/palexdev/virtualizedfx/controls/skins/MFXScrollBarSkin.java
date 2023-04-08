@@ -4,12 +4,12 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.builders.bindings.BooleanBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
-import io.github.palexdev.mfxcore.builders.nodes.IconWrapperBuilder;
-import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.mfxresources.builders.IconBuilder;
+import io.github.palexdev.mfxresources.builders.IconWrapperBuilder;
+import io.github.palexdev.mfxresources.fonts.MFXIconWrapper;
 import io.github.palexdev.virtualizedfx.controls.MFXScrollBar;
 import io.github.palexdev.virtualizedfx.controls.behavior.MFXScrollBarBehavior;
 import javafx.beans.InvalidationListener;
@@ -63,14 +63,14 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 
 		decIcon = IconWrapperBuilder.build()
 				.setIcon(IconBuilder.build().get())
-				.addRippleGenerator()
+				.enableRippleGenerator(true)
 				.addStyleClasses("decrement-icon")
-				.getNode();
+				.get();
 		incIcon = IconWrapperBuilder.build()
 				.setIcon(IconBuilder.build().get())
-				.addRippleGenerator()
+				.enableRippleGenerator(true)
 				.addStyleClasses("increment-icon")
-				.getNode();
+				.get();
 
 		thumbPos = DoubleBindingBuilder.build()
 				.setMapper(() -> valToPos(scrollBar.getValue()))

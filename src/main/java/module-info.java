@@ -3,7 +3,8 @@ module VirtualizedFX {
 	requires transitive javafx.graphics;
 	requires transitive javafx.controls;
 
-	requires transitive MFXCore;
+	requires transitive mfx.core;
+	requires transitive mfx.effects;
 	requires transitive mfx.resources;
 
 	// Base Package

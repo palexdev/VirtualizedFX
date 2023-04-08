@@ -25,11 +25,11 @@ import io.github.palexdev.materialfx.controls.MFXTextField;
 import io.github.palexdev.materialfx.enums.FloatMode;
 import io.github.palexdev.materialfx.utils.NodeUtils;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
-import io.github.palexdev.mfxcore.builders.nodes.IconWrapperBuilder;
 import io.github.palexdev.mfxcore.collections.ObservableGrid;
-import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
 import io.github.palexdev.mfxcore.utils.fx.RegionUtils;
 import io.github.palexdev.mfxresources.builders.IconBuilder;
+import io.github.palexdev.mfxresources.builders.IconWrapperBuilder;
+import io.github.palexdev.mfxresources.fonts.MFXIconWrapper;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
@@ -47,78 +47,83 @@ import java.util.ResourceBundle;
 
 public class PGridTestController implements Initializable {
 
-	@FXML StackPane rootPane;
-	@FXML MFXFilterComboBox<PGridTestActions> actionsBox;
-	@FXML MFXIconWrapper runIcon;
-	@FXML StackPane contentPane;
-	@FXML HBox footer;
+    @FXML
+    StackPane rootPane;
+    @FXML
+    MFXFilterComboBox<PGridTestActions> actionsBox;
+    @FXML
+    MFXIconWrapper runIcon;
+    @FXML
+    StackPane contentPane;
+    @FXML
+    HBox footer;
 
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
-		// Init Parameters
-		GridTestParameters parameters = new GridTestParameters(rootPane, SimpleGridCell.class);
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        // Init Parameters
+        GridTestParameters parameters = new GridTestParameters(rootPane, SimpleGridCell.class);
 
-		// Grid Initialization
-		PaginatedVirtualGrid<Integer, GridCell<Integer>> grid = new PaginatedVirtualGrid<>(
-				ObservableGrid.fromMatrix(Utils.randMatrix(50, 10)),
-				SimpleGridCell::new
-		);
+        // Grid Initialization
+        PaginatedVirtualGrid<Integer, GridCell<Integer>> grid = new PaginatedVirtualGrid<>(
+                ObservableGrid.fromMatrix(Utils.randMatrix(50, 10)),
+                SimpleGridCell::new
+        );
 
-		// Init Actions
-		actionsBox.setItems(FXCollections.observableArrayList(PGridTestActions.values()));
-		actionsBox.selectFirst();
-		runIcon.setOnMouseClicked(event -> actionsBox.getSelectedItem().run(parameters, grid));
-		runIcon.defaultRippleGeneratorBehavior();
-		RegionUtils.makeRegionCircular(runIcon);
+        // Init Actions
+        actionsBox.setItems(FXCollections.observableArrayList(PGridTestActions.values()));
+        actionsBox.selectFirst();
+        runIcon.setOnMouseClicked(event -> actionsBox.getSelectedItem().run(parameters, grid));
+        runIcon.enableRippleGenerator(true);
+        RegionUtils.makeRegionCircular(runIcon);
 
-		// Init Content Pane
-		VirtualScrollPane vsp = grid.wrap();
-		vsp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
-		vsp.setAutoHideBars(true);
+        // Init Content Pane
+        VirtualScrollPane vsp = grid.wrap();
+        vsp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        vsp.setAutoHideBars(true);
 
-		contentPane.getChildren().setAll(vsp);
+        contentPane.getChildren().setAll(vsp);
 
-		// Footer
-		// TODO spinner models are absolute garbage
-		MFXIconWrapper goFirst = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().setDescription("fas-backward-step").setSize(16).get())
-				.setSize(32)
-				.defaultRippleGeneratorBehavior()
-				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> grid.goToFirstPage()).getNode();
-		NodeUtils.makeRegionCircular(goFirst);
+        // Footer
+        // TODO spinner models are absolute garbage
+        MFXIconWrapper goFirst = IconWrapperBuilder.build()
+                .setIcon(IconBuilder.build().setDescription("fas-backward-step").setSize(16).get())
+                .setSize(32)
+                .enableRippleGenerator(true)
+                .addEventHandler(MouseEvent.MOUSE_CLICKED, event -> grid.goToFirstPage()).get();
+        NodeUtils.makeRegionCircular(goFirst);
 
-		MFXIconWrapper goBack = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().setDescription("fas-caret-left").setSize(16).get())
-				.setSize(32)
-				.defaultRippleGeneratorBehavior()
-				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> grid.setCurrentPage(Math.max(1, grid.getCurrentPage() - 1))).getNode();
-		NodeUtils.makeRegionCircular(goBack);
+        MFXIconWrapper goBack = IconWrapperBuilder.build()
+                .setIcon(IconBuilder.build().setDescription("fas-caret-left").setSize(16).get())
+                .setSize(32)
+                .enableRippleGenerator(true)
+                .addEventHandler(MouseEvent.MOUSE_CLICKED, event -> grid.setCurrentPage(Math.max(1, grid.getCurrentPage() - 1))).get();
+        NodeUtils.makeRegionCircular(goBack);
 
-		MFXIconWrapper goForward = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().setDescription("fas-caret-right").setSize(16).get())
-				.setSize(32)
-				.defaultRippleGeneratorBehavior()
-				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> grid.setCurrentPage(grid.getCurrentPage() + 1)).getNode();
-		NodeUtils.makeRegionCircular(goForward);
+        MFXIconWrapper goForward = IconWrapperBuilder.build()
+                .setIcon(IconBuilder.build().setDescription("fas-caret-right").setSize(16).get())
+                .setSize(32)
+                .enableRippleGenerator(true)
+                .addEventHandler(MouseEvent.MOUSE_CLICKED, event -> grid.setCurrentPage(grid.getCurrentPage() + 1)).get();
+        NodeUtils.makeRegionCircular(goForward);
 
-		MFXIconWrapper goLast = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().setDescription("fas-forward-step").setSize(16).get())
-				.setSize(32)
-				.defaultRippleGeneratorBehavior()
-				.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> grid.goToLastPage()).getNode();
-		NodeUtils.makeRegionCircular(goLast);
+        MFXIconWrapper goLast = IconWrapperBuilder.build()
+                .setIcon(IconBuilder.build().setDescription("fas-forward-step").setSize(16).get())
+                .setSize(32)
+                .enableRippleGenerator(true)
+                .addEventHandler(MouseEvent.MOUSE_CLICKED, event -> grid.goToLastPage()).get();
+        NodeUtils.makeRegionCircular(goLast);
 
-		MFXTextField label = MFXTextField.asLabel();
-		label.setFloatMode(FloatMode.DISABLED);
-		label.setAlignment(Pos.CENTER);
-		label.setLeadingIcon(new HBox(5, goFirst, goBack));
-		label.setTrailingIcon(new HBox(5, goForward, goLast));
-		label.textProperty().bind(StringBindingBuilder.build()
-				.setMapper(() -> grid.getCurrentPage() + "/" + grid.getMaxPage())
-				.addSources(grid.currentPageProperty(), grid.maxPageProperty())
-				.get()
-		);
+        MFXTextField label = MFXTextField.asLabel();
+        label.setFloatMode(FloatMode.DISABLED);
+        label.setAlignment(Pos.CENTER);
+        label.setLeadingIcon(new HBox(5, goFirst, goBack));
+        label.setTrailingIcon(new HBox(5, goForward, goLast));
+        label.textProperty().bind(StringBindingBuilder.build()
+                .setMapper(() -> grid.getCurrentPage() + "/" + grid.getMaxPage())
+                .addSources(grid.currentPageProperty(), grid.maxPageProperty())
+                .get()
+        );
 
-		footer.getChildren().addAll(label);
-	}
+        footer.getChildren().addAll(label);
+    }
 }

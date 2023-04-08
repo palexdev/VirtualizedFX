@@ -19,8 +19,8 @@
   -->
 
 <?import io.github.palexdev.materialfx.controls.MFXFilterComboBox?>
-<?import io.github.palexdev.mfxcore.controls.MFXIconWrapper?>
 <?import io.github.palexdev.mfxresources.fonts.MFXFontIcon?>
+<?import io.github.palexdev.mfxresources.fonts.MFXIconWrapper?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.*?>
 <StackPane id="rootPane" fx:id="rootPane" stylesheets="@PTableTest.css" xmlns="http://javafx.com/javafx/18"

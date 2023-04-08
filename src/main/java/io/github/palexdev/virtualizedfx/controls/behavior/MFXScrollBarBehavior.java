@@ -18,15 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.controls.behavior;
 
-import io.github.palexdev.mfxcore.animations.Animations.KeyFrames;
-import io.github.palexdev.mfxcore.animations.Animations.PauseBuilder;
-import io.github.palexdev.mfxcore.animations.Animations.TimelineBuilder;
-import io.github.palexdev.mfxcore.animations.BezierEasing;
-import io.github.palexdev.mfxcore.animations.Interpolators;
-import io.github.palexdev.mfxcore.animations.MomentumTransition;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils.ScrollDirection;
+import io.github.palexdev.mfxeffects.animations.Animations.KeyFrames;
+import io.github.palexdev.mfxeffects.animations.Animations.PauseBuilder;
+import io.github.palexdev.mfxeffects.animations.Animations.TimelineBuilder;
+import io.github.palexdev.mfxeffects.animations.MomentumTransition;
+import io.github.palexdev.mfxeffects.animations.base.Curve;
 import io.github.palexdev.virtualizedfx.controls.MFXScrollBar;
 import io.github.palexdev.virtualizedfx.controls.behavior.base.BehaviorBase;
 import javafx.animation.Animation;
@@ -190,7 +189,7 @@ public class MFXScrollBarBehavior extends BehaviorBase<MFXScrollBar> {
 
 		double newVal = sb.getValue() + sb.getTrackIncrement() * mul;
 		Animation firstTick = TimelineBuilder.build()
-				.add(KeyFrames.of(300, sb.valueProperty(), newVal, Interpolators.EASE_OUT_SINE))
+				.add(KeyFrames.of(300, sb.valueProperty(), newVal, Curve.EASE_OUT))
 				.getAnimation();
 
 		holdAnimation = PauseBuilder.build()
@@ -211,7 +210,7 @@ public class MFXScrollBarBehavior extends BehaviorBase<MFXScrollBar> {
 						double clamped = increment ? Math.min(val, target) : Math.max(val, target);
 						sb.setValue(clamped);
 					});
-					mt.setInterpolator(Interpolators.EASE_IN_OUT_SINE);
+					mt.setInterpolator(Curve.EASE_BOTH);
 					scrollAnimation = mt;
 					scrollAnimation.play();
 				}).getAnimation();
@@ -262,7 +261,7 @@ public class MFXScrollBarBehavior extends BehaviorBase<MFXScrollBar> {
 				double clamp = increment ? Math.min(val, target) : Math.max(val, target);
 				sb.setValue(clamp);
 			});
-			mt.setInterpolator(Interpolators.EASE_IN_OUT_SINE);
+			mt.setInterpolator(Curve.EASE_BOTH);
 			scrollAnimation = mt;
 			scrollAnimation.play();
 		}
@@ -294,7 +293,7 @@ public class MFXScrollBarBehavior extends BehaviorBase<MFXScrollBar> {
 		MFXScrollBar sb = getNode();
 		double newVal = sb.getValue() - sb.getUnitIncrement();
 		Animation firstTick = TimelineBuilder.build()
-				.add(KeyFrames.of(50, sb.valueProperty(), newVal, Interpolators.EASE_IN_OUT_SINE))
+				.add(KeyFrames.of(50, sb.valueProperty(), newVal, Curve.EASE_BOTH))
 				.getAnimation();
 
 		holdAnimation = PauseBuilder.build()
@@ -336,7 +335,7 @@ public class MFXScrollBarBehavior extends BehaviorBase<MFXScrollBar> {
 		MFXScrollBar sb = getNode();
 		double newVal = NumberUtils.clamp(sb.getValue() + sb.getUnitIncrement(), sb.getMin(), sb.getMax());
 		Animation firstTick = TimelineBuilder.build()
-				.add(KeyFrames.of(50, sb.valueProperty(), newVal, Interpolators.EASE_IN_OUT_SINE))
+				.add(KeyFrames.of(50, sb.valueProperty(), newVal, Curve.EASE_BOTH))
 				.getAnimation();
 
 		holdAnimation = PauseBuilder.build()
@@ -370,7 +369,7 @@ public class MFXScrollBarBehavior extends BehaviorBase<MFXScrollBar> {
 		double target = sb.getValue() + sb.getUnitIncrement() * direction;
 		double delta = Math.abs(sb.getValue() - target);
 		MomentumTransition mt = MomentumTransition.fromTime(delta, 530);
-		mt.setInterpolator(BezierEasing.EASE);
+		mt.setInterpolator(Curve.EASE_BOTH);
 		mt.setOnUpdate(upd -> sb.setValue(sb.getValue() + upd * direction));
 		mt.setOnFinished(event -> smoothScrollAnimations.remove(mt));
 		smoothScrollAnimations.add(mt);

@@ -18,9 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.controls.skins;
 
-import io.github.palexdev.mfxcore.animations.Animations;
-import io.github.palexdev.mfxcore.animations.Animations.KeyFrames;
-import io.github.palexdev.mfxcore.animations.Animations.TimelineBuilder;
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.builders.bindings.BooleanBindingBuilder;
@@ -30,6 +27,9 @@ import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.mfxcore.utils.fx.NodeUtils;
+import io.github.palexdev.mfxeffects.animations.Animations;
+import io.github.palexdev.mfxeffects.animations.Animations.KeyFrames;
+import io.github.palexdev.mfxeffects.animations.Animations.TimelineBuilder;
 import io.github.palexdev.virtualizedfx.controls.MFXScrollBar;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.controls.behavior.MFXScrollBarBehavior;

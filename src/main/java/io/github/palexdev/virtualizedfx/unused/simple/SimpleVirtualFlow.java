@@ -18,9 +18,9 @@
 
 package io.github.palexdev.virtualizedfx.unused.simple;
 
-import io.github.palexdev.mfxcore.animations.Interpolators;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils.ScrollDirection;
+import io.github.palexdev.mfxeffects.enums.Interpolators;
 import io.github.palexdev.virtualizedfx.ResourceManager;
 import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.unused.base.OrientationHelper;

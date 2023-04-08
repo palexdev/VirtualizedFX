@@ -42,6 +42,7 @@ dependencies {
     testImplementation name: "materialfx"
 
     api "io.github.palexdev:mfxcore:$mfxcore"
+    api "io.github.palexdev:mfxeffects:$mfxeffects"
     api "io.github.palexdev:mfxresources:$mfxresources"
 }
 
@@ -106,8 +107,8 @@ compileTestJava {
     moduleOptions {
         compileOnClasspath = true
     }
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = "$testJdk"
+    targetCompatibility = "$testJdk"
 }
 
 test {

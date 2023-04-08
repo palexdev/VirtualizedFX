@@ -23,9 +23,9 @@ import app.others.Utils;
 import io.github.palexdev.materialfx.controls.MFXCheckbox;
 import io.github.palexdev.materialfx.controls.MFXFilterComboBox;
 import io.github.palexdev.mfxcore.collections.ObservableGrid;
-import io.github.palexdev.mfxcore.controls.MFXIconWrapper;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.RegionUtils;
+import io.github.palexdev.mfxresources.fonts.MFXIconWrapper;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
@@ -42,54 +42,59 @@ import java.util.function.Consumer;
 
 public class GridTestController implements Initializable {
 
-	@FXML StackPane rootPane;
-	@FXML MFXFilterComboBox<GridTestActions> actionsBox;
-	@FXML MFXIconWrapper runIcon;
-	@FXML StackPane contentPane;
-	@FXML MFXCheckbox ssCheck;
+    @FXML
+    StackPane rootPane;
+    @FXML
+    MFXFilterComboBox<GridTestActions> actionsBox;
+    @FXML
+    MFXIconWrapper runIcon;
+    @FXML
+    StackPane contentPane;
+    @FXML
+    MFXCheckbox ssCheck;
 
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
-		// Init Parameters
-		GridTestParameters parameters = new GridTestParameters(rootPane, SimpleGridCell.class);
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        // Init Parameters
+        GridTestParameters parameters = new GridTestParameters(rootPane, SimpleGridCell.class);
 
-		// Grid Initialization
-		VirtualGrid<Integer, GridCell<Integer>> grid = new VirtualGrid<>(
-				ObservableGrid.fromMatrix(Utils.randMatrix(50, 10)),
-				SimpleGridCell::new
-		);
+        // Grid Initialization
+        VirtualGrid<Integer, GridCell<Integer>> grid = new VirtualGrid<>(
+                ObservableGrid.fromMatrix(Utils.randMatrix(50, 10)),
+                SimpleGridCell::new
+        );
 
-		// Init Actions
-		actionsBox.setItems(FXCollections.observableArrayList(GridTestActions.values()));
-		actionsBox.selectFirst();
-		runIcon.setOnMouseClicked(event -> actionsBox.getSelectedItem().run(parameters, grid));
-		runIcon.defaultRippleGeneratorBehavior();
-		RegionUtils.makeRegionCircular(runIcon);
+        // Init Actions
+        actionsBox.setItems(FXCollections.observableArrayList(GridTestActions.values()));
+        actionsBox.selectFirst();
+        runIcon.setOnMouseClicked(event -> actionsBox.getSelectedItem().run(parameters, grid));
+        runIcon.enableRippleGenerator(true);
+        RegionUtils.makeRegionCircular(runIcon);
 
-		// Init Content Pane
-		VirtualScrollPane vsp = grid.wrap();
-		vsp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
-		vsp.setAutoHideBars(true);
-		vsp.setMinHeight(500);
-		vsp.setMaxWidth(1000);
-		Runnable speedAction = () -> {
-			double ch = grid.getCellSize().getHeight();
-			double cw = grid.getCellSize().getWidth();
-			VSPUtils.setVSpeed(vsp, ch / 3, ch / 2, ch / 2);
-			VSPUtils.setHSpeed(vsp, cw / 3, cw / 2, cw / 2);
-		};
-		When.onInvalidated(grid.cellSizeProperty())
-				.then(i -> speedAction.run())
-				.executeNow()
-				.listen();
+        // Init Content Pane
+        VirtualScrollPane vsp = grid.wrap();
+        vsp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        vsp.setAutoHideBars(true);
+        vsp.setMinHeight(500);
+        vsp.setMaxWidth(1000);
+        Runnable speedAction = () -> {
+            double ch = grid.getCellSize().getHeight();
+            double cw = grid.getCellSize().getWidth();
+            VSPUtils.setVSpeed(vsp, ch / 3, ch / 2, ch / 2);
+            VSPUtils.setHSpeed(vsp, cw / 3, cw / 2, cw / 2);
+        };
+        When.onInvalidated(grid.cellSizeProperty())
+                .then(i -> speedAction.run())
+                .executeNow()
+                .listen();
 
-		contentPane.getChildren().setAll(vsp);
+        contentPane.getChildren().setAll(vsp);
 
-		// Init Settings
-		Consumer<Boolean> ssAction = val -> {
-			vsp.setSmoothScroll(true);
-			vsp.setTrackSmoothScroll(true);
-		};
-		ssCheck.selectedProperty().addListener((observable, oldValue, newValue) -> ssAction.accept(newValue));
-	}
+        // Init Settings
+        Consumer<Boolean> ssAction = val -> {
+            vsp.setSmoothScroll(true);
+            vsp.setTrackSmoothScroll(true);
+        };
+        ssCheck.selectedProperty().addListener((observable, oldValue, newValue) -> ssAction.accept(newValue));
+    }
 }
