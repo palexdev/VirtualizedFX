@@ -30,6 +30,28 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - GridRow: typo, rIndex must be oIndex when processing reusable cells (thanks to Alexander-Ploskin #11)
 
+## [11.9.2] - 08-04-2023
+
+## Changed
+
+- Bump MFXResources to version 11.3.3
+
+## [11.9.1] - 08-04-2023
+
+## Added
+
+- Added MFXEffects as animations were moved from core to this
+
+## Changed
+
+- Upgrade MFXCore to version 11.3.0 to avoid conflicts with older versions in which the module was still called "
+  MFXCore" (changed to "mfx.core")
+- Upgrade MFXResources to version 11.3.2
+
+## Fixed
+
+- GridRow: typo, rIndex must be oIndex when processing reusable cells (thanks to Alexander-Ploskin #11)
+
 ## [11.9.0] - 16-03-2023
 
 ## Changed
