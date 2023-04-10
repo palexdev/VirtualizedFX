@@ -6,8 +6,10 @@ import io.github.palexdev.mfxcore.collections.ObservableGrid;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
+import io.github.palexdev.virtualizedfx.controls.MFXScrollBar;
 import io.github.palexdev.virtualizedfx.grid.GridRow;
 import io.github.palexdev.virtualizedfx.grid.VirtualGrid;
+import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
@@ -18,6 +20,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
@@ -86,6 +89,54 @@ public class GridTests {
 		}
 		firstRow.getCellsUnmodifiable().values().forEach(c -> assertEquals(0, c.getNode().getLayoutY()));
 	}
+
+    @Test
+    void testCorrectScrollingWithAutoHideBars(FxRobot robot) {
+        double width = 200.0;
+        double height = 200.0;
+
+        List<Color> colors = IntStream.range(0, 100)
+                .mapToObj(i -> ColorUtils.getRandomColor())
+                .toList();
+        ObservableGrid<Color> data = ObservableGrid.fromList(colors, 10);
+        VirtualGrid<Color, SimpleTestCell> grid = new VirtualGrid<>(
+                data,
+                c -> new SimpleTestCell(c, width, height)
+        );
+        grid.setCellSize(Size.of(width, height));
+
+        var vsp = VSPUtils.wrap(grid);
+        vsp.setAutoHideBars(true);
+
+        BorderPane root = new BorderPane(vsp, null, null, null, null);
+        setupStage(root, new Size(1000, 900));
+
+        var child = (MFXScrollBar) vsp.getChildrenUnmodifiable().get(1);
+        var thumb = child.getChildrenUnmodifiable().get(1);
+
+        robot.drag(thumb);
+
+        robot.moveBy(-10.0, 10.0);
+        Assertions.assertDoesNotThrow(() -> robot.moveBy(20.0, 10.0));
+    }
+
+    static class SimpleTestCell implements GridCell<Color> {
+        private final Rectangle rt;
+
+        SimpleTestCell(Color color, double width, double height) {
+            rt = new Rectangle(width, height, color);
+        }
+
+        @Override
+        public Node getNode() {
+            return rt;
+        }
+
+        @Override
+        public void updateItem(Color item) {
+            rt.setFill(item);
+        }
+    }
 
 	//================================================================================
 	// Utilities
