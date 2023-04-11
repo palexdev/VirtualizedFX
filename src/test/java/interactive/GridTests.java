@@ -3,7 +3,6 @@ package interactive;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.collections.ObservableGrid;
-import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.virtualizedfx.cell.GridCell;
 import io.github.palexdev.virtualizedfx.grid.GridRow;
@@ -131,7 +130,6 @@ public class GridTests {
 
 		@Override
 		public void dispose() {
-			When.disposeFor(scale);
 			scale = null;
 		}
 	}

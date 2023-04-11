@@ -24,6 +24,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Default skin implementation for {@link MFXScrollBar}.
  * <p></p>
@@ -50,6 +54,8 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 	private static final PseudoClass HORIZONTAL_PSEUDO_CLASS = PseudoClass.getPseudoClass("horizontal");
 	private static final PseudoClass FOCUS_WITHIN_PSEUDO_CLASS = PseudoClass.getPseudoClass("focus-within");
 
+	protected final List<When<?>> whens = new ArrayList<>();
+
 	//================================================================================
 	// Constructors
 	//================================================================================
@@ -62,21 +68,21 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		thumb.getStyleClass().add("thumb");
 
 		decIcon = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().get())
-				.enableRippleGenerator(true)
-				.addStyleClasses("decrement-icon")
-				.get();
+			.setIcon(IconBuilder.build().get())
+			.enableRippleGenerator(true)
+			.addStyleClasses("decrement-icon")
+			.get();
 		incIcon = IconWrapperBuilder.build()
-				.setIcon(IconBuilder.build().get())
-				.enableRippleGenerator(true)
-				.addStyleClasses("increment-icon")
-				.get();
+			.setIcon(IconBuilder.build().get())
+			.enableRippleGenerator(true)
+			.addStyleClasses("increment-icon")
+			.get();
 
 		thumbPos = DoubleBindingBuilder.build()
-				.setMapper(() -> valToPos(scrollBar.getValue()))
-				.addSources(scrollBar.valueProperty())
-				.addSources(thumb.widthProperty(), thumb.heightProperty())
-				.get();
+			.setMapper(() -> valToPos(scrollBar.getValue()))
+			.addSources(scrollBar.valueProperty())
+			.addSources(thumb.widthProperty(), thumb.heightProperty())
+			.get();
 
 
 		onOrientationChange();
@@ -119,43 +125,48 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		sb.minProperty().addListener(reLayout);
 		sb.maxProperty().addListener(reLayout);
 		sb.visibleAmountProperty().addListener(reLayout);
+		sb.buttonsGapProperty().addListener(reLayout);
+
 		((DoubleProperty) sb.thumbPosProperty()).bind(thumbPos);
 		((DoubleProperty) sb.trackLengthProperty()).bind(
-				DoubleBindingBuilder.build()
-						.setMapper(() -> (sb.getOrientation() == Orientation.VERTICAL) ? track.getHeight() : track.getWidth())
-						.addSources(track.widthProperty(), track.heightProperty())
-						.addSources(sb.orientationProperty())
-						.get()
-		);
-
-		sb.visibleProperty().bind(BooleanBindingBuilder.build()
-				.setMapper(() -> sb.getVisibleAmount() < 1.0)
-				.addSources(sb.visibleAmountProperty())
+			DoubleBindingBuilder.build()
+				.setMapper(() -> (sb.getOrientation() == Orientation.VERTICAL) ? track.getHeight() : track.getWidth())
+				.addSources(track.widthProperty(), track.heightProperty())
+				.addSources(sb.orientationProperty())
 				.get()
 		);
 
-		sb.buttonsVisibleProperty().addListener(invalidated -> {
-			updateChildren();
-			thumbPos.invalidate();
-			sb.requestLayout();
-		});
-		sb.buttonsGapProperty().addListener(reLayout);
+		sb.visibleProperty().bind(BooleanBindingBuilder.build()
+			.setMapper(() -> sb.getVisibleAmount() < 1.0)
+			.addSources(sb.visibleAmountProperty())
+			.get()
+		);
 
-		sb.orientationProperty().addListener(invalidated -> {
-			onOrientationChange();
-			sb.requestLayout();
-		});
-
-		sb.behaviorProperty().addListener(invalidated -> initBehavior());
-
-		decIcon.focusedProperty().addListener((observable, oldValue, newValue) -> pseudoClassStateChanged(FOCUS_WITHIN_PSEUDO_CLASS, newValue));
-		incIcon.focusedProperty().addListener((observable, oldValue, newValue) -> pseudoClassStateChanged(FOCUS_WITHIN_PSEUDO_CLASS, newValue));
-
+		// Register Whens
+		Collections.addAll(whens,
+			When.onInvalidated(sb.buttonsVisibleProperty())
+				.then(v -> {
+					updateChildren();
+					thumbPos.invalidate();
+					sb.requestLayout();
+				}).listen(),
+			When.onInvalidated(sb.orientationProperty())
+				.then(v -> {
+					onOrientationChange();
+					sb.requestLayout();
+				}).listen(),
+			When.onInvalidated(sb.behaviorProperty())
+				.then(v -> initBehavior()).listen(),
+			When.onChanged(decIcon.focusedProperty())
+				.then((o, n) -> pseudoClassStateChanged(FOCUS_WITHIN_PSEUDO_CLASS, n)).listen(),
+			When.onChanged(incIcon.focusedProperty())
+				.then((o, n) -> pseudoClassStateChanged(FOCUS_WITHIN_PSEUDO_CLASS, n)).listen()
+		);
 		When.onChanged(track.layoutBoundsProperty())
-				.condition((oldValue, newValue) -> newValue.getWidth() > 0 && newValue.getHeight() > 0)
-				.then((oldValue, newValue) -> thumbPos.invalidate())
-				.oneShot()
-				.listen();
+			.condition((oldValue, newValue) -> newValue.getWidth() > 0 && newValue.getHeight() > 0)
+			.then((oldValue, newValue) -> thumbPos.invalidate())
+			.oneShot()
+			.listen();
 	}
 
 	/**
@@ -187,11 +198,11 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 				barPressed = true;
 				Point2D toTrack = track.parentToLocal(me.getX(), me.getY());
 				MouseEvent nme = new MouseEvent(
-						null, track, MouseEvent.MOUSE_PRESSED,
-						toTrack.getX(), toTrack.getY(), 0, 0,
-						MouseButton.PRIMARY, 1,
-						false, false, false, false, true,
-						false, false, false, false, false, null
+					null, track, MouseEvent.MOUSE_PRESSED,
+					toTrack.getX(), toTrack.getY(), 0, 0,
+					MouseButton.PRIMARY, 1,
+					false, false, false, false, true,
+					false, false, false, false, false, null
 				);
 				Event.fireEvent(track, nme);
 				me.consume();
@@ -268,9 +279,9 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		double max = sb.getMax();
 		assert val >= min && val <= max;
 		return NumberUtils.mapOneRangeToAnother(
-				val,
-				DoubleRange.of(min, max),
-				DoubleRange.of(0.0, trackLength - thumbLength)
+			val,
+			DoubleRange.of(min, max),
+			DoubleRange.of(0.0, trackLength - thumbLength)
 		);
 	}
 
@@ -330,8 +341,8 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		boolean buttonsVisible = sb.isButtonsVisible();
 		double buttonsGap = buttonsVisible ? sb.getButtonsGap() : 0.0;
 		return (o == Orientation.VERTICAL) ?
-				getLength(Orientation.VERTICAL) :
-				leftInset + decIcon.getSize() + minTrackLength(Orientation.HORIZONTAL) + incIcon.getSize() + rightInset + (buttonsGap * 2);
+			getLength(Orientation.VERTICAL) :
+			leftInset + decIcon.getSize() + minTrackLength(Orientation.HORIZONTAL) + incIcon.getSize() + rightInset + (buttonsGap * 2);
 	}
 
 	@Override
@@ -341,8 +352,8 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		boolean buttonsVisible = sb.isButtonsVisible();
 		double buttonsGap = buttonsVisible ? sb.getButtonsGap() : 0.0;
 		return (o == Orientation.VERTICAL) ?
-				topInset + decIcon.getSize() + minTrackLength(Orientation.VERTICAL) + incIcon.getSize() + bottomInset + (buttonsGap * 2) :
-				getLength(Orientation.HORIZONTAL);
+			topInset + decIcon.getSize() + minTrackLength(Orientation.VERTICAL) + incIcon.getSize() + bottomInset + (buttonsGap * 2) :
+			getLength(Orientation.HORIZONTAL);
 	}
 
 	@Override
@@ -352,8 +363,8 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		boolean buttonsVisible = sb.isButtonsVisible();
 		double buttonsGap = buttonsVisible ? sb.getButtonsGap() : 0.0;
 		return (o == Orientation.VERTICAL) ?
-				getLength(Orientation.VERTICAL) :
-				leftInset + DEFAULT_LENGTH + rightInset + (buttonsGap * 2);
+			getLength(Orientation.VERTICAL) :
+			leftInset + DEFAULT_LENGTH + rightInset + (buttonsGap * 2);
 	}
 
 	@Override
@@ -363,24 +374,24 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		boolean buttonsVisible = sb.isButtonsVisible();
 		double buttonsGap = buttonsVisible ? sb.getButtonsGap() : 0.0;
 		return (o == Orientation.VERTICAL) ?
-				topInset + DEFAULT_LENGTH + bottomInset + (buttonsGap * 2) :
-				getLength(Orientation.HORIZONTAL);
+			topInset + DEFAULT_LENGTH + bottomInset + (buttonsGap * 2) :
+			getLength(Orientation.HORIZONTAL);
 	}
 
 	@Override
 	protected double computeMaxWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
 		MFXScrollBar scrollBar = getSkinnable();
 		return (scrollBar.getOrientation() == Orientation.VERTICAL) ?
-				scrollBar.prefWidth(-1) :
-				Double.MAX_VALUE;
+			scrollBar.prefWidth(-1) :
+			Double.MAX_VALUE;
 	}
 
 	@Override
 	protected double computeMaxHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
 		MFXScrollBar scrollBar = getSkinnable();
 		return (scrollBar.getOrientation() == Orientation.VERTICAL) ?
-				Double.MAX_VALUE :
-				scrollBar.prefHeight(-1);
+			Double.MAX_VALUE :
+			scrollBar.prefHeight(-1);
 	}
 
 	@Override
@@ -415,10 +426,10 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 			}
 
 			Position position = LayoutUtils.computePosition(
-					sb, thumb,
-					x, y + decSize, w, thumbLength, 0,
-					Insets.EMPTY, HPos.CENTER, VPos.TOP,
-					false, true
+				sb, thumb,
+				x, y + decSize, w, thumbLength, 0,
+				Insets.EMPTY, HPos.CENTER, VPos.TOP,
+				false, true
 			);
 			double thumbW = LayoutUtils.boundWidth(thumb);
 			thumb.resizeRelocate(position.getX(), position.getY(), thumbW, thumbLength);
@@ -434,10 +445,10 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 			}
 
 			Position position = LayoutUtils.computePosition(
-					sb, thumb,
-					x + decSize, y, thumbLength, h, 0,
-					Insets.EMPTY, HPos.LEFT, VPos.CENTER,
-					false, true
+				sb, thumb,
+				x + decSize, y, thumbLength, h, 0,
+				Insets.EMPTY, HPos.LEFT, VPos.CENTER,
+				false, true
 			);
 			double thumbH = LayoutUtils.boundWidth(thumb);
 			thumb.resizeRelocate(position.getX(), position.getY(), thumbLength, thumbH);
@@ -453,6 +464,7 @@ public class MFXScrollBarSkin extends SkinBase<MFXScrollBar> {
 		thumb.translateYProperty().unbind();
 		thumbPos = null;
 
+		whens.forEach(w -> w.dispose());
 		super.dispose();
 	}
 }

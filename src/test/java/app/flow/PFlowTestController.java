@@ -25,6 +25,7 @@ import io.github.palexdev.materialfx.controls.MFXTextField;
 import io.github.palexdev.materialfx.enums.FloatMode;
 import io.github.palexdev.materialfx.utils.NodeUtils;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
+import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.RegionUtils;
 import io.github.palexdev.mfxresources.builders.IconBuilder;
 import io.github.palexdev.mfxresources.builders.IconWrapperBuilder;
@@ -33,6 +34,7 @@ import io.github.palexdev.virtualizedfx.cell.Cell;
 import io.github.palexdev.virtualizedfx.controls.VirtualScrollPane;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.flow.paginated.PaginatedVirtualFlow;
+import io.github.palexdev.virtualizedfx.utils.VSPUtils;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -81,16 +83,23 @@ public class PFlowTestController implements Initializable {
         VirtualScrollPane vsp = flow.wrap();
         vsp.setLayoutMode(LayoutMode.COMPACT);
         vsp.setAutoHideBars(true);
+        vsp.setSmoothScroll(true);
+        vsp.setTrackSmoothScroll(true);
+        Runnable speedAction = () -> VSPUtils.setHSpeed(vsp, 15, (flow.getMaxBreadth() - vsp.getWidth()) / 2, 15);
+        When.onInvalidated(flow.maxBreadthProperty())
+            .then(i -> speedAction.run())
+            .executeNow()
+            .listen();
 
         contentPane.getChildren().setAll(vsp);
 
         // Footer
         // TODO spinner models are absolute garbage
         MFXIconWrapper goFirst = IconWrapperBuilder.build()
-                .setIcon(IconBuilder.build().setDescription("fas-backward-step").setSize(16).get())
-                .setSize(32)
-                .enableRippleGenerator(true)
-                .addEventHandler(MouseEvent.MOUSE_CLICKED, event -> flow.scrollToFirst()).get();
+            .setIcon(IconBuilder.build().setDescription("fas-backward-step").setSize(16).get())
+            .setSize(32)
+            .enableRippleGenerator(true)
+            .addEventHandler(MouseEvent.MOUSE_CLICKED, event -> flow.scrollToFirst()).get();
         NodeUtils.makeRegionCircular(goFirst);
 
         MFXIconWrapper goBack = IconWrapperBuilder.build()

@@ -87,6 +87,7 @@ public class SimpleTableCell<T, E> extends HBox implements MappingTableCell<T, E
 	private StringConverter<E> converter;
 
 	protected final Label label;
+	protected When<Boolean> ivwWhen;
 
 	//================================================================================
 	// Constructors
@@ -114,15 +115,15 @@ public class SimpleTableCell<T, E> extends HBox implements MappingTableCell<T, E
 		invalidate();
 
 		columnProperty().addListener((observable, oldValue, newValue) -> {
-			if (oldValue != null) When.disposeFor(oldValue.inViewportProperty());
+			if (oldValue != null && ivwWhen != null) ivwWhen.dispose();
 			if (newValue != null) {
 				VirtualTable<T> table = newValue.getTable();
 				if (table == null || table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) return;
 
-				When.onChanged(newValue.inViewportProperty())
-						.then((o, n) -> setVisible(getColumn() != null && getColumn().isInViewport()))
-						.executeNow()
-						.listen();
+				ivwWhen = When.onChanged(newValue.inViewportProperty())
+					.then((o, n) -> setVisible(getColumn() != null && getColumn().isInViewport()))
+					.executeNow()
+					.listen();
 			}
 		});
 	}

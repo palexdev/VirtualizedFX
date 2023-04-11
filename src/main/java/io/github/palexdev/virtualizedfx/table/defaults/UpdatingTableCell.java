@@ -48,13 +48,14 @@ public class UpdatingTableCell<T, E> extends SimpleTableCell<T, ObservableValue<
 	// Properties
 	//================================================================================
 	private ObservableValue<E> property;
+	protected When<E> updWhen;
 
 	//================================================================================
 	// Constructors
 	//================================================================================
 	public UpdatingTableCell(T item, Function<T, ObservableValue<E>> extractor) {
 		this(item, extractor, FunctionalStringConverter.to(p ->
-				(p != null) ? Objects.toString(p.getValue()) : "null")
+			(p != null) ? Objects.toString(p.getValue()) : "null")
 		);
 	}
 
@@ -77,10 +78,10 @@ public class UpdatingTableCell<T, E> extends SimpleTableCell<T, ObservableValue<
 	protected ObservableValue<E> getProperty() {
 		if (property == null) {
 			property = getExtractor().apply(getItem());
-			When.onInvalidated(property)
-					.then(o -> invalidate())
-					.executeNow()
-					.listen();
+			updWhen = When.onInvalidated(property)
+				.then(o -> invalidate())
+				.executeNow()
+				.listen();
 		}
 		return property;
 	}
@@ -93,14 +94,15 @@ public class UpdatingTableCell<T, E> extends SimpleTableCell<T, ObservableValue<
 	 * {@inheritDoc}
 	 * <p></p>
 	 * When the item is updated the {@link ObservableValue} changes too.
-	 * First listener attached to the old one is disposed with {@link When#disposeFor(ObservableValue)},
+	 * First listener attached to the old one is disposed with {@link When#dispose()},
 	 * then the local reference to the old one is set to null.
 	 * <p>
 	 * Afterwards the item is updated and {@link #invalidate()} called.
 	 */
 	@Override
 	public void updateItem(T item) {
-		When.disposeFor(getProperty());
+		if (ivwWhen != null) ivwWhen.dispose();
+		ivwWhen = null;
 		property = null;
 
 		setItem(item);
@@ -120,12 +122,13 @@ public class UpdatingTableCell<T, E> extends SimpleTableCell<T, ObservableValue<
 	}
 
 	/**
-	 * Calls {@link When#disposeFor(ObservableValue)} on the stored observable, {@link #getProperty()},
+	 * Calls {@link When#dispose()} on the stored observable, {@link #getProperty()},
 	 * then sets it to null.
 	 */
 	@Override
 	public void dispose() {
-		When.disposeFor(getProperty());
+		if (ivwWhen != null) ivwWhen.dispose();
+		ivwWhen = null;
 		property = null;
 	}
 }

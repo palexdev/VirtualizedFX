@@ -14,21 +14,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
-## [11.9.1] - 08-04-2023
-
-## Added
-
-- Added MFXEffects as animations were moved from core to this
+## [11.9.3] - 11-04-2023
 
 ## Changed
 
-- Upgrade MFXCore to version 11.3.0 to avoid conflicts with older versions in which the module was still called "
-  MFXCore" (changed to "mfx.core")
-- Upgrade MFXResources to version 11.3.2
-
-## Fixed
-
-- GridRow: typo, rIndex must be oIndex when processing reusable cells (thanks to Alexander-Ploskin #11)
+- Bump JavaFX to v19.0.2
+- Bump MFXCore to v11.3.1
 
 ## [11.9.2] - 08-04-2023
 
