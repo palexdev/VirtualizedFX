@@ -14,6 +14,35 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.9.4] - 29-05-2023
+
+## Added
+
+- VirtualTable: added convenience method to autosize columns
+
+## Changed
+
+- Update Gradle to version 8.1.1
+- Update JavaFX plugin to version 0.0.14
+- Update JavaFX to version 20.0.1
+- Update MFXCore to version 11.6.2
+- Update MFXEffects to version 11.2.1
+- Update MFXResources to version 11.7.0
+- Update JUnito to version 5.9.2
+- DefaultTableColumnSkin: improved minimum width computation in VARIABLE layout mode to be at least the size of the
+  header
+- TableHelper: remove computeEstimatedSize() method override from the VariableHelper. The method has also been changed
+  so that the virtual width/breadth is always computed as the sum of all the columns' width
+- TableHelper: improved layout algorithm in general. Rows now use the virtual width as their width to cover all the
+  table even when scrolling. Improved size computation of the last table column. Do not constraint the column' sizes
+  here anymore, just use LayoutUtils.boundWidth(...)
+- VirtualTableSkin: use the virtual width as the width for the viewport during layout
+
+## Fixed
+
+- DefaultTableColumn: fix inViewport property not updating correctly in VARIABLE layout mode
+- DefaultTableColumnSkin: fixed sizes not updating when switching layout mode due to JavaFX caching the previous results
+
 ## [11.9.3] - 11-04-2023
 
 ## Changed
