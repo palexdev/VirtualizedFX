@@ -1,11 +1,13 @@
 package io.github.palexdev.virtualizedfx.table.defaults;
 
 import io.github.palexdev.mfxcore.base.bindings.MFXBindings;
+import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.mfxcore.utils.fx.TextUtils;
 import io.github.palexdev.virtualizedfx.cell.TableCell;
 import io.github.palexdev.virtualizedfx.controls.BoundLabel;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.VirtualTable;
+import javafx.beans.InvalidationListener;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -85,8 +87,13 @@ public class DefaultTableColumnSkin<T, C extends TableCell<T>> extends SkinBase<
 			table.onColumnChangedFactory(column);
 		});
 
+		/*
+		 * JavaFX caches the size computations, requestLayout() resets the cache
+		 */
 		VirtualTable<T> table = column.getTable();
-		table.heightProperty().addListener(invalidated -> column.requestLayout());
+		InvalidationListener layoutListener = invalidated -> column.requestLayout();
+		table.heightProperty().addListener(layoutListener);
+		table.columnsLayoutModeProperty().addListener(layoutListener);
 	}
 
 	private void initIcon() {
@@ -110,8 +117,8 @@ public class DefaultTableColumnSkin<T, C extends TableCell<T>> extends SkinBase<
 	protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
 		DefaultTableColumn<T, C> column = getSkinnable();
 		VirtualTable<T> table = column.getTable();
-		if (table != null && table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) {
-			return table.getColumnSize().getWidth();
+		if (table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) {
+			return Math.max(LayoutUtils.boundWidth(box), table.getColumnSize().getWidth());
 		}
 		return super.computeMinWidth(height, topInset, rightInset, bottomInset, leftInset);
 	}
@@ -122,7 +129,7 @@ public class DefaultTableColumnSkin<T, C extends TableCell<T>> extends SkinBase<
 		VirtualTable<T> table = column.getTable();
 		Node icon = column.getGraphic();
 		double gap = column.getGraphicTextGap();
-		if (table != null && table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) {
+		if (table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) {
 			return leftInset + TextUtils.computeLabelWidth(label) + (icon != null ? icon.prefWidth(-1) + gap : 0) + rightInset;
 		}
 		return super.computePrefWidth(height, topInset, rightInset, bottomInset, leftInset);

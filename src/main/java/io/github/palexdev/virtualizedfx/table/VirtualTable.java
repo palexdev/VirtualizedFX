@@ -31,6 +31,7 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoublePrope
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty.SizeConverter;
+import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
@@ -242,6 +243,53 @@ public class VirtualTable<T> extends Control implements VirtualScrollPane.Wrappa
 	 */
 	public void requestViewportLayout() {
 		setNeedsViewportLayout(true);
+	}
+
+	/**
+	 * Retrieves the column at the given index, if present and not null, delegates to
+	 * {@link #autosizeColumn(TableColumn)}.
+	 */
+	public void autosizeColumn(int index) {
+		try {
+			TableColumn<T, ? extends TableCell<T>> column = getColumn(index);
+			if (column == null) return;
+			autosizeColumn(column);
+		} catch (Exception ignored) {
+		}
+	}
+
+	/**
+	 * Auto-sizes the given column. This can be done only if the current {@link #getTableHelper()} is not null.
+	 * For this to work properly, the table should have been laid out in the scene graph at least once. If the skin is
+	 * still not available, the action is delayed until the skin is created.
+	 */
+	public void autosizeColumn(TableColumn<T, ? extends TableCell<T>> column) {
+		TableHelper helper = getTableHelper();
+		if (helper == null) return;
+		When.onChanged(skinProperty())
+			.condition((o, n) -> n != null && getWidth() > 0)
+			.then((o, n) -> helper.autosizeColumn(column))
+			.invalidating(widthProperty())
+			.oneShot(true)
+			.executeNow(() -> getSkin() != null && getWidth() > 0)
+			.listen();
+	}
+
+	/**
+	 * Auto-sizes all the table's columns. This can be done only if the current {@link #getTableHelper()} is not null.
+	 * For this to work properly, the table should have been laid out in the scene graph at least once. If the skin is
+	 * still not available, the action is delayed until the skin is created.
+	 */
+	public void autosizeColumns() {
+		TableHelper helper = getTableHelper();
+		if (helper == null) return;
+		When.onChanged(skinProperty())
+			.condition((o, n) -> n != null && getWidth() > 0)
+			.then((o, n) -> helper.autosizeColumns())
+			.invalidating(widthProperty())
+			.oneShot(true)
+			.executeNow(() -> getSkin() != null && getWidth() > 0)
+			.listen();
 	}
 
 	/**

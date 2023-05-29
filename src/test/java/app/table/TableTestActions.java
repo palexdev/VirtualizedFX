@@ -220,7 +220,7 @@ public enum TableTestActions {
 				p.getRoot(),
 				"Switch Columns",
 				"Choose Second Column By Index",
-				Constraint.of("Invalid index", i -> i >= 0 && i < t.getColumns().size())
+			Constraint.of("Invalid index", i -> i >= 0 && i < t.getColumns().size())
 		);
 		if (fIndex == -1 || sIndex == -1) return;
 
@@ -230,6 +230,7 @@ public enum TableTestActions {
 	}),
 	CLEAR_COLUMNS((p, t) -> t.getColumns().clear()),
 	RESET_COLUMNS((p, t) -> t.getColumns().setAll(p.getColumns())),
+	AUTOSIZE_COLUMNS((p, t) -> t.autosizeColumns()),
 	SWITCH_LAYOUT_MODE((p, t) -> t.setColumnsLayoutMode(EnumUtils.next(ColumnsLayoutMode.class, t.getColumnsLayoutMode()))),
 	SCROLL_TO_ROW((p, t) -> {
 		int index = getIntFromUser(p.getRoot(), "Choose TableRow...", "Number of rows: " + t.getItems().size(), Constraint.of("Invalid!", i -> i >= 0));

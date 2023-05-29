@@ -448,12 +448,25 @@ public interface TableHelper {
 			return estimatedSize.getWidth() - table.getWidth();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 * <p></p>
+		 * The virtual height is computed as the number of items multiplied by {@link VirtualTable#cellHeightProperty()}.
+		 * The virtual width is computed by summing the width of every column in the table. This is necessary for two
+		 * reasons:
+		 * <p> 1) In {@link ColumnsLayoutMode#VARIABLE} the columns may have a width that is lesser or greater than
+		 * {@link VirtualTable#columnSizeProperty()}
+		 * <p> 2) In {@link ColumnsLayoutMode#FIXED} all columns are forced to have the sizes specified by
+		 * {@link VirtualTable#columnSizeProperty()}, however the last column may be bigger since the layout strategy
+		 * is made so that the last column always covers any space left in the viewport
+		 */
 		@Override
 		public Size computeEstimatedSize() {
 			double cellHeight = table.getCellHeight();
-			double columnWidth = table.getColumnSize().getWidth();
 			double length = table.getItems().size() * cellHeight;
-			double breadth = table.getColumns().size() * columnWidth;
+			double breadth = table.getColumns().stream()
+				.mapToDouble(c -> c.getRegion().getWidth())
+				.sum();
 			Size size = Size.of(breadth, length);
 			estimatedSize.set(size);
 			return size;
@@ -652,8 +665,8 @@ public interface TableHelper {
 		 * space.
 		 * <p></p>
 		 * Rows are laid out from top to bottom, relocated at the previously computed X offset and at the extracted Y position
-		 * (+ the Y offset); and resized with the previously gathered height. The width is given by the maximum between
-		 * the table width and the row size (given by the number of cells in the row multiplied by the columns width)
+		 * (+ the Y offset); and resized with the previously gathered height. The width is given by the current
+		 * {@link VirtualTable#estimatedSizeProperty()} so that rows always have the same width of the column's container.
 		 * <p></p>
 		 * For each row in the loop it also lays out the their cells. Each cell is relocated at the extracted X position
 		 * and at Y 0; and resized to the previously gathered cell height. The width is the same of the corresponding column.
@@ -700,7 +713,7 @@ public interface TableHelper {
 				for (TableRow<?> row : state.getRows().values()) {
 					xI = xPositions.size() - 1;
 					Double yPos = yPositions.get(yI);
-					double rowW = Math.max(row.size() * colW, table.getWidth());
+					double rowW = table.getEstimatedSize().getWidth();
 					row.resizeRelocate(xOffset, yPos + yOffset, rowW, cellH);
 
 					List<TableCell<?>> cells = new ArrayList<>(row.getCells().values());
@@ -782,25 +795,6 @@ public interface TableHelper {
 		}
 
 		/**
-		 * {@inheritDoc}
-		 * <p></p>
-		 * The breadth is computed by iterating over all the columns and getting their width.
-		 * To be precise the width used by the computation is given by the maximum between the actual width of the
-		 * column's region and the size specified by {@link VirtualTable#columnSizeProperty()}.
-		 */
-		@Override
-		public Size computeEstimatedSize() {
-			double cellHeight = table.getCellHeight();
-			double length = table.getItems().size() * cellHeight;
-			double breadth = table.getColumns().stream()
-					.mapToDouble(c -> Math.max(c.getRegion().getWidth(), table.getColumnSize().getWidth()))
-					.sum();
-			Size size = Size.of(breadth, length);
-			estimatedSize.set(size);
-			return size;
-		}
-
-		/**
 		 * This binding holds the horizontal position of the viewport.
 		 * This is the direction along the estimated breath.
 		 * <p>
@@ -876,19 +870,33 @@ public interface TableHelper {
 			Region region = column.getRegion();
 			ObservableList<? extends TableColumn<?, ? extends TableCell<?>>> columns = table.getColumns();
 			int cIndex = table.getColumnIndex(((TableColumn) column));
-			double targetW;
 
-			// If it's last index, special handling to always use all the available remaining space
+			// Find the largest cell for column, this is needed in any case
+			// For last column, we want a width that is enough to fill the table but also enough to fully show
+			// all cells
+			Collection<? extends TableRow<?>> rows = state.getRows().values();
+			double targetW = rows.stream()
+				.mapToDouble(r -> r.getWidthOf(cIndex))
+				.max()
+				.orElseGet(region::getWidth);
+
+			// If it's last index, special handling to use at least all the available remaining space
 			if (cIndex == columns.size() - 1) {
+				// Compute last column's width
+				double colW = LayoutUtils.boundWidth(region);
+
 				// First compute total width for all previous columns
 				double totalW = columns.stream()
-						.map(TableColumn::getRegion)
-						.mapToDouble(Region::getWidth)
-						.sum() - region.getWidth();
+					.map(TableColumn::getRegion)
+					.mapToDouble(Region::getWidth)
+					.sum() - colW;
 
 				// If less than table width then targetW becomes `table.getWidth() - totalW + colW`
 				if (totalW < table.getWidth()) {
-					targetW = table.getWidth() - totalW + region.getWidth();
+					targetW = Math.max(
+						targetW,
+						table.getWidth() - totalW + colW
+					);
 
 					// Here we terminate the auto-sizing, if the condition is false
 					// then the other "method" is used
@@ -899,12 +907,6 @@ public interface TableHelper {
 					return;
 				}
 			}
-
-			Collection<? extends TableRow<?>> rows = state.getRows().values();
-			targetW = rows.stream()
-					.mapToDouble(r -> r.getWidthOf(cIndex))
-					.max()
-					.orElseGet(region::getWidth);
 
 			region.setPrefWidth(targetW);
 			computeEstimatedSize();
@@ -967,7 +969,7 @@ public interface TableHelper {
 					TableColumn<?, ? extends TableCell<?>> column = table.getColumn(cIndex);
 					Region region = column.getRegion();
 					xPositions.add(pos);
-					double colW = Math.max(LayoutUtils.boundWidth(region), table.getColumnSize().getWidth());
+					double colW = LayoutUtils.boundWidth(region);
 					pos += colW;
 				}
 			}
@@ -1003,15 +1005,15 @@ public interface TableHelper {
 		 * <p> - the Y offset with {@link #verticalOffset()}
 		 * <p></p>
 		 * Columns are laid out from left to right, relocated at the extracted X position and at Y 0;
-		 * and resized to the previously gathered height. The width is computed as the maximum between the column's region
-		 * width and the minimum width specified by {@link VirtualTable#columnSizeProperty()}.
+		 * and resized to the previously gathered height. The width is computed by {@link LayoutUtils#boundWidth(Node)}
+		 * to honor the min, pref, and max values.
 		 * The last column is an exception because if not all the space of the table was occupied by
 		 * laying out the previous columns than its width will be set to the entire remaining
 		 * space.
 		 * <p></p>
 		 * Rows are laid out from top to bottom, relocated at X 0 and at the extracted Y position (+ the Y offset);
-		 * and resized with the previously gathered height. The width is given by the maximum between
-		 * the table width and the row size (the row's region width plus the minimum columns width given by {@link VirtualTable#columnSizeProperty()}).
+		 * and resized with the previously gathered height. The width is given by the current
+		 * {@link VirtualTable#estimatedSizeProperty()} so that rows always have the same width of the column's container.
 		 * <p></p>
 		 * For each row in the loop it also lays out their cells. Each cell is relocated at the extracted X position
 		 * and at Y 0; and resized to the previously gathered cell height. The width is the same of the corresponding column.
@@ -1036,7 +1038,7 @@ public interface TableHelper {
 			for (Integer cIndex : columnsRange) {
 				TableColumn<?, ? extends TableCell<?>> column = table.getColumn(cIndex);
 				Region region = column.getRegion();
-				double colW = Math.max(LayoutUtils.boundWidth(region), table.getColumnSize().getWidth());
+				double colW = LayoutUtils.boundWidth(region);
 				Double xPos = xPositions.get(xI);
 				totalW += colW;
 
@@ -1056,7 +1058,7 @@ public interface TableHelper {
 				for (TableRow<?> row : state.getRows().values()) {
 					xI = 0;
 					Double yPos = yPositions.get(yI);
-					double rowW = Math.max(LayoutUtils.boundWidth(row) + table.getColumnSize().getWidth(), table.getWidth());
+					double rowW = table.getEstimatedSize().getWidth();
 					row.resizeRelocate(0, yPos + yOffset, rowW, cellH);
 
 					List<TableCell<?>> cells = new ArrayList<>(row.getCells().values());

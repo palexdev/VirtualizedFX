@@ -10,6 +10,7 @@ group 'io.github.palexdev'
 version "$virtualizedfxVersion"
 
 repositories {
+    mavenLocal()
     mavenCentral()
 
     flatDir {

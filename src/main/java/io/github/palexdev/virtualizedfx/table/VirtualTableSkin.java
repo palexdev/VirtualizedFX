@@ -119,7 +119,7 @@ public class VirtualTableSkin<T> extends SkinBase<VirtualTable<T>> {
 				VirtualTable<T> table = getSkinnable();
 
 				// First layout the columns and rows containers
-				double w = table.getWidth();
+				double w = table.getEstimatedSize().getWidth();
 				double h = table.getHeight();
 				double cH = table.getColumnSize().getHeight();
 				double rH = Math.max(h - cH, LayoutUtils.boundHeight(rContainer));

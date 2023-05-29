@@ -63,7 +63,7 @@
 
 .virtual-table .table-column:dragged,
 .virtual-table .table-column:hover {
-	-fx-border-color: transparent -blue-light -blue-light transparent;
+	-fx-border-color: transparent -blue-light -blue-light -blue-light;
 }
 
 .virtual-table .table-column:dragged .overlay,

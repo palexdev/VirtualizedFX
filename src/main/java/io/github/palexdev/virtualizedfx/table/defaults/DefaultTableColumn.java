@@ -165,7 +165,6 @@ public class DefaultTableColumn<T, C extends TableCell<T>> extends Labeled imple
 					if (o.getMinX() != n.getMinX()) bindings.invTarget(inViewport);
 				}))
 				.addInvalidatingSource(ExternalSource.of(table.positionProperty(), (o, n) -> {
-					if (table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) return;
 					if (o.getX() != n.getX()) bindings.invTarget(inViewport);
 				}))
 				.addInvalidatingSource(ExternalSource.of(table.needsViewportLayoutProperty(), (o, n) -> {
@@ -269,10 +268,6 @@ public class DefaultTableColumn<T, C extends TableCell<T>> extends Labeled imple
 	@Override
 	public ReadOnlyBooleanProperty inViewportProperty() {
 		return inViewport;
-	}
-
-	@Override
-	public void onVisibilityChanged(boolean before, boolean now) {
 	}
 
 	//================================================================================
