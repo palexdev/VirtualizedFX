@@ -28,6 +28,8 @@ import io.github.palexdev.virtualizedfx.cell.TableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
@@ -106,6 +108,14 @@ public interface TableHelper {
 	 * Keeps the results of {@link #computeEstimatedSize()}.
 	 */
 	ReadOnlyObjectProperty<Size> estimatedSizeProperty();
+
+	boolean isLayoutInitialized();
+
+	/**
+	 * A hook for late layout initialization. When this property changes it is guaranteed that the first full layout
+	 * pass has been performed.
+	 */
+	ReadOnlyBooleanProperty layoutInitializedProperty();
 
 	/**
 	 * The table is a particular virtualized control because the actual viewport height is not the entire
@@ -209,6 +219,7 @@ public interface TableHelper {
 		protected ChangeListener<? super Position> positionListener;
 
 		protected final SizeProperty estimatedSize = new SizeProperty(Size.of(0, 0));
+		protected final ReadOnlyBooleanWrapper layoutInitialized = new ReadOnlyBooleanWrapper(false);
 		protected DoubleBinding xPosBinding;
 		protected DoubleBinding yPosBinding;
 
@@ -320,6 +331,16 @@ public interface TableHelper {
 		@Override
 		public ReadOnlyObjectProperty<Size> estimatedSizeProperty() {
 			return estimatedSize.getReadOnlyProperty();
+		}
+
+		@Override
+		public boolean isLayoutInitialized() {
+			return layoutInitialized.get();
+		}
+
+		@Override
+		public ReadOnlyBooleanProperty layoutInitializedProperty() {
+			return layoutInitialized.getReadOnlyProperty();
 		}
 
 		@Override
@@ -676,9 +697,10 @@ public interface TableHelper {
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state.isEmptyAll()) return;
-			if (!table.isNeedsViewportLayout()) return;
-			if (invalidatedPos()) return;
+			if (state.isEmptyAll() || !table.isNeedsViewportLayout() || invalidatedPos()) {
+				layoutInitialized.set(false);
+				return;
+			}
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
 
 			double colW = table.getColumnSize().getWidth();
@@ -728,6 +750,7 @@ public interface TableHelper {
 					}
 					yI--;
 				}
+				layoutInitialized.set(totalW > 0);
 			}
 		}
 
@@ -867,6 +890,7 @@ public interface TableHelper {
 			TableState<?> state = table.getState();
 			if (state.isEmptyAll()) return;
 
+			double extra = table.getExtraAutosizeWidth();
 			Region region = column.getRegion();
 			ObservableList<? extends TableColumn<?, ? extends TableCell<?>>> columns = table.getColumns();
 			int cIndex = table.getColumnIndex(((TableColumn) column));
@@ -878,7 +902,7 @@ public interface TableHelper {
 			double targetW = rows.stream()
 				.mapToDouble(r -> r.getWidthOf(cIndex))
 				.max()
-				.orElseGet(region::getWidth);
+				.orElseGet(region::getWidth) + extra;
 
 			// If it's last index, special handling to use at least all the available remaining space
 			if (cIndex == columns.size() - 1) {
@@ -1023,9 +1047,10 @@ public interface TableHelper {
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state.isEmptyAll()) return;
-			if (!table.isNeedsViewportLayout()) return;
-			if (invalidatedPos()) return;
+			if (state.isEmptyAll() || !table.isNeedsViewportLayout() || invalidatedPos()) {
+				layoutInitialized.set(false);
+				return;
+			}
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
 
 			double colH = table.getColumnSize().getHeight();
@@ -1073,6 +1098,7 @@ public interface TableHelper {
 					}
 					yI--;
 				}
+				layoutInitialized.set(totalW > 0);
 			}
 		}
 	}

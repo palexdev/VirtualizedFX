@@ -102,7 +102,8 @@ public class MFXScrollBar extends Control implements MFXBehavioral<MFXScrollBar,
 	//================================================================================
 	private void initialize() {
 		getStyleClass().add(STYLE_CLASS);
-		setBehavior(defaultBehavior());
+        getStylesheets().add(STYLESHEET);
+        setBehavior(defaultBehavior());
 		setMin(0.0);
 		setMax(1.0);
 	}
@@ -128,11 +129,6 @@ public class MFXScrollBar extends Control implements MFXBehavioral<MFXScrollBar,
 	@Override
 	public void setBehavior(MFXScrollBarBehavior behavior) {
 		this.behavior.set(behavior);
-	}
-
-	@Override
-	public String getUserAgentStylesheet() {
-		return STYLESHEET;
 	}
 
 	@Override

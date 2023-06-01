@@ -118,29 +118,19 @@ public class VirtualScrollPaneSkin extends SkinBase<VirtualScrollPane> {
 		container.setClip(clip);
 
 		// Init Scroll Bars
-		hBar = new MFXScrollBar(Orientation.HORIZONTAL) {
-			@Override
-			public String getUserAgentStylesheet() {
-				return scrollPane.getUserAgentStylesheet();
-			}
-		};
-		hBar.behaviorProperty().bind(ObjectBindingBuilder.<MFXScrollBarBehavior>build()
-				.setMapper(() -> scrollPane.getHBarBehavior().apply(hBar))
-				.addSources(scrollPane.hBarBehaviorProperty())
-				.get()
-		);
+		hBar = new MFXScrollBar(Orientation.HORIZONTAL);
+        hBar.behaviorProperty().bind(ObjectBindingBuilder.<MFXScrollBarBehavior>build()
+            .setMapper(() -> scrollPane.getHBarBehavior().apply(hBar))
+            .addSources(scrollPane.hBarBehaviorProperty())
+            .get()
+        );
 
-		vBar = new MFXScrollBar(Orientation.VERTICAL) {
-			@Override
-			public String getUserAgentStylesheet() {
-				return scrollPane.getUserAgentStylesheet();
-			}
-		};
-		vBar.behaviorProperty().bind(ObjectBindingBuilder.<MFXScrollBarBehavior>build()
-				.setMapper(() -> scrollPane.getVBarBehavior().apply(vBar))
-				.addSources(scrollPane.vBarBehaviorProperty())
-				.get()
-		);
+        vBar = new MFXScrollBar(Orientation.VERTICAL);
+        vBar.behaviorProperty().bind(ObjectBindingBuilder.<MFXScrollBarBehavior>build()
+            .setMapper(() -> scrollPane.getVBarBehavior().apply(vBar))
+            .addSources(scrollPane.vBarBehaviorProperty())
+            .get()
+        );
 
 		if (scrollPane.isAutoHideBars()) {
 			hBar.setOpacity(0.0);

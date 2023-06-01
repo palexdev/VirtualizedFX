@@ -129,6 +129,7 @@ public class VirtualScrollPane extends Control {
 	//================================================================================
 	private void initialize() {
 		getStyleClass().add(STYLE_CLASS);
+		getStylesheets().add(STYLESHEET);
 	}
 
 	//================================================================================
@@ -142,11 +143,6 @@ public class VirtualScrollPane extends Control {
 	@Override
 	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
 		return getClassCssMetaData();
-	}
-
-	@Override
-	public String getUserAgentStylesheet() {
-		return STYLESHEET;
 	}
 
 	//================================================================================

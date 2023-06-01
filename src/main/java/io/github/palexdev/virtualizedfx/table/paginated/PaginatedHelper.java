@@ -177,9 +177,10 @@ public interface PaginatedHelper extends TableHelper {
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state.isEmptyAll()) return;
-			if (!table.isNeedsViewportLayout()) return;
-			if (invalidatedPos()) return;
+			if (state.isEmptyAll() || !table.isNeedsViewportLayout() || invalidatedPos()) {
+				layoutInitialized.set(false);
+				return;
+			}
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
 
 			double colW = table.getColumnSize().getWidth();
@@ -231,6 +232,7 @@ public interface PaginatedHelper extends TableHelper {
 					}
 					yI--;
 				}
+				layoutInitialized.set(totalW > 0);
 			}
 		}
 
@@ -387,9 +389,10 @@ public interface PaginatedHelper extends TableHelper {
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state.isEmptyAll()) return;
-			if (!table.isNeedsViewportLayout()) return;
-			if (invalidatedPos()) return;
+			if (state.isEmptyAll() || !table.isNeedsViewportLayout() || invalidatedPos()) {
+				layoutInitialized.set(false);
+				return;
+			}
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
 
 			double colH = table.getColumnSize().getHeight();
@@ -440,6 +443,7 @@ public interface PaginatedHelper extends TableHelper {
 					}
 					yI--;
 				}
+				layoutInitialized.set(totalW > 0);
 			}
 		}
 

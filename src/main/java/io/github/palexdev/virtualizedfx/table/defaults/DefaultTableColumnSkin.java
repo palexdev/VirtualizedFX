@@ -94,6 +94,7 @@ public class DefaultTableColumnSkin<T, C extends TableCell<T>> extends SkinBase<
 		InvalidationListener layoutListener = invalidated -> column.requestLayout();
 		table.heightProperty().addListener(layoutListener);
 		table.columnsLayoutModeProperty().addListener(layoutListener);
+		table.columnSizeProperty().addListener(layoutListener);
 	}
 
 	private void initIcon() {
@@ -117,8 +118,9 @@ public class DefaultTableColumnSkin<T, C extends TableCell<T>> extends SkinBase<
 	protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
 		DefaultTableColumn<T, C> column = getSkinnable();
 		VirtualTable<T> table = column.getTable();
-		if (table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) {
-			return Math.max(LayoutUtils.boundWidth(box), table.getColumnSize().getWidth());
+		double cw = table.getColumnSize().getWidth();
+		if (table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE && cw > 0) {
+			return Math.max(LayoutUtils.boundWidth(box), cw);
 		}
 		return super.computeMinWidth(height, topInset, rightInset, bottomInset, leftInset);
 	}
