@@ -14,6 +14,33 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Removed** for now removed features.
 - **Fixed** for any bug fixes.
 
+## [11.9.6] - 04-06-2023
+
+### Changed
+
+- For convenience, now controls are not styled by default, an enumerator allows to easily retrieve the needed
+  stylesheets
+- TableHelper: improve autosize columns code
+- TableHelper: improved layoutInitialized detection
+
+## [11.9.5] - 04-06-2023
+
+### Added
+
+- TableHelper, PaginatedHelper: added property to check when the table fully completes its layout pass
+
+### Changed
+
+- DefaultTableColumnSkin: use the columnSizeProperty() only if the set width is greater than 0, otherwise it falls back
+  to the standard computation
+
+### Fixed
+
+- Ditch the buggy getUserAgentStylesheet() method and use getStylesheets() instead to style the controls
+- VirtualTable: use the new aforementioned layoutInitializedProperty() to autosize columns instead of the Skin and Width
+  properties. The fact that the skin is not null anymore, and that the width has changed is not a valid indicator of the
+  table's layout state
+
 ## [11.9.4] - 29-05-2023
 
 ## Added

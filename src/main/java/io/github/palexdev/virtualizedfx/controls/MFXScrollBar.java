@@ -5,7 +5,6 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoublePrope
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
-import io.github.palexdev.virtualizedfx.ResourceManager;
 import io.github.palexdev.virtualizedfx.controls.behavior.MFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.behavior.base.BehaviorBase;
 import io.github.palexdev.virtualizedfx.controls.behavior.base.MFXBehavioral;
@@ -62,7 +61,6 @@ public class MFXScrollBar extends Control implements MFXBehavioral<MFXScrollBar,
 	// Properties
 	//================================================================================
 	private final String STYLE_CLASS = "mfx-scroll-bar";
-	private final String STYLESHEET = ResourceManager.loadResource("MFXScrollBar.css");
 
 	private final DoubleProperty min = PropUtils.clampedDoubleProperty(() -> 0.0, this::getMax);
 	private final DoubleProperty value = PropUtils.clampedDoubleProperty(this::getMin, this::getMax);
@@ -102,7 +100,6 @@ public class MFXScrollBar extends Control implements MFXBehavioral<MFXScrollBar,
 	//================================================================================
 	private void initialize() {
 		getStyleClass().add(STYLE_CLASS);
-        getStylesheets().add(STYLESHEET);
         setBehavior(defaultBehavior());
 		setMin(0.0);
 		setMax(1.0);

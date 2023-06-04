@@ -24,7 +24,6 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoublePrope
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
-import io.github.palexdev.virtualizedfx.ResourceManager;
 import io.github.palexdev.virtualizedfx.beans.VirtualBounds;
 import io.github.palexdev.virtualizedfx.controls.behavior.MFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VirtualScrollPaneSkin;
@@ -91,7 +90,6 @@ public class VirtualScrollPane extends Control {
 	// Properties
 	//================================================================================
 	private final String STYLE_CLASS = "virtual-scroll-pane";
-	private final String STYLESHEET = ResourceManager.loadResource("VirtualScrollPane.css");
 
 	private final ObjectProperty<Node> content = new SimpleObjectProperty<>();
 	private final ObjectProperty<VirtualBounds> contentBounds = new SimpleObjectProperty<>(VirtualBounds.EMPTY);
@@ -129,7 +127,6 @@ public class VirtualScrollPane extends Control {
 	//================================================================================
 	private void initialize() {
 		getStyleClass().add(STYLE_CLASS);
-		getStylesheets().add(STYLESHEET);
 	}
 
 	//================================================================================

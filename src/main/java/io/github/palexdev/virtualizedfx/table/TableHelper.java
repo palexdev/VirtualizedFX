@@ -697,10 +697,11 @@ public interface TableHelper {
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state.isEmptyAll() || !table.isNeedsViewportLayout() || invalidatedPos()) {
+			if (state.isEmptyAll()) {
 				layoutInitialized.set(false);
 				return;
 			}
+			if (!table.isNeedsViewportLayout() || invalidatedPos()) return;
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
 
 			double colW = table.getColumnSize().getWidth();
@@ -900,9 +901,9 @@ public interface TableHelper {
 			// all cells
 			Collection<? extends TableRow<?>> rows = state.getRows().values();
 			double targetW = rows.stream()
-				.mapToDouble(r -> r.getWidthOf(cIndex))
-				.max()
-				.orElseGet(region::getWidth) + extra;
+					.mapToDouble(r -> r.getWidthOf(cIndex))
+					.max()
+					.orElseGet(region::getWidth);
 
 			// If it's last index, special handling to use at least all the available remaining space
 			if (cIndex == columns.size() - 1) {
@@ -919,7 +920,7 @@ public interface TableHelper {
 				if (totalW < table.getWidth()) {
 					targetW = Math.max(
 						targetW,
-						table.getWidth() - totalW + colW
+							table.getWidth() - totalW
 					);
 
 					// Here we terminate the auto-sizing, if the condition is false
@@ -932,7 +933,7 @@ public interface TableHelper {
 				}
 			}
 
-			region.setPrefWidth(targetW);
+			region.setPrefWidth(targetW + extra);
 			computeEstimatedSize();
 			computePositions(state, true, false);
 			layout();
@@ -1047,10 +1048,11 @@ public interface TableHelper {
 		@Override
 		public void layout() {
 			TableState<?> state = table.getState();
-			if (state.isEmptyAll() || !table.isNeedsViewportLayout() || invalidatedPos()) {
+			if (state.isEmptyAll()) {
 				layoutInitialized.set(false);
 				return;
 			}
+			if (!table.isNeedsViewportLayout() || invalidatedPos()) return;
 			Map<Orientation, List<Double>> positions = computePositions(state, false, false);
 
 			double colH = table.getColumnSize().getHeight();
