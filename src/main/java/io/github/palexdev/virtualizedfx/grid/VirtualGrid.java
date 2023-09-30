@@ -184,11 +184,8 @@ public class VirtualGrid<T, C extends GridCell<T>> extends Control implements Vi
 		helper.computeEstimatedSize();
 
 		if (getWidth() != 0.0 && getHeight() != 0.0) {
-			if (!manager.init()) {
-				requestViewportLayout();
-			} else {
-				setPosition(0, 0);
-			}
+			manager.init();
+			requestViewportLayout();
 		}
 	}
 
