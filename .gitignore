@@ -12,3 +12,5 @@ out/
 #Others
 scenicView.properties
 logs
+# Ignore Gradle build output directory
+build

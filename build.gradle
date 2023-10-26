@@ -1,0 +1,66 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
+plugins {
+    id 'java-library'
+    id 'org.openjfx.javafxplugin' version "$jfxPlugin"
+    id 'com.vanniktech.maven.publish' version "$mavenPublish"
+}
+
+group 'io.github.palexdev'
+version "$vfx"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    // Deps
+    api "io.github.palexdev:mfxcore:$mfxcore"
+    api "io.github.palexdev:mfxeffects:$mfxeffects"
+    api "io.github.palexdev:mfxresources:$mfxresources"
+
+    // Test Deps
+    testImplementation "org.openjdk.jmh:jmh-core:$jmh"
+    testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:$jmh"
+    testImplementation platform("org.junit:junit-bom:$junit")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation "org.testfx:testfx-core:$testfx"
+    testImplementation "org.testfx:testfx-junit5:$testfx"
+    testImplementation "io.github.palexdev:scenicview:$scenicView"
+}
+
+java {
+    sourceCompatibility = "$jdk"
+    targetCompatibility = "$jdk"
+    withSourcesJar()
+    withJavadocJar()
+    tasks.withType(Jar).each { it.archiveBaseName.set("virtualizedfx") }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+javafx {
+    version = "$jfx"
+    modules = ['javafx.controls', 'javafx.fxml']
+    configurations = ["implementation", "testImplementation"]
+}
+
+configurations {
+    // Remove vanniktech non-sense
+    gradle.taskGraph.whenReady { graph ->
+        if (graph.hasTask(simpleJavadocJar)) {
+            simpleJavadocJar.enabled = false
+        }
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.S01)
+    signAllPublications()
+}
+
+
+
