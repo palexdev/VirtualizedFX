@@ -9,11 +9,11 @@ import javafx.scene.Node;
 import java.util.*;
 
 /**
- * Immutable object to represent the state of a {@link VirtualizedListState} in a specific moment in time. In other words,
+ * Immutable object to represent the state of a {@link VFXListState} in a specific moment in time. In other words,
  * each and every state is given by a unique combination of the list's properties.
  * <p>
  * The state carries three important information:
- * <p> 1) The range of items to display from the {@link VirtualizedList#itemsProperty()}
+ * <p> 1) The range of items to display from the {@link VFXList#itemsProperty()}
  * <p> 2) The cells that are currently in the viewport
  * <p> 3) A flag that indicates whether cells have changed
  * <p></p>
@@ -24,17 +24,17 @@ import java.util.*;
  */
 // NullPointerException warnings due to special EMPTY state
 @SuppressWarnings({"DataFlowIssue", "rawtypes"})
-public class VirtualizedListState<T, C extends Cell<T>> {
+public class VFXListState<T, C extends Cell<T>> {
 	//================================================================================
 	// Static Properties
 	//================================================================================
 	/**
-	 * Special instance of {@code VirtualizedListState} used to indicate that no cells can be present in the viewport at
+	 * Special instance of {@code VFXListState} used to indicate that no cells can be present in the viewport at
 	 * a certain time. The reasons can be many, for example, no cell factory, invalid range, width/height <= 0, etc...
 	 * <p>
 	 * This and {@link #isEmpty()} are two total different things!!
 	 */
-	public static final VirtualizedListState EMPTY = new VirtualizedListState<>() {
+	public static final VFXListState EMPTY = new VFXListState<>() {
 		@Override
 		protected Cell<Object> removeCell(int index) {return null;}
 
@@ -45,7 +45,7 @@ public class VirtualizedListState<T, C extends Cell<T>> {
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final VirtualizedList<T, C> list;
+	private final VFXList<T, C> list;
 	private final IntegerRange range;
 	private final StateMap<T, C> cells = new StateMap<>();
 	private boolean cellsChanged = false;
@@ -53,12 +53,12 @@ public class VirtualizedListState<T, C extends Cell<T>> {
 	//================================================================================
 	// Constructors
 	//================================================================================
-	private VirtualizedListState() {
+	private VFXListState() {
 		this.list = null;
 		this.range = Utils.INVALID_RANGE;
 	}
 
-	public VirtualizedListState(VirtualizedList<T, C> list, IntegerRange range) {
+	public VFXListState(VFXList<T, C> list, IntegerRange range) {
 		this.list = list;
 		this.range = range;
 	}
@@ -68,7 +68,7 @@ public class VirtualizedListState<T, C extends Cell<T>> {
 	//================================================================================
 
 	/**
-	 * Retrieves the item at the given index from {@link VirtualizedList#itemsProperty()} and delegates to
+	 * Retrieves the item at the given index from {@link VFXList#itemsProperty()} and delegates to
 	 * {@link #addCell(int, Object, Cell)}.
 	 *
 	 * @see StateMap
@@ -88,7 +88,7 @@ public class VirtualizedListState<T, C extends Cell<T>> {
 
 	/**
 	 * Removes a cell from the {@link StateMap} for the given index. If the cell is not found the next attempt
-	 * is to remove it by the item at the given index in the {@link VirtualizedList#itemsProperty()}.
+	 * is to remove it by the item at the given index in the {@link VFXList#itemsProperty()}.
 	 */
 	protected C removeCell(int index) {
 		C c = cells.remove(index);
@@ -104,13 +104,13 @@ public class VirtualizedListState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Disposes this state object by: caching all the cells ({@link VirtualizedListCache#cache(Collection)}), and then
+	 * Disposes this state object by: caching all the cells ({@link VFXListCache#cache(Collection)}), and then
 	 * clearing the {@link StateMap} ({@link StateMap#clear()}).
 	 *
 	 * @see StateMap
 	 */
 	protected void dispose() {
-		VirtualizedListCache<T, C> cache = list.getCache();
+		VFXListCache<T, C> cache = list.getCache();
 		cache.cache(getCellsByIndex().values());
 		cells.clear();
 	}
@@ -120,9 +120,9 @@ public class VirtualizedListState<T, C extends Cell<T>> {
 	//================================================================================
 
 	/**
-	 * @return the {@link VirtualizedList} instance this state is associated to
+	 * @return the {@link VFXList} instance this state is associated to
 	 */
-	public VirtualizedList<T, C> getList() {
+	public VFXList<T, C> getList() {
 		return list;
 	}
 
@@ -192,7 +192,7 @@ public class VirtualizedListState<T, C extends Cell<T>> {
 	 * @return whether the cells have changed since the last state. This is used to indicate if more or less cells are
 	 * present in this state compared to the old one. Used by the default skin to check whether the viewport has to
 	 * update its children or not.
-	 * @see VirtualizedListSkin
+	 * @see VFXListSkin
 	 */
 	public boolean haveCellsChanged() {
 		return cellsChanged;

@@ -9,7 +9,7 @@ import io.github.palexdev.mfxeffects.animations.Animations;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.mfxeffects.animations.motion.M3Motion;
 import io.github.palexdev.mfxeffects.animations.motion.Motion;
-import io.github.palexdev.virtualizedfx.list.VirtualizedList;
+import io.github.palexdev.virtualizedfx.list.VFXList;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -34,7 +34,7 @@ public class Playground extends Application {
 		pane.setPadding(InsetsBuilder.all(20));
 
 		ObservableList<Integer> items = Utils.items(50);
-		VirtualizedList<Integer, SimpleCell> list = new VirtualizedList<>(items, SimpleCell::new);
+		VFXList<Integer, SimpleCell> list = new VFXList<>(items, SimpleCell::new);
 		list.setPrefSize(400, 400);
 		list.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
 		list.setStyle("-fx-border-color: blue; -fx-border-insets: -1");

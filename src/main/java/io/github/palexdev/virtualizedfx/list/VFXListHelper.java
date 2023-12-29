@@ -19,11 +19,11 @@ import javafx.scene.Node;
 import java.util.Optional;
 
 /**
- * This interface is a utility API for {@link VirtualizedList} which helps to avoid if checks that depend on the container's
- * orientation, {@link VirtualizedList#orientationProperty()}. There are two concrete implementations: {@link VerticalHelper}
+ * This interface is a utility API for {@link VFXList} which helps to avoid if checks that depend on the container's
+ * orientation, {@link VFXList#orientationProperty()}. There are two concrete implementations: {@link VerticalHelper}
  * and {@link HorizontalHelper}
  */
-public interface VirtualizedListHelper<T, C extends Cell<T>> {
+public interface VFXListHelper<T, C extends Cell<T>> {
 
 	/**
 	 * @return the index of the first visible item
@@ -110,18 +110,18 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	void scrollToIndex(int index);
 
 	/**
-	 * @return the {@link VirtualizedList} instance associated to this helper
+	 * @return the {@link VFXList} instance associated to this helper
 	 */
-	VirtualizedList<T, C> getList();
+	VFXList<T, C> getList();
 
 	/**
-	 * Forces the {@link VirtualizedList#vPosProperty()} and {@link VirtualizedList#hPosProperty()} to be invalidated.
+	 * Forces the {@link VFXList#vPosProperty()} and {@link VFXList#hPosProperty()} to be invalidated.
 	 * This is simply done by calling the respective setters with their current respective values. Those two properties
 	 * will automatically call {@link #maxVScroll()} and {@link #maxHScroll()} to ensure the values are correct. This is
-	 * automatically invoked by the {@link VirtualizedListManager} when needed.
+	 * automatically invoked by the {@link VFXListManager} when needed.
 	 */
 	default void invalidatePos() {
-		VirtualizedList<T, C> list = getList();
+		VFXList<T, C> list = getList();
 		list.setVPos(list.getVPos());
 		list.setHPos(list.getHPos());
 	}
@@ -135,11 +135,11 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Converts the given item to a cell. The result is either on of the cells cached in {@link VirtualizedListCache} that
-	 * is updated with the given item, or a totally new one created by the {@link VirtualizedList#cellFactoryProperty()}.
+	 * Converts the given item to a cell. The result is either on of the cells cached in {@link VFXListCache} that
+	 * is updated with the given item, or a totally new one created by the {@link VFXList#cellFactoryProperty()}.
 	 */
 	default C itemToCell(T item) {
-		VirtualizedListCache<T, C> cache = getList().getCache();
+		VFXListCache<T, C> cache = getList().getCache();
 		Optional<C> opt = cache.tryTake();
 		opt.ifPresent(c -> c.updateItem(item));
 		return opt.orElseGet(() -> getList().getCellFactory().apply(item));
@@ -153,8 +153,8 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Implementing the {@link VirtualizedList#spacingProperty()} has been incredibly easy. It is enough to think at the
-	 * spacing as an extension of the {@link VirtualizedList#cellSizeProperty()}. In other words, for the helper to still
+	 * Implementing the {@link VFXList#spacingProperty()} has been incredibly easy. It is enough to think at the
+	 * spacing as an extension of the {@link VFXList#cellSizeProperty()}. In other words, for the helper to still
 	 * produce valid ranges, it is enough to sum the spacing to the cell size when the latter is needed.
 	 * This is a shortcut for {@code getList().getCellSize() + getList().getSpacing()}.
 	 */
@@ -163,13 +163,13 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Automatically called by {@link VirtualizedList} when a helper is not needed anymore (changed).
+	 * Automatically called by {@link VFXList} when a helper is not needed anymore (changed).
 	 * If the helper uses listeners/bindings that may lead to memory leaks, this is the right place to remove them.
 	 */
 	default void dispose() {}
 
 	/**
-	 * Abstract implementation of {@link VirtualizedListHelper}, contains common members for the two concrete implementations
+	 * Abstract implementation of {@link VFXListHelper}, contains common members for the two concrete implementations
 	 * {@link VerticalHelper} and {@link HorizontalHelper}, such as:
 	 * <p> - the range of items to display as a {@link IntegerRangeProperty}
 	 * <p> - the estimated length, which doesn't depend on the orientation but only on the number of items in the list
@@ -178,14 +178,14 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	 * <p> - the maximum breadth, {@link #maxBreadthProperty()}
 	 * <p> - the viewport's position, {@link #viewportPositionProperty()} as a {@link PositionProperty}
 	 */
-	abstract class AbstractHelper<T, C extends Cell<T>> implements VirtualizedListHelper<T, C> {
-		protected final VirtualizedList<T, C> list;
+	abstract class AbstractHelper<T, C extends Cell<T>> implements VFXListHelper<T, C> {
+		protected final VFXList<T, C> list;
 		protected final IntegerRangeProperty range = new IntegerRangeProperty();
 		protected final ReadOnlyDoubleWrapper estimatedLength = new ReadOnlyDoubleWrapper();
 		protected final ReadOnlyDoubleWrapper maxBreadth = new ReadOnlyDoubleWrapper();
 		protected final PositionProperty viewportPosition = new PositionProperty();
 
-		public AbstractHelper(VirtualizedList<T, C> list) {
+		public AbstractHelper(VFXList<T, C> list) {
 			this.list = list;
 			estimatedLength.bind(DoubleBindingBuilder.build()
 				.setMapper(() -> (list.size() * getTotalCellSize() - list.getSpacing()))
@@ -221,7 +221,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 		}
 
 		@Override
-		public VirtualizedList<T, C> getList() {
+		public VFXList<T, C> getList() {
 			return list;
 		}
 	}
@@ -229,7 +229,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	/**
 	 * Concrete implementation of {@link AbstractHelper} for {@link Orientation#VERTICAL}. Here the range of items to
 	 * display and the viewport position are defined as follows:
-	 * <p> - the range is given by the {@link #firstVisible()} element minus the buffer size ({@link VirtualizedList#bufferSizeProperty()}),
+	 * <p> - the range is given by the {@link #firstVisible()} element minus the buffer size ({@link VFXList#bufferSizeProperty()}),
 	 * cannot be negative; and the sum between this start index and the total number of needed cells given by {@link #totalNum()}, cannot
 	 * exceed the number of items - 1. It may happen the number of indexes given by the range {@code end - start + 1} is lesser
 	 * than the total number of cells we need, in such cases, the range start is corrected to be {@code end - needed + 1}.
@@ -238,7 +238,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	 * the vertical position.
 	 * <p> - the viewport position. This computation is at the core of virtual scrolling. The viewport, which contains the cell,
 	 * is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
-	 * The horizontal position is just the current {@link VirtualizedList#hPosProperty()} but negative. The vertical
+	 * The horizontal position is just the current {@link VFXList#hPosProperty()} but negative. The vertical
 	 * position is the one virtualized.
 	 * First we get the range of items to display and the total cell size given by {@link #getTotalCellSize()}, yes, the
 	 * spacing also affects the position. Then we compute the range to the first visible cell, which is given by
@@ -256,7 +256,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	 */
 	class VerticalHelper<T, C extends Cell<T>> extends AbstractHelper<T, C> {
 
-		public VerticalHelper(VirtualizedList<T, C> list) {
+		public VerticalHelper(VFXList<T, C> list) {
 			super(list);
 			range.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
@@ -355,7 +355,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * If {@link VirtualizedList#fitToBreadthProperty()} is true, then the computation will always return the
+		 * If {@link VFXList#fitToBreadthProperty()} is true, then the computation will always return the
 		 * list's width, otherwise the node width is computed by {@link LayoutUtils#boundWidth(Node)}.
 		 * Also, in the latter case, if the found width is greater than the current max breadth, then the property
 		 * {@link #maxBreadthProperty()} is updated with the new value.
@@ -377,7 +377,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 		 * {@inheritDoc}
 		 * <p></p>
 		 * The x position is 0. The y position is the total cell size multiplied bu the given index. The width is
-		 * computed by {@link #computeBreadth(Node)}, and the height is given by the {@link VirtualizedList#cellSizeProperty()}.
+		 * computed by {@link #computeBreadth(Node)}, and the height is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
 		public void layout(int index, Node node) {
@@ -406,7 +406,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	/**
 	 * Concrete implementation of {@link AbstractHelper} for {@link Orientation#HORIZONTAL}. Here the range of items to
 	 * display and the viewport position are defined as follows:
-	 * <p> - the range is given by the {@link #firstVisible()} element minus the buffer size ({@link VirtualizedList#bufferSizeProperty()}),
+	 * <p> - the range is given by the {@link #firstVisible()} element minus the buffer size ({@link VFXList#bufferSizeProperty()}),
 	 * cannot be negative; and the sum between this start index and the total number of needed cells given by {@link #totalNum()}, cannot
 	 * exceed the number of items - 1. It may happen the number of indexes given by the range {@code end - start + 1} is lesser
 	 * than the total number of cells we need, in such cases, the range start is corrected to be {@code end - needed + 1}.
@@ -415,7 +415,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	 * the horizontal position.
 	 * <p> - the viewport position. This computation is at the core of virtual scrolling. The viewport, which contains the cell,
 	 * is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
-	 * The vertical position is just the current {@link VirtualizedList#vPosProperty()} but negative. The horizontal
+	 * The vertical position is just the current {@link VFXList#vPosProperty()} but negative. The horizontal
 	 * position is the one virtualized.
 	 * First we get the range of items to display and the total cell size given by {@link #getTotalCellSize()}, yes, the
 	 * spacing also affects the position. Then we compute the range to the first visible cell, which is given by
@@ -433,7 +433,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	 */
 	class HorizontalHelper<T, C extends Cell<T>> extends AbstractHelper<T, C> {
 
-		public HorizontalHelper(VirtualizedList<T, C> list) {
+		public HorizontalHelper(VFXList<T, C> list) {
 			super(list);
 			range.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
@@ -532,7 +532,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * If {@link VirtualizedList#fitToBreadthProperty()} is true, then the computation will always return the
+		 * If {@link VFXList#fitToBreadthProperty()} is true, then the computation will always return the
 		 * list's height, otherwise the node width is computed by {@link LayoutUtils#boundHeight(Node)}.
 		 * Also, in the latter case, if the found height is greater than the current max breadth, then the property
 		 * {@link #maxBreadthProperty()} is updated with the new value.
@@ -554,7 +554,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 		 * {@inheritDoc}
 		 * <p></p>
 		 * The y position is 0. The x position is the total cell size multiplied bu the given index. The height is
-		 * computed by {@link #computeBreadth(Node)}, and the width is given by the {@link VirtualizedList#cellSizeProperty()}.
+		 * computed by {@link #computeBreadth(Node)}, and the width is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
 		public void layout(int index, Node node) {

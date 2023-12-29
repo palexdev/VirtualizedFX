@@ -8,7 +8,7 @@ import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.cells.CellBase;
 import io.github.palexdev.virtualizedfx.cells.CellBaseBehavior;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListHelper;
+import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static utils.Utils.items;
 
 @ExtendWith(ApplicationExtension.class)
-public class VirtualizedListTests {
+public class ListTests {
 
 	@Start
 	void start(Stage stage) {stage.show();}
@@ -192,7 +192,7 @@ public class VirtualizedListTests {
 		StackPane pane = setupStage();
 		ObservableList<Integer> items = items(20);
 		List list = new List(items, SimpleCell::new);
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Standard buffer -> 17 cells (4 buffer)
@@ -221,7 +221,7 @@ public class VirtualizedListTests {
 		StackPane pane = setupStage();
 		ObservableList<Integer> items = items(20);
 		List list = new List(items, SimpleCell::new);
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setVPos(Double.MAX_VALUE);
@@ -260,7 +260,7 @@ public class VirtualizedListTests {
 		StackPane pane = setupStage();
 		ObservableList<Integer> items = items(50);
 		List list = new List(items, SimpleCell::new);
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setVPos(600);
@@ -295,7 +295,7 @@ public class VirtualizedListTests {
 		StackPane pane = setupStage();
 		ObservableList<Integer> items = items(50);
 		List list = new List(items, SimpleCell::new);
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Test init
@@ -411,7 +411,7 @@ public class VirtualizedListTests {
 		StackPane pane = setupStage();
 		ObservableList<Integer> items = items(50);
 		List list = new List(items, SimpleCell::new);
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Test init, why not
@@ -437,7 +437,7 @@ public class VirtualizedListTests {
 		StackPane pane = setupStage();
 		ObservableList<Integer> items = items(50);
 		List list = new List(items, SimpleCell::new);
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setVPos(600.0);
@@ -472,7 +472,7 @@ public class VirtualizedListTests {
 		StackPane pane = setupStage();
 		ObservableList<Integer> items = items(50);
 		List list = new List(items, SimpleCell::new);
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setVPos(Double.MAX_VALUE);

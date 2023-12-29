@@ -1,6 +1,6 @@
 ## General
 
-- [ ] Review names
+- [x] Review names
 - [ ] Review APIs (classes, simplify as much as possible/re-organize at least)
 - [ ] Maybe define a common Interface for Virtualized containers
 

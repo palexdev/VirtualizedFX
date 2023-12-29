@@ -12,9 +12,9 @@ import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListHelper.HorizontalHelper;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListHelper.VerticalHelper;
-import io.github.palexdev.virtualizedfx.properties.VirtualizedListStateProperty;
+import io.github.palexdev.virtualizedfx.list.VFXListHelper.HorizontalHelper;
+import io.github.palexdev.virtualizedfx.list.VFXListHelper.VerticalHelper;
+import io.github.palexdev.virtualizedfx.properties.VFXListStateProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -35,32 +35,32 @@ import java.util.function.Supplier;
  * Implementation of a virtualized container to show a list of items either vertically or horizontally.
  * The default style class is: '.virtualized-list'.
  * <p>
- * Extends {@link Control}, has its own skin implementation {@link VirtualizedListSkin} and behavior {@link VirtualizedListManager}.
+ * Extends {@link Control}, has its own skin implementation {@link VFXListSkin} and behavior {@link VFXListManager}.
  * Uses cells of type {@link Cell}.
  * <p>
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
- * {@link VirtualizedListState}. The state determines which and how items are displayed in the container.
+ * {@link VFXListState}. The state determines which and how items are displayed in the container.
  * <p></p>
  * <b>Features & Implementation Details</b>
- * <p> - The default behavior implementation, {@link VirtualizedListManager}, can be considered as the name suggests more like
+ * <p> - The default behavior implementation, {@link VFXListManager}, can be considered as the name suggests more like
  * a 'manager' than an actual behavior. It is responsible for reacting to core changes here in the control to produce a new
  * state. The state can be considered like a picture of the container at a certain time. Each combination of the variables
  * that influence the way items are shown (how many, start, end, changes in the list, etc.) produce a specific state.
  * This is an important concept as some of the features I'm going to mention below are due to the combination of default
  * skin + default behavior. You are allowed to change/customize the skin and the behavior as you please.
  * <p> - The items list is managed automatically (permutations, insertions, removals, updates). Compared to previous
- * algorithms the {@link VirtualizedListManager} implements a much simpler strategy while still trying to keep the cell updates
- * count as low as possible to improve performance. See {@link VirtualizedListManager#onItemsChanged()}.
+ * algorithms the {@link VFXListManager} implements a much simpler strategy while still trying to keep the cell updates
+ * count as low as possible to improve performance. See {@link VFXListManager#onItemsChanged()}.
  * <p> - The function used to generate the cells, called "cellFactory", can be changed anytime, even at runtime,
- * see {@link VirtualizedListManager#onCellFactoryChanged()}.
+ * see {@link VFXListManager#onCellFactoryChanged()}.
  * <p> - The component is based on a fixed size for all the cell, this parameter can be controlled through the {@link #cellSizeProperty()},
- * and can also be changed anytime, see {@link VirtualizedListManager#onCellSizeChanged()}.
+ * and can also be changed anytime, see {@link VFXListManager#onCellSizeChanged()}.
  * <p> - Similar to the {@code VBox} pane, this container allows you to evenly space the cells in the viewport by setting the
- * {@link #spacingProperty()}. See {@link VirtualizedListManager#onSpacingChanged()}.
+ * {@link #spacingProperty()}. See {@link VFXListManager#onSpacingChanged()}.
  * <p> - The container can be oriented either vertically or horizontally through the {@link #orientationProperty()}.
  * Depending on the orientation, the layout and other computations change. Thanks to polymorphism, it's possible
  * to define a public API for such computations and implement two separate classes for each orientation, this is the
- * {@link VirtualizedListHelper}. You are allowed to change the helper through the {@link #helperFactoryProperty()}.
+ * {@link VFXListHelper}. You are allowed to change the helper through the {@link #helperFactoryProperty()}.
  * <p> - The vertical and horizontal positions are available through the properties, {@link #vPosProperty()} and {@link #hPosProperty()}.
  * It was indeed possible to use a single property for the position, but they are split for performance reasons. Since the
  * cells are arranged according to the container's orientation, there is a distinction between the width and height.
@@ -75,7 +75,7 @@ import java.util.function.Supplier;
  * for changes in the displaying cells, you want to add a listener on this property.
  * <p> - It is possible to programmatically tell the viewport to update its layout with {@link #requestViewportLayout()},
  * although this should never be necessary as it is handled automatically when the state changes.
- * <p> - Additionally, this container makes use of a simple cache implementation, {@link VirtualizedListCache}, which
+ * <p> - Additionally, this container makes use of a simple cache implementation, {@link VFXListCache}, which
  * avoids creating new cells when needed if some are already present in it. The most crucial aspect for this kind of
  * virtualization is to avoid creating nodes, as this is the most expensive operation it can occur. Not only nodes need
  * to be created but also added to the container and then laid out. Instead, it's much more likely that the {@link Cell#updateItem(Object)}
@@ -86,11 +86,11 @@ import java.util.function.Supplier;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedListManager<T, C>> {
+public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>> {
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final VirtualizedListCache<T, C> cache;
+	private final VFXListCache<T, C> cache;
 	private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList()) {
 		@Override
 		public void set(ObservableList<T> newValue) {
@@ -99,23 +99,23 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 		}
 	};
 	private final FunctionProperty<T, C> cellFactory = new FunctionProperty<>();
-	private final ReadOnlyObjectWrapper<VirtualizedListHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
+	private final ReadOnlyObjectWrapper<VFXListHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
 		@Override
-		public void set(VirtualizedListHelper<T, C> newValue) {
+		public void set(VFXListHelper<T, C> newValue) {
 			if (newValue == null)
 				throw new NullPointerException("List helper cannot be null!");
-			VirtualizedListHelper<T, C> oldValue = get();
+			VFXListHelper<T, C> oldValue = get();
 			if (oldValue != null) oldValue.dispose();
 			super.set(newValue);
 		}
 	};
-	private final FunctionProperty<Orientation, VirtualizedListHelper<T, C>> helperFactory = new FunctionProperty<>(o ->
+	private final FunctionProperty<Orientation, VFXListHelper<T, C>> helperFactory = new FunctionProperty<>(o ->
 		(o == Orientation.VERTICAL) ?
-			new VerticalHelper<>(VirtualizedList.this) :
-			new HorizontalHelper<>(VirtualizedList.this)
+			new VerticalHelper<>(VFXList.this) :
+			new HorizontalHelper<>(VFXList.this)
 	) {
 		@Override
-		public void set(Function<Orientation, VirtualizedListHelper<T, C>> newValue) {
+		public void set(Function<Orientation, VFXListHelper<T, C>> newValue) {
 			if (newValue == null)
 				throw new NullPointerException("List helper factory cannot be null");
 			super.set(newValue);
@@ -124,7 +124,7 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 		@Override
 		protected void invalidated() {
 			Orientation orientation = getOrientation();
-			VirtualizedListHelper<T, C> helper = get().apply(orientation);
+			VFXListHelper<T, C> helper = get().apply(orientation);
 			setHelper(helper);
 		}
 	};
@@ -137,25 +137,25 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 		() -> (getHelper() != null) ? getHelper().maxHScroll() : 0.0
 	);
 
-	private final VirtualizedListStateProperty<T, C> state = new VirtualizedListStateProperty<>(VirtualizedListState.EMPTY);
+	private final VFXListStateProperty<T, C> state = new VFXListStateProperty<>(VFXListState.EMPTY);
 	private final ReadOnlyBooleanWrapper needsViewportLayout = new ReadOnlyBooleanWrapper(false);
 
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public VirtualizedList() {
+	public VFXList() {
 		cache = createCache();
 		setOrientation(Orientation.VERTICAL);
 		initialize();
 	}
 
-	public VirtualizedList(ObservableList<T> items, Function<T, C> cellFactory) {
+	public VFXList(ObservableList<T> items, Function<T, C> cellFactory) {
 		this();
 		setItems(items);
 		setCellFactory(cellFactory);
 	}
 
-	public VirtualizedList(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
+	public VFXList(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
 		this();
 		setItems(items);
 		setCellFactory(cellFactory);
@@ -173,17 +173,17 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 	/**
 	 * Responsible for creating the cache instance used by this container.
 	 *
-	 * @see VirtualizedListCache
+	 * @see VFXListCache
 	 * @see #cacheCapacityProperty()
 	 */
-	protected VirtualizedListCache<T, C> createCache() {
-		return new VirtualizedListCache<>(this, getCacheCapacity());
+	protected VFXListCache<T, C> createCache() {
+		return new VFXListCache<>(this, getCacheCapacity());
 	}
 
 	/**
 	 * Setter for the {@link #stateProperty()}.
 	 */
-	protected void update(VirtualizedListState<T, C> state) {
+	protected void update(VFXListState<T, C> state) {
 		setState(state);
 	}
 
@@ -200,12 +200,12 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 	//================================================================================
 	@Override
 	protected SkinBase<?, ?> buildSkin() {
-		return new VirtualizedListSkin<>(this);
+		return new VFXListSkin<>(this);
 	}
 
 	@Override
-	public Supplier<VirtualizedListManager<T, C>> defaultBehaviorProvider() {
-		return () -> new VirtualizedListManager<>(this);
+	public Supplier<VFXListManager<T, C>> defaultBehaviorProvider() {
+		return () -> new VFXListManager<>(this);
 	}
 
 	//================================================================================
@@ -241,56 +241,56 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 	}
 
 	/**
-	 * Delegate for {@link VirtualizedListState#getRange()}
+	 * Delegate for {@link VFXListState#getRange()}
 	 */
 	public IntegerRange getRange() {
 		return getState().getRange();
 	}
 
 	/**
-	 * Delegate for {@link VirtualizedListState#getCellsByIndexUnmodifiable()}
+	 * Delegate for {@link VFXListState#getCellsByIndexUnmodifiable()}
 	 */
 	public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {
 		return getState().getCellsByIndexUnmodifiable();
 	}
 
 	/**
-	 * Delegate for {@link VirtualizedListState#getCellsByItemUnmodifiable()}
+	 * Delegate for {@link VFXListState#getCellsByItemUnmodifiable()}
 	 */
 	public Map<T, C> getCellsByItemUnmodifiable() {
 		return getState().getCellsByItemUnmodifiable();
 	}
 
 	/**
-	 * Delegate for {@link VirtualizedListHelper#estimatedLengthProperty()}.
+	 * Delegate for {@link VFXListHelper#estimatedLengthProperty()}.
 	 */
 	public ReadOnlyDoubleProperty estimatedLengthProperty() {
 		return getHelper().estimatedLengthProperty();
 	}
 
 	/**
-	 * Delegate for {@link VirtualizedListHelper#maxBreadthProperty()}.
+	 * Delegate for {@link VFXListHelper#maxBreadthProperty()}.
 	 */
 	public ReadOnlyDoubleProperty maxBreadthProperty() {
 		return getHelper().maxBreadthProperty();
 	}
 
 	/**
-	 * Delegate for {@link VirtualizedListHelper#scrollBy(double)}.
+	 * Delegate for {@link VFXListHelper#scrollBy(double)}.
 	 */
 	public void scrollBy(double pixels) {
 		getHelper().scrollBy(pixels);
 	}
 
 	/**
-	 * Delegate for {@link VirtualizedListHelper#scrollToPixel(double)}.
+	 * Delegate for {@link VFXListHelper#scrollToPixel(double)}.
 	 */
 	public void scrollToPixel(double pixel) {
 		getHelper().scrollToPixel(pixel);
 	}
 
 	/**
-	 * Delegate for {@link VirtualizedListHelper#scrollToIndex(int)}.
+	 * Delegate for {@link VFXListHelper#scrollToIndex(int)}.
 	 */
 	public void scrollToIndex(int index) {
 		getHelper().scrollToIndex(index);
@@ -342,7 +342,7 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 		@Override
 		protected void invalidated() {
 			Orientation orientation = get();
-			VirtualizedListHelper<T, C> helper = getHelperFactory().apply(orientation);
+			VFXListHelper<T, C> helper = getHelperFactory().apply(orientation);
 			setHelper(helper);
 		}
 	};
@@ -511,58 +511,58 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 	// CssMetaData
 	//================================================================================
 	private static class StyleableProperties {
-		private static final StyleablePropertyFactory<VirtualizedList<?, ?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+		private static final StyleablePropertyFactory<VFXList<?, ?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
 		private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
-		private static final CssMetaData<VirtualizedList<?, ?>, Number> CELL_SIZE =
+		private static final CssMetaData<VFXList<?, ?>, Number> CELL_SIZE =
 			FACTORY.createSizeCssMetaData(
 				"-vfx-cell-size",
-				VirtualizedList::cellSizeProperty,
+				VFXList::cellSizeProperty,
 				32.0
 			);
 
-		private static final CssMetaData<VirtualizedList<?, ?>, Number> SPACING =
+		private static final CssMetaData<VFXList<?, ?>, Number> SPACING =
 			FACTORY.createSizeCssMetaData(
 				"-vfx-spacing",
-				VirtualizedList::spacingProperty,
+				VFXList::spacingProperty,
 				0.0
 			);
 
-		private static final CssMetaData<VirtualizedList<?, ?>, BufferSize> BUFFER_SIZE =
+		private static final CssMetaData<VFXList<?, ?>, BufferSize> BUFFER_SIZE =
 			FACTORY.createEnumCssMetaData(
 				BufferSize.class,
 				"-vfx-buffer-size",
-				VirtualizedList::bufferSizeProperty,
+				VFXList::bufferSizeProperty,
 				BufferSize.standard()
 			);
 
-		private static final CssMetaData<VirtualizedList<?, ?>, Orientation> ORIENTATION =
+		private static final CssMetaData<VFXList<?, ?>, Orientation> ORIENTATION =
 			FACTORY.createEnumCssMetaData(
 				Orientation.class,
 				"-vfx-orientation",
-				VirtualizedList::orientationProperty,
+				VFXList::orientationProperty,
 				Orientation.VERTICAL
 			);
 
-		private static final CssMetaData<VirtualizedList<?, ?>, Boolean> FIT_TO_BREADTH =
+		private static final CssMetaData<VFXList<?, ?>, Boolean> FIT_TO_BREADTH =
 			FACTORY.createBooleanCssMetaData(
 				"-vfx-fit-to-breadth",
-				VirtualizedList::fitToBreadthProperty,
+				VFXList::fitToBreadthProperty,
 				true
 			);
 
 
-		private static final CssMetaData<VirtualizedList<?, ?>, Number> CLIP_BORDER_RADIUS =
+		private static final CssMetaData<VFXList<?, ?>, Number> CLIP_BORDER_RADIUS =
 			FACTORY.createSizeCssMetaData(
 				"-vfx-clip-border-radius",
-				VirtualizedList::clipBorderRadiusProperty,
+				VFXList::clipBorderRadiusProperty,
 				0.0
 			);
 
-		private static final CssMetaData<VirtualizedList<?, ?>, Number> CACHE_CAPACITY =
+		private static final CssMetaData<VFXList<?, ?>, Number> CACHE_CAPACITY =
 			FACTORY.createSizeCssMetaData(
 				"-vfx-cache-capacity",
-				VirtualizedList::cacheCapacityProperty,
+				VFXList::cacheCapacityProperty,
 				10
 			);
 
@@ -590,7 +590,7 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 	/**
 	 * @return the cache instance used by this container
 	 */
-	public VirtualizedListCache<T, C> getCache() {
+	public VFXListCache<T, C> getCache() {
 		return cache;
 	}
 
@@ -628,33 +628,33 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 		this.cellFactory.set(cellFactory);
 	}
 
-	public VirtualizedListHelper<T, C> getHelper() {
+	public VFXListHelper<T, C> getHelper() {
 		return helper.get();
 	}
 
 	/**
-	 * Specifies the instance of the {@link VirtualizedListHelper} built by the {@link #helperFactoryProperty()}.
+	 * Specifies the instance of the {@link VFXListHelper} built by the {@link #helperFactoryProperty()}.
 	 */
-	public ReadOnlyObjectProperty<VirtualizedListHelper<T, C>> helperProperty() {
+	public ReadOnlyObjectProperty<VFXListHelper<T, C>> helperProperty() {
 		return helper.getReadOnlyProperty();
 	}
 
-	protected void setHelper(VirtualizedListHelper<T, C> helper) {
+	protected void setHelper(VFXListHelper<T, C> helper) {
 		this.helper.set(helper);
 	}
 
-	public Function<Orientation, VirtualizedListHelper<T, C>> getHelperFactory() {
+	public Function<Orientation, VFXListHelper<T, C>> getHelperFactory() {
 		return helperFactory.get();
 	}
 
 	/**
-	 * Specifies the function used to build a {@link VirtualizedListHelper} instance depending on the container's orientation.
+	 * Specifies the function used to build a {@link VFXListHelper} instance depending on the container's orientation.
 	 */
-	public FunctionProperty<Orientation, VirtualizedListHelper<T, C>> helperFactoryProperty() {
+	public FunctionProperty<Orientation, VFXListHelper<T, C>> helperFactoryProperty() {
 		return helperFactory;
 	}
 
-	public void setHelperFactory(Function<Orientation, VirtualizedListHelper<T, C>> helperFactory) {
+	public void setHelperFactory(Function<Orientation, VFXListHelper<T, C>> helperFactory) {
 		this.helperFactory.set(helperFactory);
 	}
 
@@ -692,7 +692,7 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 		this.hPos.set(hPos);
 	}
 
-	public VirtualizedListState<T, C> getState() {
+	public VFXListState<T, C> getState() {
 		return state.get();
 	}
 
@@ -700,11 +700,11 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 	 * Specifies the container's current state. The state carries useful information such as the range of displayed items
 	 * and the cells ordered by index, or by item (not ordered).
 	 */
-	public ReadOnlyObjectProperty<VirtualizedListState<T, C>> stateProperty() {
+	public ReadOnlyObjectProperty<VFXListState<T, C>> stateProperty() {
 		return state.getReadOnlyProperty();
 	}
 
-	protected void setState(VirtualizedListState<T, C> state) {
+	protected void setState(VFXListState<T, C> state) {
 		this.state.set(state);
 	}
 

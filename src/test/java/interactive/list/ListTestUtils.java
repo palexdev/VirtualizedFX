@@ -6,10 +6,10 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.cells.CellBase;
 import io.github.palexdev.virtualizedfx.cells.CellBaseBehavior;
-import io.github.palexdev.virtualizedfx.list.VirtualizedList;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListHelper;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListSkin;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListState;
+import io.github.palexdev.virtualizedfx.list.VFXList;
+import io.github.palexdev.virtualizedfx.list.VFXListHelper;
+import io.github.palexdev.virtualizedfx.list.VFXListSkin;
+import io.github.palexdev.virtualizedfx.list.VFXListState;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
@@ -54,11 +54,11 @@ public class ListTestUtils {
 		return pane;
 	}
 
-	static void assertState(VirtualizedList<Integer, SimpleCell> list, IntegerRange range) {
-		VirtualizedListState<Integer, SimpleCell> state = list.getState();
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
+	static void assertState(VFXList<Integer, SimpleCell> list, IntegerRange range) {
+		VFXListState<Integer, SimpleCell> state = list.getState();
+		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		if (IntegerRange.of(-1).equals(range)) {
-			assertEquals(VirtualizedListState.EMPTY, state);
+			assertEquals(VFXListState.EMPTY, state);
 			return;
 		}
 
@@ -82,7 +82,7 @@ public class ListTestUtils {
 		}
 	}
 
-	static void assertPosition(VirtualizedList<Integer, SimpleCell> list, int iteration, SimpleCell cell) {
+	static void assertPosition(VFXList<Integer, SimpleCell> list, int iteration, SimpleCell cell) {
 		Orientation o = list.getOrientation();
 		Function<Bounds, Double> inParentPos = (o == Orientation.VERTICAL) ? Bounds::getMinY : Bounds::getMinX;
 		double pos = iteration * list.getHelper().getTotalCellSize();
@@ -102,7 +102,7 @@ public class ListTestUtils {
 	//================================================================================
 	// Internal Classes
 	//================================================================================
-	public static class List extends VirtualizedList<Integer, SimpleCell> {
+	public static class List extends VFXList<Integer, SimpleCell> {
 		public List(ObservableList<Integer> items, Function<Integer, SimpleCell> cellFactory) {
 			super(items, cellFactory);
 		}
@@ -117,7 +117,7 @@ public class ListTestUtils {
 
 		@Override
 		protected SkinBase<?, ?> buildSkin() {
-			return new VirtualizedListSkin<>(this) {
+			return new VFXListSkin<>(this) {
 				@Override
 				protected void onLayoutCompleted(boolean done) {
 					super.onLayoutCompleted(done);

@@ -19,29 +19,29 @@
 package io.github.palexdev.virtualizedfx.properties;
 
 import io.github.palexdev.virtualizedfx.cells.Cell;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListState;
+import io.github.palexdev.virtualizedfx.list.VFXListState;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
 /**
- * Convenience property that extends {@link ReadOnlyObjectWrapper} for {@link VirtualizedListState}.
+ * Convenience property that extends {@link ReadOnlyObjectWrapper} for {@link VFXListState}.
  */
-public class VirtualizedListStateProperty<T, C extends Cell<T>> extends ReadOnlyObjectWrapper<VirtualizedListState<T, C>> {
+public class VFXListStateProperty<T, C extends Cell<T>> extends ReadOnlyObjectWrapper<VFXListState<T, C>> {
 
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public VirtualizedListStateProperty() {
+	public VFXListStateProperty() {
 	}
 
-	public VirtualizedListStateProperty(VirtualizedListState<T, C> initialValue) {
+	public VFXListStateProperty(VFXListState<T, C> initialValue) {
 		super(initialValue);
 	}
 
-	public VirtualizedListStateProperty(Object bean, String name) {
+	public VFXListStateProperty(Object bean, String name) {
 		super(bean, name);
 	}
 
-	public VirtualizedListStateProperty(Object bean, String name, VirtualizedListState<T, C> initialValue) {
+	public VFXListStateProperty(Object bean, String name, VFXListState<T, C> initialValue) {
 		super(bean, name, initialValue);
 	}
 }

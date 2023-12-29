@@ -10,11 +10,11 @@ import javafx.beans.property.ListProperty;
 import java.util.*;
 
 /**
- * Default behavior implementation for {@link VirtualizedList}. Although, to be precise, and as the name also suggests,
+ * Default behavior implementation for {@link VFXList}. Although, to be precise, and as the name also suggests,
  * this can be considered more like a 'manager' than a behavior. Behaviors typically respond to user input, and then update
- * the component's state. This behavior contains core methods to respond to various properties change in {@link VirtualizedList}.
- * All computations here will generate a new {@link VirtualizedListState}, if possible, and update the list and the
- * layout (indirect, call to {@link VirtualizedList#requestViewportLayout()}).
+ * the component's state. This behavior contains core methods to respond to various properties change in {@link VFXList}.
+ * All computations here will generate a new {@link VFXListState}, if possible, and update the list and the
+ * layout (indirect, call to {@link VFXList#requestViewportLayout()}).
  * <p>
  * By default, manages the following changes:
  * <p> - geometry changes (width/height changes), {@link #onGeometryChanged()}
@@ -27,12 +27,12 @@ import java.util.*;
  * <p> - spacing changes {@link #onSpacingChanged()}
  * <p></p>
  * Last but not least, some of these computations may need to ensure the current vertical and horizontal positions are correct,
- * so that a valid state can be produced. To achieve this, {@link VirtualizedListHelper#invalidatePos()} is called.
+ * so that a valid state can be produced. To achieve this, {@link VFXListHelper#invalidatePos()} is called.
  * However, invalidating the positions, also means that the {@link #onPositionChanged()} method could be potentially
  * triggered, thus generating an unwanted 'middle' state. For this reason a special flag {@link #invalidatingPos} is used
  * before the invalidation to avoid triggering that method.
  */
-public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<VirtualizedList<T, C>> {
+public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T, C>> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -41,7 +41,7 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public VirtualizedListManager(VirtualizedList<T, C> list) {
+	public VFXListManager(VFXList<T, C> list) {
 		super(list);
 	}
 
@@ -55,15 +55,15 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * responsible for initialization (when width/height changes from 0.0 to > 0.0).
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()} and {@link #rangeCheck(IntegerRange, boolean, boolean)},
-	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VirtualizedListState)}.
+	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VFXListState)}.
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the list's positions by invoking
-	 * {@link VirtualizedListHelper#invalidatePos()}.
+	 * {@link VFXListHelper#invalidatePos()}.
 	 */
 	protected void onGeometryChanged() {
 		invalidatingPos = true;
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
 		if (!listFactorySizeCheck()) return;
 
 		// Ensure positions are correct!
@@ -74,7 +74,7 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 		if (!rangeCheck(range, true, true)) return;
 
 		// Compute the new state
-		VirtualizedListState<T, C> newState = new VirtualizedListState<>(list, range);
+		VFXListState<T, C> newState = new VFXListState<>(list, range);
 		moveOrCreateAlgorithm(range, newState);
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
@@ -87,15 +87,15 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * orientation, hPos for HORIZONTAL orientation). Since the list doesn't use throttling to limit the number of events/changes,
 	 * and since scrolling can be very fast, performance here is crucial.
 	 * <p>
-	 * Immediately exists if: the special flag {@link #invalidatingPos} is true or the current state is {@link VirtualizedListState#EMPTY}.
+	 * Immediately exists if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXListState#EMPTY}.
 	 * That boolean flag exists exactly for this, stop this method from executing. Many other computations here need to validate
-	 * the positions by calling {@link VirtualizedListHelper#invalidatePos()}, so that the resulting state is valid.
+	 * the positions by calling {@link VFXListHelper#invalidatePos()}, so that the resulting state is valid.
 	 * However, invalidating the positions may trigger this method, causing two or more state computations at the 'same' time;
 	 * this behavior must be avoided.
 	 * <p></p>
 	 * For the sake of performance, this method tries to update only the cells which need it. The computation is divided
 	 * in two steps:
-	 * <p> 0) Prerequisites: the last range (retrieved from the current state), the new range (given by {@link VirtualizedListHelper#range()}).
+	 * <p> 0) Prerequisites: the last range (retrieved from the current state), the new range (given by {@link VFXListHelper#range()}).
 	 * Note that if these two ranges are equal, then the method exits.
 	 * <p> 1) First of all, we check for common indexes. Cells are removed from the old state and copied to the new one
 	 * without updating, since it's not needed. For cells that are not found in the old state (not in common), the index
@@ -105,8 +105,8 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * Remaining cells are removed one by one from the old state, an index is also removed from the queue, then the cell
 	 * is updated both in index and item. Finally, it is added to the new state, with the index removed from the queue.
 	 * <p></p>
-	 * The list's state is updated, {@link VirtualizedList#update(VirtualizedListState)}, but most importantly this also
-	 * calls {@link VirtualizedList#requestViewportLayout()}. The reason for this 'forced' layout is that the remaining
+	 * The list's state is updated, {@link VFXList#update(VFXListState)}, but most importantly this also
+	 * calls {@link VFXList#requestViewportLayout()}. The reason for this 'forced' layout is that the remaining
 	 * cells, due to the scroll, can now be higher or lower than their previous index, which means that they need to be
 	 * repositioned in the viewport.
 	 * <p></p>
@@ -119,11 +119,11 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 */
 	protected void onPositionChanged() {
 		if (invalidatingPos) return;
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListState<T, C> state = list.getState();
-		if (state == VirtualizedListState.EMPTY) return;
+		VFXList<T, C> list = getNode();
+		VFXListState<T, C> state = list.getState();
+		if (state == VFXListState.EMPTY) return;
 
-		VirtualizedListHelper<T, C> helper = list.getHelper();
+		VFXListHelper<T, C> helper = list.getHelper();
 		IntegerRange lastRange = state.getRange();
 		IntegerRange range = helper.range();
 		if (Objects.equals(lastRange, range) || Utils.INVALID_RANGE.equals(range)) return;
@@ -131,7 +131,7 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 		// Compute the new state
 		// Commons are just moved to the new state
 		// New indexes are stored in a queue
-		VirtualizedListState<T, C> newState = new VirtualizedListState<>(list, range);
+		VFXListState<T, C> newState = new VFXListState<>(list, range);
 		Deque<Integer> needed = new ArrayDeque<>();
 		for (Integer i : range) {
 			C common = state.removeCell(i);
@@ -157,30 +157,30 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	}
 
 	/**
-	 * This method is responsible for updating the list's state when the {@link VirtualizedList#cellFactoryProperty()}
+	 * This method is responsible for updating the list's state when the {@link VFXList#cellFactoryProperty()}
 	 * changes. Unfortunately, this is always a costly operation because all cells need to be re-created, and the
-	 * {@link VirtualizedListCache} cleaned. In fact, the very first operation done by this method is exactly this,
+	 * {@link VFXListCache} cleaned. In fact, the very first operation done by this method is exactly this,
 	 * the disposal of the current/old state and the cleaning of the cache. Luckily, this kind of change is likely to not happen very often.
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()} and {@link #rangeCheck(IntegerRange, boolean, boolean)},
-	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VirtualizedListState)}.
+	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VFXListState)}.
 	 * <p>
-	 * The new state's {@link VirtualizedListState#haveCellsChanged()} flag will always be {@code true} od course.
+	 * The new state's {@link VFXListState#haveCellsChanged()} flag will always be {@code true} od course.
 	 * The great thing about the factory change is that there is no need to invalidate the position.
 	 */
 	protected void onCellFactoryChanged() {
-		VirtualizedList<T, C> list = getNode();
+		VFXList<T, C> list = getNode();
 
 		// Dispose current state, cells if any (not EMPTY) are now in cache
 		// Purge cache too, cells are from old factory
 		if (disposeCurrent()) list.getCache().clear();
 		if (!listFactorySizeCheck()) return;
 
-		VirtualizedListState<T, C> current = list.getState();
+		VFXListState<T, C> current = list.getState();
 		IntegerRange range = current.getRange();
 		if (!rangeCheck(range, true, true)) return;
 
-		VirtualizedListState<T, C> newState = new VirtualizedListState<>(list, range);
+		VFXListState<T, C> newState = new VFXListState<>(list, range);
 		moveOrCreateAlgorithm(range, newState);
 		newState.setCellsChanged(true);
 		list.update(newState);
@@ -188,7 +188,7 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 
 	/**
 	 * Before describing the operations performed by this method, it's important for the reader to understand the difference
-	 * between the two changes caught by this method. {@link VirtualizedList} makes use of a {@link ListProperty} to store
+	 * between the two changes caught by this method. {@link VFXList} makes use of a {@link ListProperty} to store
 	 * the items to display. The property is essentially the equivalent of this {@code ObjectProperty<ObservableList>}. Now,
 	 * if you are familiar with JavaFX, you probably know that there are two possible changes to listen to: one is changes
 	 * to {@code ObjectProperty} (if the {@code ObservableList} instance changes), and the other are changes in the {@code ObservableList}
@@ -209,9 +209,9 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * possible by, in theory, isolating the indexes at which the changes occurred, separating the cells that need only
 	 * an index update from the ones that actually need a full update. However, such an approach requires a lot of code,
 	 * is error-prone, and a bit heavy on performance. The new approach implemented here requires changes to the state
-	 * class as well, {@link VirtualizedListState}.
+	 * class as well, {@link VFXListState}.
 	 * <p>
-	 * The computation for the new state is very similar to the {@link #moveOrCreateAlgorithm(IntegerRange, VirtualizedListState)},
+	 * The computation for the new state is very similar to the {@link #moveOrCreateAlgorithm(IntegerRange, VFXListState)},
 	 * but the first step, which tries to identify the common cells, is quite different. You see, as I said before, additions
 	 * and removals can occur at any place in the list. Picture it with this example:
 	 * <pre>
@@ -230,24 +230,24 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * </pre>
 	 * <p></p>
 	 * For this reason, cells from the old state are not removed by index, but by <b>item</b>,
-	 * {@link VirtualizedListState#removeCell(Object)}. First, we retrieve the item from the list that is now at index i
+	 * {@link VFXListState#removeCell(Object)}. First, we retrieve the item from the list that is now at index i
 	 * (this index comes from the loop on the range), then we try to remove the cell for this item from the old state.
 	 * If the cell is found, we update it by index and add it to the new state. Note that the index is also removed from
 	 * the expanded range.
 	 * <p>
-	 * Now that 'common' cells have been properly updated, the remaining items are processed by the {@link #remainingsAlgorithm(Set, VirtualizedListState)}.
+	 * Now that 'common' cells have been properly updated, the remaining items are processed by the {@link #remainingsAlgorithm(Set, VFXListState)}.
 	 * <p></p>
 	 * Last notes:
 	 * <p> 1) This is one of those methods that to produce a valid new state needs to validate the list's positions,
-	 * so it calls {@link VirtualizedListHelper#invalidatePos()}
-	 * <p> 2) To make sure the layout is always correct, at the end we always invoke {@link VirtualizedList#requestViewportLayout()}.
+	 * so it calls {@link VFXListHelper#invalidatePos()}
+	 * <p> 2) To make sure the layout is always correct, at the end we always invoke {@link VFXList#requestViewportLayout()}.
 	 * You can guess why from the above example, items 2 and 3 are still in the viewport, but at different indexes,
 	 * which also means at different layout positions. There is no easy way to detect this, so better safe than sorry, always update the layout.
 	 */
 	protected void onItemsChanged() {
 		invalidatingPos = true;
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
 
 		/*
 		 * Ensure positions are correct
@@ -258,13 +258,13 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 		helper.invalidatePos();
 
 		// If the list is now empty, then set EMPTY state
-		VirtualizedListState<T, C> current = list.getState();
+		VFXListState<T, C> current = list.getState();
 		if (!listFactorySizeCheck()) return;
 
 		// Compute range and new state
 		IntegerRange range = helper.range();
 		Set<Integer> expanded = IntegerRange.expandRangeToSet(range);
-		VirtualizedListState<T, C> newState = new VirtualizedListState<>(list, range);
+		VFXListState<T, C> newState = new VFXListState<>(list, range);
 
 		// First update by index
 		for (Integer index : range) {
@@ -287,29 +287,29 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	}
 
 	/**
-	 * The easiest of all changes. It's enough to request a viewport layout, {@link VirtualizedList#requestViewportLayout()},
-	 * and to make sure that the horizontal position is valid, {@link VirtualizedListHelper#invalidatePos()}.
+	 * The easiest of all changes. It's enough to request a viewport layout, {@link VFXList#requestViewportLayout()},
+	 * and to make sure that the horizontal position is valid, {@link VFXListHelper#invalidatePos()}.
 	 */
 	protected void onFitToBreadthChanged() {
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
 		list.requestViewportLayout();
 		helper.invalidatePos(); // Not necessary to set invalidatingPos flag
 	}
 
 	/**
-	 * This method is responsible for computing a new state when the {@link VirtualizedList#cellSizeProperty()} changes.
+	 * This method is responsible for computing a new state when the {@link VFXList#cellSizeProperty()} changes.
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()}, the computation for the new state is delegated to
 	 * the {@link #intersectionAlgorithm()}.
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the list's positions by invoking
-	 * {@link VirtualizedListHelper#invalidatePos()}.
+	 * {@link VFXListHelper#invalidatePos()}.
 	 */
 	protected void onCellSizeChanged() {
 		invalidatingPos = true;
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
 
 		// Ensure positions are correct
 		helper.invalidatePos();
@@ -317,7 +317,7 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 		if (!listFactorySizeCheck()) return;
 
 		// Compute new state with the intersection algorithm
-		VirtualizedListState<T, C> newState = intersectionAlgorithm();
+		VFXListState<T, C> newState = intersectionAlgorithm();
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
 		list.update(newState);
@@ -325,26 +325,26 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	}
 
 	/**
-	 * This method is responsible for computing a new state when the {@link VirtualizedList#orientationProperty()} changes.
+	 * This method is responsible for computing a new state when the {@link VFXList#orientationProperty()} changes.
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()}, the computation for the new state is delegated to
 	 * the {@link #intersectionAlgorithm()}.
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the list's positions by invoking
-	 * {@link VirtualizedListHelper#invalidatePos()}. Also, this will request the layout computation,
-	 * {@link VirtualizedList#requestViewportLayout()}, even if the cells didn't change.
+	 * {@link VFXListHelper#invalidatePos()}. Also, this will request the layout computation,
+	 * {@link VFXList#requestViewportLayout()}, even if the cells didn't change.
 	 */
 	protected void onOrientationChanged() {
 		invalidatingPos = true;
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
 		if (!listFactorySizeCheck()) return;
 
 		// Ensure positions are correct
 		helper.invalidatePos();
 
 		// Compute new state with the intersection algorithm
-		VirtualizedListState<T, C> newState = intersectionAlgorithm();
+		VFXListState<T, C> newState = intersectionAlgorithm();
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
 		list.update(newState);
@@ -353,19 +353,19 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	}
 
 	/**
-	 * This method is responsible for updating the list's state when the {@link VirtualizedList#spacingProperty()} changes.
+	 * This method is responsible for updating the list's state when the {@link VFXList#spacingProperty()} changes.
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()} and {@link #rangeCheck(IntegerRange, boolean, boolean)},
-	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VirtualizedListState)}.
+	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VFXListState)}.
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the list's positions by invoking
-	 * {@link VirtualizedListHelper#invalidatePos()}. Also, this will request the layout computation,
-	 * {@link VirtualizedList#requestViewportLayout()}, even if the cells didn't change.
+	 * {@link VFXListHelper#invalidatePos()}. Also, this will request the layout computation,
+	 * {@link VFXList#requestViewportLayout()}, even if the cells didn't change.
 	 */
 	protected void onSpacingChanged() {
 		invalidatingPos = true;
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
 
 		// Ensure positions are correct
 		helper.invalidatePos();
@@ -375,7 +375,7 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 		if (!rangeCheck(range, true, true)) return;
 
 		// Compute new state
-		VirtualizedListState<T, C> newState = new VirtualizedListState<>(list, range);
+		VFXListState<T, C> newState = new VFXListState<>(list, range);
 		moveOrCreateAlgorithm(range, newState);
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
@@ -393,13 +393,13 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * it's enough to move the cells from the current state to the new state. For indexes which are not found
 	 * in the current state, a new cell is either taken from cache or created from the cell factory.
 	 *
-	 * @see VirtualizedListHelper#indexToCell(int)
-	 * @see VirtualizedList#cellFactoryProperty()
+	 * @see VFXListHelper#indexToCell(int)
+	 * @see VFXList#cellFactoryProperty()
 	 */
-	protected void moveOrCreateAlgorithm(IntegerRange range, VirtualizedListState<T, C> newState) {
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
-		VirtualizedListState<T, C> current = list.getState();
+	protected void moveOrCreateAlgorithm(IntegerRange range, VFXListState<T, C> newState) {
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
+		VFXListState<T, C> current = list.getState();
 		for (Integer index : range) {
 			C c = current.removeCell(index);
 			if (c == null) {
@@ -426,20 +426,20 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * <p> - See {@link Utils#intersection}: used to find the intersection between two ranges
 	 * <p> - See {@link #rangeCheck(IntegerRange, boolean, boolean)}: used to validate the intersection range, both parameters
 	 * are false!
-	 * <p> - See {@link #remainingsAlgorithm(Set, VirtualizedListState)}: the second part of the algorithm is delegated to this
+	 * <p> - See {@link #remainingsAlgorithm(Set, VFXListState)}: the second part of the algorithm is delegated to this
 	 * method
 	 */
-	protected VirtualizedListState<T, C> intersectionAlgorithm() {
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
+	protected VFXListState<T, C> intersectionAlgorithm() {
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
 
 		// New range, also expanded
 		IntegerRange range = helper.range();
 		Set<Integer> expandedRange = IntegerRange.expandRangeToSet(range);
 
 		// Current and new states, intersection between current and new range
-		VirtualizedListState<T, C> current = list.getState();
-		VirtualizedListState<T, C> newState = new VirtualizedListState<>(list, range);
+		VFXListState<T, C> current = list.getState();
+		VFXListState<T, C> newState = new VFXListState<>(list, range);
 		IntegerRange intersection = Utils.intersection(current.getRange(), range);
 
 		// If range valid, move common cells from current to new state. Also, remove common indexes from expanded range
@@ -462,17 +462,17 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * This cell can come from three sources:
 	 * <p> 1) from the current state if it's not empty yet. Since the cells are stored in a {@link SequencedMap}, one
 	 * is removed by calling {@link SequencedMap#pollFirstEntry()}.
-	 * <p> 2) from the {@link VirtualizedListCache} if not empty
+	 * <p> 2) from the {@link VFXListCache} if not empty
 	 * <p> 3) created by the cell factory
 	 * <p></p>
-	 * <p> - See {@link VirtualizedListHelper#indexToCell(int)}: this handles the second and third cases. If a cell can
+	 * <p> - See {@link VFXListHelper#indexToCell(int)}: this handles the second and third cases. If a cell can
 	 * be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
-	 * {@link VirtualizedList#cellFactoryProperty()} to create a new one
+	 * {@link VFXList#cellFactoryProperty()} to create a new one
 	 */
-	protected void remainingsAlgorithm(Set<Integer> expandedRange, VirtualizedListState<T, C> newState) {
-		VirtualizedList<T, C> list = getNode();
-		VirtualizedListHelper<T, C> helper = list.getHelper();
-		VirtualizedListState<T, C> current = list.getState();
+	protected void remainingsAlgorithm(Set<Integer> expandedRange, VFXListState<T, C> newState) {
+		VFXList<T, C> list = getNode();
+		VFXListHelper<T, C> helper = list.getHelper();
+		VFXListState<T, C> current = list.getState();
 
 		// Indexes in the given set were not found in the current state.
 		// Which means item updates. Cells are retrieved either from the current state (if not empty), from the cache,
@@ -499,22 +499,22 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * <p> 2) If the cell factory is null
 	 * <p> 3) If the cell size is lesser or equal to 0
 	 * <p>
-	 * If any of those checks is true: the list's state is set to {@link VirtualizedListState#EMPTY}, the
+	 * If any of those checks is true: the list's state is set to {@link VFXListState#EMPTY}, the
 	 * current state is disposed, the 'invalidatingPos' flag is reset, finally returns false.
 	 * Otherwise, does nothing and returns true.
 	 * <p></p>
-	 * <p> - See {@link VirtualizedList#cellFactoryProperty()}
-	 * <p> - See {@link VirtualizedList#cellSizeProperty()}
+	 * <p> - See {@link VFXList#cellFactoryProperty()}
+	 * <p> - See {@link VFXList#cellSizeProperty()}
 	 * <p> - See {@link #disposeCurrent()}: for the current state disposal
 	 *
 	 * @return whether all the aforementioned checks have passed
 	 */
 	@SuppressWarnings("unchecked")
 	protected boolean listFactorySizeCheck() {
-		VirtualizedList<T, C> list = getNode();
+		VFXList<T, C> list = getNode();
 		if (list.isEmpty() || list.getCellFactory() == null || list.getCellSize() <= 0) {
 			disposeCurrent();
-			list.update(VirtualizedListState.EMPTY);
+			list.update(VFXListState.EMPTY);
 			invalidatingPos = false;
 			return false;
 		}
@@ -525,12 +525,12 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 * Avoids code duplication. Used to check whether the given range is valid, not equal to {@link Utils#INVALID_RANGE}.
 	 * <p>
 	 * When invalid, returns false, but first runs the following operations: disposes the current state (only if the
-	 * 'dispose' parameter is true), sets the list's state to {@link VirtualizedListState#EMPTY} (only if the 'update'
+	 * 'dispose' parameter is true), sets the list's state to {@link VFXListState#EMPTY} (only if the 'update'
 	 * parameter is true), resets the 'invalidatingPos' flag.
 	 * Otherwise, does nothing and returns true.
 	 * <p>
 	 * Last but not least, this is a note for the future on why the method is structured like this. It's crucial for
-	 * the disposal operation to happen <b>before</b> the list's state is set to {@link VirtualizedListState#EMPTY}, otherwise
+	 * the disposal operation to happen <b>before</b> the list's state is set to {@link VFXListState#EMPTY}, otherwise
 	 * the disposal method will fail, since it will then retrieve the empty state instead of the correct one.
 	 * <p></p>
 	 * <p> - See {@link #disposeCurrent()}: for the current state disposal
@@ -542,10 +542,10 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	 */
 	@SuppressWarnings("unchecked")
 	protected boolean rangeCheck(IntegerRange range, boolean update, boolean dispose) {
-		VirtualizedList<T, C> list = getNode();
+		VFXList<T, C> list = getNode();
 		if (Utils.INVALID_RANGE.equals(range)) {
 			if (dispose) disposeCurrent();
-			if (update) list.update(VirtualizedListState.EMPTY);
+			if (update) list.update(VFXListState.EMPTY);
 			invalidatingPos = false;
 			return false;
 		}
@@ -555,12 +555,12 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 	/**
 	 * Avoids code duplication. Responsible for disposing the current state if it is not empty.
 	 * <p></p>
-	 * <p> - See {@link VirtualizedListState#dispose()}
+	 * <p> - See {@link VFXListState#dispose()}
 	 *
 	 * @return whether the disposal was done or not
 	 */
 	protected boolean disposeCurrent() {
-		VirtualizedListState<T, C> state = getNode().getState();
+		VFXListState<T, C> state = getNode().getState();
 		if (!state.isEmpty()) {
 			state.dispose();
 			return true;
