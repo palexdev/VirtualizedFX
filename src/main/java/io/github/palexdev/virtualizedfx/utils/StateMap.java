@@ -94,7 +94,8 @@ public class StateMap<T, C extends Cell<T>> {
 	 * [Item -> Index].
 	 */
 	public void put(Integer index, T item, C cell) {
-		assert index != null && item != null && cell != null;
+		if (index == null || item == null || cell == null)
+			throw new NullPointerException("Cannot add entry [Index:%s; Item:%s; Cell:%s] in state map".formatted(index, item, cell));
 		byIndex.put(index, cell);
 		byItem.put(item, index);
 	}

@@ -296,6 +296,20 @@ public class VirtualizedList<T, C extends Cell<T>> extends Control<VirtualizedLi
 		getHelper().scrollToIndex(index);
 	}
 
+	/**
+	 * Shortcut for {@code scrollToIndex(0)}.
+	 */
+	public void scrollToFirst() {
+		scrollToIndex(0);
+	}
+
+	/**
+	 * Shortcut for {@code scrollToIndex(size() - 1)}.
+	 */
+	public void scrollToLast() {
+		scrollToIndex(size() - 1);
+	}
+
 	//================================================================================
 	// Styleable Properties
 	//================================================================================

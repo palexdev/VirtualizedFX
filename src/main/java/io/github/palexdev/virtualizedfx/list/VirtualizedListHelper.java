@@ -2,7 +2,6 @@ package io.github.palexdev.virtualizedfx.list;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
 import io.github.palexdev.mfxcore.base.properties.PositionProperty;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
@@ -17,7 +16,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -182,14 +180,7 @@ public interface VirtualizedListHelper<T, C extends Cell<T>> {
 	 */
 	abstract class AbstractHelper<T, C extends Cell<T>> implements VirtualizedListHelper<T, C> {
 		protected final VirtualizedList<T, C> list;
-		protected final IntegerRangeProperty range = new IntegerRangeProperty() {
-			@Override
-			public void set(NumberRange<Integer> newValue) {
-				NumberRange<Integer> oldValue = get();
-				if (Objects.equals(oldValue, newValue)) return;
-				super.set(newValue);
-			}
-		};
+		protected final IntegerRangeProperty range = new IntegerRangeProperty();
 		protected final ReadOnlyDoubleWrapper estimatedLength = new ReadOnlyDoubleWrapper();
 		protected final ReadOnlyDoubleWrapper maxBreadth = new ReadOnlyDoubleWrapper();
 		protected final PositionProperty viewportPosition = new PositionProperty();

@@ -64,7 +64,7 @@ public class VirtualizedListSkin<T, C extends Cell<T>> extends SkinBase<Virtuali
 		clip.heightProperty().bind(list.heightProperty());
 		clip.arcWidthProperty().bind(list.clipBorderRadiusProperty());
 		clip.arcHeightProperty().bind(list.clipBorderRadiusProperty());
-		//list.setClip(clip);
+		list.setClip(clip);
 
 		// End initialization
 		addListeners();

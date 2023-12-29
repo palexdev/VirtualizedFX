@@ -1,4 +1,4 @@
-package interactive;
+package interactive.list;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
@@ -8,41 +8,32 @@ import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.cells.CellBase;
 import io.github.palexdev.virtualizedfx.cells.CellBaseBehavior;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
-import io.github.palexdev.virtualizedfx.list.VirtualizedList;
 import io.github.palexdev.virtualizedfx.list.VirtualizedListHelper;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListSkin;
-import io.github.palexdev.virtualizedfx.list.VirtualizedListState;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
-import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.opentest4j.AssertionFailedError;
 import org.testfx.api.FxRobot;
-import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
 import utils.Utils;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static interactive.list.ListTestUtils.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static utils.Utils.items;
 
 @ExtendWith(ApplicationExtension.class)
 public class VirtualizedListTests {
-	private static final Counter counter = new Counter();
 
 	@Start
 	void start(Stage stage) {stage.show();}
@@ -95,6 +86,41 @@ public class VirtualizedListTests {
 		});
 		assertState(list, IntegerRange.of(-1));
 		assertCounter(0, 0, 0, 0, 0, 14);
+	}
+
+	@Test
+	void testInitAndGeometryAtBottom(FxRobot robot) {
+		StackPane pane = setupStage();
+		ObservableList<Integer> items = items(50);
+		List list = new List(items, SimpleCell::new);
+		robot.interact(() -> {
+			pane.getChildren().add(list);
+			list.scrollToLast();
+		});
+
+		// Check vPos!!
+		assertEquals(1200.0, list.getVPos());
+
+		assertState(list, IntegerRange.of(33, 49)); // ceil(400/32) + 4 (buffer) -> 17
+		assertCounter(17, 1, 17, 17, 0, 0);
+
+		// Expand and check counter, state and pos
+		robot.interact(() -> {
+			Window w = list.getScene().getWindow();
+			w.setHeight(600);
+		});
+		assertEquals(1000.0, list.getVPos());
+		assertState(list, IntegerRange.of(27, 49)); // ceil(600/32) + 4 (buffer) -> 23
+		assertCounter(6, 1, 6, 6, 0, 0);
+
+		// Shrink and check again
+		robot.interact(() -> {
+			Window w = list.getScene().getWindow();
+			w.setHeight(300);
+		});
+		assertEquals(1000.0, list.getVPos());
+		assertState(list, IntegerRange.of(29, 42));
+		assertCounter(0, 1, 0, 0, 0, 9);
 	}
 
 	@Test
@@ -430,6 +456,7 @@ public class VirtualizedListTests {
 		assertState(list, IntegerRange.of(6, 49));
 		assertCounter(27, 1, 27, 27, 0, 0);
 		assertEquals(10 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(100, list.getVPos());
 
 		// Increase and test again
 		// vPos is now at 100!
@@ -437,6 +464,7 @@ public class VirtualizedListTests {
 		assertState(list, IntegerRange.of(0, 11));
 		assertCounter(0, 1, 6, 6, 0, 32);
 		assertEquals(50 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(100, list.getVPos());
 	}
 
 	@Test
@@ -489,7 +517,7 @@ public class VirtualizedListTests {
 		// Change items property (fewer elements)
 		robot.interact(() -> list.setItems(items(50, 10)));
 		assertState(list, IntegerRange.of(0, 9));
-		assertCounter(0, 1, 0, 0, 0, 7); // Still 34 since still starts from 50
+		assertCounter(0, 1, 0, 0, 0, 7);
 
 		// Change items property (more elements)
 		robot.interact(() -> list.setItems(items(100, 50)));
@@ -732,7 +760,7 @@ public class VirtualizedListTests {
 
 		// Remove enough to change vPos
 		// Removed up until now: 14. Remaining -> 36. Max vPos -> 1152
-		// Remove to 27 -> Max vPos = 464
+		// Remove to 27 -> Max vPos -> 464
 		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 1, 2, 3, 4, 5, 6, 7, 8));
 		assertState(list, IntegerRange.of(10, 26));
 		assertCounter(0, 1, 17, 3, 0, 0);
@@ -937,186 +965,5 @@ public class VirtualizedListTests {
 		robot.interact(() -> list.setSpacing(0.0));
 		assertState(list, IntegerRange.of(33, 49));
 		assertCounter(0, 1, 6, 6, 6, 0);
-	}
-
-	//================================================================================
-	// Misc
-	//================================================================================
-	void assertState(List list, IntegerRange range) {
-		VirtualizedListState<Integer, SimpleCell> state = list.getState();
-		VirtualizedListHelper<Integer, SimpleCell> helper = list.getHelper();
-		if (IntegerRange.of(-1).equals(range)) {
-			assertEquals(VirtualizedListState.EMPTY, state);
-			return;
-		}
-
-		assertEquals(helper.totalNum(), range.diff() + 1);
-
-		Map<Integer, SimpleCell> cells = state.getCellsByIndexUnmodifiable();
-		ObservableList<Integer> items = list.getItems();
-		for (Integer index : range) {
-			SimpleCell cell = cells.get(index);
-			try {
-				assertNotNull(cell);
-			} catch (AssertionFailedError error) {
-				// For debug purposes
-				System.err.println("Null cell for index: " + index);
-				throw error;
-			}
-			assertEquals(index, cell.getIndex());
-			assertEquals(items.get(index), cell.getItem());
-			assertPosition(list, index - range.getMin(), cell);
-		}
-	}
-
-	void assertCounter(int created, int layouts, int ixUpdates, int itUpdates, int deCached, int cached) {
-		assertEquals(created, counter.created);
-		assertEquals(layouts, counter.layoutCnt);
-		assertEquals(ixUpdates, counter.updIndexCnt);
-		assertEquals(itUpdates, counter.updItemCnt);
-		assertEquals(deCached, counter.fromCache);
-		assertEquals(cached, counter.toCache);
-		counter.reset();
-	}
-
-	void assertPosition(List list, int iteration, SimpleCell cell) {
-		Orientation o = list.getOrientation();
-		Function<Bounds, Double> inParentPos = (o == Orientation.VERTICAL) ? Bounds::getMinY : Bounds::getMinX;
-		double pos = iteration * list.getHelper().getTotalCellSize();
-		assertEquals(pos, inParentPos.apply(cell.toNode().getBoundsInParent()));
-	}
-
-	StackPane setupStage() {
-		StackPane pane = new StackPane();
-		try {
-			Scene scene = new Scene(pane, 400, 400);
-			FxToolkit.setupStage(s -> {
-				s.setWidth(400);
-				s.setHeight(400);
-				s.setScene(scene);
-			});
-		} catch (TimeoutException e) {
-			throw new RuntimeException(e);
-		}
-		return pane;
-	}
-
-	public static class List extends VirtualizedList<Integer, SimpleCell> {
-		public List(ObservableList<Integer> items, Function<Integer, SimpleCell> cellFactory) {
-			super(items, cellFactory);
-		}
-
-		@Override
-		public void setCellFactory(Function<Integer, SimpleCell> cellFactory) {
-			super.setCellFactory(cellFactory.andThen(c -> {
-				counter.created();
-				return c;
-			}));
-		}
-
-		@Override
-		protected SkinBase<?, ?> buildSkin() {
-			return new VirtualizedListSkin<>(this) {
-				@Override
-				protected void onLayoutCompleted(boolean done) {
-					super.onLayoutCompleted(done);
-					if (done) counter.layout();
-				}
-			};
-		}
-	}
-
-	public static class SimpleCell extends CellBase<Integer> {
-
-		public SimpleCell() {}
-
-		public SimpleCell(Integer item) {super(item);}
-
-		@Override
-		public void onDeCache() {
-			counter.fCache();
-		}
-
-		@Override
-		public void onCache() {
-			counter.tCache();
-		}
-
-		@Override
-		protected SkinBase<?, ?> buildSkin() {
-			return new SkinBase<>(this) {
-				final Label label = new Label();
-
-				{
-					CellBase<Integer> cell = getSkinnable();
-					listeners(
-						When.onInvalidated(cell.itemProperty())
-							.then(this::byItem)
-							.executeNow(),
-						When.onInvalidated(cell.indexProperty())
-							.then(this::byIndex)
-							.executeNow()
-					);
-					label.setStyle("-fx-border-color: red");
-					getChildren().add(label);
-				}
-
-				private void byItem(Integer it) {
-					counter.item();
-					int idx = getIndex();
-					label.setText("Index: %d Item: %s".formatted(
-						idx,
-						it != null ? it.toString() : ""
-					));
-				}
-
-				private void byIndex(Number index) {
-					counter.index();
-					Integer it = getItem();
-					label.setText("Index: %d Item: %s".formatted(
-						index.intValue(),
-						it != null ? it.toString() : ""
-					));
-				}
-
-				@Override
-				protected void initBehavior(CellBaseBehavior<Integer> behavior) {}
-
-				@Override
-				protected void layoutChildren(double x, double y, double w, double h) {
-					label.resizeRelocate(x, y, w, h);
-				}
-			};
-		}
-	}
-
-	public static class Counter {
-		private int created = 0;
-		private int layoutCnt = 0;
-		private int updIndexCnt = 0;
-		private int updItemCnt = 0;
-		private int fromCache = 0;
-		private int toCache = 0;
-
-		public void created() {created++;}
-
-		public void layout() {layoutCnt++;}
-
-		public void index() {updIndexCnt++;}
-
-		public void item() {updItemCnt++;}
-
-		public void fCache() {fromCache++;}
-
-		public void tCache() {toCache++;}
-
-		public void reset() {
-			created = 0;
-			layoutCnt = 0;
-			updIndexCnt = 0;
-			updItemCnt = 0;
-			fromCache = 0;
-			toCache = 0;
-		}
 	}
 }

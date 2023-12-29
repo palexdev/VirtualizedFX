@@ -4,6 +4,9 @@ import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
+import org.scenicview.ScenicView;
+import org.testfx.api.FxRobot;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,6 +22,10 @@ public class Utils {
 	//================================================================================
 	// Static Methods
 	//================================================================================
+	public static void debugView(FxRobot robot, Node node) {
+		robot.interact(() -> ScenicView.show(node.getScene()));
+	}
+
 	public static void sleep(long millis) {
 		try {
 			Thread.sleep(millis);

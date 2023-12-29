@@ -126,7 +126,7 @@ public class VirtualizedListManager<T, C extends Cell<T>> extends BehaviorBase<V
 		VirtualizedListHelper<T, C> helper = list.getHelper();
 		IntegerRange lastRange = state.getRange();
 		IntegerRange range = helper.range();
-		if (Objects.equals(lastRange, range)) return;
+		if (Objects.equals(lastRange, range) || Utils.INVALID_RANGE.equals(range)) return;
 
 		// Compute the new state
 		// Commons are just moved to the new state

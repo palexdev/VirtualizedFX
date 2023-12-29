@@ -115,6 +115,10 @@ public class VirtualizedListCache<T, C extends Cell<T>> {
 		return this;
 	}
 
+	public int size() {
+		return queue.size();
+	}
+
 	/**
 	 * Sets the cache's capacity. Visibility is restricted because capacity is meant to be set through the
 	 * {@link VirtualizedList#cacheCapacityProperty()}.

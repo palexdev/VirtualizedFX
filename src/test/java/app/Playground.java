@@ -1,6 +1,6 @@
 package app;
 
-import interactive.VirtualizedListTests.SimpleCell;
+import interactive.list.ListTestUtils.SimpleCell;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.events.WhenEvent;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
