@@ -48,7 +48,7 @@ test {
 javafx {
     version = "$jfx"
     modules = ['javafx.controls', 'javafx.fxml']
-    configurations = ["implementation", "testImplementation"]
+    configurations = ["compileOnly", "testImplementation"]
 }
 
 configurations {
