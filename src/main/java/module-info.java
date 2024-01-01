@@ -7,6 +7,7 @@ module VirtualizedFX {
 
 	// Base
 	exports io.github.palexdev.virtualizedfx;
+	exports io.github.palexdev.virtualizedfx.base;
 
 	// Cells
 	exports io.github.palexdev.virtualizedfx.cells;
@@ -16,6 +17,7 @@ module VirtualizedFX {
 
 	// List
 	exports io.github.palexdev.virtualizedfx.list;
+	exports io.github.palexdev.virtualizedfx.list.paginated;
 
 	// Properties
 	exports io.github.palexdev.virtualizedfx.properties;
