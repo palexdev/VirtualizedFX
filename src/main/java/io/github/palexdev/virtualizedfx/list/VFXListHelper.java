@@ -260,6 +260,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 			super(list);
 			range.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
+					if (list.getHeight() <= 0) return Utils.INVALID_RANGE;
 					int needed = totalNum();
 					if (needed == 0) return Utils.INVALID_RANGE;
 
@@ -268,9 +269,10 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 					if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
 					return IntegerRange.of(start, end);
 				})
-				.addSources(list.heightProperty(), estimatedLengthProperty())
+				.addSources(list.heightProperty())
 				.addSources(list.bufferSizeProperty())
 				.addSources(list.vPosProperty())
+				.addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
 				.get()
 			);
 			viewportPosition.bind(ObjectBindingBuilder.<Position>build()
@@ -437,6 +439,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 			super(list);
 			range.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
+					if (list.getWidth() <= 0) return Utils.INVALID_RANGE;
 					int needed = totalNum();
 					if (needed == 0) return Utils.INVALID_RANGE;
 
@@ -445,9 +448,10 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 					if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
 					return IntegerRange.of(start, end);
 				})
-				.addSources(list.widthProperty(), estimatedLengthProperty())
+				.addSources(list.widthProperty())
 				.addSources(list.bufferSizeProperty())
 				.addSources(list.hPosProperty())
+				.addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
 				.get()
 			);
 			viewportPosition.bind(ObjectBindingBuilder.<Position>build()

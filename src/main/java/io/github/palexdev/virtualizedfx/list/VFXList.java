@@ -10,6 +10,7 @@ import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
+import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.HorizontalHelper;
@@ -35,8 +36,8 @@ import java.util.function.Supplier;
  * Implementation of a virtualized container to show a list of items either vertically or horizontally.
  * The default style class is: '.virtualized-list'.
  * <p>
- * Extends {@link Control}, has its own skin implementation {@link VFXListSkin} and behavior {@link VFXListManager}.
- * Uses cells of type {@link Cell}.
+ * Extends {@link Control}, implements {@link VFXContainer}, has its own skin implementation {@link VFXListSkin}
+ * and behavior {@link VFXListManager}. Uses cells of type {@link Cell}.
  * <p>
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
  * {@link VFXListState}. The state determines which and how items are displayed in the container.
@@ -86,7 +87,7 @@ import java.util.function.Supplier;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>> {
+public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>> implements VFXContainer {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -109,11 +110,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 			super.set(newValue);
 		}
 	};
-	private final FunctionProperty<Orientation, VFXListHelper<T, C>> helperFactory = new FunctionProperty<>(o ->
-		(o == Orientation.VERTICAL) ?
-			new VerticalHelper<>(VFXList.this) :
-			new HorizontalHelper<>(VFXList.this)
-	) {
+	private final FunctionProperty<Orientation, VFXListHelper<T, C>> helperFactory = new FunctionProperty<>(defaultHelperFactory()) {
 		@Override
 		public void set(Function<Orientation, VFXListHelper<T, C>> newValue) {
 			if (newValue == null)
@@ -188,6 +185,15 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	}
 
 	/**
+	 * @return the default function used to produce a {@link VFXListHelper} according to the container's orientation.
+	 */
+	protected Function<Orientation, VFXListHelper<T, C>> defaultHelperFactory() {
+		return o -> (o == Orientation.VERTICAL) ?
+			new VerticalHelper<>(this) :
+			new HorizontalHelper<>(this);
+	}
+
+	/**
 	 * Setter for the {@link #needsViewportLayoutProperty()}.
 	 * This sets the property to true, causing the default skin to recompute the cells' layout.
 	 */
@@ -215,6 +221,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	/**
 	 * Delegate for {@link ListProperty#size()}.
 	 */
+	@Override
 	public int size() {
 		return getItems().size();
 	}
@@ -222,6 +229,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	/**
 	 * Delegate for {@link ListProperty#sizeProperty()}.
 	 */
+	@Override
 	public ReadOnlyIntegerProperty sizeProperty() {
 		return items.sizeProperty();
 	}
@@ -229,6 +237,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	/**
 	 * Delegate for {@link ListProperty#isEmpty()}.
 	 */
+	@Override
 	public boolean isEmpty() {
 		return getItems().isEmpty();
 	}
@@ -236,6 +245,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	/**
 	 * Delegate for {@link ListProperty#emptyProperty()}
 	 */
+	@Override
 	public ReadOnlyBooleanProperty emptyProperty() {
 		return items.emptyProperty();
 	}

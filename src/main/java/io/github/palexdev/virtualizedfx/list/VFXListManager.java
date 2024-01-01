@@ -3,6 +3,7 @@ package io.github.palexdev.virtualizedfx.list;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.virtualizedfx.cells.Cell;
+import io.github.palexdev.virtualizedfx.utils.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
@@ -50,12 +51,12 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	//================================================================================
 
 	/**
-	 * This core method is responsible for ensuring that the viewport always has the right amount of cells. This is called
-	 * every time the list's geometry changes (width/height depending on the orientation), which means that this is also
-	 * responsible for initialization (when width/height changes from 0.0 to > 0.0).
+	 * This core method is responsible for ensuring that the viewport always has the right number of cells.
+	 * This is called every time the list's geometry changes (width/height depending on the orientation),
+	 * which means that this is also responsible for initialization (when width/height becomes > 0.0).
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()} and {@link #rangeCheck(IntegerRange, boolean, boolean)},
-	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VFXListState)}.
+	 * the computation for the new state is delegated to the {@link #moveReuseCreateAlgorithm(IntegerRange, VFXListState)}.
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the list's positions by invoking
 	 * {@link VFXListHelper#invalidatePos()}.
@@ -75,7 +76,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 
 		// Compute the new state
 		VFXListState<T, C> newState = new VFXListState<>(list, range);
-		moveOrCreateAlgorithm(range, newState);
+		moveReuseCreateAlgorithm(range, newState);
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
 		list.update(newState);
@@ -126,7 +127,13 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		VFXListHelper<T, C> helper = list.getHelper();
 		IntegerRange lastRange = state.getRange();
 		IntegerRange range = helper.range();
-		if (Objects.equals(lastRange, range) || Utils.INVALID_RANGE.equals(range)) return;
+		if (Objects.equals(lastRange, range) ||
+			Utils.INVALID_RANGE.equals(range) ||
+			!lastRange.diff().equals(range.diff())) return;
+		// Why this last check?
+		// When the container changes its position, there will be updates, but the number of cells present in the viewport
+		// will not change. In fact, such changes occur only when the container's geometry changes, or its list is modified, etc...
+		// If the ranges differ in size, then what caused this method to trigger was probably not a position change.
 
 		// Compute the new state
 		// Commons are just moved to the new state
@@ -163,7 +170,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * the disposal of the current/old state and the cleaning of the cache. Luckily, this kind of change is likely to not happen very often.
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()} and {@link #rangeCheck(IntegerRange, boolean, boolean)},
-	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VFXListState)}.
+	 * the computation for the new state is delegated to the {@link #moveReuseCreateAlgorithm(IntegerRange, VFXListState)}.
 	 * <p>
 	 * The new state's {@link VFXListState#haveCellsChanged()} flag will always be {@code true} od course.
 	 * The great thing about the factory change is that there is no need to invalidate the position.
@@ -181,7 +188,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		if (!rangeCheck(range, true, true)) return;
 
 		VFXListState<T, C> newState = new VFXListState<>(list, range);
-		moveOrCreateAlgorithm(range, newState);
+		moveReuseCreateAlgorithm(range, newState);
 		newState.setCellsChanged(true);
 		list.update(newState);
 	}
@@ -211,7 +218,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * is error-prone, and a bit heavy on performance. The new approach implemented here requires changes to the state
 	 * class as well, {@link VFXListState}.
 	 * <p>
-	 * The computation for the new state is very similar to the {@link #moveOrCreateAlgorithm(IntegerRange, VFXListState)},
+	 * The computation for the new state is similar to the {@link #moveReuseCreateAlgorithm(IntegerRange, VFXListState)},
 	 * but the first step, which tries to identify the common cells, is quite different. You see, as I said before, additions
 	 * and removals can occur at any place in the list. Picture it with this example:
 	 * <pre>
@@ -235,7 +242,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * If the cell is found, we update it by index and add it to the new state. Note that the index is also removed from
 	 * the expanded range.
 	 * <p>
-	 * Now that 'common' cells have been properly updated, the remaining items are processed by the {@link #remainingsAlgorithm(Set, VFXListState)}.
+	 * Now that 'common' cells have been properly updated, the remaining items are processed by the {@link #remainingAlgorithm(Set, VFXListState)}.
 	 * <p></p>
 	 * Last notes:
 	 * <p> 1) This is one of those methods that to produce a valid new state needs to validate the list's positions,
@@ -277,8 +284,8 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 			}
 		}
 
-		// Process remainings with the "remainings' algorithm"
-		remainingsAlgorithm(expanded, newState);
+		// Process remaining with the "remaining' algorithm"
+		remainingAlgorithm(expanded, newState);
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
 		list.update(newState);
@@ -330,18 +337,18 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * After preliminary checks done by {@link #listFactorySizeCheck()}, the computation for the new state is delegated to
 	 * the {@link #intersectionAlgorithm()}.
 	 * <p></p>
+	 * Note that the default behavior resets both the positions to 0.0, as maintaining them doesn't make too much sense.
 	 * Note that to compute a valid new state, it is important to also validate the list's positions by invoking
-	 * {@link VFXListHelper#invalidatePos()}. Also, this will request the layout computation,
-	 * {@link VFXList#requestViewportLayout()}, even if the cells didn't change.
+	 * This will also request the layout computation, {@link VFXList#requestViewportLayout()}, even if the cells didn't change.
 	 */
 	protected void onOrientationChanged() {
 		invalidatingPos = true;
 		VFXList<T, C> list = getNode();
-		VFXListHelper<T, C> helper = list.getHelper();
 		if (!listFactorySizeCheck()) return;
 
-		// Ensure positions are correct
-		helper.invalidatePos();
+		// When the orientation changes, it's a better behavior to just reset the positions
+		list.setVPos(0.0);
+		list.setHPos(0.0);
 
 		// Compute new state with the intersection algorithm
 		VFXListState<T, C> newState = intersectionAlgorithm();
@@ -356,7 +363,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * This method is responsible for updating the list's state when the {@link VFXList#spacingProperty()} changes.
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()} and {@link #rangeCheck(IntegerRange, boolean, boolean)},
-	 * the computation for the new state is delegated to the {@link #moveOrCreateAlgorithm(IntegerRange, VFXListState)}.
+	 * the computation for the new state is delegated to the {@link #moveReuseCreateAlgorithm(IntegerRange, VFXListState)}.
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the list's positions by invoking
 	 * {@link VFXListHelper#invalidatePos()}. Also, this will request the layout computation,
@@ -376,7 +383,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 
 		// Compute new state
 		VFXListState<T, C> newState = new VFXListState<>(list, range);
-		moveOrCreateAlgorithm(range, newState);
+		moveReuseCreateAlgorithm(range, newState);
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
 		list.update(newState);
@@ -391,24 +398,26 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	/**
 	 * Avoids code duplication. Typically used when, while iterating on a range,
 	 * it's enough to move the cells from the current state to the new state. For indexes which are not found
-	 * in the current state, a new cell is either taken from cache or created from the cell factory.
+	 * in the current state, a new cell is either taken from the old state, taken from cache or created by the cell factory.
+	 * <p>
+	 * (The last operations are delegated to the {@link #remainingAlgorithm(Set, VFXListState)}).
 	 *
 	 * @see VFXListHelper#indexToCell(int)
 	 * @see VFXList#cellFactoryProperty()
 	 */
-	protected void moveOrCreateAlgorithm(IntegerRange range, VFXListState<T, C> newState) {
+	protected void moveReuseCreateAlgorithm(IntegerRange range, VFXListState<T, C> newState) {
 		VFXList<T, C> list = getNode();
-		VFXListHelper<T, C> helper = list.getHelper();
 		VFXListState<T, C> current = list.getState();
+		Set<Integer> remaining = new LinkedHashSet<>();
 		for (Integer index : range) {
 			C c = current.removeCell(index);
 			if (c == null) {
-				c = helper.indexToCell(index);
-				c.updateIndex(index);
-				newState.setCellsChanged(true);
+				remaining.add(index);
+				continue;
 			}
 			newState.addCell(index, c);
 		}
+		remainingAlgorithm(remaining, newState);
 	}
 
 	/**
@@ -426,7 +435,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * <p> - See {@link Utils#intersection}: used to find the intersection between two ranges
 	 * <p> - See {@link #rangeCheck(IntegerRange, boolean, boolean)}: used to validate the intersection range, both parameters
 	 * are false!
-	 * <p> - See {@link #remainingsAlgorithm(Set, VFXListState)}: the second part of the algorithm is delegated to this
+	 * <p> - See {@link #remainingAlgorithm(Set, VFXListState)}: the second part of the algorithm is delegated to this
 	 * method
 	 */
 	protected VFXListState<T, C> intersectionAlgorithm() {
@@ -449,19 +458,18 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 				expandedRange.remove(common);
 			}
 
-		// Process remainings with the "remainings' algorithm"
-		remainingsAlgorithm(expandedRange, newState);
+		// Process remaining with the "remaining' algorithm"
+		remainingAlgorithm(expandedRange, newState);
 		return newState;
 	}
 
 	/**
-	 * Avoids code duplication. Typically used to process indexes not found in the current state. Needed by the
-	 * {@link #intersectionAlgorithm()} or by {@link #onItemsChanged()}.
+	 * Avoids code duplication. Typically used to process indexes not found in the current state.
 	 * <p>
 	 * For any index in the given collection, a cell is needed. Also, it needs to be updated by index and item both.
 	 * This cell can come from three sources:
 	 * <p> 1) from the current state if it's not empty yet. Since the cells are stored in a {@link SequencedMap}, one
-	 * is removed by calling {@link SequencedMap#pollFirstEntry()}.
+	 * is removed by calling {@link StateMap#poll()}.
 	 * <p> 2) from the {@link VFXListCache} if not empty
 	 * <p> 3) created by the cell factory
 	 * <p></p>
@@ -469,7 +477,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
 	 * {@link VFXList#cellFactoryProperty()} to create a new one
 	 */
-	protected void remainingsAlgorithm(Set<Integer> expandedRange, VFXListState<T, C> newState) {
+	protected void remainingAlgorithm(Set<Integer> expandedRange, VFXListState<T, C> newState) {
 		VFXList<T, C> list = getNode();
 		VFXListHelper<T, C> helper = list.getHelper();
 		VFXListState<T, C> current = list.getState();
@@ -481,7 +489,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 			T item = helper.indexToItem(index);
 			C c;
 			if (!current.isEmpty()) {
-				c = current.getCellsByIndex().pollFirstEntry().getValue();
+				c = current.getCells().poll().getValue();
 				c.updateIndex(index);
 				c.updateItem(item);
 			} else {

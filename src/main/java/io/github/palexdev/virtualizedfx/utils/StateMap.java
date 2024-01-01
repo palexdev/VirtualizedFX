@@ -131,6 +131,16 @@ public class StateMap<T, C extends Cell<T>> {
 	}
 
 	/**
+	 * Removes the first entry from the map [Integer -> Cell] by using {@link SequencedMap#pollFirstEntry()}.
+	 * <p>
+	 * Note that this won't remove the entry from the map [Item -> Index], leaving this in an incorrect state. Which means
+	 * this should be used only when transitioning to a new state.
+	 */
+	public Map.Entry<Integer, C> poll() {
+		return byIndex.pollFirstEntry();
+	}
+
+	/**
 	 * @return the size of this data structure. Since it is expected for both the used maps to have the same size, this delegates
 	 * to the {@link Map#size()} method of the [Integer -> Cell] map.
 	 */

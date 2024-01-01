@@ -10,6 +10,8 @@ import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListSkin;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
+import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedList;
+import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedListSkin;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
@@ -103,6 +105,10 @@ public class ListTestUtils {
 	// Internal Classes
 	//================================================================================
 	public static class List extends VFXList<Integer, SimpleCell> {
+		public List(ObservableList<Integer> items) {
+			this(items, SimpleCell::new);
+		}
+
 		public List(ObservableList<Integer> items, Function<Integer, SimpleCell> cellFactory) {
 			super(items, cellFactory);
 		}
@@ -118,6 +124,35 @@ public class ListTestUtils {
 		@Override
 		protected SkinBase<?, ?> buildSkin() {
 			return new VFXListSkin<>(this) {
+				@Override
+				protected void onLayoutCompleted(boolean done) {
+					super.onLayoutCompleted(done);
+					if (done) counter.layout();
+				}
+			};
+		}
+	}
+
+	public static class PList extends VFXPaginatedList<Integer, SimpleCell> {
+		public PList(ObservableList<Integer> items) {
+			this(items, SimpleCell::new);
+		}
+
+		public PList(ObservableList<Integer> items, Function<Integer, SimpleCell> cellFactory) {
+			super(items, cellFactory);
+		}
+
+		@Override
+		public void setCellFactory(Function<Integer, SimpleCell> cellFactory) {
+			super.setCellFactory(cellFactory.andThen(c -> {
+				counter.created();
+				return c;
+			}));
+		}
+
+		@Override
+		protected SkinBase<?, ?> buildSkin() {
+			return new VFXPaginatedListSkin<>(this) {
 				@Override
 				protected void onLayoutCompleted(boolean done) {
 					super.onLayoutCompleted(done);

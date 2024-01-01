@@ -40,6 +40,9 @@ java {
 
 test {
     useJUnitPlatform()
+    filter {
+        excludeTestsMatching "JMH*"
+    }
 }
 
 javafx {

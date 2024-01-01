@@ -19,7 +19,8 @@ import java.util.concurrent.TimeUnit;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static io.github.palexdev.virtualizedfx.utils.Utils.intersection;
 
-public class TestScrollAlgorithms {
+@SuppressWarnings("NewClassNamingConvention")
+public class JMHTestScrollAlgorithms {
 	private static final List<Integer> items = Utils.items(100);
 	private static final IntegerRange lastRange = IntegerRange.of(20, 49);
 	private static final IntegerRange newRange = new IntegerRange(25, 54);

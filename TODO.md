@@ -1,10 +1,11 @@
 ## General
 
 - [x] Review names
+- [ ] Rework pos listener/bindings and move it to manager (on init and 'orientation change' switch function)
 - [ ] Review APIs (classes, simplify as much as possible/re-organize at least)
-- [ ] Maybe define a common Interface for Virtualized containers
+- [x] Maybe define a common Interface for Virtualized containers
 
-## VirtualFlow
+## List
 
 - [x] Items changed (property)
 - [x] Items changed (inside list)
@@ -17,4 +18,4 @@
 - [x] Caching mechanism
 - [x] Orientation change
 - [x] Introduce spacing feature
-- [ ] Implement paginated variant
+- [x] Implement paginated variant

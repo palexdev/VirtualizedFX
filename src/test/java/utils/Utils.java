@@ -23,7 +23,11 @@ public class Utils {
 	// Static Methods
 	//================================================================================
 	public static void debugView(FxRobot robot, Node node) {
-		robot.interact(() -> ScenicView.show(node.getScene()));
+		if (robot != null) {
+			robot.interact(() -> ScenicView.show(node.getScene()));
+			return;
+		}
+		ScenicView.show(node.getScene());
 	}
 
 	public static void sleep(long millis) {

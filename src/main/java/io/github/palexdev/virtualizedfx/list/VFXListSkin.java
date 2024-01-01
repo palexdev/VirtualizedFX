@@ -20,7 +20,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * {@link VFXListManager}.
  * <p>
  * The layout is quite simple: there is just one note, called the 'viewport', that is the {@code Pane} responsible for
- * containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
+ * containing and laying out the cells. Needlessly to say, the layout strategy is custom, and it's defined in the
  * {@link #layout()} method. The viewport node is also clipped to avoid cells from overflowing when scrolling.
  * About the clip, check also {@link VFXList#clipBorderRadiusProperty()}.
  * <p></p>
@@ -41,7 +41,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 
 	// To maximize performance, one listener is used to update on scroll, but it's added only on
 	// one of the two position properties, depending on the orientation
-	protected InvalidationListener pl = o -> getSkinnable().getBehavior().onPositionChanged();
+	protected InvalidationListener pl = o -> getBehavior().onPositionChanged();
 
 	//================================================================================
 	// Constructors
@@ -67,6 +67,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 		list.setClip(clip);
 
 		// End initialization
+		swapPositionListener();
 		addListeners();
 		getChildren().add(viewport);
 	}
@@ -116,14 +117,12 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 				.condition(v -> v)
 				.then(v -> layout()),
 			onInvalidated(list.orientationProperty())
-				.then(o -> swapPositionListener())
-				.executeNow(),
+				.then(o -> {
+					getBehavior().onOrientationChanged();
+					swapPositionListener();
+				}),
 			onChanged(list.helperProperty())
 				.then((o, n) -> {
-					viewport.translateXProperty().unbind();
-					viewport.translateYProperty().unbind();
-					if (o != null) list.getBehavior().onOrientationChanged();
-					if (n == null) return;
 					viewport.translateXProperty().bind(n.viewportPositionProperty().map(Position::getX));
 					viewport.translateYProperty().bind(n.viewportPositionProperty().map(Position::getY));
 				})
@@ -224,7 +223,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 	 * Note: this listener is not added through {@link #listeners(When[])}, which means that its disposal is not automatic,
 	 * and it's done in the overridden {@link #dispose()}.
 	 */
-	protected final void swapPositionListener() {
+	protected void swapPositionListener() {
 		VFXList<T, C> list = getSkinnable();
 		Orientation orientation = list.getOrientation();
 		if (orientation == Orientation.VERTICAL) {
