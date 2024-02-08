@@ -408,7 +408,7 @@ public class PaginatedListTests {
 
 		// Disable and test again
 		robot.interact(() -> list.setFitToBreadth(false));
-		assertEquals(800.0, list.getHelper().maxBreadthProperty().get());
+		assertEquals(800.0, list.getHelper().getMaxBreadth());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
 			.map(CellBase::toNode)
 			.forEach(n -> assertNotEquals(400.0, n.getLayoutBounds().getWidth()));
@@ -434,19 +434,19 @@ public class PaginatedListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
-		assertEquals(32 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(32 * 50, helper.getEstimatedLength());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(20));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(20 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(20 * 50, helper.getEstimatedLength());
 
 		// Increase and test again
 		robot.interact(() -> list.setCellSize(36));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(36 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(36 * 50, helper.getEstimatedLength());
 	}
 
 	@Test
@@ -465,13 +465,13 @@ public class PaginatedListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
-		assertEquals(32 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(32 * 50, helper.getEstimatedLength());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(10));
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(10 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(10 * 50, helper.getEstimatedLength());
 		assertEquals(200, list.getVPos());
 
 		// Increase and test again
@@ -479,7 +479,7 @@ public class PaginatedListTests {
 		robot.interact(() -> list.setCellSize(50));
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(50 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(50 * 50, helper.getEstimatedLength());
 		assertEquals(1000, list.getVPos());
 	}
 
@@ -499,13 +499,13 @@ public class PaginatedListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(36, 49));
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
-		assertEquals(32 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(32 * 50, helper.getEstimatedLength());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(24));
 		assertState(list, IntegerRange.of(36, 49));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(24 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(24 * 50, helper.getEstimatedLength());
 		assertEquals(960, list.getVPos());
 
 		// Increase and test again
@@ -513,7 +513,7 @@ public class PaginatedListTests {
 		robot.interact(() -> list.setCellSize(44));
 		assertState(list, IntegerRange.of(36, 49));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(44 * 50, helper.estimatedLengthProperty().get());
+		assertEquals(44 * 50, helper.getEstimatedLength());
 		assertEquals(1760, list.getVPos());
 	}
 
@@ -915,7 +915,7 @@ public class PaginatedListTests {
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(14, 1, 14, 14, 0, 14, 0);
-		assertEquals(400.0, list.getHelper().maxBreadthProperty().get());
+		assertEquals(400.0, list.getHelper().getMaxBreadth());
 
 		// Allow variable height
 		robot.interact(() -> {
@@ -926,7 +926,7 @@ public class PaginatedListTests {
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(500.0, list.getHelper().maxBreadthProperty().get());
+		assertEquals(500.0, list.getHelper().getMaxBreadth());
 
 		robot.interact(() -> {
 			list.scrollToLast();
@@ -937,7 +937,7 @@ public class PaginatedListTests {
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 2, 14, 14, 0, 0, 0);
-		assertEquals(500.0, list.getHelper().maxBreadthProperty().get());
+		assertEquals(500.0, list.getHelper().getMaxBreadth());
 
 	}
 

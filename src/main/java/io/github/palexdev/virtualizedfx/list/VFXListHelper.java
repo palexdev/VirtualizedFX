@@ -2,6 +2,7 @@ package io.github.palexdev.virtualizedfx.list;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
 import io.github.palexdev.mfxcore.base.properties.PositionProperty;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
@@ -48,10 +49,18 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	int totalNum();
 
 	/**
+	 * Specifies the range of items present in the list. This also takes into account buffer items, see {@link #visibleNum()}
+	 * and {@link #totalNum()}
+	 */
+	ReadOnlyObjectProperty<NumberRange<Integer>> rangeProperty();
+
+	/**
 	 * @return the range of items present in the list. This also takes into account buffer items, see {@link #visibleNum()}
 	 * and {@link #totalNum()}
 	 */
-	IntegerRange range();
+	default IntegerRange range() {
+		return (IntegerRange) rangeProperty().get();
+	}
 
 	/**
 	 * @return the maximum amount of pixels the container can scroll on the vertical direction
@@ -69,6 +78,13 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	ReadOnlyDoubleProperty estimatedLengthProperty();
 
 	/**
+	 * @return the virtual length of the viewport (total width/height).
+	 */
+	default double getEstimatedLength() {
+		return estimatedLengthProperty().get();
+	}
+
+	/**
 	 * Specifies the maximum breadth, opposed to the container's orientation.
 	 * So: VERTICAL -> max width, HORIZONTAL -> max height.
 	 * <p></p>
@@ -78,11 +94,26 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	ReadOnlyDoubleProperty maxBreadthProperty();
 
 	/**
+	 * @return the maximum breadth, opposed to the container's orientation.
+	 * So: VERTICAL -> max width, HORIZONTAL -> max height.
+	 */
+	default double getMaxBreadth() {
+		return maxBreadthProperty().get();
+	}
+
+	/**
 	 * Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
 	 * <p>
 	 * This property specifies the translation of the viewport, the calculation depends on the implementation.
 	 */
 	ReadOnlyObjectProperty<Position> viewportPositionProperty();
+
+	/**
+	 * @return the position the viewport should be at in the container
+	 */
+	default Position getViewportPosition() {
+		return viewportPositionProperty().get();
+	}
 
 	/**
 	 * Computes the breadth of the given node.
@@ -202,8 +233,8 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		}
 
 		@Override
-		public IntegerRange range() {
-			return (IntegerRange) range.get();
+		public IntegerRangeProperty rangeProperty() {
+			return range;
 		}
 
 		@Override

@@ -232,7 +232,10 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	/**
 	 * Delegate for {@link VFXCellsCache#populate()}.
 	 */
-	public VFXCellsCache<T, C> populateCache() {return cache.populate();}
+	public VFXList<T, C> populateCache() {
+		cache.populate();
+		return this;
+	}
 
 	/**
 	 * Delegate for {@link ListProperty#size()}.
@@ -617,6 +620,13 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	 */
 	protected VFXCellsCache<T, C> getCache() {
 		return cache;
+	}
+
+	/**
+	 * Delegate for {@link VFXCellsCache#size()}.
+	 */
+	public int cacheSize() {
+		return cache.size();
 	}
 
 	public ObservableList<T> getItems() {

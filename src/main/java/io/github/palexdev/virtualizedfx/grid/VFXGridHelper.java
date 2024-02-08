@@ -5,6 +5,7 @@ import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
 import io.github.palexdev.mfxcore.base.properties.PositionProperty;
+import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
@@ -33,7 +34,6 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 
 	int totalColumns();
 
-	// TODO add properties to list helper too
 	ReadOnlyObjectProperty<NumberRange<Integer>> columnsRangeProperty();
 
 	default IntegerRange columnsRange() {
@@ -94,7 +94,6 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	 */
 	double maxHScroll();
 
-	// TODO add getters to list helper too
 	ReadOnlyDoubleProperty estimatedWidthProperty();
 
 	default double getEstimateWidth() {
@@ -114,6 +113,8 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	}
 
 	void layout(int rowIndex, int cIndex, Node node);
+
+	Size getTotalCellSize();
 
 	/**
 	 * @return the {@link VFXGrid} instance associated to this helper
@@ -169,16 +170,6 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		return opt.orElseGet(() -> grid.getCellFactory().apply(item));
 	}
 
-	default Size getTotalCellSize() {
-		// TODO maybe this should be cached
-		VFXGrid<T, C> grid = getGrid();
-		Size size = grid.getCellSize();
-		return Size.of(
-			size.getWidth() + grid.getHSpacing(),
-			size.getHeight() + grid.getVSpacing()
-		);
-	}
-
 	default void dispose() {}
 
 	class DefaultHelper<T, C extends Cell<T>> implements VFXGridHelper<T, C> {
@@ -188,6 +179,7 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		protected final ReadOnlyDoubleWrapper estimatedWidth = new ReadOnlyDoubleWrapper();
 		protected final ReadOnlyDoubleWrapper estimatedHeight = new ReadOnlyDoubleWrapper();
 		protected final PositionProperty viewportPosition = new PositionProperty();
+		protected final SizeProperty totalCellSize = new SizeProperty(Size.empty());
 
 		public DefaultHelper(VFXGrid<T, C> grid) {
 			this.grid = grid;
@@ -266,6 +258,18 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 				.addSources(grid.vPosProperty(), grid.hPosProperty())
 				.addSources(grid.cellSizeProperty())
 				.addSources(grid.hSpacingProperty(), grid.vSpacingProperty())
+				.get()
+			);
+
+			totalCellSize.bind(ObjectBindingBuilder.<Size>build()
+				.setMapper(() -> {
+					Size size = grid.getCellSize();
+					return Size.of(
+						size.getWidth() + grid.getHSpacing(),
+						size.getHeight() + grid.getVSpacing()
+					);
+				})
+				.addSources(grid.cellSizeProperty(), grid.vSpacingProperty(), grid.hSpacingProperty())
 				.get()
 			);
 		}
@@ -376,6 +380,11 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 			double w = grid.getCellSize().getWidth();
 			double h = grid.getCellSize().getHeight();
 			node.resizeRelocate(x, y, w, h);
+		}
+
+		@Override
+		public Size getTotalCellSize() {
+			return totalCellSize.get();
 		}
 
 		@Override

@@ -164,7 +164,10 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	/**
 	 * Delegate for {@link VFXCellsCache#populate()}.
 	 */
-	public VFXCellsCache<T, C> populateCache() {return cache.populate();}
+	public VFXGrid<T, C> populateCache() {
+		cache.populate();
+		return this;
+	}
 
 	/**
 	 * Delegate for {@link ListProperty#size()}.
@@ -205,8 +208,6 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {return getState().getCellsByIndexUnmodifiable();}
 
 	public Map<T, C> getCellsByItemUnmodifiable() {return getState().getCellsByItemUnmodifiable();}
-
-	// TODO scroll
 
 	public ReadOnlyDoubleProperty estimatedWidthProperty() {return getHelper().estimatedWidthProperty();}
 
@@ -569,8 +570,6 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	protected VFXCellsCache<T, C> getCache() {
 		return cache;
 	}
-
-	// TODO add to list too
 
 	/**
 	 * Delegate for {@link VFXCellsCache#size()}.

@@ -278,7 +278,7 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 	 * be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
 	 * {@link VFXList#cellFactoryProperty()} to create a new one
 	 */
-	protected void remainingAlgorithm(Set<Integer> expandedRange, VFXGridState<T, C> newState) {
+	protected void remainingAlgorithm(Set<Integer> remaining, VFXGridState<T, C> newState) {
 		VFXGrid<T, C> grid = getNode();
 		VFXGridHelper<T, C> helper = grid.getHelper();
 		VFXGridState<T, C> current = grid.getState();
@@ -286,8 +286,8 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 		// Indexes in the given set were not found in the current state.
 		// Which means item updates. Cells are retrieved either from the current state (if not empty), from the cache,
 		// or created from the factory
-		for (Integer index : expandedRange) {
-			// TODO index may be out of bounds
+		for (Integer index : remaining) {
+			// We don't check the index here since we expect that the 'remaining' Set already contains valid indexes
 			T item = helper.indexToItem(index);
 			C c;
 			if (!current.isEmpty()) {
