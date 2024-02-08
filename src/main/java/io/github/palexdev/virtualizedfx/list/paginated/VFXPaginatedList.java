@@ -145,6 +145,11 @@ public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implem
 	// Overridden Methods
 	//================================================================================
 
+	@Override
+	public List<String> defaultStyleClasses() {
+		return List.of("vfx-list", "paginated");
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * <p></p>

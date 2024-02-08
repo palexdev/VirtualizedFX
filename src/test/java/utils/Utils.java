@@ -36,6 +36,9 @@ public class Utils {
 		} catch (Exception ignored) {}
 	}
 
+	// TODO implement this
+	//public static <T> void removeAll(VFXContainer<T> container, int... indexes)
+
 	public static <T> void removeAll(List<T> list, int... indexes) {
 		List<T> rem = Arrays.stream(indexes)
 			.mapToObj(list::get)
@@ -58,5 +61,10 @@ public class Utils {
 		return IntStream.range(0, cnt)
 			.mapToObj(i -> start + i)
 			.collect(FXCollectors.toList());
+	}
+
+	public static boolean isTouchSupported() {
+		String env = System.getenv().getOrDefault("TOUCH_SUPPORTED", "false");
+		return Boolean.parseBoolean(env);
 	}
 }

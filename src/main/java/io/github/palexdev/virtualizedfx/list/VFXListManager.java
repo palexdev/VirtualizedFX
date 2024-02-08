@@ -5,6 +5,7 @@ import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.utils.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
+import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
 
@@ -166,7 +167,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	/**
 	 * This method is responsible for updating the list's state when the {@link VFXList#cellFactoryProperty()}
 	 * changes. Unfortunately, this is always a costly operation because all cells need to be re-created, and the
-	 * {@link VFXListCache} cleaned. In fact, the very first operation done by this method is exactly this,
+	 * {@link VFXCellsCache} cleaned. In fact, the very first operation done by this method is exactly this,
 	 * the disposal of the current/old state and the cleaning of the cache. Luckily, this kind of change is likely to not happen very often.
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()} and {@link #rangeCheck(IntegerRange, boolean, boolean)},
@@ -470,7 +471,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * This cell can come from three sources:
 	 * <p> 1) from the current state if it's not empty yet. Since the cells are stored in a {@link SequencedMap}, one
 	 * is removed by calling {@link StateMap#poll()}.
-	 * <p> 2) from the {@link VFXListCache} if not empty
+	 * <p> 2) from the {@link VFXCellsCache} if not empty
 	 * <p> 3) created by the cell factory
 	 * <p></p>
 	 * <p> - See {@link VFXListHelper#indexToCell(int)}: this handles the second and third cases. If a cell can

@@ -131,28 +131,28 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 			// Geometry changes
 			onInvalidated(list.widthProperty())
 				.condition(w -> list.getOrientation() == Orientation.HORIZONTAL)
-				.then(w -> list.getBehavior().onGeometryChanged())
+				.then(w -> getBehavior().onGeometryChanged())
 				.otherwise((l, w) -> list.requestViewportLayout()),
 			onInvalidated(list.heightProperty())
 				.condition(h -> list.getOrientation() == Orientation.VERTICAL)
-				.then(h -> list.getBehavior().onGeometryChanged())
+				.then(h -> getBehavior().onGeometryChanged())
 				.otherwise((l, h) -> list.requestViewportLayout()),
 			onInvalidated(list.bufferSizeProperty())
-				.then(s -> list.getBehavior().onGeometryChanged()),
+				.then(b -> getBehavior().onGeometryChanged()),
 
 			// Others
 			onInvalidated(list.itemsProperty())
-				.then(it -> list.getBehavior().onItemsChanged()),
+				.then(it -> getBehavior().onItemsChanged()),
 			// DUDE! One thing cool in JavaFX, wow, I'm impressed. This invalidation listener will trigger when changes
 			// occur in the list, or the list itself is changed, impressive!
 			onInvalidated(list.cellFactoryProperty())
-				.then(f -> list.getBehavior().onCellFactoryChanged()),
+				.then(f -> getBehavior().onCellFactoryChanged()),
 			onInvalidated(list.fitToBreadthProperty())
-				.then(b -> list.getBehavior().onFitToBreadthChanged()),
+				.then(b -> getBehavior().onFitToBreadthChanged()),
 			onInvalidated(list.cellSizeProperty())
-				.then(s -> list.getBehavior().onCellSizeChanged()),
+				.then(s -> getBehavior().onCellSizeChanged()),
 			onInvalidated(list.spacingProperty())
-				.then(s -> list.getBehavior().onSpacingChanged())
+				.then(s -> getBehavior().onSpacingChanged())
 		);
 	}
 

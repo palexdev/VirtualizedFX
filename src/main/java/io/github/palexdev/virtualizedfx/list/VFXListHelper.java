@@ -10,6 +10,7 @@ import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
+import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -41,7 +42,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	int visibleNum();
 
 	/**
-	 * @return the total number of cells in the viewport which doesn't include only the number of visibles cells but also
+	 * @return the total number of cells in the viewport which doesn't include only the number of visible cells but also
 	 * the number of buffer cells
 	 */
 	int totalNum();
@@ -127,6 +128,13 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	}
 
 	/**
+	 * Converts the given index to an item (shortcut for {@code getList().getItems().get(index)}).
+	 */
+	default T indexToItem(int index) {
+		return getList().getItems().get(index);
+	}
+
+	/**
 	 * Converts the given index to a cell. Uses {@link #itemToCell(Object)}.
 	 */
 	default C indexToCell(int index) {
@@ -135,21 +143,14 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Converts the given item to a cell. The result is either on of the cells cached in {@link VFXListCache} that
+	 * Converts the given item to a cell. The result is either on of the cells cached in {@link VFXCellsCache} that
 	 * is updated with the given item, or a totally new one created by the {@link VFXList#cellFactoryProperty()}.
 	 */
 	default C itemToCell(T item) {
-		VFXListCache<T, C> cache = getList().getCache();
+		VFXCellsCache<T, C> cache = getList().getCache();
 		Optional<C> opt = cache.tryTake();
 		opt.ifPresent(c -> c.updateItem(item));
 		return opt.orElseGet(() -> getList().getCellFactory().apply(item));
-	}
-
-	/**
-	 * Converts the given index to an item (shortcut for {@code getList().getItems().get(index)}).
-	 */
-	default T indexToItem(int index) {
-		return getList().getItems().get(index);
 	}
 
 	/**

@@ -15,6 +15,9 @@ module VirtualizedFX {
 	// Enums
 	exports io.github.palexdev.virtualizedfx.enums;
 
+	// Grid
+	exports io.github.palexdev.virtualizedfx.grid;
+
 	// List
 	exports io.github.palexdev.virtualizedfx.list;
 	exports io.github.palexdev.virtualizedfx.list.paginated;

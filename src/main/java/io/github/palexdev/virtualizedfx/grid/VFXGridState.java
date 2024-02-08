@@ -1,43 +1,28 @@
-package io.github.palexdev.virtualizedfx.list;
+package io.github.palexdev.virtualizedfx.grid;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.utils.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.scene.Node;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.SequencedMap;
 
-/**
- * Immutable object to represent the state of a {@link VFXListState} in a specific moment in time. In other words,
- * each and every state is given by a unique combination of the list's properties.
- * <p>
- * The state carries three important information:
- * <p> 1) The range of items to display from the {@link VFXList#itemsProperty()}
- * <p> 2) The cells that are currently in the viewport
- * <p> 3) A flag that indicates whether cells have changed
- * <p></p>
- * <b>Note</b> that the data structure used to store the cells is particular, see {@link StateMap}.
- *
- * @see #EMPTY
- * @see StateMap
- */
-// NullPointerException warnings due to special EMPTY state
-@SuppressWarnings({"DataFlowIssue", "rawtypes", "SameParameterValue"})
-public class VFXListState<T, C extends Cell<T>> {
+@SuppressWarnings({"rawtypes", "SameParameterValue"})
+public class VFXGridState<T, C extends Cell<T>> {
 	//================================================================================
 	// Static Properties
 	//================================================================================
-	/**
-	 * Special instance of {@code VFXListState} used to indicate that no cells can be present in the viewport at
-	 * a certain time. The reasons can be many, for example, no cell factory, invalid range, width/height <= 0, etc...
-	 * <p>
-	 * This and {@link #isEmpty()} are two total different things!!
-	 */
-	public static final VFXListState EMPTY = new VFXListState<>() {
+	public static final VFXGridState EMPTY = new VFXGridState() {
 		@Override
-		protected Cell<Object> removeCell(int index) {return null;}
+		protected Cell<Object> removeCell(int index) {
+			return null;
+		}
 
 		@Override
 		protected void dispose() {}
@@ -46,72 +31,62 @@ public class VFXListState<T, C extends Cell<T>> {
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final VFXList<T, C> list;
-	private final IntegerRange range;
+	private final VFXGrid<T, C> grid;
+	private final IntegerRange rowsRange;
+	private final IntegerRange columnsRange;
+	private final int nColumns;
 	private final StateMap<T, C> cells = new StateMap<>();
 	private boolean cellsChanged = false;
 
 	//================================================================================
 	// Constructors
 	//================================================================================
-	private VFXListState() {
-		this.list = null;
-		this.range = Utils.INVALID_RANGE;
+	private VFXGridState() {
+		this.grid = null;
+		this.rowsRange = Utils.INVALID_RANGE;
+		this.columnsRange = Utils.INVALID_RANGE;
+		this.nColumns = 0;
 	}
 
-	public VFXListState(VFXList<T, C> list, IntegerRange range) {
-		this.list = list;
-		this.range = range;
+	public VFXGridState(VFXGrid<T, C> grid, IntegerRange rowsRange, IntegerRange columnsRange) {
+		this.grid = grid;
+		this.rowsRange = rowsRange;
+		this.columnsRange = columnsRange;
+		this.nColumns = grid.getHelper().maxColumns();
 	}
 
 	//================================================================================
 	// Methods
 	//================================================================================
-
-	/**
-	 * Retrieves the item at the given index from {@link VFXList#itemsProperty()} and delegates to
-	 * {@link #addCell(int, Object, Cell)}.
-	 *
-	 * @see StateMap
-	 */
-	protected void addCell(int index, C cell) {
-		addCell(index, list.getItems().get(index), cell);
+	protected void addCell(int rIndex, int cIndex, C cell) {
+		int linear = GridUtils.subToInd(nColumns, rIndex, cIndex);
+		addCell(linear, grid.getItems().get(linear), cell);
 	}
 
-	/**
-	 * Adds the given cell to the {@link StateMap} of this state object.
-	 *
-	 * @see StateMap
-	 */
+	protected void addCell(int index, C cell) {
+		addCell(index, grid.getItems().get(index), cell);
+	}
+
 	protected void addCell(int index, T item, C cell) {
 		cells.put(index, item, cell);
 	}
 
-	/**
-	 * Removes a cell from the {@link StateMap} for the given index. If the cell is not found the next attempt
-	 * is to remove it by the item at the given index in the {@link VFXList#itemsProperty()}.
-	 */
+	protected C removeCell(int rIndex, int cIndex) {
+		return removeCell(GridUtils.subToInd(nColumns, rIndex, cIndex));
+	}
+
 	protected C removeCell(int index) {
 		C c = cells.remove(index);
-		if (c == null) c = removeCell(list.getItems().get(index));
+		if (c == null) c = removeCell(grid.getItems().get(index));
 		return c;
 	}
 
-	/**
-	 * Removes a cell from the {@link StateMap} for the given item.
-	 */
 	protected C removeCell(T item) {
 		return cells.remove(item);
 	}
 
-	/**
-	 * Disposes this state object by: caching all the cells ({@link VFXCellsCache#cache(Collection)}), and then
-	 * clearing the {@link StateMap} ({@link StateMap#clear()}).
-	 *
-	 * @see StateMap
-	 */
 	protected void dispose() {
-		VFXCellsCache<T, C> cache = list.getCache();
+		VFXCellsCache<T, C> cache = grid.getCache();
 		cache.cache(getCellsByIndex().values());
 		cells.clear();
 	}
@@ -119,19 +94,16 @@ public class VFXListState<T, C extends Cell<T>> {
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
-
-	/**
-	 * @return the {@link VFXList} instance this state is associated to
-	 */
-	public VFXList<T, C> getList() {
-		return list;
+	public VFXGrid<T, C> getGrid() {
+		return grid;
 	}
 
-	/**
-	 * @return the range of items to display
-	 */
-	public IntegerRange getRange() {
-		return range;
+	public IntegerRange getRowsRange() {
+		return rowsRange;
+	}
+
+	public IntegerRange getColumnsRange() {
+		return columnsRange;
 	}
 
 	/**
@@ -200,7 +172,7 @@ public class VFXListState<T, C extends Cell<T>> {
 	 * @return whether the cells have changed since the last state. This is used to indicate if more or less cells are
 	 * present in this state compared to the old one. Used by the default skin to check whether the viewport has to
 	 * update its children or not.
-	 * @see VFXListSkin
+	 * @see VFXGridSkin
 	 */
 	public boolean haveCellsChanged() {
 		return cellsChanged;

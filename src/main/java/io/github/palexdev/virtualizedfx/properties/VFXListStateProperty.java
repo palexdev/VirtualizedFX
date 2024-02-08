@@ -30,8 +30,7 @@ public class VFXListStateProperty<T, C extends Cell<T>> extends ReadOnlyObjectWr
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public VFXListStateProperty() {
-	}
+	public VFXListStateProperty() {}
 
 	public VFXListStateProperty(VFXListState<T, C> initialValue) {
 		super(initialValue);

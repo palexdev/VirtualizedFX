@@ -16,6 +16,7 @@ import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.properties.VFXListStateProperty;
+import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -76,7 +77,7 @@ import java.util.function.Supplier;
  * for changes in the displaying cells, you want to add a listener on this property.
  * <p> - It is possible to programmatically tell the viewport to update its layout with {@link #requestViewportLayout()},
  * although this should never be necessary as it is handled automatically when the state changes.
- * <p> - Additionally, this container makes use of a simple cache implementation, {@link VFXListCache}, which
+ * <p> - Additionally, this container makes use of a simple cache implementation, {@link VFXCellsCache}, which
  * avoids creating new cells when needed if some are already present in it. The most crucial aspect for this kind of
  * virtualization is to avoid creating nodes, as this is the most expensive operation it can occur. Not only nodes need
  * to be created but also added to the container and then laid out. Instead, it's much more likely that the {@link Cell#updateItem(Object)}
@@ -91,7 +92,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final VFXListCache<T, C> cache;
+	private final VFXCellsCache<T, C> cache;
 	private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList()) {
 		@Override
 		public void set(ObservableList<T> newValue) {
@@ -99,7 +100,12 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 			super.set(newValue);
 		}
 	};
-	private final FunctionProperty<T, C> cellFactory = new FunctionProperty<>();
+	private final FunctionProperty<T, C> cellFactory = new FunctionProperty<>() {
+		@Override
+		protected void invalidated() {
+			cache.setCellFactory(get());
+		}
+	};
 	private final ReadOnlyObjectWrapper<VFXListHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
 		@Override
 		public void set(VFXListHelper<T, C> newValue) {
@@ -114,7 +120,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		@Override
 		public void set(Function<Orientation, VFXListHelper<T, C>> newValue) {
 			if (newValue == null)
-				throw new NullPointerException("List helper factory cannot be null");
+				throw new NullPointerException("List helper factory cannot be null!");
 			super.set(newValue);
 		}
 
@@ -127,11 +133,11 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	};
 	private final DoubleProperty vPos = PropUtils.clampedDoubleProperty(
 		() -> 0.0,
-		() -> (getHelper() != null) ? getHelper().maxVScroll() : 0.0
+		() -> getHelper().maxVScroll()
 	);
 	private final DoubleProperty hPos = PropUtils.clampedDoubleProperty(
 		() -> 0.0,
-		() -> (getHelper() != null) ? getHelper().maxHScroll() : 0.0
+		() -> getHelper().maxHScroll()
 	);
 
 	private final VFXListStateProperty<T, C> state = new VFXListStateProperty<>(VFXListState.EMPTY);
@@ -163,18 +169,18 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	// Methods
 	//================================================================================
 	private void initialize() {
-		getStyleClass().add("virtualized-list");
+		getStyleClass().addAll(defaultStyleClasses());
 		setDefaultBehaviorProvider();
 	}
 
 	/**
 	 * Responsible for creating the cache instance used by this container.
 	 *
-	 * @see VFXListCache
+	 * @see VFXCellsCache
 	 * @see #cacheCapacityProperty()
 	 */
-	protected VFXListCache<T, C> createCache() {
-		return new VFXListCache<>(this, getCacheCapacity());
+	protected VFXCellsCache<T, C> createCache() {
+		return new VFXCellsCache<>(null, getCacheCapacity());
 	}
 
 	/**
@@ -205,6 +211,11 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	// Overridden Methods
 	//================================================================================
 	@Override
+	public List<String> defaultStyleClasses() {
+		return List.of("vfx-list");
+	}
+
+	@Override
 	protected SkinBase<?, ?> buildSkin() {
 		return new VFXListSkin<>(this);
 	}
@@ -217,6 +228,11 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	//================================================================================
 	// Delegate Methods
 	//================================================================================
+
+	/**
+	 * Delegate for {@link VFXCellsCache#populate()}.
+	 */
+	public VFXCellsCache<T, C> populateCache() {return cache.populate();}
 
 	/**
 	 * Delegate for {@link ListProperty#size()}.
@@ -561,7 +577,6 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 				true
 			);
 
-
 		private static final CssMetaData<VFXList<?, ?>, Number> CLIP_BORDER_RADIUS =
 			FACTORY.createSizeCssMetaData(
 				"-vfx-clip-border-radius",
@@ -600,7 +615,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	/**
 	 * @return the cache instance used by this container
 	 */
-	public VFXListCache<T, C> getCache() {
+	protected VFXCellsCache<T, C> getCache() {
 		return cache;
 	}
 
