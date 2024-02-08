@@ -1,3 +1,8 @@
+## Work in progress / Coming soon
+
+- [ ] VFXGrid documentation
+- [ ] Bump and release
+
 ## General
 
 - [x] Review names
@@ -9,7 +14,7 @@
 
 - [x] Items changed (property)
 - [x] Items changed (inside list)
-- [x] Init/Geometry change (this needs positions invalidation too)
+- [x] Init/Geometry change
 - [x] Buffer change
 - [x] Position change
 - [x] Cell factory change
@@ -19,3 +24,18 @@
 - [x] Orientation change
 - [x] Introduce spacing feature
 - [x] Implement paginated variant
+
+## Grid
+
+- [x] Auto arrange
+- [x] Viewport alignment
+- [x] Items changed (property)
+- [x] Items changed (inside list)
+- [x] Init/Geometry change
+- [x] Buffer change
+- [x] Position change
+- [x] Cell factory change
+- [x] Cell size change
+- [x] Caching mechanism
+- [x] Vertical and horizontal spacing
+- [ ] Implement paginated variant (?)
