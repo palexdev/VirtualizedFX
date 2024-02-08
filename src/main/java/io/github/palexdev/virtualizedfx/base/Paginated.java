@@ -6,31 +6,42 @@ import javafx.beans.property.ReadOnlyIntegerProperty;
 /**
  * Defines the common API for every paginated virtualized container offered by VirtualizedFX. Extends {@link VFXContainer}.
  */
-public interface Paginated extends VFXContainer {
-	int getPage();
+public interface Paginated<T> extends VFXContainer<T> {
+
+	default int getPage() {
+		return pageProperty().get();
+	}
 
 	/**
 	 * Specifies the page at which the container is.
 	 */
 	IntegerProperty pageProperty();
 
-	void setPage(int page);
+	default void setPage(int page) {
+		pageProperty().set(page);
+	}
 
-	int getMaxPage();
+	default int getMaxPage() {
+		return maxPageProperty().get();
+	}
 
 	/**
 	 * Specifies the maximum page index at which the container can go.
 	 */
 	ReadOnlyIntegerProperty maxPageProperty();
 
-	int getCellsPerPage();
+	default int getCellsPerPage() {
+		return cellsPerPageProperty().get();
+	}
 
 	/**
 	 * Specifies the number of cells/items to show per each page.
 	 */
 	IntegerProperty cellsPerPageProperty();
 
-	void setCellsPerPage(int cellsPerPage);
+	default void setCellsPerPage(int cellsPerPage) {
+		cellsPerPageProperty().set(cellsPerPage);
+	}
 
 	/**
 	 * Goes to the next page if possible.

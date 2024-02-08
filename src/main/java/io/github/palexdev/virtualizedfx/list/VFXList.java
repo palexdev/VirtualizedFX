@@ -17,7 +17,6 @@ import io.github.palexdev.virtualizedfx.list.VFXListHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.properties.VFXListStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -88,7 +87,7 @@ import java.util.function.Supplier;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>> implements VFXContainer {
+public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>> implements VFXContainer<T> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -238,27 +237,11 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	}
 
 	/**
-	 * Delegate for {@link ListProperty#size()}.
-	 */
-	@Override
-	public int size() {
-		return getItems().size();
-	}
-
-	/**
 	 * Delegate for {@link ListProperty#sizeProperty()}.
 	 */
 	@Override
 	public ReadOnlyIntegerProperty sizeProperty() {
 		return items.sizeProperty();
-	}
-
-	/**
-	 * Delegate for {@link ListProperty#isEmpty()}.
-	 */
-	@Override
-	public boolean isEmpty() {
-		return getItems().isEmpty();
 	}
 
 	/**
@@ -290,26 +273,12 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		return getState().getCellsByItemUnmodifiable();
 	}
 
-	/**
-	 * Delegate for {@link VFXListHelper#getVirtualMaxX()}
-	 */
-	public double getVirtualMaxX() {return getHelper().getVirtualMaxX();}
-
-	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}.
-	 */
+	@Override
 	public ReadOnlyDoubleProperty virtualMaxXProperty() {
 		return getHelper().virtualMaxXProperty();
 	}
 
-	/**
-	 * Delegate for {@link VFXListHelper#getVirtualMaxY()}
-	 */
-	public double getVirtualMaxY() {return getHelper().getVirtualMaxY();}
-
-	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxYProperty()}.
-	 */
+	@Override
 	public ReadOnlyDoubleProperty virtualMaxYProperty() {
 		return getHelper().virtualMaxYProperty();
 	}
@@ -448,25 +417,14 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		this.spacing.set(spacing);
 	}
 
-	public BufferSize getBufferSize() {
-		return bufferSize.get();
-	}
-
 	/**
-	 * Specifies the number of extra cells to add to the container; they act as a buffer, allowing scroll to be smoother.
-	 * To avoid edge cases due to the users abusing the system, this is done by using an enumerator which allows up to
-	 * three buffer cells. Also, the default implementation (see {@link VerticalHelper} or {@link HorizontalHelper}), adds
-	 * double the number specified by the enum constant, because these buffer cells are added both at the top and at the
-	 * bottom of the container. The default value is {@link BufferSize#MEDIUM}.
-	 * <p>
+	 * {@inheritDoc}
+	 * <p></p>
 	 * Can be set in CSS via the property: '-vfx-buffer-size'.
 	 */
+	@Override
 	public StyleableObjectProperty<BufferSize> bufferSizeProperty() {
 		return bufferSize;
-	}
-
-	public void setBufferSize(BufferSize bufferSize) {
-		this.bufferSize.set(bufferSize);
 	}
 
 	public Orientation getOrientation() {
@@ -639,23 +597,9 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		return cache.size();
 	}
 
-	public ObservableList<T> getItems() {
-		return items.get();
-	}
-
-	/**
-	 * Specifies the {@link ObservableList} used to store the items.
-	 * <p>
-	 * We use a {@link ListProperty} because it offers many commodities such as both the size and emptiness of the list
-	 * as observable properties, as well as the possibility of adding an {@link InvalidationListener} that will both inform
-	 * about changes of the property and in the list.
-	 */
+	@Override
 	public ListProperty<T> itemsProperty() {
 		return items;
-	}
-
-	public void setItems(ObservableList<T> items) {
-		this.items.set(items);
 	}
 
 	public Function<T, C> getCellFactory() {
@@ -703,38 +647,14 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		this.helperFactory.set(helperFactory);
 	}
 
-	public double getVPos() {
-		return vPos.get();
-	}
-
-	/**
-	 * Specifies the container's vertical position. In case the orientation is set to {@link Orientation#VERTICAL}, this
-	 * is to be considered a 'virtual' position, as the container will never reach unreasonably high values for performance
-	 * reasons. See {@link VerticalHelper} to understand how virtual scroll is handled.
-	 */
+	@Override
 	public DoubleProperty vPosProperty() {
 		return vPos;
 	}
 
-	public void setVPos(double vPos) {
-		this.vPos.set(vPos);
-	}
-
-	public double getHPos() {
-		return hPos.get();
-	}
-
-	/**
-	 * Specifies the container's horizontal position. In case the orientation is set to {@link Orientation#HORIZONTAL}, this
-	 * is to be considered a 'virtual' position, as the container will never reach unreasonably high values for performance
-	 * reasons. See {@link HorizontalHelper} to understand how virtual scroll is handled.
-	 */
+	@Override
 	public DoubleProperty hPosProperty() {
 		return hPos;
-	}
-
-	public void setHPos(double hPos) {
-		this.hPos.set(hPos);
 	}
 
 	public VFXListState<T, C> getState() {

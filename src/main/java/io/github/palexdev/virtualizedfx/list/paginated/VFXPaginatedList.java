@@ -63,7 +63,7 @@ import java.util.stream.Collectors;
  * {@link #helperFactoryProperty()} that produces helpers of type {@link VFXListHelper}, don't do that!
  * You may end up with invalid states, thus a broken component.
  */
-public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implements Paginated {
+public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implements Paginated<T> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -220,11 +220,6 @@ public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implem
 		10
 	);
 
-	@Override
-	public int getCellsPerPage() {
-		return cellsPerPage.get();
-	}
-
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -233,11 +228,6 @@ public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implem
 	@Override
 	public StyleableIntegerProperty cellsPerPageProperty() {
 		return cellsPerPage;
-	}
-
-	@Override
-	public void setCellsPerPage(int cellsPerPage) {
-		this.cellsPerPage.set(cellsPerPage);
 	}
 
 	//================================================================================
@@ -274,24 +264,10 @@ public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implem
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
-	@Override
-	public int getPage() {
-		return page.get();
-	}
 
 	@Override
 	public IntegerProperty pageProperty() {
 		return page;
-	}
-
-	@Override
-	public void setPage(int page) {
-		this.page.set(page);
-	}
-
-	@Override
-	public int getMaxPage() {
-		return maxPage.get();
 	}
 
 	@Override

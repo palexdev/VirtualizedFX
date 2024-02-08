@@ -20,7 +20,6 @@ import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.properties.VFXGridStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -39,7 +38,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>> implements VFXContainer {
+public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>> implements VFXContainer<T> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -171,27 +170,11 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	}
 
 	/**
-	 * Delegate for {@link ListProperty#size()}.
-	 */
-	@Override
-	public int size() {
-		return getItems().size();
-	}
-
-	/**
 	 * Delegate for {@link ListProperty#sizeProperty()}.
 	 */
 	@Override
 	public ReadOnlyIntegerProperty sizeProperty() {
 		return items.sizeProperty();
-	}
-
-	/**
-	 * Delegate for {@link ListProperty#isEmpty()}.
-	 */
-	@Override
-	public boolean isEmpty() {
-		return getItems().isEmpty();
 	}
 
 	/**
@@ -211,21 +194,11 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	public Map<T, C> getCellsByItemUnmodifiable() {return getState().getCellsByItemUnmodifiable();}
 
 	/**
-	 * Delegate for {@link VFXListHelper#getVirtualMaxX()}
-	 */
-	public double getVirtualMaxX() {return getHelper().getVirtualMaxX();}
-
-	/**
 	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}.
 	 */
 	public ReadOnlyDoubleProperty virtualMaxXProperty() {
 		return getHelper().virtualMaxXProperty();
 	}
-
-	/**
-	 * Delegate for {@link VFXListHelper#getVirtualMaxY()}
-	 */
-	public double getVirtualMaxY() {return getHelper().getVirtualMaxY();}
 
 	/**
 	 * Delegate for {@link VFXListHelper#virtualMaxYProperty()}.
@@ -428,25 +401,13 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		setVSpacing(vSpacing);
 	}
 
-	public BufferSize getBufferSize() {
-		return bufferSize.get();
-	}
-
 	/**
-	 * Specifies the number of extra cells to add to the container; they act as a buffer, allowing scroll to be smoother.
-	 * To avoid edge cases due to the users abusing the system, this is done by using an enumerator which allows up to
-	 * three buffer cells. Also, the default implementation (see {@link VFXGridHelper}) adds double the number
-	 * specified by the enum constant, because these buffer cells are added both at the top and at the bottom of the container.
-	 * The default value is {@link BufferSize#MEDIUM}.
-	 * <p>
+	 * {@inheritDoc}
+	 * <p></p>
 	 * Can be set in CSS via the property: '-vfx-buffer-size'.
 	 */
 	public StyleableObjectProperty<BufferSize> bufferSizeProperty() {
 		return bufferSize;
-	}
-
-	public void setBufferSize(BufferSize bufferSize) {
-		this.bufferSize.set(bufferSize);
 	}
 
 	public double getClipBorderRadius() {
@@ -599,26 +560,14 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return cache.size();
 	}
 
-	public ObservableList<T> getItems() {
-		return items.get();
-	}
-
 	/**
-	 * Specifies the {@link ObservableList} used to store the items.
-	 * <p>
-	 * We use a {@link ListProperty} because it offers many commodities such as both the size and emptiness of the list
-	 * as observable properties, as well as the possibility of adding an {@link InvalidationListener} that will both inform
-	 * about changes of the property and in the list.
-	 * <p>
+	 * {@inheritDoc}
+	 * <p></p>
 	 * Also, despite the grid being a 2D container, we still use a 1D collection because it's much more easy and convenient
 	 * to use. Knowing the number of columns we want to divide the items by, it's enough to make the list act as a 2D collection.
 	 */
 	public ListProperty<T> itemsProperty() {
 		return items;
-	}
-
-	public void setItems(ObservableList<T> items) {
-		this.items.set(items);
 	}
 
 	public Function<T, C> getCellFactory() {
@@ -660,10 +609,6 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		this.helperFactory.set(helperFactory);
 	}
 
-	public double getVPos() {
-		return vPos.get();
-	}
-
 	/**
 	 * Specifies the container's vertical position.
 	 * <p>
@@ -673,14 +618,6 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return vPos;
 	}
 
-	public void setVPos(double vPos) {
-		this.vPos.set(vPos);
-	}
-
-	public double getHPos() {
-		return hPos.get();
-	}
-
 	/**
 	 * Specifies the container's horizontal position. In case the orientation is set to {@link Orientation#HORIZONTAL}, this
 	 * <p>
@@ -688,10 +625,6 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	 */
 	public DoubleProperty hPosProperty() {
 		return hPos;
-	}
-
-	public void setHPos(double hPos) {
-		this.hPos.set(hPos);
 	}
 
 	public VFXGridState<T, C> getState() {
