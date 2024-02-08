@@ -115,7 +115,16 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		setHelper(getHelperFactory().get());
 	}
 
-	// TODO auto-determine number of columns (auto arrange)
+	public void autoArrange() {
+		autoArrange(0);
+	}
+
+	public void autoArrange(int min) {
+		double cellWidth = getCellSize().getWidth();
+		double hSpacing = getHSpacing();
+		int nColumns = (int) Math.max(Math.max(0, min), Math.floor(getWidth() / (cellWidth + hSpacing)));
+		setColumnsNum(nColumns);
+	}
 
 	/**
 	 * Responsible for creating the cache instance used by this container.

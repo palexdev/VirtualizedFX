@@ -14,7 +14,6 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Orientation;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +34,7 @@ import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static utils.Utils.items;
+import static utils.Utils.setWindowSize;
 
 @ExtendWith(ApplicationExtension.class)
 public class PaginatedListTests {
@@ -55,26 +55,17 @@ public class PaginatedListTests {
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
 
 		// Following tests do not affect the number of cells
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setHeight(600);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 600));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 0, 0, 0, 0, 0, 0);
 
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setHeight(300);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 300));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 0, 0, 0, 0, 0, 0);
 
 		// Expand width and test again
 		// Should be the same as before but with one extra layout
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setWidth(500);
-		});
+		robot.interact(() -> setWindowSize(pane, 500, -1));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
 
@@ -83,8 +74,7 @@ public class PaginatedListTests {
 			list.setMinHeight(0);
 			list.setPrefHeight(0);
 			list.setMaxHeight(0);
-			Window window = pane.getScene().getWindow();
-			window.setHeight(0);
+			setWindowSize(pane, -1, 0);
 		});
 		assertState(list, INVALID_RANGE);
 		assertCounter(0, 0, 0, 0, 0, 14, 4);
@@ -733,7 +723,7 @@ public class PaginatedListTests {
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
 
 		// Remove all at 0
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 1, 2, 3));
+		robot.interact(() -> Utils.removeAll(list, 0, 1, 2, 3));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 14, 4, 0, 0, 0);
 
@@ -760,35 +750,35 @@ public class PaginatedListTests {
 		counter.reset(); // Reset otherwise wrong statistics
 
 		// Remove before no intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 1, 2));
+		robot.interact(() -> Utils.removeAll(list, 0, 1, 2));
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(0, 1, 14, 3, 0, 0, 0);
 
 		// Remove before intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), IntegerRange.of(16, 19)));
+		robot.interact(() -> Utils.removeAll(list, IntegerRange.of(16, 19)));
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(0, 1, 14, 4, 0, 0, 0);
 
 		// Remove after no intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 34, 35));
+		robot.interact(() -> Utils.removeAll(list, 34, 35));
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
 
 		// Remove after intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), IntegerRange.of(29, 33)));
+		robot.interact(() -> Utils.removeAll(list, IntegerRange.of(29, 33)));
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(0, 1, 0, 3, 0, 0, 0);
 
 		// Remove enough to change page
 		// Removed up until now: 14. Remaining -> 36. Max page -> 3
 		// Remove to 18 -> Max Page -> 1
-		robot.interact(() -> Utils.removeAll(list.getItems(), IntegerRange.of(0, 17)));
+		robot.interact(() -> Utils.removeAll(list, IntegerRange.of(0, 17)));
 		assertState(list, IntegerRange.of(4, 17));
 		assertCounter(0, 1, 14, 4, 0, 0, 0);
 		assertEquals(1, list.getPage());
 
 		// Do it again but this time from bottom
-		robot.interact(() -> Utils.removeAll(list.getItems(), IntegerRange.of(8, 17)));
+		robot.interact(() -> Utils.removeAll(list, IntegerRange.of(8, 17)));
 		assertState(list, IntegerRange.of(0, 7));
 		assertCounter(0, 1, 4, 4, 0, 6, 0);
 		assertEquals(0, list.getPage());
@@ -808,7 +798,7 @@ public class PaginatedListTests {
 		counter.reset(); // Reset otherwise wrong statistics
 
 		// Remove all at end
-		robot.interact(() -> Utils.removeAll(list.getItems(), IntegerRange.of(46, 49)));
+		robot.interact(() -> Utils.removeAll(list, IntegerRange.of(46, 49)));
 		assertState(list, IntegerRange.of(32, 45));
 		assertCounter(0, 1, 4, 4, 0, 0, 0);
 
@@ -820,21 +810,21 @@ public class PaginatedListTests {
 		assertCounter(0, 4, 4, 4, 0, 0, 0);
 
 		// Remove before no intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 1, 2));
+		robot.interact(() -> Utils.removeAll(list, 0, 1, 2));
 		assertState(list, IntegerRange.of(25, 38));
 		assertCounter(0, 1, 14, 0, 0, 0, 0);
 		assertEquals(3, list.getMaxPage());
 		assertEquals(3, list.getPage());
 
 		// Remove before intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), IntegerRange.of(23, 26)));
+		robot.interact(() -> Utils.removeAll(list, IntegerRange.of(23, 26)));
 		assertState(list, IntegerRange.of(21, 34));
 		assertCounter(0, 1, 14, 2, 0, 0, 0);
 		assertEquals(3, list.getMaxPage());
 		assertEquals(3, list.getPage());
 
 		// Remove enough to cache cells
-		robot.interact(() -> Utils.removeAll(list.getItems(), IntegerRange.of(5, 34)));
+		robot.interact(() -> Utils.removeAll(list, IntegerRange.of(5, 34)));
 		assertState(list, IntegerRange.of(0, 4));
 		assertCounter(0, 1, 5, 5, 0, 9, 0);
 		assertEquals(0, list.getMaxPage());
@@ -851,7 +841,7 @@ public class PaginatedListTests {
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
 
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 3, 4, 8, 10, 11));
+		robot.interact(() -> Utils.removeAll(list, 0, 3, 4, 8, 10, 11));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 14, 6, 0, 0, 0);
 	}

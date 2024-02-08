@@ -7,6 +7,7 @@ import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.events.WhenEvent;
+import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.virtualizedfx.grid.VFXGridHelper;
@@ -24,7 +25,6 @@ import utils.NodeMover;
 
 import java.util.List;
 
-import static utils.Utils.debugView;
 import static utils.Utils.items;
 
 public class Playground extends Application {
@@ -35,15 +35,12 @@ public class Playground extends Application {
 		pane.setAlignment(Pos.TOP_LEFT);
 		pane.setPadding(InsetsBuilder.all(20));
 
-		Grid grid = new Grid(items(112));
+		Grid grid = new Grid(items(200));
 		//grid.setBufferSize(BufferSize.standard());
-		grid.setColumnsNum(10);
-		//grid.setSpacing(10);
-		//grid.setAlignment(Pos.CENTER);
-		grid.setMaxSize(400, 400);
-		grid.scrollToLastColumn();
-
-		grid.scrollToLastRow();
+		//grid.setColumnsNum(10);
+		grid.setSpacing(10);
+		grid.setAlignment(Pos.CENTER);
+		//grid.setMaxSize(400, 400);
 		pane.getChildren().add(grid);
 
 		TriConsumer<Boolean, Double, Integer> scrollFn = (b, d, m) -> {
@@ -70,14 +67,18 @@ public class Playground extends Application {
 			.register();
 		NodeMover.install(pane);
 
-		Scene scene = new Scene(pane, 700, 700);
+		When.onInvalidated(grid.widthProperty())
+			.then(w -> grid.autoArrange())
+			.listen();
+
+		Scene scene = new Scene(pane, 400, 400);
 		primaryStage.setScene(scene);
 		primaryStage.setOnHidden(e -> Platform.exit());
 		primaryStage.show();
 		primaryStage.centerOnScreen();
 
 		showDebugInfo(grid);
-		debugView(null, pane);
+		//debugView(null, pane);
 	}
 
 	void showDebugInfo(Grid grid) {

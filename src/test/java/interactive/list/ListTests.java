@@ -30,6 +30,7 @@ import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static utils.Utils.items;
+import static utils.Utils.setWindowSize;
 
 @ExtendWith(ApplicationExtension.class)
 public class ListTests {
@@ -50,27 +51,18 @@ public class ListTests {
 		assertCounter(17, 1, 17, 17, 0, 0, 0);
 
 		// Expand and test again
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setHeight(600);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 600));
 		assertState(list, IntegerRange.of(0, 19)); // ceil(600/32) + 4 (buffer) -> 23 (Items num 20!!!)
 		assertCounter(3, 1, 3, 3, 0, 0, 0);
 
 		// Shrink and test again
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setHeight(300);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 300));
 		assertState(list, IntegerRange.of(0, 13)); // ceil(300/32) + 4 (buffer) -> 14
 		assertCounter(0, 1, 0, 0, 0, 6, 0);
 
 		// Expand width and test again
 		// Should be the same as before but with one extra layout
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setWidth(500);
-		});
+		robot.interact(() -> setWindowSize(pane, 500, -1));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
 
@@ -79,8 +71,7 @@ public class ListTests {
 			list.setMinHeight(0);
 			list.setPrefHeight(0);
 			list.setMaxHeight(0);
-			Window window = pane.getScene().getWindow();
-			window.setHeight(0);
+			setWindowSize(pane, -1, 0);
 		});
 		assertState(list, INVALID_RANGE);
 		assertCounter(0, 0, 0, 0, 0, 14, 10); // 6 were already in cache, so 10 disposals
@@ -131,25 +122,16 @@ public class ListTests {
 		assertState(list, IntegerRange.of(0, 16));
 		assertCounter(7, 1, 17, 17, 10, 0, 0);
 
-		robot.interact(() -> {
-			Window window = list.getScene().getWindow();
-			window.setHeight(600);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 600));
 		assertState(list, IntegerRange.of(0, 19));
 		assertCounter(3, 1, 3, 3, 0, 0, 0);
 
-		robot.interact(() -> {
-			Window window = list.getScene().getWindow();
-			window.setHeight(300);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 300));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 6, 0);
 
 		// Re-expand and cache should put in some work
-		robot.interact(() -> {
-			Window window = list.getScene().getWindow();
-			window.setHeight(600);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 600));
 		assertState(list, IntegerRange.of(0, 19));
 		assertCounter(0, 1, 0, 0, 6, 0, 0); // No index nor item updates!
 	}
@@ -669,7 +651,7 @@ public class ListTests {
 		assertCounter(17, 1, 17, 17, 0, 0, 0);
 
 		// Remove all at 0
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 1, 2, 3));
+		robot.interact(() -> Utils.removeAll(list, 0, 1, 2, 3));
 		assertState(list, IntegerRange.of(0, 16));
 		assertCounter(0, 1, 17, 4, 0, 0, 0);
 
@@ -696,35 +678,35 @@ public class ListTests {
 		counter.reset(); // Reset otherwise wrong statistics
 
 		// Remove before no intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 1, 2));
+		robot.interact(() -> Utils.removeAll(list, 0, 1, 2));
 		assertState(list, IntegerRange.of(16, 32));
 		assertCounter(0, 1, 17, 3, 0, 0, 0);
 
 		// Remove before intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 14, 15, 16, 17));
+		robot.interact(() -> Utils.removeAll(list, 14, 15, 16, 17));
 		assertState(list, IntegerRange.of(16, 32));
 		assertCounter(0, 1, 17, 4, 0, 0, 0);
 
 		// Remove after no intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 34, 35));
+		robot.interact(() -> Utils.removeAll(list, 34, 35));
 		assertState(list, IntegerRange.of(16, 32));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
 
 		// Remove after intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 30, 31, 32, 33, 34));
+		robot.interact(() -> Utils.removeAll(list, 30, 31, 32, 33, 34));
 		assertState(list, IntegerRange.of(16, 32));
 		assertCounter(0, 1, 0, 3, 0, 0, 0);
 
 		// Remove enough to change vPos
 		// Removed up until now: 14. Remaining -> 36. Max vPos -> 1152
 		// Remove to 27 -> Max vPos -> 464
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 1, 2, 3, 4, 5, 6, 7, 8));
+		robot.interact(() -> Utils.removeAll(list, 0, 1, 2, 3, 4, 5, 6, 7, 8));
 		assertState(list, IntegerRange.of(10, 26));
 		assertCounter(0, 1, 17, 3, 0, 0, 0);
 		assertEquals(list.getCellSize() * list.size() - list.getHeight(), list.getVPos());
 
 		// Do it again but this time from bottom
-		robot.interact(() -> Utils.removeAll(list.getItems(), 26, 25, 24));
+		robot.interact(() -> Utils.removeAll(list, 26, 25, 24));
 		assertState(list, IntegerRange.of(7, 23));
 		assertCounter(0, 1, 3, 3, 0, 0, 0);
 		assertEquals(list.getCellSize() * list.size() - list.getHeight(), list.getVPos());
@@ -744,7 +726,7 @@ public class ListTests {
 		counter.reset(); // Reset otherwise wrong statistics
 
 		// Remove all at end
-		robot.interact(() -> Utils.removeAll(list.getItems(), 49, 48, 47, 46));
+		robot.interact(() -> Utils.removeAll(list, 49, 48, 47, 46));
 		assertState(list, IntegerRange.of(29, 45));
 		assertCounter(0, 1, 4, 4, 0, 0, 0);
 		assertEquals(list.getCellSize() * list.size() - list.getHeight(), list.getVPos());
@@ -758,19 +740,19 @@ public class ListTests {
 		assertEquals(list.getCellSize() * list.size() - list.getHeight(), list.getVPos());
 
 		// Remove before no intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 1, 2));
+		robot.interact(() -> Utils.removeAll(list, 0, 1, 2));
 		assertState(list, IntegerRange.of(22, 38));
 		assertCounter(0, 1, 17, 0, 0, 0, 0);
 		assertEquals(list.getCellSize() * list.size() - list.getHeight(), list.getVPos());
 
 		// Remove before intersect
-		robot.interact(() -> Utils.removeAll(list.getItems(), 20, 21, 22, 23));
+		robot.interact(() -> Utils.removeAll(list, 20, 21, 22, 23));
 		assertState(list, IntegerRange.of(18, 34));
 		assertCounter(0, 1, 17, 2, 0, 0, 0);
 		assertEquals(list.getCellSize() * list.size() - list.getHeight(), list.getVPos());
 
 		// Remove enough to cache cells
-		robot.interact(() -> Utils.removeAll(list.getItems(), IntegerRange.of(15, 34)));
+		robot.interact(() -> Utils.removeAll(list, IntegerRange.of(15, 34)));
 		assertState(list, IntegerRange.of(0, 14));
 		assertCounter(0, 1, 15, 15, 0, 2, 0);
 		assertEquals(list.getCellSize() * list.size() - list.getHeight(), list.getVPos());
@@ -786,7 +768,7 @@ public class ListTests {
 		assertState(list, IntegerRange.of(0, 16));
 		assertCounter(17, 1, 17, 17, 0, 0, 0);
 
-		robot.interact(() -> Utils.removeAll(list.getItems(), 0, 3, 4, 8, 10, 11));
+		robot.interact(() -> Utils.removeAll(list, 0, 3, 4, 8, 10, 11));
 		assertState(list, IntegerRange.of(0, 16));
 		assertCounter(0, 1, 17, 6, 0, 0, 0);
 	}

@@ -3,6 +3,7 @@ package interactive.grid;
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
@@ -11,7 +12,6 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,8 +29,7 @@ import static interactive.grid.GridTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static utils.Utils.items;
-import static utils.Utils.removeAll;
+import static utils.Utils.*;
 
 @ExtendWith(ApplicationExtension.class)
 public class GridTests {
@@ -135,39 +134,24 @@ public class GridTests {
 		assertCounter(30, 1, 30, 30, 0, 0, 0);
 
 		// Expand and test again
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setWidth(600);
-		}); // Unchanged because columns are already at max
+		robot.interact(() -> setWindowSize(pane, 600, -1)); // Unchanged because columns are already at max
 		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 4));
 		assertCounter(0, 0, 0, 0, 0, 0, 0);
 
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setHeight(600);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 600));
 		assertState(grid, IntegerRange.of(0, 7), IntegerRange.of(0, 4));
 		assertCounter(10, 1, 10, 10, 0, 0, 0);
 
 		// Shrink and test again
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setWidth(300);
-		}); // Unchanged because of double buffer
+		robot.interact(() -> setWindowSize(pane, 300, -1)); // Unchanged because of double buffer
 		assertState(grid, IntegerRange.of(0, 7), IntegerRange.of(0, 4));
 		assertCounter(0, 0, 0, 0, 0, 0, 0);
 
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setHeight(300);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 300));
 		assertState(grid, IntegerRange.of(0, 4), IntegerRange.of(0, 4));
 		assertCounter(0, 1, 0, 0, 0, 15, 5);
 
-		robot.interact(() -> {
-			Window window = pane.getScene().getWindow();
-			window.setHeight(500);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 500));
 		assertState(grid, IntegerRange.of(0, 6), IntegerRange.of(0, 4));
 		assertCounter(0, 1, 10, 10, 10, 0, 0);
 
@@ -176,8 +160,7 @@ public class GridTests {
 			grid.setMinWidth(0);
 			grid.setPrefWidth(0);
 			grid.setMaxWidth(0);
-			Window window = pane.getScene().getWindow();
-			window.setWidth(0);
+			robot.interact(() -> setWindowSize(pane, 0, -1));
 		});
 		assertState(grid, INVALID_RANGE, INVALID_RANGE);
 		assertCounter(0, 0, 0, 0, 0, 35, 25);
@@ -199,18 +182,14 @@ public class GridTests {
 		assertCounter(30, 1, 30, 30, 0, 0, 0);
 
 		// Expand (won't have any effect since columns are already all shown)
-		robot.interact(() -> {
-			Window window = grid.getScene().getWindow();
-			window.setWidth(600);
-		});
+		robot.interact(() -> setWindowSize(pane, 600, -1));
 		assertEquals(0, grid.getHPos());
 		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 4));
 		assertCounter(0, 0, 0, 0, 0, 0, 0);
 
 		// Shrink
 		robot.interact(() -> {
-			Window window = grid.getScene().getWindow();
-			window.setWidth(100);
+			robot.interact(() -> setWindowSize(pane, 100, -1));
 			// Why you be like that JavaFX :smh:
 			grid.setMinWidth(100.0);
 			grid.setPrefWidth(100.0);
@@ -238,19 +217,13 @@ public class GridTests {
 
 
 		// Expand
-		robot.interact(() -> {
-			Window window = grid.getScene().getWindow();
-			window.setHeight(600);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 600));
 		assertEquals(400, grid.getVPos());
 		assertState(grid, IntegerRange.of(2, 9), IntegerRange.of(0, 4));
 		assertCounter(10, 1, 10, 10, 0, 0, 0);
 
 		// Shrink
-		robot.interact(() -> {
-			Window window = grid.getScene().getWindow();
-			window.setHeight(300);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 300));
 		assertEquals(400, grid.getVPos());
 		assertState(grid, IntegerRange.of(3, 7), IntegerRange.of(0, 4));
 		assertCounter(0, 1, 0, 0, 0, 15, 5);
@@ -269,26 +242,17 @@ public class GridTests {
 		assertCounter(20, 1, 30, 30, 10, 0, 0);
 		assertEquals(0, grid.cacheSize());
 
-		robot.interact(() -> {
-			Window window = grid.getScene().getWindow();
-			window.setHeight(600);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 600));
 		assertState(grid, IntegerRange.of(0, 7), IntegerRange.of(0, 4));
 		assertCounter(10, 1, 10, 10, 0, 0, 0);
 
-		robot.interact(() -> {
-			Window window = grid.getScene().getWindow();
-			window.setHeight(200);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 200));
 		assertState(grid, IntegerRange.of(0, 3), IntegerRange.of(0, 4));
 		assertCounter(0, 1, 0, 0, 0, 20, 10);
 		assertEquals(10, grid.cacheSize());
 
 		// Re-expand and cache should put in some work
-		robot.interact(() -> {
-			Window window = grid.getScene().getWindow();
-			window.setHeight(600);
-		});
+		robot.interact(() -> setWindowSize(pane, -1, 600));
 		assertState(grid, IntegerRange.of(0, 7), IntegerRange.of(0, 4));
 		assertCounter(10, 1, 20, 20, 10, 0, 0);
 		assertEquals(0, grid.cacheSize());
@@ -853,6 +817,64 @@ public class GridTests {
 	}
 
 	@Test
+	void testAutoArrange(FxRobot robot) {
+		/*
+		 * We are not going to test the counter here since the type of change that occurs here is essentially
+		 * 'testChangeColumnsNum...'
+		 */
+		StackPane pane = setupStage();
+		Grid grid = new Grid(items(200));
+		robot.interact(() -> {
+			grid.setAlignment(Pos.TOP_CENTER);
+			grid.setColumnsNum(10);
+			When.onInvalidated(grid.widthProperty())
+				.then(w -> grid.autoArrange())
+				.invalidating(grid.hSpacingProperty())
+				.listen();
+			pane.getChildren().add(grid);
+		});
+
+		// Test init
+		robot.interact(() -> grid.autoArrange());
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 3));
+		// Note here that since the pane is 400px wide, we have 4 columns, therefore no buffer
+
+		// Test at 450px
+		robot.interact(() -> setWindowSize(pane, 450, -1));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 3));
+
+		// Test at 500px
+		robot.interact(() -> setWindowSize(pane, 500, -1));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 4));
+
+		// Test with spacing (20px)
+		robot.interact(() -> grid.setSpacing(20));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 3));
+
+		// Test at 450px
+		robot.interact(() -> setWindowSize(pane, 450, -1));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 2));
+
+		// Test at 400px
+		robot.interact(() -> setWindowSize(pane, 400, -1));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 2));
+
+		// Test at 200px
+		robot.interact(() -> setWindowSize(pane, 200, -1));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 0));
+
+		// Auto-arrange with minimum
+		robot.interact(() -> grid.autoArrange(6));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 3));
+		// Here the range is [0, 3] because 2 are buffers.
+		// ceil(200 / 120) = 2 + 2 = 4
+
+		// Test at 1000px
+		robot.interact(() -> setWindowSize(pane, 1000, -1));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 7));
+	}
+
+	@Test
 	void testChangeList(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(100));
@@ -1188,12 +1210,12 @@ public class GridTests {
 		assertCounter(30, 1, 30, 30, 0, 0, 0);
 
 		// Remove all at 0
-		robot.interact(() -> removeAll(grid.getItems(), 0, 1, 2, 3));
+		robot.interact(() -> removeAll(grid, 0, 1, 2, 3));
 		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 4));
 		assertCounter(0, 1, 30, 4, 0, 0, 0);
 
 		// Remove once again to remove one buffer
-		robot.interact(() -> removeAll(grid.getItems(), 0, 1, 2, 3, 4));
+		robot.interact(() -> removeAll(grid, 0, 1, 2, 3, 4));
 		assertState(grid, IntegerRange.of(0, 4), IntegerRange.of(0, 4));
 		assertCounter(0, 1, 25, 0, 0, 5, 0);
 
@@ -1229,7 +1251,7 @@ public class GridTests {
 		assertCounter(0, 2, 24, 24, 0, 0, 0);
 
 		// Remove before no intersect (< 22)
-		robot.interact(() -> removeAll(grid.getItems(), 0, 1, 2));
+		robot.interact(() -> removeAll(grid, 0, 1, 2));
 		assertEquals(300, grid.getHPos());
 		assertEquals(300, grid.getHPos());
 		assertState(grid, IntegerRange.of(2, 7), IntegerRange.of(2, 7));
@@ -1237,7 +1259,7 @@ public class GridTests {
 		// For every item removed, we have the same amount of updates for each row. So, 3 * 6 = 18
 
 		// Remove before intersect (around 22)
-		robot.interact(() -> removeAll(grid.getItems(), 20, 21, 22, 23));
+		robot.interact(() -> removeAll(grid, 20, 21, 22, 23));
 		assertEquals(300, grid.getHPos());
 		assertEquals(300, grid.getHPos());
 		assertState(grid, IntegerRange.of(2, 7), IntegerRange.of(2, 7));
@@ -1245,7 +1267,7 @@ public class GridTests {
 		// Same logic as above, 4 * 6 = 24
 
 		// Remove in the middle of the range (> 22)
-		robot.interact(() -> removeAll(grid.getItems(), 50, 51, 52, 53));
+		robot.interact(() -> removeAll(grid, 50, 51, 52, 53));
 		assertEquals(300, grid.getHPos());
 		assertEquals(300, grid.getHPos());
 		assertState(grid, IntegerRange.of(2, 7), IntegerRange.of(2, 7));
@@ -1253,7 +1275,7 @@ public class GridTests {
 		// Same logic as above, 4 * 3 = 12 (3 rows: 5, 6, 7)
 
 		// Remove in the middle of the range, in viewport (> 22 & inside viewport)
-		robot.interact(() -> removeAll(grid.getItems(), 53, 54, 55));
+		robot.interact(() -> removeAll(grid, 53, 54, 55));
 		assertEquals(300, grid.getHPos());
 		assertEquals(300, grid.getHPos());
 		assertState(grid, IntegerRange.of(2, 7), IntegerRange.of(2, 7));
@@ -1261,7 +1283,7 @@ public class GridTests {
 		// Same logic as above, 3 * 3 = 9 (3 rows: 5, 6, 7)
 
 		// Remove after intersect (around 77)
-		robot.interact(() -> removeAll(grid.getItems(), 75, 76, 77, 78, 79, 80));
+		robot.interact(() -> removeAll(grid, 75, 76, 77, 78, 79, 80));
 		assertEquals(300, grid.getHPos());
 		assertEquals(300, grid.getHPos());
 		assertState(grid, IntegerRange.of(2, 7), IntegerRange.of(2, 7));
@@ -1269,14 +1291,14 @@ public class GridTests {
 		// 3 updates because removal is at 75, so cells 75, 76, 77 are updated
 
 		// Remove after no intersect (> 77)
-		robot.interact(() -> removeAll(grid.getItems(), 78, 79));
+		robot.interact(() -> removeAll(grid, 78, 79));
 		assertEquals(300, grid.getHPos());
 		assertEquals(300, grid.getHPos());
 		assertState(grid, IntegerRange.of(2, 7), IntegerRange.of(2, 7));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
 
 		// Remove enough to change the range
-		robot.interact(() -> removeAll(grid.getItems(), IntegerRange.of(70, 77)));
+		robot.interact(() -> removeAll(grid, IntegerRange.of(70, 77)));
 		assertEquals(300, grid.getHPos());
 		assertEquals(300, grid.getVPos());
 		assertState(grid, IntegerRange.of(1, 6), IntegerRange.of(2, 7));
@@ -1306,7 +1328,7 @@ public class GridTests {
 		assertCounter(0, 2, 48, 48, 0, 0, 0);
 
 		// Remove all at end (96)
-		robot.interact(() -> removeAll(grid.getItems(), 96, 97, 98, 99));
+		robot.interact(() -> removeAll(grid, 96, 97, 98, 99));
 		assertState(grid, IntegerRange.of(4, 9), IntegerRange.of(4, 9));
 		assertCounter(0, 1, 0, 0, 0, 4, 0);
 		assertEquals(32, helper.totalCells());
@@ -1322,7 +1344,7 @@ public class GridTests {
 		// Only 2 cached instead of 4 because only 2 cells in the viewport are removed
 
 		// Remove before no intersect (88)
-		robot.interact(() -> removeAll(grid.getItems(), 0, 1, 2, 3));
+		robot.interact(() -> removeAll(grid, 0, 1, 2, 3));
 		assertState(grid, IntegerRange.of(3, 8), IntegerRange.of(4, 9));
 		assertEquals(34, helper.totalCells());
 		assertCounter(0, 1, 34, 24, 4, 0, 0);
@@ -1331,7 +1353,7 @@ public class GridTests {
 		// 4 * 6 = 24 item updates
 
 		// Remove before intersect (82)
-		robot.interact(() -> removeAll(grid.getItems(), IntegerRange.of(32, 37)));
+		robot.interact(() -> removeAll(grid, IntegerRange.of(32, 37)));
 		assertState(grid, IntegerRange.of(3, 8), IntegerRange.of(4, 9));
 		assertEquals(30, helper.totalCells());
 		assertCounter(0, 1, 18, 20, 0, 4, 0);
@@ -1348,7 +1370,7 @@ public class GridTests {
 		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 4));
 		assertCounter(30, 1, 30, 30, 0, 0, 0);
 
-		robot.interact(() -> removeAll(grid.getItems(), 0, 3, 4, 8, 10, 11));
+		robot.interact(() -> removeAll(grid, 0, 3, 4, 8, 10, 11));
 		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 4));
 		assertCounter(0, 1, 30, 6, 0, 0, 0);
 	}
