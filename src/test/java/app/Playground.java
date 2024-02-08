@@ -88,17 +88,17 @@ public class Playground extends Application {
 
 		Label estimate = new Label();
 		estimate.textProperty().bind(StringBindingBuilder.build()
-			.setMapper(() -> "Estimate W/H: %f  /  %f".formatted(helper.getEstimateWidth(), helper.getEstimateHeight()))
-			.addSources(helper.estimatedWidthProperty())
-			.addSources(helper.estimatedHeightProperty())
+			.setMapper(() -> "Estimate W/H: %f  /  %f".formatted(helper.getVirtualMaxX(), helper.getVirtualMaxY()))
+			.addSources(helper.virtualMaxXProperty())
+			.addSources(helper.virtualMaxYProperty())
 			.get()
 		);
 
 		Label scrollable = new Label();
 		scrollable.textProperty().bind(StringBindingBuilder.build()
 			.setMapper(() -> "Scrollable X/Y: %f  /  %f".formatted(helper.maxHScroll(), helper.maxVScroll()))
-			.addSources(helper.estimatedWidthProperty(), grid.widthProperty())
-			.addSources(helper.estimatedHeightProperty(), grid.helperProperty())
+			.addSources(helper.virtualMaxXProperty(), grid.widthProperty())
+			.addSources(helper.virtualMaxYProperty(), grid.helperProperty())
 			.get()
 		);
 

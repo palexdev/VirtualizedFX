@@ -24,6 +24,15 @@ import java.util.Optional;
  * This interface is a utility API for {@link VFXList} which helps to avoid if checks that depend on the container's
  * orientation, {@link VFXList#orientationProperty()}. There are two concrete implementations: {@link VerticalHelper}
  * and {@link HorizontalHelper}
+ * <p></p>
+ * A little <b>note</b> on the virtual max X/Y properties.
+ * <p></p>
+ * The axis property which is the opposite of the current container's orientation ({@link VFXList#orientationProperty()}),
+ * specifies the biggest cell size (width/height) so that if {@link VFXList#fitToViewportProperty()} is set to false we
+ * know how much we can scroll the list in that direction.
+ * <p>
+ * This value however is dynamic, since the size of each node is computed only once it is laid out. This means that the absolute
+ * maximum value is only found when all items have been displayed at least once.
  */
 public interface VFXListHelper<T, C extends Cell<T>> {
 
@@ -73,32 +82,27 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	double maxHScroll();
 
 	/**
-	 * Specifies the virtual length of the viewport (total width/height).
+	 * Specifies the total number of pixels alongside the x-axis.
 	 */
-	ReadOnlyDoubleProperty estimatedLengthProperty();
+	ReadOnlyDoubleProperty virtualMaxXProperty();
 
 	/**
-	 * @return the virtual length of the viewport (total width/height).
+	 * @return the total number of pixels alongside the x-axis.
 	 */
-	default double getEstimatedLength() {
-		return estimatedLengthProperty().get();
+	default double getVirtualMaxX() {
+		return virtualMaxXProperty().get();
 	}
 
 	/**
-	 * Specifies the maximum breadth, opposed to the container's orientation.
-	 * So: VERTICAL -> max width, HORIZONTAL -> max height.
-	 * <p></p>
-	 * This is dynamic, since the breadth of each node is computed only once it is laid out. This means that the absolute
-	 * maximum breadth is only found when all items have been displayed at least once.
+	 * Specifies the total number of pixels alongside the y-axis.
 	 */
-	ReadOnlyDoubleProperty maxBreadthProperty();
+	ReadOnlyDoubleProperty virtualMaxYProperty();
 
 	/**
-	 * @return the maximum breadth, opposed to the container's orientation.
-	 * So: VERTICAL -> max width, HORIZONTAL -> max height.
+	 * @return the total number of pixels alongside the y-axis.
 	 */
-	default double getMaxBreadth() {
-		return maxBreadthProperty().get();
+	default double getVirtualMaxY() {
+		return virtualMaxYProperty().get();
 	}
 
 	/**
@@ -116,9 +120,11 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Computes the breadth of the given node.
+	 * Computes the width or height of the cell depending on the container's orientation.
+	 * <p> - VERTICAL -> width
+	 * <p> - HORIZONTAL -> height
 	 */
-	double computeBreadth(Node node);
+	double computeSize(Node node);
 
 	/**
 	 * Lays out the given node. The index parameter is necessary to identify the position of a cell compared to the others
@@ -204,26 +210,19 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	 * Abstract implementation of {@link VFXListHelper}, contains common members for the two concrete implementations
 	 * {@link VerticalHelper} and {@link HorizontalHelper}, such as:
 	 * <p> - the range of items to display as a {@link IntegerRangeProperty}
-	 * <p> - the estimated length, which doesn't depend on the orientation but only on the number of items in the list
-	 * and the total cell size ({@link #getTotalCellSize()}). The computation is: {@code itemsNum * totalCellSize - spacing},
-	 * spacing for the last element needs to be removed.
-	 * <p> - the maximum breadth, {@link #maxBreadthProperty()}
+	 * <p> - the virtual max x as a {@link ReadOnlyDoubleWrapper}
+	 * <p> - the virtual max y as a {@link ReadOnlyDoubleWrapper}
 	 * <p> - the viewport's position, {@link #viewportPositionProperty()} as a {@link PositionProperty}
 	 */
 	abstract class AbstractHelper<T, C extends Cell<T>> implements VFXListHelper<T, C> {
 		protected final VFXList<T, C> list;
 		protected final IntegerRangeProperty range = new IntegerRangeProperty();
-		protected final ReadOnlyDoubleWrapper estimatedLength = new ReadOnlyDoubleWrapper();
-		protected final ReadOnlyDoubleWrapper maxBreadth = new ReadOnlyDoubleWrapper();
+		protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
+		protected final ReadOnlyDoubleWrapper virtualMaxY = new ReadOnlyDoubleWrapper();
 		protected final PositionProperty viewportPosition = new PositionProperty();
 
 		public AbstractHelper(VFXList<T, C> list) {
 			this.list = list;
-			estimatedLength.bind(DoubleBindingBuilder.build()
-				.setMapper(() -> (list.size() * getTotalCellSize() - list.getSpacing()))
-				.addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
-				.get()
-			);
 		}
 
 		@Override
@@ -238,13 +237,13 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		}
 
 		@Override
-		public ReadOnlyDoubleProperty estimatedLengthProperty() {
-			return estimatedLength.getReadOnlyProperty();
+		public ReadOnlyDoubleProperty virtualMaxXProperty() {
+			return virtualMaxX.getReadOnlyProperty();
 		}
 
 		@Override
-		public ReadOnlyDoubleProperty maxBreadthProperty() {
-			return maxBreadth.getReadOnlyProperty();
+		public ReadOnlyDoubleProperty virtualMaxYProperty() {
+			return virtualMaxY.getReadOnlyProperty();
 		}
 
 		@Override
@@ -266,7 +265,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	 * exceed the number of items - 1. It may happen the number of indexes given by the range {@code end - start + 1} is lesser
 	 * than the total number of cells we need, in such cases, the range start is corrected to be {@code end - needed + 1}.
 	 * A typical situation for this is when the list position reaches the max scroll.
-	 * The range computation has the following dependencies: the list's height, the estimated length, the buffer size and
+	 * The range computation has the following dependencies: the list's height, the virtual max y, the buffer size and
 	 * the vertical position.
 	 * <p> - the viewport position. This computation is at the core of virtual scrolling. The viewport, which contains the cell,
 	 * is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
@@ -290,6 +289,11 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 
 		public VerticalHelper(VFXList<T, C> list) {
 			super(list);
+			virtualMaxY.bind(DoubleBindingBuilder.build()
+				.setMapper(() -> (list.size() * getTotalCellSize() - list.getSpacing()))
+				.addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
+				.get()
+			);
 			range.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
 					if (list.getHeight() <= 0) return Utils.INVALID_RANGE;
@@ -369,41 +373,41 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * Given by {@code estimatedLength - listHeight}, cannot be negative
+		 * Given by {@code virtualMaxY - listHeight}, cannot be negative
 		 */
 		@Override
 		public double maxVScroll() {
-			return Math.max(0, estimatedLength.get() - list.getHeight());
+			return Math.max(0, getVirtualMaxY() - list.getHeight());
 		}
 
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * Given by {@code maxBreadth - listWidth}, cannot be negative
+		 * Given by {@code virtualMaxX - listWidth}, cannot be negative
 		 */
 		@Override
 		public double maxHScroll() {
-			return Math.max(0, maxBreadth.get() - list.getWidth());
+			return Math.max(0, getVirtualMaxX() - list.getWidth());
 		}
 
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * If {@link VFXList#fitToBreadthProperty()} is true, then the computation will always return the
+		 * If {@link VFXList#fitToViewportProperty()} is true, then the computation will always return the
 		 * list's width, otherwise the node width is computed by {@link LayoutUtils#boundWidth(Node)}.
-		 * Also, in the latter case, if the found width is greater than the current max breadth, then the property
-		 * {@link #maxBreadthProperty()} is updated with the new value.
+		 * Also, in the latter case, if the found width is greater than the current max x, then the property
+		 * {@link #virtualMaxXProperty()} is updated with the new value.
 		 */
 		@Override
-		public double computeBreadth(Node node) {
-			boolean fitToBreadth = list.isFitToBreadth();
-			if (fitToBreadth) {
+		public double computeSize(Node node) {
+			boolean fitToViewport = list.isFitToViewport();
+			if (fitToViewport) {
 				double fW = list.getWidth();
-				maxBreadth.set(fW);
+				virtualMaxX.set(fW);
 				return fW;
 			}
 			double nW = LayoutUtils.boundWidth(node);
-			if (nW > maxBreadth.get()) maxBreadth.set(nW);
+			if (nW > virtualMaxX.get()) virtualMaxX.set(nW);
 			return nW;
 		}
 
@@ -411,12 +415,12 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 * {@inheritDoc}
 		 * <p></p>
 		 * The x position is 0. The y position is the total cell size multiplied bu the given index. The width is
-		 * computed by {@link #computeBreadth(Node)}, and the height is given by the {@link VFXList#cellSizeProperty()}.
+		 * computed by {@link #computeSize(Node)}, and the height is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
 		public void layout(int index, Node node) {
 			double y = getTotalCellSize() * index;
-			double w = computeBreadth(node);
+			double w = computeSize(node);
 			double h = list.getCellSize();
 			node.resizeRelocate(0, y, w, h);
 		}
@@ -445,7 +449,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	 * exceed the number of items - 1. It may happen the number of indexes given by the range {@code end - start + 1} is lesser
 	 * than the total number of cells we need, in such cases, the range start is corrected to be {@code end - needed + 1}.
 	 * A typical situation for this is when the list position reaches the max scroll.
-	 * The range computation has the following dependencies: the list's width, the estimated length, the buffer size and
+	 * The range computation has the following dependencies: the list's width, the virtual max x, the buffer size and
 	 * the horizontal position.
 	 * <p> - the viewport position. This computation is at the core of virtual scrolling. The viewport, which contains the cell,
 	 * is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
@@ -469,6 +473,11 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 
 		public HorizontalHelper(VFXList<T, C> list) {
 			super(list);
+			virtualMaxX.bind(DoubleBindingBuilder.build()
+				.setMapper(() -> (list.size() * getTotalCellSize() - list.getSpacing()))
+				.addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
+				.get()
+			);
 			range.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
 					if (list.getWidth() <= 0) return Utils.INVALID_RANGE;
@@ -548,41 +557,41 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * Given by {@code maxBreadth - listHeight}, cannot be negative
+		 * Given by {@code virtualMaxY - listHeight}, cannot be negative
 		 */
 		@Override
 		public double maxVScroll() {
-			return Math.max(0, maxBreadth.get() - list.getHeight());
+			return Math.max(0, getVirtualMaxY() - list.getHeight());
 		}
 
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * Given by {@code estimatedLength - listWidth}, cannot be negative
+		 * Given by {@code virtualMaxX - listWidth}, cannot be negative
 		 */
 		@Override
 		public double maxHScroll() {
-			return Math.max(0, estimatedLength.get() - list.getWidth());
+			return Math.max(0, getVirtualMaxX() - list.getWidth());
 		}
 
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * If {@link VFXList#fitToBreadthProperty()} is true, then the computation will always return the
-		 * list's height, otherwise the node width is computed by {@link LayoutUtils#boundHeight(Node)}.
-		 * Also, in the latter case, if the found height is greater than the current max breadth, then the property
-		 * {@link #maxBreadthProperty()} is updated with the new value.
+		 * If {@link VFXList#fitToViewportProperty()} is true, then the computation will always return the
+		 * list's height, otherwise the node height is computed by {@link LayoutUtils#boundHeight(Node)}.
+		 * Also, in the latter case, if the found height is greater than the current max y, then the property
+		 * {@link #virtualMaxYProperty()} is updated with the new value.
 		 */
 		@Override
-		public double computeBreadth(Node node) {
-			boolean fitToBreadth = list.isFitToBreadth();
-			if (fitToBreadth) {
+		public double computeSize(Node node) {
+			boolean fitToViewport = list.isFitToViewport();
+			if (fitToViewport) {
 				double fH = list.getHeight();
-				maxBreadth.set(fH);
+				virtualMaxY.set(fH);
 				return fH;
 			}
 			double nH = LayoutUtils.boundHeight(node);
-			if (nH > maxBreadth.get()) maxBreadth.set(nH);
+			if (nH > virtualMaxY.get()) virtualMaxY.set(nH);
 			return nH;
 		}
 
@@ -590,13 +599,13 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 * {@inheritDoc}
 		 * <p></p>
 		 * The y position is 0. The x position is the total cell size multiplied bu the given index. The height is
-		 * computed by {@link #computeBreadth(Node)}, and the width is given by the {@link VFXList#cellSizeProperty()}.
+		 * computed by {@link #computeSize(Node)}, and the width is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
 		public void layout(int index, Node node) {
 			double x = getTotalCellSize() * index;
 			double w = list.getCellSize();
-			double h = computeBreadth(node);
+			double h = computeSize(node);
 			node.resizeRelocate(x, 0, w, h);
 		}
 

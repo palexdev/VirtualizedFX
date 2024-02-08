@@ -327,7 +327,7 @@ public class ListTests {
 	}
 
 	@Test
-	void testFitToBreadth(FxRobot robot) {
+	void testFitToViewport(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(30), i -> new SimpleCell(i) {
 			@Override
@@ -348,17 +348,17 @@ public class ListTests {
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Disable and test again
-		robot.interact(() -> list.setFitToBreadth(false));
-		assertEquals(800.0, list.getHelper().getMaxBreadth());
+		robot.interact(() -> list.setFitToViewport(false));
+		assertEquals(800.0, list.getHelper().getVirtualMaxX());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
 			.map(CellBase::toNode)
 			.forEach(n -> assertNotEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Scroll to max and then disable again
 		robot.interact(() -> list.setHPos(Double.MAX_VALUE));
-		assertEquals(400.0, list.getHPos()); // maxBreadth(800) - viewportWidth(400)
+		assertEquals(400.0, list.getHPos()); // virtualMaxX(800) - viewportWidth(400)
 
-		robot.interact(() -> list.setFitToBreadth(true));
+		robot.interact(() -> list.setFitToViewport(true));
 		assertEquals(0.0, list.getHPos());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
 			.map(CellBase::toNode)
@@ -375,19 +375,19 @@ public class ListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(0, 16));
 		assertCounter(17, 1, 17, 17, 0, 0, 0);
-		assertEquals(32 * 50, helper.getEstimatedLength());
+		assertEquals(32 * 50, helper.getVirtualMaxY());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(20));
 		assertState(list, IntegerRange.of(0, 23));
 		assertCounter(7, 1, 7, 7, 0, 0, 0);
-		assertEquals(20 * 50, helper.getEstimatedLength());
+		assertEquals(20 * 50, helper.getVirtualMaxY());
 
 		// Increase and test again
 		robot.interact(() -> list.setCellSize(36));
 		assertState(list, IntegerRange.of(0, 15));
 		assertCounter(0, 1, 0, 0, 0, 8, 0);
-		assertEquals(36 * 50, helper.getEstimatedLength());
+		assertEquals(36 * 50, helper.getVirtualMaxY());
 	}
 
 	@Test
@@ -406,13 +406,13 @@ public class ListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(16, 32));
 		assertCounter(17, 1, 17, 17, 0, 0, 0);
-		assertEquals(32 * 50, helper.getEstimatedLength());
+		assertEquals(32 * 50, helper.getVirtualMaxY());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(10));
 		assertState(list, IntegerRange.of(6, 49));
 		assertCounter(27, 1, 27, 27, 0, 0, 0);
-		assertEquals(10 * 50, helper.getEstimatedLength());
+		assertEquals(10 * 50, helper.getVirtualMaxY());
 		assertEquals(100, list.getVPos());
 
 		// Increase and test again
@@ -420,7 +420,7 @@ public class ListTests {
 		robot.interact(() -> list.setCellSize(50));
 		assertState(list, IntegerRange.of(0, 11));
 		assertCounter(0, 1, 6, 6, 0, 32, 22);
-		assertEquals(50 * 50, helper.getEstimatedLength());
+		assertEquals(50 * 50, helper.getVirtualMaxY());
 		assertEquals(100, list.getVPos());
 	}
 
@@ -440,20 +440,20 @@ public class ListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(33, 49));
 		assertCounter(17, 1, 17, 17, 0, 0, 0);
-		assertEquals(32 * 50, helper.getEstimatedLength());
+		assertEquals(32 * 50, helper.getVirtualMaxY());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(24));
 		assertState(list, IntegerRange.of(29, 49));
 		assertCounter(4, 1, 4, 4, 0, 0, 0);
-		assertEquals(24 * 50, helper.getEstimatedLength());
+		assertEquals(24 * 50, helper.getVirtualMaxY());
 
 		// Increase and test again
 		// vPos is now at 800!
 		robot.interact(() -> list.setCellSize(44));
 		assertState(list, IntegerRange.of(16, 29));
 		assertCounter(0, 1, 13, 13, 0, 7, 0);
-		assertEquals(44 * 50, helper.getEstimatedLength());
+		assertEquals(44 * 50, helper.getVirtualMaxY());
 	}
 
 	@Test
@@ -822,7 +822,7 @@ public class ListTests {
 	}
 
 	@Test
-	void testSwitchOrientationFitToBreadth(FxRobot robot) {
+	void testSwitchOrientationFitToViewport(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(50));
 		robot.interact(() -> {
@@ -850,18 +850,18 @@ public class ListTests {
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 16));
 		assertCounter(17, 1, 17, 17, 0, 17, 17);
-		assertEquals(400.0, list.getHelper().getMaxBreadth());
+		assertEquals(400.0, list.getHelper().getVirtualMaxY());
 
 		// Allow variable height
 		robot.interact(() -> {
-			list.setFitToBreadth(false);
+			list.setFitToViewport(false);
 			list.setVPos(Double.MAX_VALUE);
 		});
 		assertEquals(100.0, list.getVPos());
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 16));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(500.0, list.getHelper().getMaxBreadth());
+		assertEquals(500.0, list.getHelper().getVirtualMaxY());
 
 		robot.interact(() -> {
 			list.setHPos(Double.MAX_VALUE);
@@ -872,7 +872,7 @@ public class ListTests {
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 16));
 		assertCounter(0, 1, 17, 17, 0, 0, 0);
-		assertEquals(500.0, list.getHelper().getMaxBreadth());
+		assertEquals(500.0, list.getHelper().getVirtualMaxX());
 	}
 
 	@Test

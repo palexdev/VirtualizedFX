@@ -96,7 +96,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 	 * Yes, it is enough to threat this change as a geometry change to avoid code duplication
 	 * <p> - Listener on {@link VFXList#itemsProperty()}, will invoke {@link VFXListManager#onItemsChanged()}
 	 * <p> - Listener on {@link VFXList#cellFactoryProperty()}, will invoke {@link VFXListManager#onCellFactoryChanged()}
-	 * <p> - Listener on {@link VFXList#fitToBreadthProperty()}, will invoke {@link VFXListManager#onFitToBreadthChanged()}
+	 * <p> - Listener on {@link VFXList#fitToViewportProperty()}, will invoke {@link VFXListManager#onFitToViewportChanged()}
 	 * <p> - Listener on {@link VFXList#cellSizeProperty()}, will invoke {@link VFXListManager#onCellSizeChanged()}
 	 * <p> - Listener on {@link VFXList#spacingProperty()}, will invoke {@link VFXListManager#onSpacingChanged()}
 	 */
@@ -147,8 +147,8 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 			// occur in the list, or the list itself is changed, impressive!
 			onInvalidated(list.cellFactoryProperty())
 				.then(f -> getBehavior().onCellFactoryChanged()),
-			onInvalidated(list.fitToBreadthProperty())
-				.then(b -> getBehavior().onFitToBreadthChanged()),
+			onInvalidated(list.fitToViewportProperty())
+				.then(b -> getBehavior().onFitToViewportChanged()),
 			onInvalidated(list.cellSizeProperty())
 				.then(s -> getBehavior().onCellSizeChanged()),
 			onInvalidated(list.spacingProperty())

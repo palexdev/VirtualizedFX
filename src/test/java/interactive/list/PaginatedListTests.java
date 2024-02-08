@@ -87,7 +87,7 @@ public class PaginatedListTests {
 			window.setHeight(0);
 		});
 		assertState(list, INVALID_RANGE);
-		assertCounter(0, 0, 0, 0, 0, 14, 0);
+		assertCounter(0, 0, 0, 0, 0, 14, 4);
 	}
 
 	@Test
@@ -380,13 +380,13 @@ public class PaginatedListTests {
 		assertState(list, IntegerRange.of(18, 31));
 		assertEquals(10, helper.visibleNum());
 		assertEquals(14, helper.totalNum());
-		assertCounter(14, 1, 14, 14, 0, 14, 0);
+		assertCounter(14, 1, 14, 14, 0, 14, 14);
 		// The cache comes from the old state disposal, but those cells are then immediately
 		// disposed and dropped by the cache, in fact there is no de-cache afterward
 	}
 
 	@Test
-	void testFitToBreadth(FxRobot robot) {
+	void testFitToViewport(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
 		PList list = new PList(items(30), i -> new TestFXUtils.SimpleCell(i) {
 			@Override
@@ -407,17 +407,17 @@ public class PaginatedListTests {
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Disable and test again
-		robot.interact(() -> list.setFitToBreadth(false));
-		assertEquals(800.0, list.getHelper().getMaxBreadth());
+		robot.interact(() -> list.setFitToViewport(false));
+		assertEquals(800.0, list.getHelper().getVirtualMaxX());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
 			.map(CellBase::toNode)
 			.forEach(n -> assertNotEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Scroll to max and then disable again
 		robot.interact(() -> list.setHPos(Double.MAX_VALUE));
-		assertEquals(400.0, list.getHPos()); // maxBreadth(800) - viewportWidth(400)
+		assertEquals(400.0, list.getHPos()); // virtualMaxX(800) - viewportWidth(400)
 
-		robot.interact(() -> list.setFitToBreadth(true));
+		robot.interact(() -> list.setFitToViewport(true));
 		assertEquals(0.0, list.getHPos());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
 			.map(CellBase::toNode)
@@ -434,19 +434,19 @@ public class PaginatedListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
-		assertEquals(32 * 50, helper.getEstimatedLength());
+		assertEquals(32 * 50, helper.getVirtualMaxY());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(20));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(20 * 50, helper.getEstimatedLength());
+		assertEquals(20 * 50, helper.getVirtualMaxY());
 
 		// Increase and test again
 		robot.interact(() -> list.setCellSize(36));
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(36 * 50, helper.getEstimatedLength());
+		assertEquals(36 * 50, helper.getVirtualMaxY());
 	}
 
 	@Test
@@ -465,13 +465,13 @@ public class PaginatedListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
-		assertEquals(32 * 50, helper.getEstimatedLength());
+		assertEquals(32 * 50, helper.getVirtualMaxY());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(10));
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(10 * 50, helper.getEstimatedLength());
+		assertEquals(10 * 50, helper.getVirtualMaxY());
 		assertEquals(200, list.getVPos());
 
 		// Increase and test again
@@ -479,7 +479,7 @@ public class PaginatedListTests {
 		robot.interact(() -> list.setCellSize(50));
 		assertState(list, IntegerRange.of(18, 31));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(50 * 50, helper.getEstimatedLength());
+		assertEquals(50 * 50, helper.getVirtualMaxY());
 		assertEquals(1000, list.getVPos());
 	}
 
@@ -499,13 +499,13 @@ public class PaginatedListTests {
 		// Test init, why not
 		assertState(list, IntegerRange.of(36, 49));
 		assertCounter(14, 1, 14, 14, 0, 0, 0);
-		assertEquals(32 * 50, helper.getEstimatedLength());
+		assertEquals(32 * 50, helper.getVirtualMaxY());
 
 		// Decrease and test again
 		robot.interact(() -> list.setCellSize(24));
 		assertState(list, IntegerRange.of(36, 49));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(24 * 50, helper.getEstimatedLength());
+		assertEquals(24 * 50, helper.getVirtualMaxY());
 		assertEquals(960, list.getVPos());
 
 		// Increase and test again
@@ -513,7 +513,7 @@ public class PaginatedListTests {
 		robot.interact(() -> list.setCellSize(44));
 		assertState(list, IntegerRange.of(36, 49));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(44 * 50, helper.getEstimatedLength());
+		assertEquals(44 * 50, helper.getVirtualMaxY());
 		assertEquals(1760, list.getVPos());
 	}
 
@@ -559,7 +559,7 @@ public class PaginatedListTests {
 		// Change items to empty
 		robot.interact(() -> list.setItems(null));
 		assertState(list, INVALID_RANGE);
-		assertCounter(0, 0, 0, 0, 0, 14, 0);
+		assertCounter(0, 0, 0, 0, 0, 14, 4);
 		assertEquals(0, list.getPage());
 		assertEquals(0, list.getMaxPage());
 	}
@@ -887,7 +887,7 @@ public class PaginatedListTests {
 	}
 
 	@Test
-	void testSwitchOrientationFitToBreadth(FxRobot robot) {
+	void testSwitchOrientationFitToViewport(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
 		PList list = new PList(items(50));
 		robot.interact(() -> {
@@ -914,19 +914,19 @@ public class PaginatedListTests {
 		assertEquals(0.0, list.getVPos());
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 13));
-		assertCounter(14, 1, 14, 14, 0, 14, 0);
-		assertEquals(400.0, list.getHelper().getMaxBreadth());
+		assertCounter(14, 1, 14, 14, 0, 14, 14);
+		assertEquals(400.0, list.getHelper().getVirtualMaxY());
 
 		// Allow variable height
 		robot.interact(() -> {
-			list.setFitToBreadth(false);
+			list.setFitToViewport(false);
 			list.setVPos(Double.MAX_VALUE);
 		});
 		assertEquals(100.0, list.getVPos());
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 1, 0, 0, 0, 0, 0);
-		assertEquals(500.0, list.getHelper().getMaxBreadth());
+		assertEquals(500.0, list.getHelper().getVirtualMaxY());
 
 		robot.interact(() -> {
 			list.scrollToLast();
@@ -937,7 +937,7 @@ public class PaginatedListTests {
 		assertEquals(0.0, list.getHPos());
 		assertState(list, IntegerRange.of(0, 13));
 		assertCounter(0, 2, 14, 14, 0, 0, 0);
-		assertEquals(500.0, list.getHelper().getMaxBreadth());
+		assertEquals(500.0, list.getHelper().getVirtualMaxX());
 
 	}
 

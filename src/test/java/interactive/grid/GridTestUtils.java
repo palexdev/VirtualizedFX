@@ -74,8 +74,8 @@ public class GridTestUtils {
 
 	static void assertLength(VFXGrid<Integer, SimpleCell> grid, double vLength, double hLength) {
 		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
-		assertEquals(vLength, helper.getEstimateHeight());
-		assertEquals(hLength, helper.getEstimateWidth());
+		assertEquals(hLength, helper.getVirtualMaxX());
+		assertEquals(vLength, helper.getVirtualMaxY());
 	}
 
 	static void assertPosition(VFXGrid<Integer, SimpleCell> grid, int rIdxIt, int cIdxIt, SimpleCell cell) {

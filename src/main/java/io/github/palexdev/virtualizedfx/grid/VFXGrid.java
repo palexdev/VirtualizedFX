@@ -17,6 +17,7 @@ import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.properties.VFXGridStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.InvalidationListener;
@@ -209,9 +210,29 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 
 	public Map<T, C> getCellsByItemUnmodifiable() {return getState().getCellsByItemUnmodifiable();}
 
-	public ReadOnlyDoubleProperty estimatedWidthProperty() {return getHelper().estimatedWidthProperty();}
+	/**
+	 * Delegate for {@link VFXListHelper#getVirtualMaxX()}
+	 */
+	public double getVirtualMaxX() {return getHelper().getVirtualMaxX();}
 
-	public ReadOnlyDoubleProperty estimatedHeightProperty() {return getHelper().estimatedHeightProperty();}
+	/**
+	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}.
+	 */
+	public ReadOnlyDoubleProperty virtualMaxXProperty() {
+		return getHelper().virtualMaxXProperty();
+	}
+
+	/**
+	 * Delegate for {@link VFXListHelper#getVirtualMaxY()}
+	 */
+	public double getVirtualMaxY() {return getHelper().getVirtualMaxY();}
+
+	/**
+	 * Delegate for {@link VFXListHelper#virtualMaxYProperty()}.
+	 */
+	public ReadOnlyDoubleProperty virtualMaxYProperty() {
+		return getHelper().virtualMaxYProperty();
+	}
 
 	public void scrollToRow(int row) {
 		getHelper().scrollToRow(row);

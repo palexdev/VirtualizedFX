@@ -23,7 +23,7 @@ import java.util.*;
  * <p> - position changes, {@link #onPositionChanged()}
  * <p> - cell factory changes, {@link #onCellFactoryChanged()}
  * <p> - items change, {@link #onItemsChanged()}
- * <p> - fit to breadth flag changes, {@link #onFitToBreadthChanged()}
+ * <p> - fit to viewport flag changes, {@link #onFitToViewportChanged()}
  * <p> - cell size changes, {@link #onCellSizeChanged()}
  * <p> - orientation changes, {@link #onOrientationChanged()}
  * <p> - spacing changes {@link #onSpacingChanged()}
@@ -298,7 +298,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * The easiest of all changes. It's enough to request a viewport layout, {@link VFXList#requestViewportLayout()},
 	 * and to make sure that the horizontal position is valid, {@link VFXListHelper#invalidatePos()}.
 	 */
-	protected void onFitToBreadthChanged() {
+	protected void onFitToViewportChanged() {
 		VFXList<T, C> list = getNode();
 		VFXListHelper<T, C> helper = list.getHelper();
 		list.requestViewportLayout();

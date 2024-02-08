@@ -64,14 +64,14 @@ import java.util.function.Supplier;
  * to define a public API for such computations and implement two separate classes for each orientation, this is the
  * {@link VFXListHelper}. You are allowed to change the helper through the {@link #helperFactoryProperty()}.
  * <p> - The vertical and horizontal positions are available through the properties, {@link #vPosProperty()} and {@link #hPosProperty()}.
- * It was indeed possible to use a single property for the position, but they are split for performance reasons. Since the
- * cells are arranged according to the container's orientation, there is a distinction between the width and height.
- * For this reason, the terms width and height are not used much; instead we define the length as the number
- * of pixels along the orientation (vertical -> y-axis, horizontal -> x-axis), and the breadth as the number of pixels
- * in the opposite direction. Given these two concepts, there are two related properties: the estimated length and the
- * max breadth. The {@link #estimatedLengthProperty()} is the total number of pixels given by the number of cells and their
- * size. The {@link #maxBreadthProperty()} is the max breadth among all the cells. This is typically a dynamic property
- * as the breadth of a cell is only computed during its layout.
+ * It was indeed possible to use a single property for the position, but they are split for performance reasons.
+ * The virtual bounds of the container are given by the two properties:
+ * <p>&emsp; a) the {@link #virtualMaxXProperty()} which specifies the total number of pixels alongside the x-axis
+ * <p>&emsp; b) the {@link #virtualMaxYProperty()} which specifies the total number of pixels alongside the y-axis
+ * <p>
+ * &emsp; The value of such properties depends on the container's orientation. The virtualized axis will have its value given by
+ * &emsp; the total number of items in the list multiplied by the cell size, the spacing is included too. The other axis will have
+ * &emsp; its value given by the biggest (in height or width) cell in the viewport.
  * <p> - You can access the current state through the {@link #stateProperty()}. The state gives crucial information about
  * the container such as the range of displayed items and the visible cells (by index and by item). If you'd like to observe
  * for changes in the displaying cells, you want to add a listener on this property.
@@ -291,17 +291,27 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	}
 
 	/**
-	 * Delegate for {@link VFXListHelper#estimatedLengthProperty()}.
+	 * Delegate for {@link VFXListHelper#getVirtualMaxX()}
 	 */
-	public ReadOnlyDoubleProperty estimatedLengthProperty() {
-		return getHelper().estimatedLengthProperty();
+	public double getVirtualMaxX() {return getHelper().getVirtualMaxX();}
+
+	/**
+	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}.
+	 */
+	public ReadOnlyDoubleProperty virtualMaxXProperty() {
+		return getHelper().virtualMaxXProperty();
 	}
 
 	/**
-	 * Delegate for {@link VFXListHelper#maxBreadthProperty()}.
+	 * Delegate for {@link VFXListHelper#getVirtualMaxY()}
 	 */
-	public ReadOnlyDoubleProperty maxBreadthProperty() {
-		return getHelper().maxBreadthProperty();
+	public double getVirtualMaxY() {return getHelper().getVirtualMaxY();}
+
+	/**
+	 * Delegate for {@link VFXListHelper#virtualMaxYProperty()}.
+	 */
+	public ReadOnlyDoubleProperty virtualMaxYProperty() {
+		return getHelper().virtualMaxYProperty();
 	}
 
 	/**
@@ -376,10 +386,10 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		}
 	};
 
-	private final StyleableBooleanProperty fitToBreadth = new StyleableBooleanProperty(
-		StyleableProperties.FIT_TO_BREADTH,
+	private final StyleableBooleanProperty fitToViewport = new StyleableBooleanProperty(
+		StyleableProperties.FIT_TO_VIEWPORT,
 		this,
-		"fitToBreadth",
+		"fitToViewport",
 		true
 	);
 
@@ -476,22 +486,22 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		this.orientation.set(orientation);
 	}
 
-	public boolean isFitToBreadth() {
-		return fitToBreadth.get();
+	public boolean isFitToViewport() {
+		return fitToViewport.get();
 	}
 
 	/**
 	 * Specifies whether cells should be resized to be the same size of the viewport in the opposite
 	 * direction of the current {@link #orientationProperty()}.
 	 * <p>
-	 * Can be set in CSS via the property: '-vfx-fit-to-breadth'.
+	 * Can be set in CSS via the property: '-vfx-fit-to-viewport'.
 	 */
-	public StyleableBooleanProperty fitToBreadthProperty() {
-		return fitToBreadth;
+	public StyleableBooleanProperty fitToViewportProperty() {
+		return fitToViewport;
 	}
 
-	public void setFitToBreadth(boolean fitToBreadth) {
-		this.fitToBreadth.set(fitToBreadth);
+	public void setFitToViewport(boolean fitToViewport) {
+		this.fitToViewport.set(fitToViewport);
 	}
 
 	public double getClipBorderRadius() {
@@ -573,10 +583,10 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 				Orientation.VERTICAL
 			);
 
-		private static final CssMetaData<VFXList<?, ?>, Boolean> FIT_TO_BREADTH =
+		private static final CssMetaData<VFXList<?, ?>, Boolean> FIT_TO_VIEWPORT =
 			FACTORY.createBooleanCssMetaData(
-				"-vfx-fit-to-breadth",
-				VFXList::fitToBreadthProperty,
+				"-vfx-fit-to-viewport",
+				VFXList::fitToViewportProperty,
 				true
 			);
 
@@ -597,7 +607,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		static {
 			cssMetaDataList = StyleUtils.cssMetaDataList(
 				Control.getClassCssMetaData(),
-				CELL_SIZE, SPACING, BUFFER_SIZE, ORIENTATION, FIT_TO_BREADTH, CLIP_BORDER_RADIUS, CACHE_CAPACITY
+				CELL_SIZE, SPACING, BUFFER_SIZE, ORIENTATION, FIT_TO_VIEWPORT, CLIP_BORDER_RADIUS, CACHE_CAPACITY
 			);
 		}
 	}

@@ -85,25 +85,37 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	}
 
 	/**
+	 * @return the maximum amount of pixels the container can scroll on the horizontal direction
+	 */
+	double maxHScroll();
+
+	/**
 	 * @return the maximum amount of pixels the container can scroll on the vertical direction
 	 */
 	double maxVScroll();
 
 	/**
-	 * @return the maximum amount of pixels the container can scroll on the horizontal direction
+	 * Specifies the total number of pixels alongside the x-axis.
 	 */
-	double maxHScroll();
+	ReadOnlyDoubleProperty virtualMaxXProperty();
 
-	ReadOnlyDoubleProperty estimatedWidthProperty();
-
-	default double getEstimateWidth() {
-		return estimatedWidthProperty().get();
+	/**
+	 * @return the total number of pixels alongside the x-axis.
+	 */
+	default double getVirtualMaxX() {
+		return virtualMaxXProperty().get();
 	}
 
-	ReadOnlyDoubleProperty estimatedHeightProperty();
+	/**
+	 * Specifies the total number of pixels alongside the y-axis.
+	 */
+	ReadOnlyDoubleProperty virtualMaxYProperty();
 
-	default double getEstimateHeight() {
-		return estimatedHeightProperty().get();
+	/**
+	 * @return the total number of pixels alongside the y-axis.
+	 */
+	default double getVirtualMaxY() {
+		return virtualMaxYProperty().get();
 	}
 
 	ReadOnlyObjectProperty<Position> viewportPositionProperty();
@@ -176,8 +188,8 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		protected final VFXGrid<T, C> grid;
 		protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
 		protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
-		protected final ReadOnlyDoubleWrapper estimatedWidth = new ReadOnlyDoubleWrapper();
-		protected final ReadOnlyDoubleWrapper estimatedHeight = new ReadOnlyDoubleWrapper();
+		protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
+		protected final ReadOnlyDoubleWrapper virtualMaxY = new ReadOnlyDoubleWrapper();
 		protected final PositionProperty viewportPosition = new PositionProperty();
 		protected final SizeProperty totalCellSize = new SizeProperty(Size.empty());
 
@@ -221,13 +233,13 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 				.get()
 			);
 
-			estimatedWidth.bind(DoubleBindingBuilder.build()
+			virtualMaxX.bind(DoubleBindingBuilder.build()
 				.setMapper(() -> (maxColumns() * getTotalCellSize().getWidth()) - grid.getHSpacing())
 				.addSources(grid.sizeProperty(), grid.columnsNumProperty(), grid.cellSizeProperty())
 				.addSources(grid.hSpacingProperty())
 				.get()
 			);
-			estimatedHeight.bind(DoubleBindingBuilder.build()
+			virtualMaxY.bind(DoubleBindingBuilder.build()
 				.setMapper(() -> (maxRows() * getTotalCellSize().getHeight()) - grid.getVSpacing())
 				.addSources(grid.sizeProperty(), grid.columnsNumProperty(), grid.cellSizeProperty())
 				.addSources(grid.vSpacingProperty())
@@ -349,23 +361,23 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		}
 
 		@Override
-		public double maxVScroll() {
-			return Math.max(0, estimatedHeight.get() - grid.getHeight());
-		}
-
-		@Override
 		public double maxHScroll() {
-			return Math.max(0, estimatedWidth.get() - grid.getWidth());
+			return Math.max(0, getVirtualMaxX() - grid.getWidth());
 		}
 
 		@Override
-		public ReadOnlyDoubleProperty estimatedWidthProperty() {
-			return estimatedWidth.getReadOnlyProperty();
+		public double maxVScroll() {
+			return Math.max(0, getVirtualMaxY() - grid.getHeight());
 		}
 
 		@Override
-		public ReadOnlyDoubleProperty estimatedHeightProperty() {
-			return estimatedHeight.getReadOnlyProperty();
+		public ReadOnlyDoubleProperty virtualMaxXProperty() {
+			return virtualMaxX.getReadOnlyProperty();
+		}
+
+		@Override
+		public ReadOnlyDoubleProperty virtualMaxYProperty() {
+			return virtualMaxY.getReadOnlyProperty();
 		}
 
 		@Override
