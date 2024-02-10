@@ -753,6 +753,38 @@ public class GridTests {
 	}
 
 	@Test
+	void testChangeColumnsNumNoRangeChanges(FxRobot robot) {
+		StackPane pane = setupStage();
+		Grid grid = new Grid(items(200));
+		robot.interact(() -> {
+			grid.setColumnsNum(10);
+			pane.getChildren().add(grid);
+		});
+
+		/*
+		 * This test proves that the update of the cells is needed even if the ranges do not change.
+		 * The reason behind this is pretty simple: when the number of columns changes, the items are arranged in a
+		 * different way from before (from a 2D perspective).
+		 */
+
+		// Test init
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 5));
+		assertCounter(36, 1, 36, 36, 0, 0, 0);
+
+		// Increase and test
+		robot.interact(() -> grid.setColumnsNum(11));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 5));
+		assertCounter(0, 1, 15, 15, 0, 0, 0);
+
+		// Decrease and test
+		robot.interact(() -> grid.setColumnsNum(9));
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 5));
+		assertCounter(0, 1, 15, 15, 0, 0, 0);
+
+		// I don't know why 15, but the GridVisualizer seem to confirm it
+	}
+
+	@Test
 	void testSpacing(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(200));

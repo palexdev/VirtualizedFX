@@ -10,13 +10,13 @@ import javafx.scene.Node;
 import java.util.*;
 
 /**
- * Immutable object to represent the state of a {@link VFXListState} in a specific moment in time. In other words,
- * each and every state is given by a unique combination of the list's properties.
+ * Immutable object to represent the state of a {@link VFXList} in a specific moment in time. In other words, each and
+ * every state is given by a unique combination of the list's properties (in terms of values).
  * <p>
  * The state carries three important information:
  * <p> 1) The range of items to display from the {@link VFXList#itemsProperty()}
  * <p> 2) The cells that are currently in the viewport
- * <p> 3) A flag that indicates whether cells have changed
+ * <p> 3) A flag that indicates whether cells have changed since last state
  * <p></p>
  * <b>Note</b> that the data structure used to store the cells is particular, see {@link StateMap}.
  *
@@ -88,7 +88,7 @@ public class VFXListState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Removes a cell from the {@link StateMap} for the given index. If the cell is not found the next attempt
+	 * Removes a cell from the {@link StateMap} for the given index. If the cell is not found, the next attempt
 	 * is to remove it by the item at the given index in the {@link VFXList#itemsProperty()}.
 	 */
 	protected C removeCell(int index) {
@@ -106,7 +106,7 @@ public class VFXListState<T, C extends Cell<T>> {
 
 	/**
 	 * Disposes this state object by: caching all the cells ({@link VFXCellsCache#cache(Collection)}), and then
-	 * clearing the {@link StateMap} ({@link StateMap#clear()}).
+	 * clearing the {@link StateMap} by calling {@link StateMap#clear()}.
 	 *
 	 * @see StateMap
 	 */

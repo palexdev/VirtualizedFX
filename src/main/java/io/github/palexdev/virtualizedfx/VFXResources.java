@@ -2,18 +2,18 @@ package io.github.palexdev.virtualizedfx;
 
 import java.net.URL;
 
-public class Resources {
+public class VFXResources {
 
 	//================================================================================
 	// Constructors
 	//================================================================================
-	private Resources() {}
+	private VFXResources() {}
 
 	//================================================================================
 	// Static Methods
 	//================================================================================
 	public static URL getResource(String name) {
-		return Resources.class.getResource(name);
+		return VFXResources.class.getResource(name);
 	}
 
 	public static String loadResource(String name) {

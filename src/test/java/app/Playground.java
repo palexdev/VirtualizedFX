@@ -7,7 +7,8 @@ import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.events.WhenEvent;
-import io.github.palexdev.mfxcore.observables.When;
+import io.github.palexdev.mfxcore.utils.EnumUtils;
+import io.github.palexdev.mfxcore.utils.PositionUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.virtualizedfx.grid.VFXGridHelper;
@@ -22,8 +23,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import utils.NodeMover;
-
-import java.util.List;
 
 import static utils.Utils.items;
 
@@ -67,9 +66,9 @@ public class Playground extends Application {
 			.register();
 		NodeMover.install(pane);
 
-		When.onInvalidated(grid.widthProperty())
+/*		When.onInvalidated(grid.widthProperty())
 			.then(w -> grid.autoArrange())
-			.listen();
+			.listen();*/
 
 		Scene scene = new Scene(pane, 400, 400);
 		primaryStage.setScene(scene);
@@ -117,10 +116,22 @@ public class Playground extends Application {
 			.get()
 		);
 
-		Button action = new Button("Test Items Change");
-		action.setOnAction(e -> grid.getItems().addAll(62, List.of(-1, -2, -3, -4, -5)));
+		Label alignment = new Label();
+		alignment.textProperty().bind(StringBindingBuilder.build()
+			.setMapper(() -> "Alignment: %s".formatted(grid.getAlignment()))
+			.addSources(grid.alignmentProperty())
+			.get()
+		);
 
-		pane.getChildren().addAll(estimate, scrollable, positions, ranges, action);
+		Button action = new Button("Change alignment");
+		action.setOnAction(e -> {
+			Pos current = grid.getAlignment();
+			Pos next = EnumUtils.next(Pos.class, current);
+			while (PositionUtils.isBaseline(next)) next = EnumUtils.next(Pos.class, next);
+			grid.setAlignment(next);
+		});
+
+		pane.getChildren().addAll(estimate, scrollable, positions, ranges, alignment, action);
 
 		Stage stage = new Stage();
 		Scene scene = new Scene(pane);

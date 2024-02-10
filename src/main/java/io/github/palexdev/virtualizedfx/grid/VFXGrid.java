@@ -27,7 +27,6 @@ import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleableProperty;
 import javafx.css.StyleablePropertyFactory;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.shape.Rectangle;
 
@@ -37,6 +36,79 @@ import java.util.SequencedMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * Implementation of a virtualized container to show a list of items in a "2D" perspective.
+ * The default style class is: '.vfx-grid'.
+ * <p>
+ * Extends {@link Control}, implements {@link VFXContainer}, has its own skin implementation {@link VFXGridSkin}
+ * and behavior {@link VFXGridManager}. Uses cells of type {@link Cell}.
+ * <p>
+ * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
+ * {@link VFXGridState} when changing. The state determines which and how items are displayed in the container.
+ * <p></p>
+ * <b>Features & Implementation Details</b>
+ * <p> - First and foremost, it's important to describe how the grid works and why it's made as it is. The grid arranges
+ * the contents of a simple 1D data structure (a list) in a 2D way. <b>(History time)</b> The previous implementation used a 2D data structure
+ * instead which indeed made some algorithms easier to implement, but made its usage very inconvenient for one simple reason:
+ * the data structure was not flexible enough. To add a row/column, they needed to have the same size of the data structure,
+ * so in practice, if you had, for example, a half-full row/column to add, you had to fill it with 'null' elements.
+ * The same issue occurred for the data structure creation, the source list/array had to be exactly the size given by
+ * 'nRows * nColumns'. <b>(End of history time)</b> So the question is, if we now use a simple 1D structure now
+ * (which is more flexible and easier to use for the end-user), how can the grid arrange the contents in a 2D way? Well,
+ * the answer is pretty straightforward; we need a value that the big dumb-dumb me of the past didn't think about:
+ * the {@link #columnsNumProperty()}. Given the desired number of columns, we can easily get the number of rows as follows:
+ * {@code Math.ceil(nItems / nColumns)}. However, note that for performance reason, the property acts as a 'maximum number of columns',
+ * which means that the actual number of columns in the viewport depends on these other factors: the container width,
+ * the cell size, the horizontal spacing and the buffer size.
+ * <p> - The default behavior implementation, {@link VFXGridManager}, can be considered as the name suggests more like
+ * a 'manager' than an actual behavior. It is responsible for reacting to core changes in the functionalities defined here
+ * to produce a new state.
+ * The state can be considered like a 'picture' of the container at a certain time. Each combination of the variables
+ * that influence the way items are shown (how many, start, end, changes in the list, etc.) will produce a specific state.
+ * This is an important concept as some of the features I'm going to mention below are due to the combination of default
+ * skin + default behavior. You are allowed to change/customize the skin and behavior as you please. BUT, beware, VFX
+ * components are no joke, they are complex, make sure to read the documentation before!
+ * <p> - The {@link #alignmentProperty()} is a unique feature of the grid that allows to set the position of the viewport,
+ * more information can be found in the skin, {@link VFXGridSkin}.
+ * <p> - The items list is managed automatically (permutations, insertions, removals, updates). Compared to previous
+ * algorithms, the {@link VFXGridManager} adopts a much simpler strategy while still trying to keep the cell updates count
+ * as low as possible to improve performance. See {@link VFXGridManager#onItemsChanged()}.
+ * <p> - The function used to generate the cells, called "cellFactory", can be changed anytime, even at runtime, see
+ * {@link VFXGridManager#onCellFactoryChanged()}.
+ * <p> - The component is around the concept of a fixed cell size for all cells, this parameter can be controlled through
+ * the {@link #cellSizeProperty()}, and can also be changed anytime, see {@link VFXGridManager#onCellSizeChanged()}.
+ * <p> - Similar to the JavaFX's {@code GridPane}, this container allows you to evenly space the cells in the viewport by
+ * setting the properties {@link #hSpacingProperty()} and {@link #vSpacingProperty()}. See {@link VFXGridManager#onSpacingChanged()}.
+ * <p> - Even though the grid doesn't have the orientation property (compared to the VFXList), core computations such as
+ * the range of rows, the range of columns, the estimated size, the layout of nodes etc., are delegated to separate 'helper'
+ * class which is the {@link VFXGridHelper}. You are allowed to change the helper through the {@link #helperFactoryProperty()}.
+ * <p> - The vertical and horizontal positions are available through the properties {@link #hPosProperty()} and {@link #vPosProperty()}.
+ * It was indeed possible to use a single property for the position, but they are split for performance reasons.
+ * <p> - The virtual bounds of the container are given by two properties:
+ * <p>&emsp; a) the {@link #virtualMaxXProperty()} which specifies the total number of pixels on the x-axis
+ * <p>&emsp; b) the {@link #virtualMaxYProperty()} which specifies the total number of pixels on the y-axis
+ * <p> - You can access the current state through the {@link #stateProperty()}. The state gives crucial information about
+ * the container such as the range rows and columns and the visible cells (by index and by item). If you'd like to observe
+ * for changes in the displayed cells, then you want to add a listener on this property. Make sure to also read the
+ * {@link VFXGridState} documentation, as it also contains important information on the grid's mechanics.
+ * <p> - It is possible to programmatically tell the viewport to update its layout with {@link #requestViewportLayout()},
+ * although this should never be necessary as it is handled automatically when the state changes.
+ * <p> - Additionally, this container makes use of a simple cache implementation, {@link VFXCellsCache}, which
+ * avoids creating new cells when needed if some are already present in it. The most crucial aspect for this kind of
+ * virtualization is to avoid creating nodes, as this is the most expensive operation. Not only nodes need
+ * to be created but also added to the container and then laid out.
+ * Instead, it's much more likely that the {@link Cell#updateItem(Object)} will be simple and faster.
+ * <b>Note 1:</b> to make the cache more generic, thus allowing its usage in more cases, a recent refactor,
+ * removed the dependency on the container itself and replaced it with the cell factory. Since the cache can also populate
+ * itself with "empty" cells, it must know how to create them. The cache's cell factory is automatically synchronized with
+ * the container's one.
+ * <b>Note 2:</b> by default, the capacity is set to 10 cells. However, for the grid's nature, such number is likely to be
+ * too small, but it mostly depends from case to case. For such reason, you may want to increase it.
+ * <p></p>
+ *
+ * @param <T> the type of items in the list
+ * @param <C> the type of cells used by the container to visualize the items
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>> implements VFXContainer<T> {
 	//================================================================================
@@ -115,10 +187,25 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		setHelper(getHelperFactory().get());
 	}
 
+	/**
+	 * Calls {@link #autoArrange(int)} with 0 as parameter.
+	 */
 	public void autoArrange() {
 		autoArrange(0);
 	}
 
+	/**
+	 * This method will compute the maximum number of columns that can fit in the grid. The computation depends on the
+	 * following values: the container's width, the cell width, and the horizontal spacing. The expression is the following:
+	 * {@code Math.max(Math.max(0, min), Math.floor(getWidth() / (cellWidth + hSpacing)))}.
+	 * <p>
+	 * One good example of this would be a grid that automatically adapts to the size of its parent or window.
+	 * In combination with the {@link #alignmentProperty()} this can reveal to be very powerful.
+	 * <p>
+	 * Needless to say, the computed number is automatically set as the {@link #columnsNumProperty()}.
+	 *
+	 * @param min the minimum number of columns
+	 */
 	public void autoArrange(int min) {
 		double cellWidth = getCellSize().getWidth();
 		double hSpacing = getHSpacing();
@@ -136,14 +223,24 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return new VFXCellsCache<>(null, getCacheCapacity());
 	}
 
+	/**
+	 * Setter for the {@link #stateProperty()}.
+	 */
 	protected void update(VFXGridState<T, C> state) {
 		setState(state);
 	}
 
+	/**
+	 * @return the default function used to produce a {@link VFXGridHelper}.
+	 */
 	protected Supplier<VFXGridHelper<T, C>> defaultHelperFactory() {
 		return () -> new VFXGridHelper.DefaultHelper<>(this);
 	}
 
+	/**
+	 * Setter for the {@link #needsViewportLayoutProperty()}.
+	 * This sets the property to true, causing the default skin to recompute the cells' layout.
+	 */
 	public void requestViewportLayout() {
 		setNeedsViewportLayout(true);
 	}
@@ -194,12 +291,24 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return items.emptyProperty();
 	}
 
+	/**
+	 * Delegate for {@link VFXGridState#getRowsRange()}
+	 */
 	public IntegerRange getRowsRange() {return getState().getRowsRange();}
 
+	/**
+	 * Delegate for {@link VFXGridState#getColumnsRange()}
+	 */
 	public IntegerRange getColumnsRange() {return getState().getColumnsRange();}
 
+	/**
+	 * Delegate for {@link VFXGridState#getCellsByIndexUnmodifiable()}
+	 */
 	public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {return getState().getCellsByIndexUnmodifiable();}
 
+	/**
+	 * Delegate for {@link VFXGridState#getCellsByItemUnmodifiable()}
+	 */
 	public Map<T, C> getCellsByItemUnmodifiable() {return getState().getCellsByItemUnmodifiable();}
 
 	/**
@@ -216,26 +325,45 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return getHelper().virtualMaxYProperty();
 	}
 
+	/**
+	 * Delegate for {@link VFXGridHelper#scrollToRow(int)}.
+	 */
 	public void scrollToRow(int row) {
 		getHelper().scrollToRow(row);
 	}
 
+	/**
+	 * Delegate for {@link VFXGridHelper#scrollToColumn(int)}.
+	 */
 	public void scrollToColumn(int column) {
 		getHelper().scrollToColumn(column);
 	}
 
+
+	/**
+	 * Delegate for {@link VFXGridHelper#scrollToRow(int)}, with parameter 0.
+	 */
 	public void scrollToFirstRow() {
 		scrollToRow(0);
 	}
 
+	/**
+	 * Delegate for {@link VFXGridHelper#scrollToRow(int)}, with parameter {@link Integer#MAX_VALUE}.
+	 */
 	public void scrollToLastRow() {
 		scrollToRow(Integer.MAX_VALUE);
 	}
 
+	/**
+	 * Delegate for {@link VFXGridHelper#scrollToColumn(int)}, with parameter 0.
+	 */
 	public void scrollToFirstColumn() {
 		scrollToColumn(0);
 	}
 
+	/**
+	 * Delegate for {@link VFXGridHelper#scrollToColumn(int)}, with parameter {@link Integer#MAX_VALUE}.
+	 */
 	public void scrollToLastColumn() {
 		scrollToColumn(Integer.MAX_VALUE);
 	}
@@ -314,6 +442,14 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return cellSize.get();
 	}
 
+	/**
+	 * Specifies the cells' width and height as a {@link Size} object.
+	 * <p>
+	 * Can be set in CSS via the property: '-vfx-cell-size'.
+	 * <p>
+	 * <b>Note</b> that this is a special styleable property, in order to set it in CSS see the docs here
+	 * {@link SizeConverter}.
+	 */
 	public StyleableSizeProperty cellSizeProperty() {
 		return cellSize;
 	}
@@ -334,6 +470,12 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return columnsNum.get();
 	}
 
+	/**
+	 * Specifies the maximum number of columns the grid can have. This number is crucial to also compute the nuber of rows.
+	 * By default, the latter is computed as follows: {@code Math.ceil(nItems / nColumns)}.
+	 * <p>
+	 * Can be set in CSS via the property: '-vfx-columns-num'.
+	 */
 	public StyleableIntegerProperty columnsNumProperty() {
 		return columnsNum;
 	}
@@ -346,6 +488,12 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return alignment.get();
 	}
 
+	/**
+	 * Specifies the position of the viewport node inside the grid as a {@link Pos} object.
+	 * <b>Note</b> that 'baseline' positions are not supported and will default to {@link Pos#TOP_LEFT} instead.
+	 * <p>
+	 * Can be set in CSS via the property: '-vfx-alignment'.
+	 */
 	public StyleableObjectProperty<Pos> alignmentProperty() {
 		return alignment;
 	}
@@ -361,7 +509,7 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	/**
 	 * Specifies the horizontal number of pixels between each cell.
 	 * <p>
-	 * Can be set in CSS via the property: '-vfx-h-spacing'
+	 * Can be set in CSS via the property: '-vfx-h-spacing'.
 	 */
 	public StyleableDoubleProperty hSpacingProperty() {
 		return hSpacing;
@@ -378,7 +526,7 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	/**
 	 * Specifies the vertical number of pixels between each cell.
 	 * <p>
-	 * Can be set in CSS via the property: '-vfx-v-spacing'
+	 * Can be set in CSS via the property: '-vfx-v-spacing'.
 	 */
 	public StyleableDoubleProperty vSpacingProperty() {
 		return vSpacing;
@@ -413,6 +561,11 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	/**
 	 * {@inheritDoc}
 	 * <p></p>
+	 * To be more precise, for the grid this determines the number of extra rows and columns to add in the viewport.
+	 * Since this is a "2D" container, by its nature, a considerable amount of cells is displayed (but it also depends on
+	 * other factors such as the container's size, the cells size, etc.). The buffer increases such number, if you have
+	 * performance issues you may try to lower the buffer value, although I would consider it as a last resort.
+	 * <p>
 	 * Can be set in CSS via the property: '-vfx-buffer-size'.
 	 */
 	public StyleableObjectProperty<BufferSize> bufferSizeProperty() {
@@ -425,7 +578,7 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 
 	/**
 	 * Used by the viewport's clip to set its border radius.
-	 * This is useful when you want to make a rounded virtual flow, this
+	 * This is useful when you want to make a rounded container, this
 	 * prevents the content from going outside the view.
 	 * <p></p>
 	 * <b>Side note:</b> the clip is a {@link Rectangle}, now for some fucking reason,
@@ -598,6 +751,9 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return helper.get();
 	}
 
+	/**
+	 * Specifies the instance of the {@link VFXGridHelper} built by the {@link #helperFactoryProperty()}.
+	 */
 	public ReadOnlyObjectProperty<VFXGridHelper<T, C>> helperProperty() {
 		return helper.getReadOnlyProperty();
 	}
@@ -610,6 +766,9 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		return helperFactory.get();
 	}
 
+	/**
+	 * Specifies the function used to build a {@link VFXGridHelper} instance.
+	 */
 	public SupplierProperty<VFXGridHelper<T, C>> helperFactoryProperty() {
 		return helperFactory;
 	}
@@ -628,7 +787,7 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	}
 
 	/**
-	 * Specifies the container's horizontal position. In case the orientation is set to {@link Orientation#HORIZONTAL}, this
+	 * Specifies the container's horizontal position.
 	 * <p>
 	 * In the case of the Grid, both directions are virtualized.
 	 */
@@ -641,7 +800,7 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	}
 
 	/**
-	 * Specifies the container's current state. The state carries useful information such as the range of displayed items
+	 * Specifies the container's current state. The state carries useful information such as the range of rows and columns
 	 * and the cells ordered by index, or by item (not ordered).
 	 */
 	public ReadOnlyObjectProperty<VFXGridState<T, C>> stateProperty() {

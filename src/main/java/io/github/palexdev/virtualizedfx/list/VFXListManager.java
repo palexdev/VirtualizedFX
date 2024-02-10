@@ -31,8 +31,9 @@ import java.util.*;
  * Last but not least, some of these computations may need to ensure the current vertical and horizontal positions are correct,
  * so that a valid state can be produced. To achieve this, {@link VFXListHelper#invalidatePos()} is called.
  * However, invalidating the positions, also means that the {@link #onPositionChanged()} method could be potentially
- * triggered, thus generating an unwanted 'middle' state. For this reason a special flag {@link #invalidatingPos} is used
- * before the invalidation to avoid triggering that method.
+ * triggered, thus generating an unwanted 'middle' state. For this reason a special fla {@link #invalidatingPos} is set
+ * to {@code true} before the invalidation, so that the other method will exit immediately. It's reset back to false
+ * after the computation or if any of the checks before the actual computation fails.
  */
 public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T, C>> {
 	//================================================================================
@@ -86,19 +87,22 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 
 	/**
 	 * This core method is responsible for updating the list's state when the 'main' position changes (vPos for VERTICAL
-	 * orientation, hPos for HORIZONTAL orientation). Since the list doesn't use throttling to limit the number of events/changes,
-	 * and since scrolling can be very fast, performance here is crucial.
+	 * orientation, hPos for HORIZONTAL orientation). Since the list doesn't use any throttling technique to limit the number of events/changes,
+	 * and since scrolling can happen very fast, performance here is crucial.
 	 * <p>
 	 * Immediately exists if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXListState#EMPTY}.
-	 * That boolean flag exists exactly for this, stop this method from executing. Many other computations here need to validate
-	 * the positions by calling {@link VFXListHelper#invalidatePos()}, so that the resulting state is valid.
-	 * However, invalidating the positions may trigger this method, causing two or more state computations at the 'same' time;
-	 * this behavior must be avoided.
+	 * Many other computations here need to validate the positions by calling {@link VFXListHelper#invalidatePos()}, so that
+	 * the resulting state is valid.
+	 * However, invalidating the positions may trigger this method, causing two or more state computations to run at the
+	 * 'same time'; this behavior must be avoided, and that flag exists specifically for this reason.
 	 * <p></p>
 	 * For the sake of performance, this method tries to update only the cells which need it. The computation is divided
 	 * in two steps:
 	 * <p> 0) Prerequisites: the last range (retrieved from the current state), the new range (given by {@link VFXListHelper#range()}).
-	 * Note that if these two ranges are equal, then the method exits.
+	 * Note that if these two ranges are equal or the new range in invalid ([-1, -1]), or the number of elements differ,
+	 * the method exits. The latter condition essentially means that the change is not a position change but something else,
+	 * if you think about it, when scrolling the number of items cannot change in any way, if it does, then it's surely
+	 * something else.
 	 * <p> 1) First of all, we check for common indexes. Cells are removed from the old state and copied to the new one
 	 * without updating, since it's not needed. For cells that are not found in the old state (not in common), the index
 	 * is added to a queue
@@ -168,12 +172,13 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * This method is responsible for updating the list's state when the {@link VFXList#cellFactoryProperty()}
 	 * changes. Unfortunately, this is always a costly operation because all cells need to be re-created, and the
 	 * {@link VFXCellsCache} cleaned. In fact, the very first operation done by this method is exactly this,
-	 * the disposal of the current/old state and the cleaning of the cache. Luckily, this kind of change is likely to not happen very often.
+	 * the disposal of the current/old state and the cleaning of the cache.
+	 * Luckily, this kind of change is likely to not happen very often.
 	 * <p>
 	 * After preliminary checks done by {@link #listFactorySizeCheck()} and {@link #rangeCheck(IntegerRange, boolean, boolean)},
 	 * the computation for the new state is delegated to the {@link #moveReuseCreateAlgorithm(IntegerRange, VFXListState)}.
 	 * <p>
-	 * The new state's {@link VFXListState#haveCellsChanged()} flag will always be {@code true} od course.
+	 * The new state's {@link VFXListState#haveCellsChanged()} flag will always be {@code true} of course.
 	 * The great thing about the factory change is that there is no need to invalidate the position.
 	 */
 	protected void onCellFactoryChanged() {

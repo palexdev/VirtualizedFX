@@ -26,7 +26,7 @@ public class Utils {
 	/**
 	 * Finds the {@link IntegerRange} which is the intersection between the two given ranges.
 	 * <p>
-	 * The {@code min} is given by {@code Math.max(r1Min, r2Min}, while the {@code max} is given by {@code Math.min(r1Ma, r2Max}.
+	 * The {@code min} is given by {@code Math.max(r1Min, r2Min}, while the {@code max} is given by {@code Math.min(r1Max, r2Max}.
 	 */
 	public static IntegerRange intersection(IntegerRange r1, IntegerRange r2) {
 		int min = Math.max(r1.getMin(), r2.getMin());

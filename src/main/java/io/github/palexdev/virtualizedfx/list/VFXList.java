@@ -34,53 +34,59 @@ import java.util.function.Supplier;
 
 /**
  * Implementation of a virtualized container to show a list of items either vertically or horizontally.
- * The default style class is: '.virtualized-list'.
+ * The default style class is: '.vfx-list'.
  * <p>
  * Extends {@link Control}, implements {@link VFXContainer}, has its own skin implementation {@link VFXListSkin}
  * and behavior {@link VFXListManager}. Uses cells of type {@link Cell}.
  * <p>
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
- * {@link VFXListState}. The state determines which and how items are displayed in the container.
+ * {@link VFXListState} when changing. The state determines which and how items are displayed in the container.
  * <p></p>
  * <b>Features & Implementation Details</b>
  * <p> - The default behavior implementation, {@link VFXListManager}, can be considered as the name suggests more like
- * a 'manager' than an actual behavior. It is responsible for reacting to core changes here in the control to produce a new
- * state. The state can be considered like a picture of the container at a certain time. Each combination of the variables
- * that influence the way items are shown (how many, start, end, changes in the list, etc.) produce a specific state.
+ * a 'manager' than an actual behavior. It is responsible for reacting to core changes in the functionalities defined here
+ * to produce a new state.
+ * The state can be considered like a 'picture' of the container at a certain time. Each combination of the variables
+ * that influence the way items are shown (how many, start, end, changes in the list, etc.) will produce a specific state.
  * This is an important concept as some of the features I'm going to mention below are due to the combination of default
- * skin + default behavior. You are allowed to change/customize the skin and the behavior as you please.
+ * skin + default behavior. You are allowed to change/customize the skin and the behavior as you please. BUT, beware, VFX
+ *  * components are no joke, they are complex, make sure to read the documentation before!
  * <p> - The items list is managed automatically (permutations, insertions, removals, updates). Compared to previous
- * algorithms the {@link VFXListManager} implements a much simpler strategy while still trying to keep the cell updates
- * count as low as possible to improve performance. See {@link VFXListManager#onItemsChanged()}.
+ * algorithms, the {@link VFXListManager} adopts a much simpler strategy while still trying to keep the cell updates count
+ * as low as possible to improve performance. See {@link VFXListManager#onItemsChanged()}.
  * <p> - The function used to generate the cells, called "cellFactory", can be changed anytime, even at runtime,
  * see {@link VFXListManager#onCellFactoryChanged()}.
- * <p> - The component is based on a fixed size for all the cell, this parameter can be controlled through the {@link #cellSizeProperty()},
- * and can also be changed anytime, see {@link VFXListManager#onCellSizeChanged()}.
+ * <p> - The component is around the concept of a fixed cell size for all cells, this parameter can be controlled
+ * through the {@link #cellSizeProperty()}, and can also be changed anytime, see {@link VFXListManager#onCellSizeChanged()}.
  * <p> - Similar to the {@code VBox} pane, this container allows you to evenly space the cells in the viewport by setting the
  * {@link #spacingProperty()}. See {@link VFXListManager#onSpacingChanged()}.
  * <p> - The container can be oriented either vertically or horizontally through the {@link #orientationProperty()}.
  * Depending on the orientation, the layout and other computations change. Thanks to polymorphism, it's possible
  * to define a public API for such computations and implement two separate classes for each orientation, this is the
  * {@link VFXListHelper}. You are allowed to change the helper through the {@link #helperFactoryProperty()}.
- * <p> - The vertical and horizontal positions are available through the properties, {@link #vPosProperty()} and {@link #hPosProperty()}.
+ * <p> - The vertical and horizontal positions are available through the properties {@link #vPosProperty()} and {@link #hPosProperty()}.
  * It was indeed possible to use a single property for the position, but they are split for performance reasons.
- * The virtual bounds of the container are given by the two properties:
- * <p>&emsp; a) the {@link #virtualMaxXProperty()} which specifies the total number of pixels alongside the x-axis
- * <p>&emsp; b) the {@link #virtualMaxYProperty()} which specifies the total number of pixels alongside the y-axis
+ * <p> - The virtual bounds of the container are given by two properties:
+ * <p>&emsp; a) the {@link #virtualMaxXProperty()} which specifies the total number of pixels on the x-axis
+ * <p>&emsp; b) the {@link #virtualMaxYProperty()} which specifies the total number of pixels on the y-axis
  * <p>
  * &emsp; The value of such properties depends on the container's orientation. The virtualized axis will have its value given by
  * &emsp; the total number of items in the list multiplied by the cell size, the spacing is included too. The other axis will have
  * &emsp; its value given by the biggest (in height or width) cell in the viewport.
  * <p> - You can access the current state through the {@link #stateProperty()}. The state gives crucial information about
  * the container such as the range of displayed items and the visible cells (by index and by item). If you'd like to observe
- * for changes in the displaying cells, you want to add a listener on this property.
+ * for changes in the displayed cells, then you want to add a listener on this property.
  * <p> - It is possible to programmatically tell the viewport to update its layout with {@link #requestViewportLayout()},
  * although this should never be necessary as it is handled automatically when the state changes.
  * <p> - Additionally, this container makes use of a simple cache implementation, {@link VFXCellsCache}, which
  * avoids creating new cells when needed if some are already present in it. The most crucial aspect for this kind of
- * virtualization is to avoid creating nodes, as this is the most expensive operation it can occur. Not only nodes need
- * to be created but also added to the container and then laid out. Instead, it's much more likely that the {@link Cell#updateItem(Object)}
- * will be simple and faster.
+ * virtualization is to avoid creating nodes, as this is the most expensive operation. Not only nodes need
+ * to be created but also added to the container and then laid out.
+ * Instead, it's much more likely that the {@link Cell#updateItem(Object)} will be simple and faster.
+ * Note that to make the cache more generic, thus allowing its usage in more cases, a recent refactor,
+ * removed the dependency on the container itself and replaced it with the cell factory. Since the cache can also populate
+ * itself with "empty" cells, it must know how to create them. The cache's cell factory is automatically synchronized with
+ * the container's one.
  * <p></p>
  *
  * @param <T> the type of items in the list
@@ -432,7 +438,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	}
 
 	/**
-	 * Specifies the orientation of the virtual flow.
+	 * Specifies the orientation of the container.
 	 * <p>
 	 * Can be set in CSS via the property: '-vfx-orientation'.
 	 */
@@ -468,7 +474,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 
 	/**
 	 * Used by the viewport's clip to set its border radius.
-	 * This is useful when you want to make a rounded virtual flow, this
+	 * This is useful when you want to make a rounded container, this
 	 * prevents the content from going outside the view.
 	 * <p></p>
 	 * <b>Side note:</b> the clip is a {@link Rectangle}, now for some fucking reason,

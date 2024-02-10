@@ -1,6 +1,6 @@
 ## Work in progress / Coming soon
 
-- [ ] VFXGrid documentation
+- [x] VFXGrid documentation
 - [ ] Bump and release
 
 ## General
@@ -39,3 +39,5 @@
 - [x] Caching mechanism
 - [x] Vertical and horizontal spacing
 - [ ] Implement paginated variant (?)
+
+## Table

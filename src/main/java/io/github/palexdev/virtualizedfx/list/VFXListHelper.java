@@ -31,7 +31,7 @@ import java.util.Optional;
  * specifies the biggest cell size (width/height) so that if {@link VFXList#fitToViewportProperty()} is set to false we
  * know how much we can scroll the list in that direction.
  * <p>
- * This value however is dynamic, since the size of each node is computed only once it is laid out. This means that the absolute
+ * This value, however, is dynamic, since the size of each node is computed only once it is laid out. This means that the absolute
  * maximum value is only found when all items have been displayed at least once.
  */
 public interface VFXListHelper<T, C extends Cell<T>> {
@@ -82,24 +82,24 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	double maxHScroll();
 
 	/**
-	 * Specifies the total number of pixels alongside the x-axis.
+	 * Specifies the total number of pixels on the x-axis.
 	 */
 	ReadOnlyDoubleProperty virtualMaxXProperty();
 
 	/**
-	 * @return the total number of pixels alongside the x-axis.
+	 * @return the total number of pixels on the x-axis.
 	 */
 	default double getVirtualMaxX() {
 		return virtualMaxXProperty().get();
 	}
 
 	/**
-	 * Specifies the total number of pixels alongside the y-axis.
+	 * Specifies the total number of pixels on the y-axis.
 	 */
 	ReadOnlyDoubleProperty virtualMaxYProperty();
 
 	/**
-	 * @return the total number of pixels alongside the y-axis.
+	 * @return the total number of pixels on the y-axis.
 	 */
 	default double getVirtualMaxY() {
 		return virtualMaxYProperty().get();
@@ -261,21 +261,21 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	 * Concrete implementation of {@link AbstractHelper} for {@link Orientation#VERTICAL}. Here the range of items to
 	 * display and the viewport position are defined as follows:
 	 * <p> - the range is given by the {@link #firstVisible()} element minus the buffer size ({@link VFXList#bufferSizeProperty()}),
-	 * cannot be negative; and the sum between this start index and the total number of needed cells given by {@link #totalNum()}, cannot
-	 * exceed the number of items - 1. It may happen the number of indexes given by the range {@code end - start + 1} is lesser
-	 * than the total number of cells we need, in such cases, the range start is corrected to be {@code end - needed + 1}.
+	 * (cannot be negative) and the sum between this start index and the total number of needed cells given by {@link #totalNum()},
+	 * (cannot exceed the number of items - 1). It may happen the number of indexes given by the range {@code end - start + 1} is lesser
+	 * than the total number of cells we need. In such cases, the range start is corrected to be {@code end - needed + 1}.
 	 * A typical situation for this is when the list position reaches the max scroll.
 	 * The range computation has the following dependencies: the list's height, the virtual max y, the buffer size and
 	 * the vertical position.
-	 * <p> - the viewport position. This computation is at the core of virtual scrolling. The viewport, which contains the cell,
+	 * <p> - the viewport position, a computation that is at the core of virtual scrolling. The viewport, which contains the cells,
 	 * is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
 	 * The horizontal position is just the current {@link VFXList#hPosProperty()} but negative. The vertical
 	 * position is the one virtualized.
 	 * First we get the range of items to display and the total cell size given by {@link #getTotalCellSize()}, yes, the
 	 * spacing also affects the position. Then we compute the range to the first visible cell, which is given by
 	 * {@code IntegerRange.of(range.getMin(), firstVisible())}, in other words we limit the 'complete' range to the
-	 * top buffer including the first cell after the buffer. The number of indexes in this newfound range, given by
-	 * {@link IntegerRange#diff()} is multiplied by the total cell size, this way we found the number of pixels to the
+	 * top buffer including the first cell after the buffer. The number of indexes in this newfound range
+	 * (given by {@link IntegerRange#diff()}) is multiplied by the total cell size, this way we found the number of pixels to the
 	 * first visible cell, {@code pixelsToFirst}. We are missing only one last information, how much do we actually see
 	 * of the first visible cell? We call this amount {@code visibleAmountFirst} and it's given by {@code vPos % totalCellSize}.
 	 * Finally, the viewport's vertical position is given by {@code -(pixelsToFirst + visibleAmountFist}.

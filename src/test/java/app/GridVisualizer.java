@@ -26,8 +26,6 @@ import javafx.stage.Stage;
 import utils.MouseHoldHandler;
 import utils.NodeMover;
 
-import java.util.List;
-
 import static utils.Utils.isTouchSupported;
 import static utils.Utils.items;
 
@@ -85,16 +83,13 @@ public class GridVisualizer extends Application {
 		 * however, when comparing, keep in mind that you need to watch the cells in the given ranges to count right!
 		 */
 
-		IntegerRange oldR = IntegerRange.of(6, 11);
-		IntegerRange oldC = IntegerRange.of(4, 9);
+		IntegerRange oldR = IntegerRange.of(0, 5);
+		IntegerRange oldC = IntegerRange.of(0, 5);
 		int oldN = 10;
 
 		initLinears(oldR, oldC, oldN);
-		Grid oGrid = drawGrid(oldR, oldC, oldN);
-		oGrid.setItems(items(112));
-		Grid nGrid = drawGrid(IntegerRange.of(6, 11), IntegerRange.of(4, 9), 10);
-		nGrid.setItems(items(112));
-		nGrid.getItems().addAll(62, List.of(-1, -2, -3, -4, -5));
+		drawGrid(oldR, oldC, oldN);
+		drawGrid(IntegerRange.of(0, 5), IntegerRange.of(0, 5), 11);
 
 		Scene scene = new Scene(root, 1024, 720);
 		stage.setScene(scene);

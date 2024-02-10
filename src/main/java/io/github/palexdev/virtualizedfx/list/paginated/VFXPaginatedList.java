@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 /**
  * Simple and naive implementation of a paginated variant of {@link VFXList}.
+ * The default style class is extended to: '.vfx-list.paginated'.
  * <p>
  * Extends {@link VFXList}, implements {@link Paginated}, has its own skin {@link VFXPaginatedListSkin} and behavior
  * {@link VFXPaginatedListSkin}.

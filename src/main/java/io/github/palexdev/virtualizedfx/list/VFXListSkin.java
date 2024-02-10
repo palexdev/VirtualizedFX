@@ -19,13 +19,13 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * Default skin implementation for {@link VFXList}, extends {@link SkinBase} and expects behaviors of type
  * {@link VFXListManager}.
  * <p>
- * The layout is quite simple: there is just one note, called the 'viewport', that is the {@code Pane} responsible for
- * containing and laying out the cells. Needlessly to say, the layout strategy is custom, and it's defined in the
+ * The layout is quite simple: there is just one node, called the 'viewport', that is the {@code Pane} responsible for
+ * containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
  * {@link #layout()} method. The viewport node is also clipped to avoid cells from overflowing when scrolling.
  * About the clip, check also {@link VFXList#clipBorderRadiusProperty()}.
  * <p></p>
- * As all skins typically do, this is also responsible for catching any change in the component's properties. The computation
- * that leads to a new state though, is delegated to the controller/behavior, which is the {@link VFXListManager}.
+ * As all skins typically do, this is also responsible for catching any change in the component's properties.
+ * The computation that leads to a new state is delegated to the controller/behavior, which is the {@link VFXListManager}.
  * Read this {@link #addListeners()} to check which changes are handled.
  * <p></p>
  * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
