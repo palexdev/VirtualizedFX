@@ -1,14 +1,6 @@
-## Work in progress / Coming soon
-
-- [x] VFXGrid documentation
-- [ ] Bump and release
-
 ## General
 
-- [x] Review names
-- [ ] Rework pos listener/bindings and move it to manager (on init and 'orientation change' switch function)
 - [ ] Review APIs (classes, simplify as much as possible/re-organize at least)
-- [x] Maybe define a common Interface for Virtualized containers
 
 ## List
 

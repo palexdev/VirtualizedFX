@@ -181,7 +181,7 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 		// As a result of that, it is indeed needed to ensure that the current scroll positions are valid
 		helper.invalidatePos();
 
-		// First check: ensure that both ranges are valid
+		// Second check: ensure that both ranges are valid
 		IntegerRange rowsRange = helper.rowsRange();
 		IntegerRange columnsRange = helper.columnsRange();
 		if (!rangeCheck(rowsRange, columnsRange, true, true)) return;
