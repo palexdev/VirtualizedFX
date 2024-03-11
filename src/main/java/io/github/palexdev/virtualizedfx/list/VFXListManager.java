@@ -3,6 +3,7 @@ package io.github.palexdev.virtualizedfx.list;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.virtualizedfx.cells.Cell;
+import io.github.palexdev.virtualizedfx.utils.ExcludingRange;
 import io.github.palexdev.virtualizedfx.utils.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
@@ -245,10 +246,9 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * For this reason, cells from the old state are not removed by index, but by <b>item</b>,
 	 * {@link VFXListState#removeCell(Object)}. First, we retrieve the item from the list that is now at index i
 	 * (this index comes from the loop on the range), then we try to remove the cell for this item from the old state.
-	 * If the cell is found, we update it by index and add it to the new state. Note that the index is also removed from
-	 * the expanded range.
+	 * If the cell is found, we update it by index and add it to the new state. Note that the index is also excluded from the range.
 	 * <p>
-	 * Now that 'common' cells have been properly updated, the remaining items are processed by the {@link #remainingAlgorithm(Set, VFXListState)}.
+	 * Now that 'common' cells have been properly updated, the remaining items are processed by the {@link #remainingAlgorithm(ExcludingRange, VFXListState)}.
 	 * <p></p>
 	 * Last notes:
 	 * <p> 1) This is one of those methods that to produce a valid new state needs to validate the list's positions,
@@ -276,7 +276,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 
 		// Compute range and new state
 		IntegerRange range = helper.range();
-		Set<Integer> expanded = IntegerRange.expandRangeToSet(range);
+		ExcludingRange eRange = ExcludingRange.of(range);
 		VFXListState<T, C> newState = new VFXListState<>(list, range);
 
 		// First update by index
@@ -284,14 +284,14 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 			T item = helper.indexToItem(index);
 			C c = current.removeCell(item);
 			if (c != null) {
-				expanded.remove(index);
+				eRange.exclude(index);
 				c.updateIndex(index);
 				newState.addCell(index, item, c);
 			}
 		}
 
 		// Process remaining with the "remaining' algorithm"
-		remainingAlgorithm(expanded, newState);
+		remainingAlgorithm(eRange, newState);
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
 		list.update(newState);
@@ -406,7 +406,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * it's enough to move the cells from the current state to the new state. For indexes which are not found
 	 * in the current state, a new cell is either taken from the old state, taken from cache or created by the cell factory.
 	 * <p>
-	 * (The last operations are delegated to the {@link #remainingAlgorithm(Set, VFXListState)}).
+	 * (The last operations are delegated to the {@link #remainingAlgorithm(ExcludingRange, VFXListState)}).
 	 *
 	 * @see VFXListHelper#indexToCell(int)
 	 * @see VFXList#cellFactoryProperty()
@@ -414,65 +414,65 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	protected void moveReuseCreateAlgorithm(IntegerRange range, VFXListState<T, C> newState) {
 		VFXList<T, C> list = getNode();
 		VFXListState<T, C> current = list.getState();
-		Set<Integer> remaining = new LinkedHashSet<>();
+		ExcludingRange eRange = new ExcludingRange(range);
 		for (Integer index : range) {
 			C c = current.removeCell(index);
-			if (c == null) {
-				remaining.add(index);
-				continue;
-			}
+			if (c == null) continue;
+			eRange.exclude(index);
 			newState.addCell(index, c);
 		}
-		remainingAlgorithm(remaining, newState);
+		remainingAlgorithm(eRange, newState);
 	}
 
 	/**
 	 * Avoids code duplication. Typically used in situations where the previous range and the new one are likely to be
 	 * very close, but most importantly, that do not involve any change in the items' list.
 	 * In such cases, the computation for the new state is divided in two parts:
-	 * <p> 0) Prerequisites: the new range [min, max], the expanded range (a collection of indexes that goes from min to max),
+	 * <p> 0) Prerequisites: the new range [min, max], the excluding range (a helper class to keep track of common cells),
 	 * the current state, and the intersection between the current state's range and the new range
 	 * <p> 1) The intersection allows us to distinguish between cells that can be moved as they are, without any update,
 	 * from the current state to the new one. For this, it's enough to check that the intersection range is valid, and then
-	 * a for loop. Common indexes are also removed from the expanded range!
-	 * <p> 2) The remaining indexes in the expanded range are items that are new. Which means that if there are still cells
+	 * a for loop. Common indexes are also excluded from the range!
+	 * <p> 2) The remaining indexes are items that are new. Which means that if there are still cells
 	 * in the current state, they need to be updated (both index and item). Otherwise, new ones are created by the cell factory.
 	 * <p></p>
 	 * <p> - See {@link Utils#intersection}: used to find the intersection between two ranges
 	 * <p> - See {@link #rangeCheck(IntegerRange, boolean, boolean)}: used to validate the intersection range, both parameters
 	 * are false!
-	 * <p> - See {@link #remainingAlgorithm(Set, VFXListState)}: the second part of the algorithm is delegated to this
+	 * <p> - See {@link #remainingAlgorithm(ExcludingRange, VFXListState)}: the second part of the algorithm is delegated to this
 	 * method
+	 *
+	 * @see ExcludingRange
 	 */
 	protected VFXListState<T, C> intersectionAlgorithm() {
 		VFXList<T, C> list = getNode();
 		VFXListHelper<T, C> helper = list.getHelper();
 
-		// New range, also expanded
+		// New range
 		IntegerRange range = helper.range();
-		Set<Integer> expandedRange = IntegerRange.expandRangeToSet(range);
+		ExcludingRange eRange = ExcludingRange.of(range);
 
 		// Current and new states, intersection between current and new range
 		VFXListState<T, C> current = list.getState();
 		VFXListState<T, C> newState = new VFXListState<>(list, range);
 		IntegerRange intersection = Utils.intersection(current.getRange(), range);
 
-		// If range valid, move common cells from current to new state. Also, remove common indexes from expanded range
+		// If range valid, move common cells from current to new state. Also, exclude common indexes
 		if (rangeCheck(intersection, false, false))
 			for (Integer common : intersection) {
 				newState.addCell(common, current.removeCell(common));
-				expandedRange.remove(common);
+				eRange.exclude(common);
 			}
 
 		// Process remaining with the "remaining' algorithm"
-		remainingAlgorithm(expandedRange, newState);
+		remainingAlgorithm(eRange, newState);
 		return newState;
 	}
 
 	/**
 	 * Avoids code duplication. Typically used to process indexes not found in the current state.
 	 * <p>
-	 * For any index in the given collection, a cell is needed. Also, it needs to be updated by index and item both.
+	 * For any index in the given {@link ExcludingRange}, a cell is needed. Also, it needs to be updated by index and item both.
 	 * This cell can come from three sources:
 	 * <p> 1) from the current state if it's not empty yet. Since the cells are stored in a {@link SequencedMap}, one
 	 * is removed by calling {@link StateMap#poll()}.
@@ -483,7 +483,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
 	 * {@link VFXList#cellFactoryProperty()} to create a new one
 	 */
-	protected void remainingAlgorithm(Set<Integer> remaining, VFXListState<T, C> newState) {
+	protected void remainingAlgorithm(ExcludingRange eRange, VFXListState<T, C> newState) {
 		VFXList<T, C> list = getNode();
 		VFXListHelper<T, C> helper = list.getHelper();
 		VFXListState<T, C> current = list.getState();
@@ -491,7 +491,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		// Indexes in the given set were not found in the current state.
 		// Which means item updates. Cells are retrieved either from the current state (if not empty), from the cache,
 		// or created from the factory
-		for (Integer index : remaining) {
+		for (Integer index : eRange) {
 			T item = helper.indexToItem(index);
 			C c;
 			if (!current.isEmpty()) {
