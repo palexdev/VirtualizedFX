@@ -12,7 +12,6 @@ import javafx.scene.shape.Rectangle;
 
 import java.util.TreeMap;
 
-import static io.github.palexdev.mfxcore.observables.When.onChanged;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
@@ -121,10 +120,10 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 					getBehavior().onOrientationChanged();
 					swapPositionListener();
 				}),
-			onChanged(list.helperProperty())
-				.then((o, n) -> {
-					viewport.translateXProperty().bind(n.viewportPositionProperty().map(Position::getX));
-					viewport.translateYProperty().bind(n.viewportPositionProperty().map(Position::getY));
+			onInvalidated(list.helperProperty())
+				.then(h -> {
+					viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::getX));
+					viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::getY));
 				})
 				.executeNow(),
 

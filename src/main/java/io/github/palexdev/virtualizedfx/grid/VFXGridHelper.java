@@ -343,7 +343,7 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 					if (needed == 0) return Utils.INVALID_RANGE;
 
 					int start = Math.max(0, firstColumn() - grid.getBufferSize().val());
-					int end = Math.min(maxColumns() - 1, start + totalColumns() - 1);
+					int end = Math.min(maxColumns() - 1, start + needed - 1);
 					if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
 					return IntegerRange.of(start, end);
 				})
@@ -356,12 +356,12 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 			);
 			rowsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
-					if (grid.getHeight() == 0) return Utils.INVALID_RANGE;
+					if (grid.getHeight() <= 0) return Utils.INVALID_RANGE;
 					int needed = totalRows();
 					if (needed == 0) return Utils.INVALID_RANGE;
 
 					int start = Math.max(0, firstRow() - grid.getBufferSize().val());
-					int end = Math.min(maxRows() - 1, start + totalRows() - 1);
+					int end = Math.min(maxRows() - 1, start + needed - 1);
 					if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
 					return IntegerRange.of(start, end);
 				})

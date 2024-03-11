@@ -103,6 +103,12 @@ public class VFXGridState<T, C extends Cell<T>> {
 		}
 
 		@Override
+		protected Cell removeCell(Object item) {return null;}
+
+		@Override
+		protected Cell removeCell(int rIndex, int cIndex) {return null;}
+
+		@Override
 		protected void dispose() {}
 	};
 

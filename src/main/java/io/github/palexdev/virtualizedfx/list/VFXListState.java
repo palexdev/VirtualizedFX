@@ -40,6 +40,9 @@ public class VFXListState<T, C extends Cell<T>> {
 		protected Cell<Object> removeCell(int index) {return null;}
 
 		@Override
+		protected Cell<Object> removeCell(Object item) {return null;}
+
+		@Override
 		protected void dispose() {}
 	};
 

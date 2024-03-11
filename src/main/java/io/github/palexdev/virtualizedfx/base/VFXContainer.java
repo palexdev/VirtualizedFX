@@ -8,17 +8,10 @@ import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 
-import java.util.List;
-
 /**
  * Defines the common API for every virtualized container offered by VirtualizedFX.
  */
 public interface VFXContainer<T> {
-
-	/**
-	 * @return a list containing all the component's default style classes
-	 */
-	List<String> defaultStyleClasses();
 
 	default ObservableList<T> getItems() {
 		return itemsProperty().get();

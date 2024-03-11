@@ -14,7 +14,6 @@ import javafx.scene.shape.Rectangle;
 
 import java.util.SequencedMap;
 
-import static io.github.palexdev.mfxcore.observables.When.onChanged;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
@@ -119,10 +118,10 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 			onInvalidated(grid.needsViewportLayoutProperty())
 				.condition(v -> v)
 				.then(v -> layout()),
-			onChanged(grid.helperProperty())
-				.then((o, n) -> {
-					viewport.translateXProperty().bind(n.viewportPositionProperty().map(Position::getX));
-					viewport.translateYProperty().bind(n.viewportPositionProperty().map(Position::getY));
+			onInvalidated(grid.helperProperty())
+				.then(h -> {
+					viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::getX));
+					viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::getY));
 				})
 				.executeNow(),
 
@@ -136,9 +135,9 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 
 			// Position changes
 			onInvalidated(grid.vPosProperty())
-				.then(h -> getBehavior().onPositionChanged(Orientation.VERTICAL)),
+				.then(v -> getBehavior().onPositionChanged(Orientation.VERTICAL)),
 			onInvalidated(grid.hPosProperty())
-				.then(v -> getBehavior().onPositionChanged(Orientation.HORIZONTAL)),
+				.then(h -> getBehavior().onPositionChanged(Orientation.HORIZONTAL)),
 
 			// Others
 			onInvalidated(grid.columnsNumProperty())

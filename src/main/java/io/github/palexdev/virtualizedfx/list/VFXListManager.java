@@ -483,7 +483,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
 	 * {@link VFXList#cellFactoryProperty()} to create a new one
 	 */
-	protected void remainingAlgorithm(Set<Integer> expandedRange, VFXListState<T, C> newState) {
+	protected void remainingAlgorithm(Set<Integer> remaining, VFXListState<T, C> newState) {
 		VFXList<T, C> list = getNode();
 		VFXListHelper<T, C> helper = list.getHelper();
 		VFXListState<T, C> current = list.getState();
@@ -491,7 +491,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		// Indexes in the given set were not found in the current state.
 		// Which means item updates. Cells are retrieved either from the current state (if not empty), from the cache,
 		// or created from the factory
-		for (Integer index : expandedRange) {
+		for (Integer index : remaining) {
 			T item = helper.indexToItem(index);
 			C c;
 			if (!current.isEmpty()) {

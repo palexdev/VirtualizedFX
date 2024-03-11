@@ -1,12 +1,14 @@
 package io.github.palexdev.virtualizedfx.cells;
 
 import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -37,7 +39,7 @@ import java.util.function.Supplier;
  * reference is correct) but not perform any operation that strictly depends on the attributes (if a label displays the attributes,
  * there's no need to re-compute the text)
  */
-public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implements Cell<T> {
+public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implements Cell<T>, VFXStyleable {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -60,13 +62,18 @@ public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implement
 	// Methods
 	//================================================================================
 	protected void initialize() {
-		getStyleClass().add("cell-base");
+		getStyleClass().setAll(defaultStyleClasses());
 		setDefaultBehaviorProvider();
 	}
 
 	//================================================================================
 	// Overridden Methods
 	//================================================================================
+	@Override
+	public List<String> defaultStyleClasses() {
+		return List.of("cell-base");
+	}
+
 	@Override
 	public Node toNode() {
 		return this;

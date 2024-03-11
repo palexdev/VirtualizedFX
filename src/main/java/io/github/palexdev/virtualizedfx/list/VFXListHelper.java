@@ -129,8 +129,11 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	/**
 	 * Lays out the given node. The index parameter is necessary to identify the position of a cell compared to the others
 	 * (comes before or after).
+	 *
+	 * @param absIndex the absolute index of the given node/cell, see {@link VFXListSkin#layout()}
 	 */
-	void layout(int index, Node node);
+	void layout(int absIndex, Node node);
+
 
 	/**
 	 * Scrolls in the viewport by the given number of pixels.
@@ -301,7 +304,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 					if (needed == 0) return Utils.INVALID_RANGE;
 
 					int start = Math.max(0, firstVisible() - list.getBufferSize().val());
-					int end = Math.min(list.size() - 1, start + totalNum() - 1);
+					int end = Math.min(list.size() - 1, start + needed - 1);
 					if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
 					return IntegerRange.of(start, end);
 				})
@@ -418,8 +421,8 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 * computed by {@link #computeSize(Node)}, and the height is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int index, Node node) {
-			double y = getTotalCellSize() * index;
+		public void layout(int absIndex, Node node) {
+			double y = getTotalCellSize() * absIndex;
 			double w = computeSize(node);
 			double h = list.getCellSize();
 			node.resizeRelocate(0, y, w, h);
@@ -485,7 +488,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 					if (needed == 0) return Utils.INVALID_RANGE;
 
 					int start = Math.max(0, firstVisible() - list.getBufferSize().val());
-					int end = Math.min(list.size() - 1, start + totalNum() - 1);
+					int end = Math.min(list.size() - 1, start + needed - 1);
 					if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
 					return IntegerRange.of(start, end);
 				})
@@ -602,8 +605,8 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 * computed by {@link #computeSize(Node)}, and the width is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int index, Node node) {
-			double x = getTotalCellSize() * index;
+		public void layout(int absIndex, Node node) {
+			double x = getTotalCellSize() * absIndex;
 			double w = list.getCellSize();
 			double h = computeSize(node);
 			node.resizeRelocate(x, 0, w, h);

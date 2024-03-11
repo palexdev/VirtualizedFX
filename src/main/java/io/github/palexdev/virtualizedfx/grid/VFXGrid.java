@@ -15,6 +15,7 @@ import io.github.palexdev.mfxcore.utils.PositionUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
@@ -110,7 +111,7 @@ import java.util.function.Supplier;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>> implements VFXContainer<T> {
+public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>> implements VFXContainer<T>, VFXStyleable {
 	//================================================================================
 	// Properties
 	//================================================================================
