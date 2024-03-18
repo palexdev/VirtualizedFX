@@ -2,12 +2,16 @@ package io.github.palexdev.virtualizedfx.list;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.virtualizedfx.cells.Cell;
-import io.github.palexdev.virtualizedfx.utils.StateMap;
+import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.scene.Node;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.SequencedMap;
 
 /**
  * Immutable object to represent the state of a {@link VFXList} in a specific moment in time. In other words, each and
@@ -153,10 +157,10 @@ public class VFXListState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * @return the map containing the cells by their item
+	 * @return the list containing the cells by their item, as entries because of possible duplicates
 	 * @see StateMap#resolve()
 	 */
-	protected Map<T, C> getCellsByItem() {
+	protected List<Entry<T, C>> getCellsByItem() {
 		return cells.resolve();
 	}
 
@@ -168,11 +172,11 @@ public class VFXListState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * @return the map containing the cells by their item, unmodifiable
+	 * @return the list containing the cells by their item, as entries because of possible duplicates, unmodifiable
 	 * @see StateMap#resolve()
 	 */
-	public Map<T, C> getCellsByItemUnmodifiable() {
-		return Collections.unmodifiableMap(cells.resolve());
+	public List<Entry<T, C>> getCellsByItemUnmodifiable() {
+		return Collections.unmodifiableList(cells.resolve());
 	}
 
 	/**

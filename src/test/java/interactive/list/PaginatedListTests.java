@@ -11,6 +11,7 @@ import io.github.palexdev.virtualizedfx.cells.CellBaseBehavior;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -591,10 +592,12 @@ public class PaginatedListTests {
 		assertCounter(0, 1, 0, 0, 0, 4, 0);
 
 		// Restore old items count, scroll and set all (more)
+		// Also check re-usability (by identity!!!)
+		ObservableList<Integer> tmp = items(100, 100);
 		robot.interact(() -> {
-			list.getItems().setAll(items(100, 50));
+			list.getItems().setAll(tmp.subList(0, 50));
 			list.scrollToLast();
-			list.getItems().setAll(items(100, 100));
+			list.getItems().setAll(tmp);
 		});
 		assertState(list, IntegerRange.of(38, 51));
 		assertCounter(0, 3, 16, 16, 4, 0, 0); // 3 layouts, one scroll, two updates

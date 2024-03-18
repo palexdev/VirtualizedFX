@@ -5,7 +5,7 @@ import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
-import io.github.palexdev.virtualizedfx.utils.StateMap;
+import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.collections.ObservableList;
@@ -242,10 +242,10 @@ public class VFXGridState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * @return the map containing the cells by their item
+	 * @return the list containing the cells by their item, as entries because of possible duplicates
 	 * @see StateMap#resolve()
 	 */
-	protected Map<T, C> getCellsByItem() {
+	protected List<Map.Entry<T, C>> getCellsByItem() {
 		return cells.resolve();
 	}
 
@@ -257,11 +257,11 @@ public class VFXGridState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * @return the map containing the cells by their item, unmodifiable
+	 * @return the list containing the cells by their item, as entries because of possible duplicates, unmodifiable
 	 * @see StateMap#resolve()
 	 */
-	public Map<T, C> getCellsByItemUnmodifiable() {
-		return Collections.unmodifiableMap(cells.resolve());
+	public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
+		return Collections.unmodifiableList(cells.resolve());
 	}
 
 	/**

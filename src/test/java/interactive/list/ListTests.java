@@ -7,6 +7,7 @@ import io.github.palexdev.virtualizedfx.cells.CellBase;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -518,12 +519,14 @@ public class ListTests {
 		assertCounter(0, 1, 0, 0, 0, 2, 0);
 
 		// Restore old items count, scroll and set all (more)
+		// Also check re-usability (by identity!!!)
+		ObservableList<Integer> tmp = items(100, 100);
 		robot.interact(() -> {
-			list.getItems().setAll(items(100, 50));
+			list.getItems().setAll(tmp.subList(0, 50));
 			list.setVPos(Double.MAX_VALUE);
 		});
 		counter.reset();
-		robot.interact(() -> list.getItems().setAll(items(100, 100)));
+		robot.interact(() -> list.getItems().setAll(tmp));
 		assertState(list, IntegerRange.of(35, 51));
 		assertCounter(0, 1, 2, 2, 0, 0, 0);
 

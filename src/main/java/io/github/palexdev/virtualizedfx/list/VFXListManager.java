@@ -4,7 +4,7 @@ import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.utils.ExcludingRange;
-import io.github.palexdev.virtualizedfx.utils.StateMap;
+import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.InvalidationListener;
@@ -475,7 +475,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * For any index in the given {@link ExcludingRange}, a cell is needed. Also, it needs to be updated by index and item both.
 	 * This cell can come from three sources:
 	 * <p> 1) from the current state if it's not empty yet. Since the cells are stored in a {@link SequencedMap}, one
-	 * is removed by calling {@link StateMap#poll()}.
+	 * is removed by calling {@link StateMap#pollFirst()}.
 	 * <p> 2) from the {@link VFXCellsCache} if not empty
 	 * <p> 3) created by the cell factory
 	 * <p></p>
@@ -495,7 +495,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 			T item = helper.indexToItem(index);
 			C c;
 			if (!current.isEmpty()) {
-				c = current.getCells().poll().getValue();
+				c = current.getCells().pollFirst().getValue();
 				c.updateIndex(index);
 				c.updateItem(item);
 			} else {

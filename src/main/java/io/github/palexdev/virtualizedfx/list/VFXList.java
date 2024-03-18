@@ -276,7 +276,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	/**
 	 * Delegate for {@link VFXListState#getCellsByItemUnmodifiable()}
 	 */
-	public Map<T, C> getCellsByItemUnmodifiable() {
+	public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
 		return getState().getCellsByItemUnmodifiable();
 	}
 

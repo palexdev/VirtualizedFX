@@ -14,7 +14,7 @@ import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
 import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedListHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedListHelper.VerticalHelper;
-import io.github.palexdev.virtualizedfx.utils.StateMap;
+import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -28,6 +28,7 @@ import javafx.geometry.Orientation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -135,9 +136,10 @@ public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implem
 		IntegerRange range = getVisibleRange();
 		if (Utils.INVALID_RANGE.equals(range)) return Map.of();
 		Map<T, C> map = new HashMap<>();
+		SequencedMap<Integer, C> byIndex = getCellsByIndexUnmodifiable();
 		for (Integer i : range) {
 			T t = getItems().get(i);
-			map.put(t, getCellsByItemUnmodifiable().get(t));
+			map.put(t, byIndex.get(i));
 		}
 		return map;
 	}

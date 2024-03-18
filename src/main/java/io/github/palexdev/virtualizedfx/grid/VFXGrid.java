@@ -19,6 +19,7 @@ import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
+import io.github.palexdev.virtualizedfx.list.VFXListState;
 import io.github.palexdev.virtualizedfx.properties.VFXGridStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.*;
@@ -308,9 +309,11 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {return getState().getCellsByIndexUnmodifiable();}
 
 	/**
-	 * Delegate for {@link VFXGridState#getCellsByItemUnmodifiable()}
+	 * Delegate for {@link VFXListState#getCellsByItemUnmodifiable()}
 	 */
-	public Map<T, C> getCellsByItemUnmodifiable() {return getState().getCellsByItemUnmodifiable();}
+	public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
+		return getState().getCellsByItemUnmodifiable();
+	}
 
 	/**
 	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}.
