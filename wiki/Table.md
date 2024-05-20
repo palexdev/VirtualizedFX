@@ -32,7 +32,7 @@
 
 | Property             | Description                                                                               | CSS Property              | Type                    | Default Value |
 |----------------------|-------------------------------------------------------------------------------------------|---------------------------|-------------------------|---------------|
-| 6) cellHeight        | Specifies the height of each row (cells implicitly)                                       | -vfx-cell-height          | Double                  | 32.0          |
+| 6) rowHeight         | Specifies the height of each row (cells implicitly)                                       | -vfx-row-height           | Double                  | 32.0          |
 | 7) columnSize        | Specifies the width and height of each column                                             | -vfx-column-size          | Size                    | [100.0, 32.0] |
 | 8) columnsLayoutMode | Specifies whether the columns should have fixed sizes                                     | -vfx-columns-layout-mode  | Enum(ColumnsLayoutMode) | FIXED         |
 | 9) bufferSize        | Specifies the extra number of rows and columns to render (makes scrolling smoother)       | -vfx-buffer-size          | Enum(BufferSize)        | Standard(2)   |
@@ -177,6 +177,7 @@ with [ T ] are table-related meaning that they could affect the whole system or 
        
        dispose();
        this.cells = map;
+       this.columnsRange = range;
        onCellsChanged(); // To update children
        // Make sure to also call requestViewportLayout() where appropriate to update the layout
        ```
@@ -227,9 +228,59 @@ with [ T ] are table-related meaning that they could affect the whole system or 
     the table manager's method is also responsible for setting it for columns that are added/removed.  
     At init time, since the listener is added in the skin, the method needs to be called with a `null` parameter, in such
     occasion, there's no need to update the rows of course.
-3) **[ T ]** Same algorithm used for the other containers when the cell factory changed.  
+3) **[ T ]** ~~Same algorithm used for the other containers when the cell factory changed.  
    Current rows are to be **disposed**, which means that all the **cells** are going to be **cached** by the "parent" column.  
-   When new rows are created the old cells will be reused. No need to recompute positions and sizes.
+   When new rows are created the old cells will be reused. No need to recompute positions and sizes.~~  
+   Let's not forget we are dealing with a bi-state component, there's the **viewport state** and then the **rows' state**
+   (each row has its own state). The first is used to keep track of which and how many rows there are in the viewport.
+   The second is used by each row to know which and how many items/cells they should contain.  
+   A consequence of such architecture, in this specific case, is that the viewport state becomes invalid, but the state of
+   each row technically remains valid. Which means that there is no need to cache the cells and thus wasting performance,
+   it's enough to move them over to the new respective row. Let's see a pseudo-code example:  
+   ```java
+   // Row factory changes
+   // As usual we delegate the update to the manager...
+   VFXTableState<T> state = ...; // Current state
+   // Make sure we can create a valid new state before the actual computation
+   
+   // Ranges do not change, as well as positions
+   // Be careful though, if the old state is EMPTY then we can't take the ranges from it, but rather we need to ask the VFXTableHelper
+   IntegerRange rowsRange = (state != VFXTableState.EMPTY) ? state.getRowsRange() : helper.rowsRange();
+   IntegerRange columnsRange = (state != VFXTableState.EMPTY) ? state.getColumnsRange() : helper.columnsRange();
+   VFXTableState<T> newState = new VFXTableState<>(...);
+   
+   // Iterate over the rows range and create the new rows using the new factory
+   Function<T, VFXTableRow<T>> newFn = ...;
+   for (Integer idx : rowsRange) {
+       T item = ...; // get item at index idx
+       VFXTableRow<T> oldRow = state.getRows().get(idx); // Get the old row at the same index
+       VFXTableRow<T> row = newFn.apply(item);
+       // Here's where magic happens
+       row.copyState(oldRow);
+       // As the name suggests, we are telling the new row to copy the state of the old row, what this means is:
+       // 1) The new row will have the same index of the old one
+       // 2) The new row will have the same columns range of the old one
+       // 3) The new row will use the cells map of the old one, and the latter will have its cells map instance set to null (important for disposal, we don't want to dispose the cells too!)
+       // 4) Each cell in the map has to be updated by invoking cell.updateRow(this) so that every cell can store the correct row instance
+       // 5) Add the cells to the row by invoking onCellsChanged()
+       
+       // Beware!!
+       // The above code is a little different in reality. If the old state is EMPTY then we can't get any old row to copy the state from
+       // Which means that the new row will need a new state by invoking row.updateIndex(idx) and row.updateColumns(...)
+   
+       // Finally we can add 'row' to the new state
+       newState.addRow(idx, item, row);
+   }
+   
+   // The above code should execute only if preliminary checks have passed
+   // The below code will run always
+   state.dispose(); // Dispose the old state, the old rows are not needed anymore. Beware, this will !!clear!! and cache the rows
+   table.getCache().clear(); // This will complete the disposal of the old rows by removing them from the cache and also invoking the dispose() method on each of them
+   
+   // The below code runs only if a new state was generated newState != null
+   newState.setRowsChanged(true); // This will trigger a layout call
+   table.update(newState);
+   ```
 4) **[ R ]** When the **vertical** position changes, I believe the same algorithm used for the other containers can be used,
    it's enough to update the rows with the items that are not in the viewport anymore (which implicitly means updating the cells).  
    When the **horizontal** position changes then we need to iterate over each row and update their columns range.
@@ -303,6 +354,52 @@ So, we still would need to get its index by using `indexOf(...)` (**NOT feasible
 **However**, this is only true in case cells are mapped as `[Integer -> Cell]`.  
 As discussed [above, at point 2](#_on-changeseventsactions_); in case we use a `StateMap`, we could retrieve and
 manipulate the cells by using the **column as a key**.
+
+### The last column
+
+In table components, there is a common convention about the last column: _if the container is bigger than all the
+columns' width combined, then the last column should take up all the remaining empty space_.  
+This is quite problematic for the architecture of VFXTable. In other words, the last column is breaking one of the core
+rules of virtualization: all cells/subcomponents must have fixed size, so that values such as the max scroll, estimated/virtual
+length,... can be computed quickly and without fail.  
+Not only that, since the virtualized containers react to geometry changes (width/height changes), in terms of layout,
+only and only if the range of items to display also changes. This assumption is also broken by the aforementioned convention,
+because every time the table's width changes we must ensure not only that the last column is resized properly, but also the
+rows and their cells. All of this simply means: _potential performance issues_.  
+There are indeed ways to mitigate it, let's analyze the situation by checking what needs to be updated and how:
+  
+**Issues**
+1) **virtualMaxX:** we may assume the estimated width is simply `columnsNum * columnsWidth` but doing so will lead to an
+   incorrect value in case the table's width is bigger. If we have 5 columns of 100px width each, and the table is 500px wide,
+   the estimated width will be **600px** not 500px because the last column must be resized to 200px.
+2) **layoutColumns:** to ensure the last columns is sized correctly, every time the table's width changes we must invoke
+   the `layoutColumns()` method. However, doing so is a waste, because technically we just have to resize the last column.
+3) **layoutRows:** as for the rows, there is no other way than resize all the rows in the viewport by calling `layoutRows()`.
+4) **layoutCells:** the `layoutRows()` invocation will also lead to the layout of all the cells, and this is also a waste
+   because the only cells to resize are the last column ones. Hence, we need to perform a partial layout.
+
+**Solutions**
+1) We could modify the computation as follows `Math.max(tableWidth, columnsNum * columnsWidth)`. In **FIXED** layout mode,
+   there is only one scenario for the last column to be bigger than the fixed size: when the table is bigger than `columnsNum * columnsWidth`.
+   In other words, if the table's width is greater than the estimated width, than that's our `virtualMaxX`.  
+  
+_**Note:** before invoking the layout methods, we must determine where and how to do it. There are two places that can catch
+such changes: the manager's `onGeometryChanged()` and the skin's listener. The issue about the first one is that it also
+triggers for height changes, so we may end up calling the layout methods when unnecessary. On the other hand the second
+place does not have such issue, but does not allow for easy customization on the user-end.  
+**Ideally we should offer an in-between solution**._
+
+2) We could modify the method to accept an index parameter, which basically means we want to lay out the columns starting
+   from the given index to the end given by the current columns range. If the index is -1 or outside the range, simply
+   perform a full layout. This is also good to support partial layout for the **VARIABLE** layout mode.  
+   Unfortunately, we can't retrieve the index of a column without relying on the too slow `indexOf()` method, so instead
+   we have to pass the starting column as parameter, figure out it's index in a loop, and then use the index on the cells too.
+3) The only change we could make to the rows would be to bind their width to the table's width. However, it is not very
+   useful. Since we need to identify such changes, and consequently trigger the layout methods (when needed), there is no
+   benefit in automatizing it for the rows; after all, their layout method will also handle the cells.  
+   For this reason, we should modify this method too to accept an index parameter which is going to tell us which cells
+   need to be laid out, in other words, it would allow for a partial layout here too.
+4) Same 3, basically pass the index parameter here too and perform a partial layout when a full one is not needed.
 
 ### Variable layout mode
 

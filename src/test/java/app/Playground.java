@@ -1,87 +1,103 @@
 package app;
 
-import interactive.TestFXUtils.SimpleCell;
-import interactive.grid.GridTestUtils.Grid;
+import interactive.table.TableTestUtils.Table;
+import interactive.table.TableTestUtils.User;
 import io.github.palexdev.mfxcore.base.TriConsumer;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.events.WhenEvent;
 import io.github.palexdev.mfxcore.utils.EnumUtils;
-import io.github.palexdev.mfxcore.utils.PositionUtils;
-import io.github.palexdev.mfxcore.utils.fx.ScrollUtils;
-import io.github.palexdev.mfxeffects.animations.MomentumTransition;
-import io.github.palexdev.virtualizedfx.grid.VFXGridHelper;
-import javafx.animation.Interpolator;
+import io.github.palexdev.virtualizedfx.cells.TableCell;
+import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
+import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import utils.NodeMover;
 
-import static utils.Utils.items;
+import static utils.Utils.debugView;
 
 public class Playground extends Application {
+	private final int cnt = 20;
 
 	@Override
 	public void start(Stage primaryStage) {
-		StackPane pane = new StackPane();
+		Table table = new Table(User.users(cnt));
+		table.setColumnsWidth(80.0);
+		table.setExtraAutosizeWidth(50.0);
+		table.switchColumnsLayoutMode();
+		table.autosizeColumns();
+
+		table.getColumns().forEach(c -> c.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+			VFXDefaultTableColumn<User, ? extends TableCell<User>> dc = (VFXDefaultTableColumn<User, ? extends TableCell<User>>) c;
+			if (e.getButton() == MouseButton.PRIMARY) {
+				dc.setIconAlignment(
+					EnumUtils.next(HPos.class, dc.getIconAlignment())
+				);
+			}
+		}));
+
+		StackPane pane = new StackPane() {
+/*			@Override
+			protected void layoutChildren() {
+				table.resize(getWidth() - 200.0, getHeight());
+				positionInArea(table, 0, 0, getWidth(), getHeight(), 0, getInsets(), HPos.LEFT, VPos.CENTER, true);
+			}*/
+		};
 		pane.setAlignment(Pos.TOP_LEFT);
 		pane.setPadding(InsetsBuilder.all(20));
+		pane.getChildren().add(table);
 
-		Grid grid = new Grid(items(200));
-		//grid.setBufferSize(BufferSize.standard());
-		//grid.setColumnsNum(10);
-		grid.setSpacing(10);
-		grid.setAlignment(Pos.CENTER);
-		//grid.setMaxSize(400, 400);
-		pane.getChildren().add(grid);
+		WhenEvent.intercept(table, MouseEvent.MOUSE_CLICKED)
+			.condition(e -> e.getButton() == MouseButton.SECONDARY)
+			.process(e -> table.autosizeColumns())
+			.asFilter()
+			.register();
 
 		TriConsumer<Boolean, Double, Integer> scrollFn = (b, d, m) -> {
 			if (b) {
-				grid.setHPos(grid.getHPos() + d * m);
+				table.setHPos(table.getHPos() + d * m);
 			} else {
-				grid.setVPos(grid.getVPos() + d * m);
+				table.setVPos(table.getVPos() + d * m);
 			}
 		};
 
-		WhenEvent.intercept(grid, ScrollEvent.SCROLL)
+		WhenEvent.intercept(table, ScrollEvent.SCROLL)
 			.process(e -> {
-				ScrollUtils.ScrollDirection sd = ScrollUtils.determineScrollDirection(e);
-				int mul = switch (sd) {
-					case UP, RIGHT -> -1;
-					case DOWN, LEFT -> 1;
-				};
-				MomentumTransition.fromTime(50, 500)
+				double delta = e.isShiftDown() ? e.getDeltaX() : e.getDeltaY();
+				if (delta == 0) return;
+				int mul = (delta > 0) ? -1 : 1;
+
+/*				MomentumTransition.fromTime(50, 500)
 					.setOnUpdate(d -> scrollFn.accept(e.isShiftDown(), d, mul))
 					.setInterpolatorFluent(Interpolator.EASE_OUT)
-					.play();
+					.play();*/
+				scrollFn.accept(e.isShiftDown(), 30.0, mul);
 			})
 			.asFilter()
 			.register();
-		NodeMover.install(pane);
+		//NodeMover.install(pane);
 
-/*		When.onInvalidated(grid.widthProperty())
-			.then(w -> grid.autoArrange())
-			.listen();*/
-
-		Scene scene = new Scene(pane, 400, 400);
+		Scene scene = new Scene(pane, 600, 400);
 		primaryStage.setScene(scene);
 		primaryStage.setOnHidden(e -> Platform.exit());
 		primaryStage.show();
 		primaryStage.centerOnScreen();
 
-		showDebugInfo(grid);
-		//debugView(null, pane);
+		//showDebugInfo(table);
+		debugView(null, pane);
 	}
 
-	void showDebugInfo(Grid grid) {
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+	void showDebugInfo(Table table) {
+		VFXTableHelper<User> helper = table.getHelper();
 		VBox pane = new VBox(30);
 		pane.setPrefWidth(400);
 		pane.setPadding(InsetsBuilder.all(10));
@@ -97,15 +113,15 @@ public class Playground extends Application {
 		Label scrollable = new Label();
 		scrollable.textProperty().bind(StringBindingBuilder.build()
 			.setMapper(() -> "Scrollable X/Y: %f  /  %f".formatted(helper.maxHScroll(), helper.maxVScroll()))
-			.addSources(helper.virtualMaxXProperty(), grid.widthProperty())
-			.addSources(helper.virtualMaxYProperty(), grid.helperProperty())
+			.addSources(helper.virtualMaxXProperty(), table.widthProperty())
+			.addSources(helper.virtualMaxYProperty(), table.helperProperty())
 			.get()
 		);
 
 		Label positions = new Label();
 		positions.textProperty().bind(StringBindingBuilder.build()
-			.setMapper(() -> "VPos/HPos: %f  /  %f".formatted(grid.getVPos(), grid.getHPos()))
-			.addSources(grid.vPosProperty(), grid.hPosProperty())
+			.setMapper(() -> "VPos/HPos: %f  /  %f".formatted(table.getVPos(), table.getHPos()))
+			.addSources(table.vPosProperty(), table.hPosProperty())
 			.get()
 		);
 
@@ -116,22 +132,7 @@ public class Playground extends Application {
 			.get()
 		);
 
-		Label alignment = new Label();
-		alignment.textProperty().bind(StringBindingBuilder.build()
-			.setMapper(() -> "Alignment: %s".formatted(grid.getAlignment()))
-			.addSources(grid.alignmentProperty())
-			.get()
-		);
-
-		Button action = new Button("Change alignment");
-		action.setOnAction(e -> {
-			Pos current = grid.getAlignment();
-			Pos next = EnumUtils.next(Pos.class, current);
-			while (PositionUtils.isBaseline(next)) next = EnumUtils.next(Pos.class, next);
-			grid.setAlignment(next);
-		});
-
-		pane.getChildren().addAll(estimate, scrollable, positions, ranges, alignment, action);
+		pane.getChildren().addAll(estimate, scrollable, positions, ranges);
 
 		Stage stage = new Stage();
 		Scene scene = new Scene(pane);

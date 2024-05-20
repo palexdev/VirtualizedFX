@@ -25,6 +25,10 @@ module VirtualizedFX {
 	// Properties
 	exports io.github.palexdev.virtualizedfx.properties;
 
+	// Table
+	exports io.github.palexdev.virtualizedfx.table;
+	exports io.github.palexdev.virtualizedfx.table.defaults;
+
 	// Utils
 	exports io.github.palexdev.virtualizedfx.utils;
 }

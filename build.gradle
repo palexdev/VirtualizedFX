@@ -29,6 +29,7 @@ dependencies {
     testImplementation "org.testfx:testfx-junit5:$testfx"
     testImplementation "io.github.palexdev:scenicview:$scenicView"
     testImplementation "net.datafaker:datafaker:$dataFaker"
+    testImplementation "com.google.code.gson:gson:$gson"
 }
 
 java {

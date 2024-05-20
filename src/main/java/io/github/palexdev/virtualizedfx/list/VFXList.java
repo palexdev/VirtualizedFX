@@ -265,7 +265,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	}
 
 	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxXProperty(()}
+	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}
 	 */
 	@Override
 	public ReadOnlyDoubleProperty virtualMaxXProperty() {

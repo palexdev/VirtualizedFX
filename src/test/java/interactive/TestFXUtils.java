@@ -11,6 +11,7 @@ import org.testfx.api.FxToolkit;
 
 import java.util.concurrent.TimeoutException;
 
+import static interactive.table.TableTestUtils.rowsCounter;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -19,6 +20,7 @@ public class TestFXUtils {
 	// Static Properties
 	//================================================================================
 	public static final Counter counter = new Counter();
+	public static final double FP_ASSERTIONS_DELTA = 2.0;
 
 	//================================================================================
 	// Constructors
@@ -37,6 +39,11 @@ public class TestFXUtils {
 		assertEquals(cached, counter.getToCache());
 		assertEquals(disposed, counter.getDisposed());
 		counter.reset();
+	}
+
+	public static void resetCounters() {
+		counter.reset();
+		rowsCounter.reset();
 	}
 
 	public static StackPane setupStage() {
