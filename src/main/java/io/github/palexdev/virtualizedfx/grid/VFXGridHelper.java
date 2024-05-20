@@ -12,7 +12,6 @@ import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.virtualizedfx.cells.Cell;
-import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -24,8 +23,9 @@ import java.util.Optional;
 
 /**
  * This interface is a utility API for {@link VFXGrid}, despite computations not depending on other properties
- * (some VFXList values depend on the orientation), it's still a nice way to adhere to the encapsulation and separation of
- * concerns principles. Has one concrete implementation: {@link DefaultHelper}.
+ * (some VFXList values depend on the orientation, for example),
+ * it's still a nice way to adhere to the encapsulation and separation of concerns principles.
+ * Has one concrete implementation: {@link DefaultHelper}.
  */
 public interface VFXGridHelper<T, C extends Cell<T>> {
 
@@ -149,7 +149,7 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	/**
 	 * Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
 	 * <p>
-	 * This property specifies the translation of the viewport, the calculation depends on the implementation.
+	 * This property specifies the translation of the viewport, the value depends on the implementation.
 	 */
 	ReadOnlyObjectProperty<Position> viewportPositionProperty();
 
@@ -161,14 +161,13 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Lays out the given node
-	 * The row and column indexes are necessary to identify the position of a cell compared to the others
+	 * Lays out the given node.
+	 * The row and column layout indexes are necessary to identify the position of a cell among the others
 	 * (comes before/after, above/below).
 	 *
-	 * @param absRowIndex    the absolute row index of the given node/cell, see {@link VFXGridSkin#layout()}
-	 * @param absColumnIndex the absolute column index of the given node/cell, see {@link VFXGridSkin#layout()}
+	 * @see VFXGridSkin#layout()
 	 */
-	void layout(int absRowIndex, int absColumnIndex, Node node);
+	void layout(int rowLayoutIndex, int columnLayoutIndex, Node node);
 
 	/**
 	 * @return the total size of each cell, given by the {@link VFXGrid#cellSizeProperty()} summed to the horizontal and
@@ -201,17 +200,17 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		// TODO can't find a better algorithm, probably with some nasty stupid math formula that I hate so much
 		VFXGrid<T, C> grid = getGrid();
 		int cnt = 0;
-		int nColumns = maxColumns();
+		int maxColumns = maxColumns();
 		IntegerRange rRange = rowsRange();
 		IntegerRange cRange = columnsRange();
-		int nCells = cRange.diff() + 1;
+		int nColumns = cRange.diff() + 1;
 		for (Integer rIdx : rRange) {
-			int linear = GridUtils.subToInd(nColumns, rIdx, cRange.getMax());
+			int linear = GridUtils.subToInd(maxColumns, rIdx, cRange.getMax());
 			if (linear < grid.size()) {
-				cnt += nCells;
+				cnt += nColumns;
 				continue;
 			}
-			int rowStart = GridUtils.subToInd(nColumns, rIdx, cRange.getMin());
+			int rowStart = GridUtils.subToInd(maxColumns, rIdx, cRange.getMin());
 			int max = Math.min(grid.size(), linear) - 1;
 			if (max < rowStart) break;
 			cnt += max - rowStart + 1;
@@ -238,8 +237,8 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	/**
 	 * Forces the {@link VFXGrid#vPosProperty()} and {@link VFXGrid#hPosProperty()} to be invalidated.
 	 * This is simply done by calling the respective setters with their current respective values. Those two properties
-	 * will automatically call {@link #maxVScroll()} and {@link #maxHScroll()} to ensure the values are correct. This is
-	 * automatically invoked by the {@link VFXGridManager} when needed.
+	 * will automatically call {@link #maxVScroll()} and {@link #maxHScroll()} to ensure the values are correct.
+	 * Automatically invoked by the {@link VFXGridManager} when needed.
 	 */
 	default void invalidatePos() {
 		VFXGrid<T, C> grid = getGrid();
@@ -248,7 +247,7 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Converts the given index to an item (shortcut for {@code getList().getItems().get(index)}).
+	 * Converts the given index to an item (shortcut for {@code getGrid().getItems().get(index)}).
 	 */
 	default T indexToItem(int index) {
 		return getGrid().getItems().get(index);
@@ -264,7 +263,7 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 
 	/**
 	 * Converts the given item to a cell. The result is either on of the cells cached in {@link VFXCellsCache} that
-	 * is updated with the given item, or a totally new one created by the {@link VFXList#cellFactoryProperty()}.
+	 * is updated with the given item, or a totally new one created by the {@link VFXGrid#cellFactoryProperty()}.
 	 */
 	default C itemToCell(T item) {
 		VFXGrid<T, C> grid = getGrid();
@@ -301,18 +300,18 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	 * the buffer size, the number of items, the cell size and the vertical spacing.
 	 * <p> - the viewport position, a computation that is at the core of virtual scrolling. The viewport, which contains the cells,
 	 * is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
-	 * For both the horizontal and vertical position we use the same technique, just using the appropiate values according
+	 * For both the horizontal and vertical positions, we use the same technique, just using the appropriate values according
 	 * to the axis we are working on.
 	 * First we get the range of rows/columns to display, then the total cell size given by {@link #getTotalCellSize()},
 	 * yes, the spacing also affects the position. Then we compute the ranges to the first visible row/column, which
 	 * are given by {@code IntegerRange.of(range.getMin(), first())}, in other words we limit the 'complete' ranges to the
 	 * start buffer including the first row/column after the buffer. The number of indexes in the newfound ranges
-	 * (given by {@link IntegerRange#diff()}) is multiplied by the total cell size, this way we found the number of pixels to the
-	 * first visible cell, {@code pixelsToFirst}. We are missing only one last information, how much of the first row/column
+	 * (given by {@link IntegerRange#diff()}) is multiplied by the total cell size, this way we are finding the number of pixels to the
+	 * first visible cell, {@code pixelsToFirst}. We are missing only one last piece of information: how much of the first row/column
 	 * do we actually see? We call this amount {@code visibleAmountFirst} and it's given by {@code pos % totalCellSize}.
-	 * Finally, the viewport's position is given by {@code -(pixelsToFirst + visibleAmountFirst)}
+	 * Finally, the viewport's position is given by this formula {@code -(pixelsToFirst + visibleAmountFirst)}
 	 * (for both hPos and vPos of course).
-	 * While it's true that the calculations are more complex and 'needy', it's important to node that this approach
+	 * While it's true that the calculations are more complex and 'needy', it's important to note that this approach
 	 * allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the top
 	 * or bottom anymore.
 	 * The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
@@ -463,11 +462,14 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		/**
 		 * {@inheritDoc}
 		 * <p></p>
-		 * Given by {@code Math.ceil(gridWidth / totalCellWidth)}.
+		 * Given by {@code Math.ceil(gridWidth / totalCellWidth)}. 0 if the total cells' width is also 0.
 		 */
 		@Override
 		public int visibleColumns() {
-			return (int) Math.ceil(grid.getWidth() / getTotalCellSize().getWidth());
+			double width = getTotalCellSize().getWidth();
+			return width > 0 ?
+				(int) Math.ceil(grid.getWidth() / width) :
+				0;
 		}
 
 		/**
@@ -532,7 +534,10 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		 */
 		@Override
 		public int visibleRows() {
-			return (int) Math.ceil(grid.getHeight() / getTotalCellSize().getHeight());
+			double height = getTotalCellSize().getHeight();
+			return height > 0 ?
+				(int) Math.ceil(grid.getHeight() / height) :
+				0;
 		}
 
 		/**
@@ -594,9 +599,9 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		 * {@code totalCellHeight * rowIndex}, the width and height are given by the {@link VFXGrid#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int absRowIndex, int absColumnIndex, Node node) {
-			double x = getTotalCellSize().getWidth() * absColumnIndex;
-			double y = getTotalCellSize().getHeight() * absRowIndex;
+		public void layout(int rowLayoutIndex, int columnLayoutIndex, Node node) {
+			double x = getTotalCellSize().getWidth() * columnLayoutIndex;
+			double y = getTotalCellSize().getHeight() * rowLayoutIndex;
 			double w = grid.getCellSize().getWidth();
 			double h = grid.getCellSize().getHeight();
 			node.resizeRelocate(x, y, w, h);

@@ -244,22 +244,6 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	}
 
 	/**
-	 * Delegate for {@link ListProperty#sizeProperty()}.
-	 */
-	@Override
-	public ReadOnlyIntegerProperty sizeProperty() {
-		return items.sizeProperty();
-	}
-
-	/**
-	 * Delegate for {@link ListProperty#emptyProperty()}
-	 */
-	@Override
-	public ReadOnlyBooleanProperty emptyProperty() {
-		return items.emptyProperty();
-	}
-
-	/**
 	 * Delegate for {@link VFXListState#getRange()}
 	 */
 	public IntegerRange getRange() {
@@ -280,11 +264,17 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		return getState().getCellsByItemUnmodifiable();
 	}
 
+	/**
+	 * Delegate for {@link VFXListHelper#virtualMaxXProperty(()}
+	 */
 	@Override
 	public ReadOnlyDoubleProperty virtualMaxXProperty() {
 		return getHelper().virtualMaxXProperty();
 	}
 
+	/**
+	 * Delegate for {@link VFXListHelper#virtualMaxYProperty()}
+	 */
 	@Override
 	public ReadOnlyDoubleProperty virtualMaxYProperty() {
 		return getHelper().virtualMaxYProperty();
@@ -427,6 +417,10 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	/**
 	 * {@inheritDoc}
 	 * <p></p>
+	 * Also, the default implementation (see {@link VFXListHelper.VerticalHelper} or {@link VFXListHelper.HorizontalHelper}), adds
+	 * double the number specified by the enum constant, because these buffer cells are added both at the top and at the
+	 * bottom of the container. The default value is {@link BufferSize#MEDIUM}.
+	 * <p>
 	 * Can be set in CSS via the property: '-vfx-buffer-size'.
 	 */
 	@Override
@@ -654,11 +648,25 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		this.helperFactory.set(helperFactory);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p></p>
+	 * In case the orientation is set to {@link Orientation#VERTICAL}, this is to be considered a 'virtual' position,
+	 * as the container will never reach unreasonably high values for performance reasons.
+	 * See {@link VFXListHelper.VerticalHelper} to understand how virtual scroll is handled.
+	 */
 	@Override
 	public DoubleProperty vPosProperty() {
 		return vPos;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p></p>
+	 * In case the orientation is set to {@link Orientation#HORIZONTAL}, this is to be considered a 'virtual' position,
+	 * as the container will never reach unreasonably high values for performance reasons.
+	 * See {@link VFXListHelper.HorizontalHelper} to understand how virtual scroll is handled.
+	 */
 	@Override
 	public DoubleProperty hPosProperty() {
 		return hPos;

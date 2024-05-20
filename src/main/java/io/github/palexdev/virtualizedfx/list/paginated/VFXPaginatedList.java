@@ -6,7 +6,7 @@ import io.github.palexdev.mfxcore.builders.bindings.IntegerBindingBuilder;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
-import io.github.palexdev.virtualizedfx.base.Paginated;
+import io.github.palexdev.virtualizedfx.base.VFXPaginated;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * Simple and naive implementation of a paginated variant of {@link VFXList}.
  * The default style class is extended to: '.vfx-list.paginated'.
  * <p>
- * Extends {@link VFXList}, implements {@link Paginated}, has its own skin {@link VFXPaginatedListSkin} and behavior
+ * Extends {@link VFXList}, implements {@link VFXPaginated}, has its own skin {@link VFXPaginatedListSkin} and behavior
  * {@link VFXPaginatedListSkin}.
  * <p>
  * A: What do you mean by naive? <p>
@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
  * {@link #helperFactoryProperty()} that produces helpers of type {@link VFXListHelper}, don't do that!
  * You may end up with invalid states, thus a broken component.
  */
-public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implements Paginated<T> {
+public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implements VFXPaginated<T> {
 	//================================================================================
 	// Properties
 	//================================================================================

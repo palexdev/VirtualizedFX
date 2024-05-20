@@ -81,7 +81,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 	 * <p>
 	 * Here's the list:
 	 * <p> - Listener on {@link VFXGrid#stateProperty()}, this is crucial to update the viewport's children and
-	 * invoke {@link VFXGrid#requestViewportLayout()} if {@link VFXGridState#haveCellsChanged()} is true
+	 * invoke {@link VFXGrid#requestViewportLayout()} if {@link VFXGridState#haveCellsChanged()} is {@code true}
 	 * <p> - Listener on {@link VFXGrid#needsViewportLayoutProperty()}, this is crucial because invokes {@link #layout()}
 	 * <p> - Listener on {@link VFXGrid#helperProperty()}, this is crucial because it's responsible for binding the
 	 * viewport's translate properties to the {@link VFXGridHelper#viewportPositionProperty()}
@@ -169,7 +169,8 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 	 * {@link VFXGridState#getCellsByIndex()}. For the actual layout, however, we use two counters because the layout
 	 * is 'absolute'. Meaning that the row and column indexes are irrelevant for the cell's position, we just care about
 	 * which comes before/after, above/below. Make sure to also read {@link VFXGridState} to understand how indexes are
-	 * managed for the {@link VFXGrid}.
+	 * managed for the {@link VFXGrid}. In other words, it doesn't matter whether our range is [1, 5] or [4, 6] or whatever,
+	 * the layout index will always start from 0 and increment towards the end of the range.
 	 * <p>
 	 * The layout is performed by {@link VFXGridHelper#layout(int, int, Node)}, the two aforementioned counters are passed
 	 * as arguments.

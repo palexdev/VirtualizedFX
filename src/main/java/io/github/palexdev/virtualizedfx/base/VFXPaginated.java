@@ -6,7 +6,7 @@ import javafx.beans.property.ReadOnlyIntegerProperty;
 /**
  * Defines the common API for every paginated virtualized container offered by VirtualizedFX. Extends {@link VFXContainer}.
  */
-public interface Paginated<T> extends VFXContainer<T> {
+public interface VFXPaginated<T> extends VFXContainer<T> {
 
 	default int getPage() {
 		return pageProperty().get();

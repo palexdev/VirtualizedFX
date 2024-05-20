@@ -509,6 +509,21 @@ public class PaginatedListTests {
 	}
 
 	@Test
+	void testChangeCellSizeTo0(FxRobot robot) {
+		StackPane pane = TestFXUtils.setupStage();
+		PList list = new PList(items(50));
+		robot.interact(() -> pane.getChildren().add(list));
+
+		assertState(list, IntegerRange.of(0, 13));
+		assertCounter(14, 1, 14, 14, 0, 0, 0);
+
+		robot.interact(() -> list.setCellSize(0.0));
+		assertState(list, INVALID_RANGE);
+		assertCounter(0, 1, 0, 0, 0, 14, 4);
+		// The triggered layout is a no-op task anyway, so no worries
+	}
+
+	@Test
 	void testChangeList(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
 		PList list = new PList(items(50));

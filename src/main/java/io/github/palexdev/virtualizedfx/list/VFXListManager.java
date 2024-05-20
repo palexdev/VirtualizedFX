@@ -17,7 +17,7 @@ import java.util.*;
  * this can be considered more like a 'manager' than a behavior. Behaviors typically respond to user input, and then update
  * the component's state. This behavior contains core methods to respond to various properties change in {@link VFXList}.
  * All computations here will generate a new {@link VFXListState}, if possible, and update the list and the
- * layout (indirect, call to {@link VFXList#requestViewportLayout()}).
+ * layout (indirectly, call to {@link VFXList#requestViewportLayout()}).
  * <p>
  * By default, manages the following changes:
  * <p> - geometry changes (width/height changes), {@link #onGeometryChanged()}
@@ -32,7 +32,7 @@ import java.util.*;
  * Last but not least, some of these computations may need to ensure the current vertical and horizontal positions are correct,
  * so that a valid state can be produced. To achieve this, {@link VFXListHelper#invalidatePos()} is called.
  * However, invalidating the positions, also means that the {@link #onPositionChanged()} method could be potentially
- * triggered, thus generating an unwanted 'middle' state. For this reason a special fla {@link #invalidatingPos} is set
+ * triggered, thus generating an unwanted 'middle' state. For this reason a special flag {@link #invalidatingPos} is set
  * to {@code true} before the invalidation, so that the other method will exit immediately. It's reset back to false
  * after the computation or if any of the checks before the actual computation fails.
  */
@@ -170,8 +170,8 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	}
 
 	/**
-	 * This method is responsible for updating the list's state when the {@link VFXList#cellFactoryProperty()}
-	 * changes. Unfortunately, this is always a costly operation because all cells need to be re-created, and the
+	 * This method is responsible for updating the list's state when the {@link VFXList#cellFactoryProperty()} changes.
+	 * Unfortunately, this is always a costly operation because all cells need to be re-created, and the
 	 * {@link VFXCellsCache} cleaned. In fact, the very first operation done by this method is exactly this,
 	 * the disposal of the current/old state and the cleaning of the cache.
 	 * Luckily, this kind of change is likely to not happen very often.
@@ -248,14 +248,16 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * (this index comes from the loop on the range), then we try to remove the cell for this item from the old state.
 	 * If the cell is found, we update it by index and add it to the new state. Note that the index is also excluded from the range.
 	 * <p>
-	 * Now that 'common' cells have been properly updated, the remaining items are processed by the {@link #remainingAlgorithm(ExcludingRange, VFXListState)}.
+	 * Now that 'common' cells have been properly updated, the remaining items are processed by the
+	 * {@link #remainingAlgorithm(ExcludingRange, VFXListState)}.
 	 * <p></p>
 	 * Last notes:
 	 * <p> 1) This is one of those methods that to produce a valid new state needs to validate the list's positions,
 	 * so it calls {@link VFXListHelper#invalidatePos()}
 	 * <p> 2) To make sure the layout is always correct, at the end we always invoke {@link VFXList#requestViewportLayout()}.
 	 * You can guess why from the above example, items 2 and 3 are still in the viewport, but at different indexes,
-	 * which also means at different layout positions. There is no easy way to detect this, so better safe than sorry, always update the layout.
+	 * which also means at different layout positions. There is no easy way to detect this, so better safe than sorry,
+	 * always update the layout.
 	 */
 	protected void onItemsChanged() {
 		invalidatingPos = true;
@@ -414,12 +416,14 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	protected void moveReuseCreateAlgorithm(IntegerRange range, VFXListState<T, C> newState) {
 		VFXList<T, C> list = getNode();
 		VFXListState<T, C> current = list.getState();
-		ExcludingRange eRange = new ExcludingRange(range);
-		for (Integer index : range) {
-			C c = current.removeCell(index);
-			if (c == null) continue;
-			eRange.exclude(index);
-			newState.addCell(index, c);
+		ExcludingRange eRange = ExcludingRange.of(range);
+		if (!current.isEmpty()) {
+			for (Integer index : range) {
+				C c = current.removeCell(index);
+				if (c == null) continue;
+				eRange.exclude(index);
+				newState.addCell(index, c);
+			}
 		}
 		remainingAlgorithm(eRange, newState);
 	}
@@ -510,7 +514,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	/**
 	 * Avoids code duplication. This method checks for three things:
 	 * <p> 1) If the list is empty
-	 * <p> 2) If the cell factory is null
+	 * <p> 2) If the cell factory is {@code null}
 	 * <p> 3) If the cell size is lesser or equal to 0
 	 * <p>
 	 * If any of those checks is true: the list's state is set to {@link VFXListState#EMPTY}, the

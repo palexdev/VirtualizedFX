@@ -6,7 +6,6 @@ import io.github.palexdev.virtualizedfx.list.VFXList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.WeakHashMap;
 import java.util.function.Function;
 
 /**
@@ -28,7 +27,7 @@ import java.util.function.Function;
  * <b>Dev Notes</b>
  * <p>
  * I often thought about optimizing the cache by using a {@code Map} instead of a {@code Queue} to store the cached cells.
- * However, doing so poses a variety of issues that make such an improvement not feasible.
+ * However, doing so poses a variety of issues that make such an improvement not possible.
  * <p></p>
  * <b>Pros</b>
  * <p>
@@ -45,9 +44,8 @@ import java.util.function.Function;
  * If an item is removed from the list, and a mapping is present in the cache, then it becomes invalid. Which means that
  * the cell associated with that item would need to be disposed or moved to the other collection.
  * <p> - T items come from "outside". In this new version of {@code VirtualizedFX}, to simplify the handling of changes in
- * the items' list, mappings of type [Item -> Cell] are used in the state. But to avoid memory leaks, we use maps of type
- * {@link WeakHashMap}. However, for a cache such data structure is not optimal because mappings are automatically removed
- * and garbage collected, but ideally before this happens, the cell would need to be disposed.
+ * the items' list, mappings of type [Item -> Cell] are used in the state. But to avoid memory leaks, old maps are always
+ * cleaned, so that there is not any reference to old items. So, again, we would have to manage this aspect too for the cache.
  * <p></p>
  * Ultimately, the number of cons and the implementation complexity they pose make me think that the refactor would not
  * be worth the effort. Especially considering that I have no empiric proof that it would be more efficient, JMH tests

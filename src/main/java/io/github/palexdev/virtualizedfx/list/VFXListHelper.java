@@ -370,7 +370,10 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 */
 		@Override
 		public int visibleNum() {
-			return (int) Math.ceil(list.getHeight() / getTotalCellSize());
+			double size = getTotalCellSize();
+			return size > 0 ?
+				(int) Math.ceil(list.getHeight() / size) :
+				0;
 		}
 
 		/**
@@ -554,7 +557,10 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 */
 		@Override
 		public int visibleNum() {
-			return (int) Math.ceil(list.getWidth() / getTotalCellSize());
+			double size = getTotalCellSize();
+			return size > 0 ?
+				(int) Math.ceil(list.getWidth() / size) :
+				0;
 		}
 
 		/**

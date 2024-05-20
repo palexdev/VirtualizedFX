@@ -22,7 +22,7 @@ public interface Cell<T> {
 	/**
 	 * Converts the cell to a {@link Node}.
 	 * <p>
-	 * Implementations can follow the following examples:
+	 * Implementations can check these examples:
 	 * <pre>
 	 * {@code
 	 * // Example 1
@@ -73,6 +73,8 @@ public interface Cell<T> {
 	 */
 	void updateItem(T item);
 
+	// TODO implement layout hooks
+
 	/**
 	 * Virtualized containers that make use of a cache to store unneeded cells that may be required again in a second time
 	 * should call this when adding the cell to the cache.
@@ -90,7 +92,7 @@ public interface Cell<T> {
 	default void onDeCache() {}
 
 	/**
-	 * Automatically called by the framework when the cell is not needed anymore. The use can override this to perform
+	 * Automatically called by the framework when the cell is not needed anymore. The user can override this to perform
 	 * some operations before the cell is GCd.
 	 */
 	default void dispose() {}

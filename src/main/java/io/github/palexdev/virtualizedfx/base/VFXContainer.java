@@ -2,11 +2,9 @@ package io.github.palexdev.virtualizedfx.base;
 
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
-import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
-import javafx.geometry.Orientation;
 
 /**
  * Defines the common API for every virtualized container offered by VirtualizedFX.
@@ -37,7 +35,9 @@ public interface VFXContainer<T> {
 	/**
 	 * Specifies the number of items in the data structure.
 	 */
-	ReadOnlyIntegerProperty sizeProperty();
+	default ReadOnlyIntegerProperty sizeProperty() {
+		return itemsProperty().sizeProperty();
+	}
 
 	default boolean isEmpty() {
 		return emptyProperty().get();
@@ -46,30 +46,20 @@ public interface VFXContainer<T> {
 	/**
 	 * Specifies whether the data set is empty.
 	 */
-	ReadOnlyBooleanProperty emptyProperty();
+	default ReadOnlyBooleanProperty emptyProperty() {
+		return itemsProperty().emptyProperty();
+	}
 
-	/**
-	 * Delegate for {@link VFXListHelper#getVirtualMaxX()}
-	 */
 	default double getVirtualMaxX() {
 		return virtualMaxXProperty().get();
 	}
 
-	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}.
-	 */
 	ReadOnlyDoubleProperty virtualMaxXProperty();
 
-	/**
-	 * Delegate for {@link VFXListHelper#getVirtualMaxY()}
-	 */
 	default double getVirtualMaxY() {
 		return virtualMaxYProperty().get();
 	}
 
-	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxYProperty()}.
-	 */
 	ReadOnlyDoubleProperty virtualMaxYProperty();
 
 	default double getVPos() {
@@ -77,9 +67,7 @@ public interface VFXContainer<T> {
 	}
 
 	/**
-	 * Specifies the container's vertical position. In case the orientation is set to {@link Orientation#VERTICAL}, this
-	 * is to be considered a 'virtual' position, as the container will never reach unreasonably high values for performance
-	 * reasons. See {@link VFXListHelper.VerticalHelper} to understand how virtual scroll is handled.
+	 * Specifies the container's vertical position.
 	 */
 	DoubleProperty vPosProperty();
 
@@ -92,9 +80,7 @@ public interface VFXContainer<T> {
 	}
 
 	/**
-	 * Specifies the container's horizontal position. In case the orientation is set to {@link Orientation#HORIZONTAL}, this
-	 * is to be considered a 'virtual' position, as the container will never reach unreasonably high values for performance
-	 * reasons. See {@link VFXListHelper.HorizontalHelper} to understand how virtual scroll is handled.
+	 * Specifies the container's horizontal position.
 	 */
 	DoubleProperty hPosProperty();
 
@@ -109,9 +95,7 @@ public interface VFXContainer<T> {
 	/**
 	 * Specifies the number of extra cells to add to the container; they act as a buffer, allowing scroll to be smoother.
 	 * To avoid edge cases due to the users abusing the system, this is done by using an enumerator which allows up to
-	 * three buffer cells. Also, the default implementation (see {@link VFXListHelper.VerticalHelper} or {@link VFXListHelper.HorizontalHelper}), adds
-	 * double the number specified by the enum constant, because these buffer cells are added both at the top and at the
-	 * bottom of the container. The default value is {@link BufferSize#MEDIUM}.
+	 * three buffer cells.
 	 */
 	StyleableObjectProperty<BufferSize> bufferSizeProperty();
 

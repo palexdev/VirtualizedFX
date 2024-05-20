@@ -76,7 +76,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 	//================================================================================
 
 	/**
-	 * Adds listeners on the component's properties which need to produce a new {@link VFXListState} upon changing.
+	 * Adds listeners to the following component's properties which need to produce a new {@link VFXListState} upon changing.
 	 * <p>
 	 * Here's the list:
 	 * <p> - Listener on {@link VFXList#stateProperty()}, this is crucial to update the viewport's children and

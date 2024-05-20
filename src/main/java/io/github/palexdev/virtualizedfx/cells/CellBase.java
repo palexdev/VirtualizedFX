@@ -43,7 +43,7 @@ public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implement
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final IntegerProperty index = new SimpleIntegerProperty();
+	private final IntegerProperty index = new SimpleIntegerProperty(-1);
 	private final ObjectProperty<T> item = new SimpleObjectProperty<>();
 
 	//================================================================================

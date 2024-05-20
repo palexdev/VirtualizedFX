@@ -17,11 +17,11 @@ import java.util.*;
  * Immutable object to represent the state of a {@link VFXGrid} in a specific moment in time. In other words, each and
  * every state is given by a unique combination of the grid's properties (in terms of values).
  * <p>
- * The state carries four important information:
+ * The state carries four important pieces of information:
  * <p> 1) The range of rows to display
  * <p> 2) The range of columns to display
  * <p> 3) The cells that are currently in the viewport
- * <p> 4) A flag that indicates whether cells have changed since last state
+ * <p> 4) A flag that indicates whether cells have changed since the last state
  * <p> Note: the combination of 1 and 2 determines the point 3, so the items to display from {@link VFXGrid#itemsProperty()}
  * <p></p>
  * <b>Indexes and loops in a 2D structure</b>

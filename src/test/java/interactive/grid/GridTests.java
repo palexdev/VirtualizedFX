@@ -650,6 +650,21 @@ public class GridTests {
 	}
 
 	@Test
+	void testChangeCellSizeTo0(FxRobot robot) {
+		StackPane pane = setupStage();
+		Grid grid = new Grid(items(100));
+		robot.interact(() -> pane.getChildren().add(grid));
+
+		// Init test
+		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 4));
+		assertCounter(30, 1, 30, 30, 0, 0, 0);
+
+		robot.interact(() -> grid.setCellSize(0, 0));
+		assertState(grid, INVALID_RANGE, INVALID_RANGE);
+		assertCounter(0, 0, 0, 0, 0, 30, 20);
+	}
+
+	@Test
 	void testChangeColumnsNumTopLeft(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(100));

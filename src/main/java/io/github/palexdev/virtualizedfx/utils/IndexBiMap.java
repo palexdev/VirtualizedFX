@@ -441,7 +441,7 @@ public class IndexBiMap<K, V> {
 	 * Extension of {@link StateMapBase} which uses mappings of type: {@code [Integer -> Cell]}, {@code [Column -> Collection<Integer>]}
 	 * and {@code [Column -> Integer -> Cell]}.
 	 * <p>
-	 * Used by the table rows to store their state, allowing high usability of cells, which translates to high performance.
+	 * Used by the table rows to store their state, allowing high re-usability of cells, which translates to high performance.
 	 * <p>
 	 * <b>Q: Why by cells are reverse-mapped by columns?</b>
 	 * <p>
@@ -452,5 +452,23 @@ public class IndexBiMap<K, V> {
 	 * <p>
 	 * By having mappings, we can quickly separate the cells that need to be updates from the ones that are ready to go.
 	 */
-	public static class RowsStateMap<T, C extends Cell<T>> extends StateMapBase<VFXTableColumn<T, ?>, T, C> {}
+	@SuppressWarnings("rawtypes")
+	public static class RowsStateMap<T, C extends Cell<T>> extends StateMapBase<VFXTableColumn<T, ?>, T, C> {
+		public static final RowsStateMap EMPTY = new RowsStateMap<>() {
+			@Override
+			public void put(Integer index, VFXTableColumn<Object, ?> key, Cell<Object> val) {}
+		};
+
+		/**
+		 * Basically a shortcut for {@code byIndex.get(byKey.get(column).getFirst())}, {@code null} check included.
+		 *
+		 * @return the cell mapped to the given column or {@code null} if the indexes {@link Set} associated to the column
+		 * is empty
+		 */
+		public C getSingle(VFXTableColumn<T, ?> column) {
+			SequencedSet<Integer> set = byKey.get(column);
+			if (set == null) return null;
+			return byIndex.get(set.getFirst());
+		}
+	}
 }

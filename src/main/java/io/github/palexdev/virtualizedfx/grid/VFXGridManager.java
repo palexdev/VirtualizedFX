@@ -98,8 +98,8 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 	 * and since scrolling can happen very fast, performance here is crucial.
 	 * <p>
 	 * Immediately exits if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXGridState#EMPTY}.
-	 * Many other computations here need to validate the positions by calling {@link VFXGridHelper#invalidatePos()}, so that
-	 * the resulting state is valid.
+	 * Many other computations here need to validate the positions by calling {@link VFXGridHelper#invalidatePos()},
+	 * to ensure that the resulting state is valid.
 	 * However, invalidating the positions may trigger this method, causing two or more state computations to run at the
 	 * 'same time'; this behavior must be avoided, and that flag exists specifically for this reason.
 	 * <p></p>
@@ -472,11 +472,12 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 	/**
 	 * Avoids code duplication. This method checks for three things:
 	 * <p> 1) If the list is empty
-	 * <p> 2) If the cell factory is null
+	 * <p> 2) If the cell factory is {@code null}
 	 * <p> 3) If the cell size is lesser or equal to 0
 	 * <p>
 	 * If any of those checks is true: the grid's state is set to {@link VFXGridState#EMPTY}, the
 	 * current state is disposed, the 'invalidatingPos' flag is reset, finally returns false.
+	 * <p>
 	 * Otherwise, does nothing and returns true.
 	 * <p></p>
 	 * <p> - See {@link VFXGrid#cellFactoryProperty()}

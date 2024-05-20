@@ -440,6 +440,20 @@ public class ListTests {
 	}
 
 	@Test
+	void testChangeCellSizeTo0(FxRobot robot) {
+		StackPane pane = setupStage();
+		List list = new List(items(50));
+		robot.interact(() -> pane.getChildren().add(list));
+
+		assertState(list, IntegerRange.of(0, 16));
+		assertCounter(17, 1, 17, 17, 0, 0, 0);
+
+		robot.interact(() -> list.setCellSize(0.0));
+		assertState(list, INVALID_RANGE);
+		assertCounter(0, 0, 0, 0, 0, 17, 7);
+	}
+
+	@Test
 	void testChangeList(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(50));
@@ -465,7 +479,7 @@ public class ListTests {
 
 		// Scroll(to bottom) and change items property (fewer elements)
 		robot.interact(() -> {
-			list.setVPos(Double.MAX_VALUE);
+			list.scrollToLast();
 			list.setItems(items(50, 50));
 		});
 		assertState(list, IntegerRange.of(33, 49));
