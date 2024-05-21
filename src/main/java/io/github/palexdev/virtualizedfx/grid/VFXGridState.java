@@ -82,7 +82,7 @@ import java.util.*;
  * }
  * </pre>
  *
- * @see #EMPTY
+ * @see #INVALID
  * @see StateMap
  */
 @SuppressWarnings({"rawtypes", "SameParameterValue"})
@@ -92,11 +92,11 @@ public class VFXGridState<T, C extends Cell<T>> {
 	//================================================================================
 	/**
 	 * Special instance of {@code VFXGridState} used to indicate that no cells can be present in the viewport at
-	 * a certain time. The reasons can be many, for example, no cell factory, invalid range, width/height <= 0, etc...
+	 * a certain time. The reasons can be many, for example, no cell factory, invalid range, {@literal width/height <= 0}, etc...
 	 * <p>
 	 * This and {@link #isEmpty()} are two total different things!!
 	 */
-	public static final VFXGridState EMPTY = new VFXGridState() {
+	public static final VFXGridState INVALID = new VFXGridState() {
 		@Override
 		protected Cell<Object> removeCell(int index) {
 			return null;

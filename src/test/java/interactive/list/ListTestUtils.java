@@ -35,7 +35,7 @@ public class ListTestUtils {
 		VFXListState<Integer, SimpleCell> state = list.getState();
 		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
 		if (Utils.INVALID_RANGE.equals(range)) {
-			assertEquals(VFXListState.EMPTY, state);
+			assertEquals(VFXListState.INVALID, state);
 			return;
 		}
 

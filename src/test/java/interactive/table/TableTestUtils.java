@@ -24,7 +24,6 @@ import io.github.palexdev.virtualizedfx.table.defaults.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
-import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
@@ -62,7 +61,7 @@ public class TableTestUtils {
 		Region columnsPane = (Region) table.lookup(".columns");
 		Region rowsPane = (Region) table.lookup(".rows");
 		if (Utils.INVALID_RANGE.equals(columnsRange)) {
-			assertEquals(VFXTableState.EMPTY, state);
+			assertEquals(VFXTableState.INVALID, state);
 			// Also verify that there are no nodes in the viewport
 			assertTrue(columnsPane.getChildrenUnmodifiable().isEmpty());
 			assertTrue(rowsPane.getChildrenUnmodifiable().isEmpty());
@@ -397,7 +396,7 @@ public class TableTestUtils {
 		protected Function<ColumnsLayoutMode, VFXTableHelper<User>> defaultHelperFactory() {
 			return mode -> mode == ColumnsLayoutMode.FIXED ? new FixedTableHelper<>(this) : new VariableTableHelper<>(this) {
 				@Override
-				public boolean layoutCell(int layoutIdx, Node node) {
+				public boolean layoutCell(int layoutIdx, TableCell<User> node) {
 					if (super.layoutCell(layoutIdx, node)) {
 						counter.layout();
 						return true;

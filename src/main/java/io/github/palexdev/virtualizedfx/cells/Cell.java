@@ -47,6 +47,7 @@ public interface Cell<T> {
 	 *         return label;
 	 *     }
 	 * }
+	 * }
 	 * </pre>
 	 */
 	Node toNode();

@@ -46,7 +46,7 @@ import java.util.*;
  * The only issue with such mechanism is that in most cases a clone state can be used, we don't want the table's skin to
  * do anything (no layout should be needed). This can be done by checking the flag with {@link #isClone()}.
  *
- * @see #EMPTY
+ * @see #INVALID
  * @see StateMap
  */
 @SuppressWarnings({"rawtypes", "DataFlowIssue", "SameParameterValue"})
@@ -56,11 +56,11 @@ public class VFXTableState<T> implements Cloneable {
 	//================================================================================
 	/**
 	 * Special instance of {@code VFXTableState} used to indicate that no columns can be present in the viewport at
-	 * a certain time. The reasons can be many, for example, invalid range, width/height <= 0, etc...
+	 * a certain time. The reasons can be many, for example, invalid range, {@literal width/height <= 0}, etc...
 	 * <p>
 	 * This and {@link #isEmpty()} are two totally different things!!
 	 */
-	public static final VFXTableState EMPTY = new VFXTableState() {
+	public static final VFXTableState INVALID = new VFXTableState() {
 		@Override
 		protected VFXTableRow removeRow(int index) {return null;}
 

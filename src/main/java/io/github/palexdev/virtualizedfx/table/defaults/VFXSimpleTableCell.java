@@ -30,7 +30,7 @@ import java.util.function.Function;
  * <p>
  * The cell's text is updated by the {@link #invalidate()} method.
  * <p>
- * If the data changes, the cell cannot automatically detect it, but you can use {@link VFXTable#update()}
+ * If the data changes, the cell cannot automatically detect it, but you can use {@link VFXTable#update(int...)}
  * to programmatically update it.
  * <p></p>
  * This implementation has the following properties:

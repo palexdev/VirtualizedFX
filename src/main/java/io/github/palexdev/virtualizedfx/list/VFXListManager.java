@@ -73,7 +73,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		// Ensure positions are correct!
 		helper.invalidatePos();
 
-		// If for whatever reason, the computed range is invalid, then set the state to EMPTY
+		// If for whatever reason, the computed range is invalid, then set the state to INVALID
 		IntegerRange range = helper.range();
 		if (!rangeCheck(range, true, true)) return;
 
@@ -91,7 +91,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * orientation, hPos for HORIZONTAL orientation). Since the list doesn't use any throttling technique to limit the number of events/changes,
 	 * and since scrolling can happen very fast, performance here is crucial.
 	 * <p>
-	 * Immediately exists if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXListState#EMPTY}.
+	 * Immediately exists if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXListState#INVALID}.
 	 * Many other computations here need to validate the positions by calling {@link VFXListHelper#invalidatePos()}, so that
 	 * the resulting state is valid.
 	 * However, invalidating the positions may trigger this method, causing two or more state computations to run at the
@@ -128,7 +128,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		if (invalidatingPos) return;
 		VFXList<T, C> list = getNode();
 		VFXListState<T, C> state = list.getState();
-		if (state == VFXListState.EMPTY) return;
+		if (state == VFXListState.INVALID) return;
 
 		VFXListHelper<T, C> helper = list.getHelper();
 		IntegerRange lastRange = state.getRange();
@@ -185,7 +185,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	protected void onCellFactoryChanged() {
 		VFXList<T, C> list = getNode();
 
-		// Dispose current state, cells if any (not EMPTY) are now in cache
+		// Dispose current state, cells if any (not INVALID) are now in cache
 		// Purge cache too, cells are from old factory
 		if (disposeCurrent()) list.getCache().clear();
 		if (!listFactorySizeCheck()) return;
@@ -272,7 +272,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		 */
 		helper.invalidatePos();
 
-		// If the list is now empty, then set EMPTY state
+		// If the list is now empty, then set INVALID state
 		VFXListState<T, C> current = list.getState();
 		if (!listFactorySizeCheck()) return;
 
@@ -517,7 +517,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * <p> 2) If the cell factory is {@code null}
 	 * <p> 3) If the cell size is lesser or equal to 0
 	 * <p>
-	 * If any of those checks is true: the list's state is set to {@link VFXListState#EMPTY}, the
+	 * If any of those checks is true: the list's state is set to {@link VFXListState#INVALID}, the
 	 * current state is disposed, the 'invalidatingPos' flag is reset, finally returns false.
 	 * Otherwise, does nothing and returns true.
 	 * <p></p>
@@ -532,7 +532,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		VFXList<T, C> list = getNode();
 		if (list.isEmpty() || list.getCellFactory() == null || list.getCellSize() <= 0) {
 			disposeCurrent();
-			list.update(VFXListState.EMPTY);
+			list.update(VFXListState.INVALID);
 			invalidatingPos = false;
 			return false;
 		}
@@ -543,12 +543,12 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 	 * Avoids code duplication. Used to check whether the given range is valid, not equal to {@link Utils#INVALID_RANGE}.
 	 * <p>
 	 * When invalid, returns false, but first runs the following operations: disposes the current state (only if the
-	 * 'dispose' parameter is true), sets the list's state to {@link VFXListState#EMPTY} (only if the 'update'
+	 * 'dispose' parameter is true), sets the list's state to {@link VFXListState#INVALID} (only if the 'update'
 	 * parameter is true), resets the 'invalidatingPos' flag.
 	 * Otherwise, does nothing and returns true.
 	 * <p>
 	 * Last but not least, this is a note for the future on why the method is structured like this. It's crucial for
-	 * the disposal operation to happen <b>before</b> the list's state is set to {@link VFXListState#EMPTY}, otherwise
+	 * the disposal operation to happen <b>before</b> the list's state is set to {@link VFXListState#INVALID}, otherwise
 	 * the disposal method will fail, since it will then retrieve the empty state instead of the correct one.
 	 * <p></p>
 	 * <p> - See {@link #disposeCurrent()}: for the current state disposal
@@ -563,7 +563,7 @@ public class VFXListManager<T, C extends Cell<T>> extends BehaviorBase<VFXList<T
 		VFXList<T, C> list = getNode();
 		if (Utils.INVALID_RANGE.equals(range)) {
 			if (dispose) disposeCurrent();
-			if (update) list.update(VFXListState.EMPTY);
+			if (update) list.update(VFXListState.INVALID);
 			invalidatingPos = false;
 			return false;
 		}

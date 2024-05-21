@@ -24,10 +24,10 @@ import java.util.SequencedMap;
  * <p></p>
  * <b>Note</b> that the data structure used to store the cells is particular, see {@link StateMap}.
  *
- * @see #EMPTY
+ * @see #INVALID
  * @see StateMap
  */
-// NullPointerException warnings due to special EMPTY state
+// NullPointerException warnings due to special INVALID state
 @SuppressWarnings({"DataFlowIssue", "rawtypes", "SameParameterValue"})
 public class VFXListState<T, C extends Cell<T>> {
 	//================================================================================
@@ -35,11 +35,11 @@ public class VFXListState<T, C extends Cell<T>> {
 	//================================================================================
 	/**
 	 * Special instance of {@code VFXListState} used to indicate that no cells can be present in the viewport at
-	 * a certain time. The reasons can be many, for example, no cell factory, invalid range, width/height <= 0, etc...
+	 * a certain time. The reasons can be many, for example, no cell factory, invalid range, {@literal width/height <= 0}, etc...
 	 * <p>
 	 * This and {@link #isEmpty()} are two total different things!!
 	 */
-	public static final VFXListState EMPTY = new VFXListState<>() {
+	public static final VFXListState INVALID = new VFXListState<>() {
 		@Override
 		protected Cell<Object> removeCell(int index) {return null;}
 

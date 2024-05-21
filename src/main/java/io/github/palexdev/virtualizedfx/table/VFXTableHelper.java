@@ -741,7 +741,7 @@ public interface VFXTableHelper<T> {
 		 * In {@link ColumnsLayoutMode#FIXED} this can be still used by setting the {@link VFXTable#columnsSizeProperty()}
 		 * rather than the width of each column.
 		 * <p>
-		 * If the current state is {@link VFXTableState#EMPTY} then exits immediately.
+		 * If the current state is {@link VFXTableState#INVALID} then exits immediately.
 		 * <p>
 		 * If the last column in range ({@link #columnsRange()}), has its skin still {@code null}, then we assume that
 		 * every other column is in the same situation. In such case, we need to 'delay' the operation and wait for the
@@ -767,7 +767,7 @@ public interface VFXTableHelper<T> {
 		@Override
 		public void autosizeColumns() {
 			VFXTableState<T> state = table.getState();
-			if (state == VFXTableState.EMPTY) return;
+			if (state == VFXTableState.INVALID) return;
 			ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
 
 			// It may happen that the columns still have a null skin
@@ -838,7 +838,7 @@ public interface VFXTableHelper<T> {
 		public boolean isInViewport(VFXTableColumn<T, ?> column) {
 			if (column.getTable() == null || column.getScene() == null || column.getParent() == null) return false;
 			VFXTableState<T> state = table.getState();
-			if (state == VFXTableState.EMPTY) return false;
+			if (state == VFXTableState.INVALID) return false;
 			int index = table.indexOf(column);
 			return IntegerRange.inRangeOf(index, state.getColumnsRange());
 		}
@@ -1185,7 +1185,7 @@ public interface VFXTableHelper<T> {
 		}
 
 		/**
-		 * If the current state is {@link VFXTableState#EMPTY} then exits immediately.
+		 * If the current state is {@link VFXTableState#INVALID} then exits immediately.
 		 * <p>
 		 * If the given column's skin is still {@code null}, then we must 'delay' the operation and wait for the skin to
 		 * be created, so that we can compute the column's width.
@@ -1212,7 +1212,7 @@ public interface VFXTableHelper<T> {
 		@Override
 		public void autosizeColumn(VFXTableColumn<T, ?> column) {
 			VFXTableState<T> state = table.getState();
-			if (state == VFXTableState.EMPTY) return;
+			if (state == VFXTableState.INVALID) return;
 
 			// It may happen that the column still has a null skin
 			// In such cases, we must delay the autosize while also ensuring that layout infos are available
@@ -1260,7 +1260,7 @@ public interface VFXTableHelper<T> {
 		@Override
 		public void autosizeColumns() {
 			VFXTableState<T> state = table.getState();
-			if (state == VFXTableState.EMPTY) return;
+			if (state == VFXTableState.INVALID) return;
 			forceAll = true;
 			table.getColumns().forEach(this::autosizeColumn);
 			forceLayout = false;

@@ -36,7 +36,7 @@ public class GridTestUtils {
 		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
 		int nColumns = helper.maxColumns();
 		if (Utils.INVALID_RANGE.equals(rowsRange) || Utils.INVALID_RANGE.equals(columnsRange)) {
-			assertEquals(VFXGridState.EMPTY, state);
+			assertEquals(VFXGridState.INVALID, state);
 			return;
 		}
 

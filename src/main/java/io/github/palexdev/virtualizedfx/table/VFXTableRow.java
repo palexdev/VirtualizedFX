@@ -234,7 +234,7 @@ public abstract class VFXTableRow<T> extends Region implements Cell<T>, VFXStyle
 	/**
 	 * This core method is responsible for sizing and positioning the cells in the row.
 	 * This is done by iterating over the columns range, getting every cell and, if not {@code null}, delegating the
-	 * operation to {@link VFXTableHelper#layoutCell(int, Node)}.
+	 * operation to {@link VFXTableHelper#layoutCell(int, TableCell)}.
 	 * <p>
 	 * This only defines the algorithm and is not automatically called by the row. Rather, it's the default table skin
 	 * to call this on each row upon a layout request received from the {@link VFXTable#needsViewportLayoutProperty()}.
@@ -251,7 +251,7 @@ public abstract class VFXTableRow<T> extends Region implements Cell<T>, VFXStyle
 		int i = 0;
 		for (Integer idx : columnsRange) {
 			TableCell<T> cell = cells.get(idx);
-			if (cell != null) helper.layoutCell(i, cell.toNode());
+			if (cell != null) helper.layoutCell(i, cell);
 			i++;
 		}
 	}

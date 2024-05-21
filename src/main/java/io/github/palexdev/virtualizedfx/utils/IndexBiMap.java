@@ -118,7 +118,7 @@ import java.util.stream.Stream;
  * // change in the associated V object, because we swapped it. So, instead, we would see the change in an entirely different V object
  * }
  * </pre>
- * <p></p
+ * <p></p>
  * <b>Retrievals</b>
  * This data structure provides to way of retrieving {@code V} values, either by index {@link #get(Integer)} or by key
  * {@link #get(Object)}.

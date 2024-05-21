@@ -68,7 +68,7 @@ public interface VFXPaginated<T> extends VFXContainer<T> {
 	 * Given an index, returns the page at which it would be displayed by the container.
 	 * <p></p>
 	 * Note that this will never generate an exception, rather acts as follows for edge cases:
-	 * <p> - empty list or max page is 0 or index < 0: returns 0
+	 * <p> - empty list or max page is 0 or {@literal index < 0}: returns 0
 	 * <p> - index > size: returns max page
 	 */
 	default int findPageByIndex(int index) {

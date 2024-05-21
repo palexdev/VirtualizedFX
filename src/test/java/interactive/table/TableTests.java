@@ -1163,7 +1163,7 @@ public class TableTests {
 		assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
 		assertCounter(64, 4, 448, 64, 0, 64, 24);
 
-		// Clear and assert EMPTY state
+		// Clear and assert INVALID state
 		robot.interact(() -> table.getColumns().clear());
 		assertState(table, INVALID_RANGE, INVALID_RANGE);
 		assertCounter(0, 0, 0, 0, 0, 112, 42);
@@ -1205,7 +1205,7 @@ public class TableTests {
 		assertState(table, IntegerRange.of(0, 15), IntegerRange.of(6, 12));
 		assertCounter(0, 1, 112, 0, 0, 0, 0);
 
-		// Clear and assert EMPTY state
+		// Clear and assert INVALID state
 		robot.interact(() -> table.getColumns().clear());
 		assertState(table, INVALID_RANGE, INVALID_RANGE);
 		assertCounter(0, 0, 0, 0, 0, 112, 42);
@@ -1249,7 +1249,7 @@ public class TableTests {
 		assertState(table, IntegerRange.of(0, 15), IntegerRange.of(5, 11));
 		assertCounter(16, 1, 112, 16, 0, 16, 6);
 
-		// Clear and assert EMPTY state
+		// Clear and assert INVALID state
 		robot.interact(() -> table.getColumns().clear());
 		assertState(table, INVALID_RANGE, INVALID_RANGE);
 		assertCounter(0, 0, 0, 0, 0, 112, 42);

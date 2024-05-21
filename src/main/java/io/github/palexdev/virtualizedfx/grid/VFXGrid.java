@@ -49,7 +49,7 @@ import java.util.function.Supplier;
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
  * {@link VFXGridState} when changing. The state determines how and which items are displayed in the container.
  * <p></p>
- * <b>Features & Implementation Details</b>
+ * <b>Features {@literal &} Implementation Details</b>
  * <p> - First and foremost, it's important to describe how the grid works and why it's made as it is. The grid arranges
  * the contents of a simple 1D data structure (a list) in a 2D way. <b>(History time)</b> The previous implementation used a 2D data structure
  * instead which indeed made some algorithms easier to implement, but made its usage very inconvenient for one simple reason:
@@ -164,7 +164,7 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 		() -> getHelper().maxHScroll()
 	);
 
-	private final VFXGridStateProperty<T, C> state = new VFXGridStateProperty<>(VFXGridState.EMPTY);
+	private final VFXGridStateProperty<T, C> state = new VFXGridStateProperty<>(VFXGridState.INVALID);
 	private final ReadOnlyBooleanWrapper needsViewportLayout = new ReadOnlyBooleanWrapper(false);
 
 	//================================================================================

@@ -11,7 +11,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
-import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
@@ -167,7 +166,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 			onInvalidated(table.stateProperty())
 				.then(s -> {
 					if (s.isClone()) return;
-					if (s == VFXTableState.EMPTY) {
+					if (s == VFXTableState.INVALID) {
 						cContainer.getChildren().clear();
 						rContainer.getChildren().clear();
 						return;
@@ -272,7 +271,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 	 * This is responsible for sizing and positioning the columns specified by the current
 	 * {@link VFXTableState#getColumnsRange()}.
 	 * <p>
-	 * If the state is {@link VFXTableState#EMPTY} exits immediately.
+	 * If the state is {@link VFXTableState#INVALID} exits immediately.
 	 * <p>
 	 * The columns are actually laid out by using {@link VFXTableHelper#layoutColumn(int, VFXTableColumn)}.
 	 * The layout index is given by an external 'i' counter which starts at 0 and is incremented at each loop iteration.
@@ -287,7 +286,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 	protected void layoutColumns() {
 		VFXTable<T> table = getSkinnable();
 		VFXTableState<T> state = table.getState();
-		if (state == VFXTableState.EMPTY) return;
+		if (state == VFXTableState.INVALID) return;
 
 		VFXTableHelper<T> helper = table.getHelper();
 		IntegerRange columnsRange = state.getColumnsRange();
@@ -304,7 +303,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 	/**
 	 * This is responsible for sizing and positioning both the rows and their cells.
 	 * <p>
-	 * If the current {@link VFXTableState} is either {@link VFXTableState#EMPTY} or {@link VFXTableState#isEmpty()} then
+	 * If the current {@link VFXTableState} is either {@link VFXTableState#INVALID} or {@link VFXTableState#isEmpty()} then
 	 * exits and calls {@link #onLayoutCompleted(boolean)} with {@code false} as parameter.
 	 * <p>
 	 * The layout is computed by iterating over the rows given by {@link VFXTableState#getRowsByIndex()}.
@@ -318,7 +317,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 		VFXTable<T> table = getSkinnable();
 		VFXTableHelper<T> helper = table.getHelper();
 		VFXTableState<T> state = table.getState();
-		if (state != VFXTableState.EMPTY && !state.isEmpty()) {
+		if (state != VFXTableState.INVALID && !state.isEmpty()) {
 			int i = 0;
 			for (VFXTableRow<T> row : state.getRowsByIndex().values()) {
 				helper.layoutRow(i, row);
@@ -359,14 +358,14 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 	 * of the changed column. Each column is resized and repositioned by {@link VFXTableHelper#layoutColumn(int, VFXTableColumn)}.
 	 * Then iterates over the rows given by {@link VFXTableState#getRowsByIndex()}, iterates over then and resizes all
 	 * of them by using {@link VFXTableHelper#layoutRow(int, VFXTableRow)}. In a nested loop, for each row, it updates
-	 * only the cells from the aforementioned start index, uses {@link VFXTableHelper#layoutCell(int, Node)}.
+	 * only the cells from the aforementioned start index, uses {@link VFXTableHelper#layoutCell(int, TableCell)}.
 	 * <p>
 	 * Finally calls {@link #onLayoutCompleted(boolean)} with {@code true} as parameter.
 	 */
 	protected void partialLayout() {
 		VFXTable<T> table = getSkinnable();
 		VFXTableState<T> state = table.getState();
-		if (state == VFXTableState.EMPTY) return;
+		if (state == VFXTableState.INVALID) return;
 
 		VFXTableHelper<T> helper = table.getHelper();
 		ColumnsLayoutMode layoutMode = table.getColumnsLayoutMode();
@@ -377,8 +376,8 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 			helper.layoutColumn(layoutIndex, column);
 			state.getRowsByIndex().values().forEach(r -> {
 				r.resize(table.getVirtualMaxX(), r.getHeight());
-				Node node = r.getCells().get(cIndex).toNode();
-				helper.layoutCell(layoutIndex, node);
+				TableCell<T> cell = r.getCells().get(cIndex);
+				helper.layoutCell(layoutIndex, cell);
 			});
 			onLayoutCompleted(true);
 			return;
@@ -400,7 +399,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 
 		state.getRowsByIndex().values().forEach(r -> {
 			r.resize(table.getVirtualMaxX(), r.getHeight());
-			range.forEach(i -> helper.layoutCell(i, r.getCells().get(i).toNode()));
+			range.forEach(i -> helper.layoutCell(i, r.getCells().get(i)));
 		});
 		onLayoutCompleted(true);
 	}

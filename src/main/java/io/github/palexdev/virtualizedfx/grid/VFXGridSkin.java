@@ -107,7 +107,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 			// Core changes
 			onInvalidated(grid.stateProperty())
 				.then(s -> {
-					if (s == VFXGridState.EMPTY) {
+					if (s == VFXGridState.INVALID) {
 						viewport.getChildren().clear();
 					} else if (s.haveCellsChanged()) {
 						viewport.getChildren().setAll(s.getNodes());
@@ -159,7 +159,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 	/**
 	 * Core method responsible for resizing and positioning cells in the viewport.
 	 * This method will not execute if the layout was not requested, {@link VFXGrid#needsViewportLayoutProperty()}
-	 * is false, or if the {@link VFXGrid#stateProperty()} is {@link VFXGridState#EMPTY}.
+	 * is false, or if the {@link VFXGrid#stateProperty()} is {@link VFXGridState#INVALID}.
 	 * <p>
 	 * In any case, at the end of the method, {@link #onLayoutCompleted(boolean)} will be called.
 	 * <p></p>
@@ -193,7 +193,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 		VFXGridHelper<T, C> helper = grid.getHelper();
 		VFXGridState<T, C> state = grid.getState();
 		int nColumns = helper.maxColumns();
-		if (state != VFXGridState.EMPTY) {
+		if (state != VFXGridState.INVALID) {
 			SequencedMap<Integer, C> cells = state.getCellsByIndex();
 			int i = 0, j = 0;
 			outer_loop:
@@ -248,7 +248,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 		VFXGrid<T, C> grid = getSkinnable();
 		VFXGridHelper<T, C> helper = grid.getHelper();
 		VFXGridState<T, C> state = grid.getState();
-		if (state == VFXGridState.EMPTY) {
+		if (state == VFXGridState.INVALID) {
 			viewport.resize(0, 0);
 			return;
 		}
@@ -272,7 +272,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 	@Override
 	public void dispose() {
 		VFXGrid<T, C> grid = getSkinnable();
-		grid.update(VFXGridState.EMPTY);
+		grid.update(VFXGridState.INVALID);
 		super.dispose();
 	}
 }

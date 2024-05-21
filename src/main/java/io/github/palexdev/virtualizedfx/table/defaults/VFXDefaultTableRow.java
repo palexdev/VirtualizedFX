@@ -102,7 +102,7 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 	 * As for the new cell, we request a new one by calling {@link #getCell(int, VFXTableColumn, boolean)}
 	 * (we don't use the cache as the cells stored in it may be invalid if the cell factory changed).
 	 * The cell is added to the state map, to the children list and finally sized and positioned by calling
-	 * {@link VFXTableHelper#layoutCell(int, Node)}.
+	 * {@link VFXTableHelper#layoutCell(int, TableCell)}.
 	 * <p>
 	 * Note that to get a new cell, and to lay out it, we need two different indexes. The index of the column is retrieved
 	 * by using {@link VFXTable#indexOf(VFXTableColumn)} and it's needed to update the cell. The other index is an important
@@ -133,7 +133,7 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 		Node nNode = nCell.toNode();
 		cells.put(cIdx, column, nCell);
 		getChildren().add(nNode);
-		helper.layoutCell(lIdx, nNode);
+		helper.layoutCell(lIdx, nCell);
 		return true;
 	}
 

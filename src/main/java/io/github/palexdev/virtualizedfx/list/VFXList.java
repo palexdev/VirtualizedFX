@@ -44,7 +44,7 @@ import java.util.function.Supplier;
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
  * {@link VFXListState} when changing. The state determines which and how items are displayed in the container.
  * <p></p>
- * <b>Features & Implementation Details</b>
+ * <b>Features {@literal &} Implementation Details</b>
  * <p> - The default behavior implementation, {@link VFXListManager}, can be considered as the name suggests more like
  * a 'manager' than an actual behavior. It is responsible for reacting to core changes in the functionalities defined here
  * to produce a new state.
@@ -147,7 +147,7 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 		() -> getHelper().maxHScroll()
 	);
 
-	private final VFXListStateProperty<T, C> state = new VFXListStateProperty<>(VFXListState.EMPTY);
+	private final VFXListStateProperty<T, C> state = new VFXListStateProperty<>(VFXListState.INVALID);
 	private final ReadOnlyBooleanWrapper needsViewportLayout = new ReadOnlyBooleanWrapper(false);
 
 	//================================================================================

@@ -51,7 +51,7 @@ import java.util.function.Supplier;
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
  * {@link VFXTableState} when changing. The state determines how and which items are displayed in the container.
  * <p></p>
- * <b>Core features & Implementation Details</b>
+ * <b>Core features {@literal &} Implementation Details</b>
  * <p> - This container is a bit special because it's like a combination of both {@link VFXList} and {@link VFXGrid}.
  * We are displaying data in two dimensions, just like the grid, because we have both the items and the columns.
  * However, each item occupies a row, just like in the list. Because of such nature, this component is also more complex
@@ -144,7 +144,7 @@ import java.util.function.Supplier;
  *             any benefit to performance.
  * </pre>
  * <p></p>
- * <b>Other features & Details</b>
+ * <b>Other features {@literal &} Details</b>
  * <p> - One of the shared features between other virtualized containers is the way layout requests are handled: by having a
  * read-only property {@link #needsViewportLayoutProperty()} and a way to request it {@link #requestViewportLayout()}.
  * However, the table handles request a bit differently. While in other containers, the property is just boolean value,
@@ -239,7 +239,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 		() -> 0.0,
 		() -> getHelper().maxHScroll()
 	);
-	private final VFXTableStateProperty<T> state = new VFXTableStateProperty<>(VFXTableState.EMPTY);
+	private final VFXTableStateProperty<T> state = new VFXTableStateProperty<>(VFXTableState.INVALID);
 	private final ViewportLayoutRequestProperty<T> needsViewportLayout = new ViewportLayoutRequestProperty<>();
 
 	//================================================================================
@@ -275,7 +275,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 
 	/**
 	 * Tries to retrieve a column from the columns' list by the given index
-	 * to then delegate to {@link #autosizeColumn(VFXTableColumn).
+	 * to then delegate to {@link #autosizeColumn(VFXTableColumn)}.
 	 */
 	public void autosizeColumn(int index) {
 		try {
@@ -328,7 +328,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 	 * <p>
 	 * Since every {@link VFXTableColumn} has its index as a property, {@link VFXTableColumn#indexProperty()}, this method
 	 * will simply invoke the related getter.
-	 * <b>However</b>, if the returned index is invalid (< 0), then it resorts to {@link List#indexOf(Object)} which is much
+	 * <b>However</b>, if the returned index is invalid {@literal (< 0)}, then it resorts to {@link List#indexOf(Object)} which is much
 	 * slower. The good thing is that if it resorts to the latter, then it also updates the column's index property,
 	 * so that the next time the index will be available through the property.
 	 */

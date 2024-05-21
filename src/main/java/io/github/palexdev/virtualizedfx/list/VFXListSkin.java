@@ -104,7 +104,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 			// Core changes
 			onInvalidated(list.stateProperty())
 				.then(s -> {
-					if (s == VFXListState.EMPTY) {
+					if (s == VFXListState.INVALID) {
 						viewport.getChildren().clear();
 					} else if (s.haveCellsChanged()) {
 						viewport.getChildren().setAll(s.getNodes());
@@ -157,7 +157,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 	/**
 	 * Core method responsible for resizing and positioning cells in the viewport.
 	 * This method will not execute if the layout was not requested, {@link VFXList#needsViewportLayoutProperty()}
-	 * is false, or if the {@link VFXList#stateProperty()} is {@link VFXListState#EMPTY}.
+	 * is false, or if the {@link VFXList#stateProperty()} is {@link VFXListState#INVALID}.
 	 * <p>
 	 * In any case, at the end of the method, {@link #onLayoutCompleted(boolean)} will be called.
 	 * <p></p>
@@ -186,7 +186,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 
 		VFXListHelper<T, C> helper = list.getHelper();
 		VFXListState<T, C> state = list.getState();
-		if (state != VFXListState.EMPTY) {
+		if (state != VFXListState.INVALID) {
 			int i = 0;
 			for (C cell : state.getCellsByIndex().values()) {
 				helper.layout(i, cell);
@@ -258,7 +258,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 		list.vPosProperty().removeListener(pl);
 		list.hPosProperty().removeListener(pl);
 		pl = null;
-		list.update(VFXListState.EMPTY);
+		list.update(VFXListState.INVALID);
 		super.dispose();
 	}
 }

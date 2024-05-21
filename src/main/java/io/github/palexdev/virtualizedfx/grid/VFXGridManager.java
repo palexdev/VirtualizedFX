@@ -97,7 +97,7 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 	 * Since the grid doesn't use any throttling technique to limit the number of events/changes,
 	 * and since scrolling can happen very fast, performance here is crucial.
 	 * <p>
-	 * Immediately exits if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXGridState#EMPTY}.
+	 * Immediately exits if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXGridState#INVALID}.
 	 * Many other computations here need to validate the positions by calling {@link VFXGridHelper#invalidatePos()},
 	 * to ensure that the resulting state is valid.
 	 * However, invalidating the positions may trigger this method, causing two or more state computations to run at the
@@ -131,7 +131,7 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 		if (invalidatingPos) return;
 		VFXGrid<T, C> grid = getNode();
 		VFXGridState<T, C> state = grid.getState();
-		if (state == VFXGridState.EMPTY) return;
+		if (state == VFXGridState.INVALID) return;
 
 		VFXGridHelper<T, C> helper = grid.getHelper();
 		IntegerRange lastRange = (axis == Orientation.VERTICAL) ?
@@ -214,7 +214,7 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 	protected void onCellFactoryChanged() {
 		VFXGrid<T, C> grid = getNode();
 
-		// Dispose current state, cells if any (not EMPTY) are now in cache
+		// Dispose current state, cells if any (not INVALID) are now in cache
 		// Purge cache too, cells are from old factory
 		if (disposeCurrent()) grid.getCache().clear();
 		if (!gridFactorySizeCheck()) return;
@@ -475,7 +475,7 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 	 * <p> 2) If the cell factory is {@code null}
 	 * <p> 3) If the cell size is lesser or equal to 0
 	 * <p>
-	 * If any of those checks is true: the grid's state is set to {@link VFXGridState#EMPTY}, the
+	 * If any of those checks is true: the grid's state is set to {@link VFXGridState#INVALID}, the
 	 * current state is disposed, the 'invalidatingPos' flag is reset, finally returns false.
 	 * <p>
 	 * Otherwise, does nothing and returns true.
@@ -492,7 +492,7 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 		if (grid.isEmpty() || grid.getCellFactory() == null ||
 			grid.getCellSize().getWidth() <= 0 || grid.getCellSize().getHeight() <= 0) {
 			disposeCurrent();
-			grid.update(VFXGridState.EMPTY);
+			grid.update(VFXGridState.INVALID);
 			invalidatingPos = false;
 			return false;
 		}
@@ -503,12 +503,12 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 	 * Avoids code duplication. Used to check whether the given ranges are valid, not equal to {@link Utils#INVALID_RANGE}.
 	 * <p>
 	 * When invalid, returns false, but first runs the following operations: disposes the current state (only if the
-	 * 'dispose' parameter is true), sets the grid's state to {@link VFXGridState#EMPTY} (only if the 'update'
+	 * 'dispose' parameter is true), sets the grid's state to {@link VFXGridState#INVALID} (only if the 'update'
 	 * parameter is true), resets the 'invalidatingPos' flag.
 	 * Otherwise, does nothing and returns true.
 	 * <p>
 	 * Last but not least, this is a note for the future on why the method is structured like this. It's crucial for
-	 * the disposal operation to happen <b>before</b> the list's state is set to {@link VFXGridState#EMPTY}, otherwise
+	 * the disposal operation to happen <b>before</b> the list's state is set to {@link VFXGridState#INVALID}, otherwise
 	 * the disposal method will fail, since it will then retrieve the empty state instead of the correct one.
 	 * <p></p>
 	 * <p> - See {@link #disposeCurrent()}: for the current state disposal
@@ -524,7 +524,7 @@ public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T
 		VFXGrid<T, C> grid = getNode();
 		if (Utils.INVALID_RANGE.equals(rowsRange) || Utils.INVALID_RANGE.equals(columnsRange)) {
 			if (dispose) disposeCurrent();
-			if (update) grid.update(VFXGridState.EMPTY);
+			if (update) grid.update(VFXGridState.INVALID);
 			invalidatingPos = false;
 			return false;
 		}

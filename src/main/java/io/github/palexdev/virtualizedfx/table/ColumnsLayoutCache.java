@@ -795,6 +795,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 			return Integer.compare(getIndex(), o.getIndex());
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;

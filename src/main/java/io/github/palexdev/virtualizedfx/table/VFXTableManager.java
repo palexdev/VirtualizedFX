@@ -131,7 +131,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * Before starting the new state computation, we must make sure that the viewport position is valid by calling
 	 * {@link VFXTableHelper#invalidatePos()}. Then we get both the columns and rows ranges by using
 	 * {@link VFXTableHelper#columnsRange()} and {@link VFXTableHelper#rowsRange()}.
-	 * If the column range is invalid, then we set the state to {@link VFXTableState#EMPTY}, dispose the old one and exit
+	 * If the column range is invalid, then we set the state to {@link VFXTableState#INVALID}, dispose the old one and exit
 	 * immediately, all of this is done by {@link #rangeCheck(IntegerRange, boolean, boolean)}.
 	 * <p>
 	 * At this point, we can compute the new state. If the rows range is valid, we iterate over it and for each row we
@@ -177,7 +177,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		IntegerRange columnsRange = helper.columnsRange();
 		IntegerRange rowsRange = helper.rowsRange();
 		if (!rangeCheck(columnsRange, true, true)) {
-			return; // If invalid (no columns), dispose current and set EMPTY state
+			return; // If invalid (no columns), dispose current and set INVALID state
 		}
 
 		VFXTableState<T> state = table.getState();
@@ -297,7 +297,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * Since the table doesn't use any throttling technique to limit the number of events/changes,
 	 * and since scrolling can happen very fast, performance here is crucial.
 	 * <p>
-	 * Immediately exits if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXTableState#EMPTY}.
+	 * Immediately exits if: the special flag {@link #invalidatingPos} is true or the current state is {@link VFXTableState#INVALID}.
 	 * Many other computations here need to validate the positions by calling {@link VFXTableHelper#invalidatePos()},
 	 * to ensure that the resulting state is valid.
 	 * However, invalidating the positions may trigger this method, causing two or more state computations to run at the
@@ -334,7 +334,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		if (invalidatingPos) return;
 		VFXTable<T> table = getNode();
 		VFXTableState<T> state = table.getState();
-		if (state == VFXTableState.EMPTY) return;
+		if (state == VFXTableState.INVALID) return;
 
 		VFXTableHelper<T> helper = table.getHelper();
 		IntegerRange columnsRange = helper.columnsRange();
@@ -409,11 +409,11 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		newState.setRowsChanged(true);
 
 		// Iterate over the rows range and generate a row with the new factory for each index/item.
-		// The new rows will copy the state of the previous row at the same index (expect if the old state is EMPTY or empty)
+		// The new rows will copy the state of the previous row at the same index (expect if the old state is INVALID or empty)
 		for (Integer idx : rowsRange) {
 			T item = table.getItems().get(idx);
 			VFXTableRow<T> row = rf.apply(item);
-			if (state != VFXTableState.EMPTY && !state.isEmpty()) {
+			if (state != VFXTableState.INVALID && !state.isEmpty()) {
 				row.copyState(state.getRows().get(idx));
 			} else {
 				row.updateIndex(idx);
@@ -504,7 +504,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		IntegerRange columnsRange = helper.columnsRange();
 
 		// Before proceeding, make sure to check the ranges are valid
-		// This essentially also checks that the current state is not EMPTY
+		// This essentially also checks that the current state is not INVALID
 		if (!rangeCheck(columnsRange, true, true)) return;
 
 		// Three possible cases
@@ -740,12 +740,12 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * Avoids code duplication. Used to check whether the given range is valid, not equal to {@link Utils#INVALID_RANGE}.
 	 * <p>
 	 * When invalid, returns false, but first runs the following operations: disposes the current state (only if the
-	 * 'dispose' parameter is true), sets the table's state to {@link VFXTableState#EMPTY} (only if the 'update'
+	 * 'dispose' parameter is true), sets the table's state to {@link VFXTableState#INVALID} (only if the 'update'
 	 * parameter is true), resets the 'invalidatingPos' flag.
 	 * Otherwise, does nothing and returns true.
 	 * <p>
 	 * Last but not least, this is a note for the future on why the method is structured like this. It's crucial for
-	 * the disposal operation to happen <b>before</b> the table's state is set to {@link VFXTableState#EMPTY}, otherwise
+	 * the disposal operation to happen <b>before</b> the table's state is set to {@link VFXTableState#INVALID}, otherwise
 	 * the disposal method will fail, since it will then retrieve the empty state instead of the correct one.
 	 * <p></p>
 	 * <p> - See {@link #disposeCurrent()}: for the current state disposal
@@ -760,7 +760,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		VFXTable<T> table = getNode();
 		if (Utils.INVALID_RANGE.equals(range)) {
 			if (dispose) disposeCurrent();
-			if (update) table.update(VFXTableState.EMPTY);
+			if (update) table.update(VFXTableState.INVALID);
 			invalidatingPos = false;
 			return false;
 		}
@@ -786,7 +786,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	/**
 	 * This method is responsible for properly compute an invalid {@link VFXTableState} depending on certain conditions.
 	 * You see, the table is a special component also because it can technically work even if there are no items in it.
-	 * The {@link VFXTableState#EMPTY} state is to be used only if there are no columns in the table, or in general if
+	 * The {@link VFXTableState#INVALID} state is to be used only if there are no columns in the table, or in general if
 	 * {@link VFXTableHelper#columnsRange()} returns {@link Utils#INVALID_RANGE}.
 	 * <p>
 	 * Otherwise, this will return a new state with {@link Utils#INVALID_RANGE} as the rows range,
@@ -800,7 +800,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		VFXTable<T> table = getNode();
 		VFXTableHelper<T> helper = table.getHelper();
 		IntegerRange columnsRange = helper.columnsRange();
-		if (Utils.INVALID_RANGE.equals(columnsRange)) return VFXTableState.EMPTY;
+		if (Utils.INVALID_RANGE.equals(columnsRange)) return VFXTableState.INVALID;
 
 		VFXTableState<T> partial = new VFXTableState<>(table, Utils.INVALID_RANGE, columnsRange);
 		partial.setColumnsChanged(table.getState());
