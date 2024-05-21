@@ -31,7 +31,7 @@ public class Playground extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		Table table = new Table(User.users(cnt));
-		table.setColumnsWidth(80.0);
+		table.setColumnsSize(80.0, 0.0);
 		table.setExtraAutosizeWidth(50.0);
 		table.switchColumnsLayoutMode();
 		table.autosizeColumns();

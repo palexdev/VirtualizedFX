@@ -75,6 +75,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 				layoutColumns();
 			}
 		};
+		cContainer.visibleProperty().bind(table.columnsSizeProperty().map(s -> s.getHeight() > 0));
 		cContainer.getStyleClass().add("columns");
 
 		rContainer = new Pane() {
