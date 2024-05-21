@@ -12,6 +12,7 @@ import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.observables.OnInvalidated;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
+import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.cells.TableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.utils.Utils;
@@ -192,16 +193,18 @@ public interface VFXTableHelper<T> {
 		double w = getVirtualMaxX();
 		double h = getTable().getRowsHeight();
 		double y = layoutIdx * h;
+		row.beforeLayout();
 		row.resizeRelocate(0, y, w, h);
+		row.afterLayout();
 	}
 
 	/**
-	 * Lays out the given node/cell.
+	 * Lays out the given cell.
 	 * The layout index is necessary to identify the position of a cell among the others (comes before/after).
 	 *
 	 * @see VFXTableRow#layoutCells()
 	 */
-	boolean layoutCell(int layoutIdx, Node node);
+	boolean layoutCell(int layoutIdx, TableCell<T> cell);
 
 	/**
 	 * Determines and sets the ideal width for the given column, where 'ideal' means that
@@ -713,15 +716,18 @@ public interface VFXTableHelper<T> {
 		 * @return always true
 		 */
 		@Override
-		public boolean layoutCell(int layoutIdx, Node node) {
+		public boolean layoutCell(int layoutIdx, TableCell<T> cell) {
 			VFXTable<T> table = getTable();
 			IntegerRange columnsRange = columnsRange();
 			int colIndex = columnsRange.getMin() + layoutIdx;
 			VFXTableColumn<T, ? extends TableCell<T>> column = table.getColumns().get(colIndex);
+			Node node = cell.toNode();
 			double x = getColumnPos(layoutIdx, column);
 			double w = getColumnWidth(column);
 			double h = table.getRowsHeight();
+			cell.beforeLayout();
 			node.resizeRelocate(x, 0, w, h);
+			cell.afterLayout();
 			return true;
 		}
 
@@ -1152,13 +1158,20 @@ public interface VFXTableHelper<T> {
 		 * the corresponding column, the width, positions and visibility computations are already done when invoking
 		 * {@link #layoutColumn(int, VFXTableColumn)}. Obviously, to do so, we first need to get the cell's corresponding
 		 * column from {@link VFXTable#getColumns()} by the given index.
+		 * <p></p>
+		 * Note: the pre/post layout hooks defined by {@link Cell} are called even if the cell will only be set to
+		 * hidden. This allows implementations to perform actions depending on the visibility state without relying on
+		 * listeners.
 		 */
 		@Override
-		public boolean layoutCell(int layoutIdx, Node node) {
+		public boolean layoutCell(int layoutIdx, TableCell<T> cell) {
 			ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
 			VFXTableColumn<T, ? extends TableCell<T>> column = columns.get(layoutIdx);
+			Node node = cell.toNode();
+			cell.beforeLayout();
 			if (!isInViewport(column)) {
 				node.setVisible(false);
+				cell.afterLayout();
 				return false;
 			}
 			double w = getColumnWidth(column);
@@ -1167,6 +1180,7 @@ public interface VFXTableHelper<T> {
 			if (node.isVisible() && node.getLayoutX() == x && node.getLayoutBounds().getWidth() == w) return false;
 			node.resizeRelocate(x, 0, w, h);
 			node.setVisible(true);
+			cell.afterLayout();
 			return true;
 		}
 

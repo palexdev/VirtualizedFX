@@ -7,7 +7,6 @@ import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
@@ -172,7 +171,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 	 * managed for the {@link VFXGrid}. In other words, it doesn't matter whether our range is [1, 5] or [4, 6] or whatever,
 	 * the layout index will always start from 0 and increment towards the end of the range.
 	 * <p>
-	 * The layout is performed by {@link VFXGridHelper#layout(int, int, Node)}, the two aforementioned counters are passed
+	 * The layout is performed by {@link VFXGridHelper#layout(int, int, Cell)}, the two aforementioned counters are passed
 	 * as arguments.
 	 * <p></p>
 	 * <pre>
@@ -202,7 +201,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 				for (Integer cIdx : state.getColumnsRange()) {
 					int linear = GridUtils.subToInd(nColumns, rIdx, cIdx);
 					if (linear >= grid.size()) break outer_loop;
-					helper.layout(i, j, cells.get(linear).toNode());
+					helper.layout(i, j, cells.get(linear));
 					j++;
 				}
 				i++;

@@ -6,7 +6,6 @@ import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Orientation;
-import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
@@ -166,7 +165,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 	 * The loop on the cells uses an external {@code i} variable that tracks the iteration count. This is because cells in the
 	 * state are already ordered by their index (since the state uses a {@link TreeMap}), and the layout is 'absolute'.
 	 * Meaning that the index of the cell is irrelevant for its position, we just care about which comes before/after.
-	 * The layout is performed by {@link VFXListHelper#layout(int, Node)}, the index given to that method is the
+	 * The layout is performed by {@link VFXListHelper#layout(int, Cell)}, the index given to that method is the
 	 * {@code i} variable.
 	 * <p></p>
 	 * <pre>
@@ -190,7 +189,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 		if (state != VFXListState.EMPTY) {
 			int i = 0;
 			for (C cell : state.getCellsByIndex().values()) {
-				helper.layout(i, cell.toNode());
+				helper.layout(i, cell);
 				i++;
 			}
 			onLayoutCompleted(true);

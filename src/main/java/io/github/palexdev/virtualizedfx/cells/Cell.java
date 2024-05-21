@@ -73,7 +73,15 @@ public interface Cell<T> {
 	 */
 	void updateItem(T item);
 
-	// TODO implement layout hooks
+	/**
+	 * The system automatically calls this before the cell is laid out.
+	 */
+	default void beforeLayout() {}
+
+	/**
+	 * The system automatically calls this after the cell is laid out.
+	 */
+	default void afterLayout() {}
 
 	/**
 	 * Virtualized containers that make use of a cache to store unneeded cells that may be required again in a second time

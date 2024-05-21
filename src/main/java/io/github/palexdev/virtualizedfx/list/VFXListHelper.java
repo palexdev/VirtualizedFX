@@ -127,12 +127,12 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	double computeSize(Node node);
 
 	/**
-	 * Lays out the given node. The index parameter is necessary to identify the position of a cell compared to the others
+	 * Lays out the given cell. The index parameter is necessary to identify the position of a cell compared to the others
 	 * (comes before or after).
 	 *
-	 * @param absIndex the absolute index of the given node/cell, see {@link VFXListSkin#layout()}
+	 * @param layoutIndex the absolute index of the given node/cell, see {@link VFXListSkin#layout()}
 	 */
-	void layout(int absIndex, Node node);
+	void layout(int layoutIndex, Cell<T> cell);
 
 
 	/**
@@ -424,11 +424,14 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 * computed by {@link #computeSize(Node)}, and the height is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int absIndex, Node node) {
-			double y = getTotalCellSize() * absIndex;
+		public void layout(int layoutIndex, Cell<T> cell) {
+			Node node = cell.toNode();
+			double y = getTotalCellSize() * layoutIndex;
 			double w = computeSize(node);
 			double h = list.getCellSize();
+			cell.beforeLayout();
 			node.resizeRelocate(0, y, w, h);
+			cell.afterLayout();
 		}
 
 		@Override
@@ -611,11 +614,14 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 * computed by {@link #computeSize(Node)}, and the width is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int absIndex, Node node) {
-			double x = getTotalCellSize() * absIndex;
+		public void layout(int layoutIndex, Cell<T> cell) {
+			Node node = cell.toNode();
+			double x = getTotalCellSize() * layoutIndex;
 			double w = list.getCellSize();
 			double h = computeSize(node);
+			cell.beforeLayout();
 			node.resizeRelocate(x, 0, w, h);
+			cell.afterLayout();
 		}
 
 		@Override

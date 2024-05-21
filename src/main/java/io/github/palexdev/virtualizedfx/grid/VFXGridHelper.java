@@ -161,13 +161,13 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Lays out the given node.
+	 * Lays out the given cell.
 	 * The row and column layout indexes are necessary to identify the position of a cell among the others
 	 * (comes before/after, above/below).
 	 *
 	 * @see VFXGridSkin#layout()
 	 */
-	void layout(int rowLayoutIndex, int columnLayoutIndex, Node node);
+	void layout(int rowLayoutIndex, int columnLayoutIndex, Cell<T> cell);
 
 	/**
 	 * @return the total size of each cell, given by the {@link VFXGrid#cellSizeProperty()} summed to the horizontal and
@@ -599,12 +599,15 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		 * {@code totalCellHeight * rowIndex}, the width and height are given by the {@link VFXGrid#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int rowLayoutIndex, int columnLayoutIndex, Node node) {
+		public void layout(int rowLayoutIndex, int columnLayoutIndex, Cell<T> cell) {
+			Node node = cell.toNode();
 			double x = getTotalCellSize().getWidth() * columnLayoutIndex;
 			double y = getTotalCellSize().getHeight() * rowLayoutIndex;
 			double w = grid.getCellSize().getWidth();
 			double h = grid.getCellSize().getHeight();
+			cell.beforeLayout();
 			node.resizeRelocate(x, y, w, h);
+			cell.afterLayout();
 		}
 
 		@Override
