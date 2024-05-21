@@ -14,6 +14,7 @@ import javafx.geometry.Orientation;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
+import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onChanged;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
@@ -161,6 +162,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 		table.getColumns().addListener(columnsListener);
 		getBehavior().onColumnsChanged(null); // This is needed since the skin is created afterward.
 
+		InvalidationListener gcl = i -> getBehavior().onGeometryChanged(GeometryChangeType.OTHER);
 		listeners(
 			// Core changes
 			onInvalidated(table.stateProperty())
@@ -224,10 +226,8 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 				.then((ow, nw) -> getBehavior().onGeometryChanged(GeometryChangeType.WIDTH)),
 			onInvalidated(table.heightProperty())
 				.then(h -> getBehavior().onGeometryChanged(GeometryChangeType.HEIGHT)),
-			onInvalidated(table.columnsBufferSizeProperty())
-				.then(b -> getBehavior().onGeometryChanged(GeometryChangeType.OTHER)),
-			onInvalidated(table.rowsBufferSizeProperty())
-				.then(b -> getBehavior().onGeometryChanged(GeometryChangeType.OTHER)),
+			withListener(table.columnsBufferSizeProperty(), gcl),
+			withListener(table.rowsBufferSizeProperty(), gcl),
 
 			// Position changes
 			onInvalidated(table.vPosProperty())

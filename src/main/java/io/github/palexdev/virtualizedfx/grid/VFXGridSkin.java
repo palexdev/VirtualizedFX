@@ -5,6 +5,7 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.cells.Cell;
+import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Parent;
@@ -13,6 +14,7 @@ import javafx.scene.shape.Rectangle;
 
 import java.util.SequencedMap;
 
+import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
@@ -103,6 +105,8 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 	 */
 	protected void addListeners() {
 		VFXGrid<T, C> grid = getSkinnable();
+
+		InvalidationListener gcl = i -> getBehavior().onGeometryChanged();
 		listeners(
 			// Core changes
 			onInvalidated(grid.stateProperty())
@@ -125,12 +129,9 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 				.executeNow(),
 
 			// Geometry changes
-			onInvalidated(grid.widthProperty())
-				.then(w -> getBehavior().onGeometryChanged()),
-			onInvalidated(grid.heightProperty())
-				.then(h -> getBehavior().onGeometryChanged()),
-			onInvalidated(grid.bufferSizeProperty())
-				.then(b -> getBehavior().onGeometryChanged()),
+			withListener(grid.widthProperty(), gcl),
+			withListener(grid.heightProperty(), gcl),
+			withListener(grid.bufferSizeProperty(), gcl),
 
 			// Position changes
 			onInvalidated(grid.vPosProperty())

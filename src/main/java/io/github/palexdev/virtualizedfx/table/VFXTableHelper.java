@@ -531,6 +531,7 @@ public interface VFXTableHelper<T> {
 	 * The computations have the following dependencies: the table's width, the number of columns and items, the columns' size,
 	 * the rows' height.
 	 */
+	@SuppressWarnings("JavadocReference") // I don't know why since the method is public
 	class FixedTableHelper<T> extends AbstractHelper<T> {
 		private boolean forceLayout = false;
 
@@ -921,6 +922,7 @@ public interface VFXTableHelper<T> {
 	 * the cache class, making it flexible to use, and suitable for more use-cases. These methods are:
 	 * {@link #computeColumnWidth(VFXTableColumn, boolean)}, {@link #computeColumnPos(int, double)}, {@link #computeVisibility(VFXTableColumn)}.
 	 */
+	@SuppressWarnings("JavadocReference") // I don't know why since the method is public
 	class VariableTableHelper<T> extends AbstractHelper<T> {
 		private ColumnsLayoutCache<T> layoutCache;
 		private boolean forceLayout = false;

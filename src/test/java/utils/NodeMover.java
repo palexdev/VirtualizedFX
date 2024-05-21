@@ -119,7 +119,6 @@ public class NodeMover<T extends Node> {
 			false, false, false, false, true, false, false, false, false, false, null));
 	}
 
-	// TODO this should be backported
 	protected void consume(MouseEvent event) {
 		event.consume();
 	}
@@ -131,7 +130,6 @@ public class NodeMover<T extends Node> {
 		return moveHandler;
 	}
 
-	// TODO should use fluent in resizers too
 	public NodeMover<T> setMoveHandler(TriConsumer<T, Double, Double> moveHandler) {
 		this.moveHandler = moveHandler;
 		return this;

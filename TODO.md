@@ -1,13 +1,18 @@
-## General
+## New features
 
-- Review APIs (classes, simplify as much as possible/re-organize at least)
-- Rename cells to VFXxxx (?)
 - Implement paginated Grid (?)
 - Implement paginated Table
-- Review listeners in skin, in particular, allow constructs to have the same listener to save up memory
+
+## Refactor
+
+- Common interface for managers (?)
+- Rename cells to VFXxxx (?)
 - Make table cells use a Skin (?)
 - Optimize cells to update only if and invalidation occurred (?)
-- Common interface for managers (?)
+- Review cells!
+
+## Misc
+
 - Look better for clone states for VFXTable
 - Reorganize tests classes/packages
-- Review cells!
+- Review APIs (classes, simplify as much as possible/re-organize at least)
