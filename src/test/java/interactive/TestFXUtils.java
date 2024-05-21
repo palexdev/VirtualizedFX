@@ -1,9 +1,11 @@
 package interactive;
 
+import assets.User;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.virtualizedfx.cells.CellBase;
 import io.github.palexdev.virtualizedfx.cells.CellBaseBehavior;
+import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
@@ -12,6 +14,7 @@ import org.testfx.api.FxToolkit;
 import java.util.concurrent.TimeoutException;
 
 import static interactive.table.TableTestUtils.rowsCounter;
+import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -86,7 +89,7 @@ public class TestFXUtils {
 
 		@Override
 		protected SkinBase<?, ?> buildSkin() {
-			return new CellSkin(this);
+			return new CellSkin<>(this);
 		}
 	}
 
@@ -98,7 +101,7 @@ public class TestFXUtils {
 
 		@Override
 		protected SkinBase<?, ?> buildSkin() {
-			return new CellSkin(this) {
+			return new CellSkin<>(this) {
 				{
 					label.setAlignment(Pos.CENTER);
 				}
@@ -106,10 +109,10 @@ public class TestFXUtils {
 		}
 	}
 
-	public static class CellSkin extends SkinBase<CellBase<Integer>, CellBaseBehavior<Integer>> {
+	public static class CellSkin<T> extends SkinBase<CellBase<T>, CellBaseBehavior<T>> {
 		protected final Label label;
 
-		public CellSkin(SimpleCell cell) {
+		public CellSkin(CellBase<T> cell) {
 			super(cell);
 
 			label = new Label();
@@ -125,7 +128,7 @@ public class TestFXUtils {
 		}
 
 		protected void addListeners() {
-			CellBase<Integer> cell = getSkinnable();
+			CellBase<T> cell = getSkinnable();
 			listeners(
 				onInvalidated(cell.indexProperty())
 					.then(v -> {
@@ -138,16 +141,24 @@ public class TestFXUtils {
 						update();
 					})
 			);
+			events(
+				intercept(cell, VFXContainerEvent.UPDATE)
+					.process(e -> {
+						update();
+						e.consume();
+					})
+			);
+
 		}
 
 		protected void update() {
-			CellBase<Integer> cell = getSkinnable();
+			CellBase<T> cell = getSkinnable();
 			int index = cell.getIndex();
-			Integer item = cell.getItem();
+			T item = cell.getItem();
 			label.setText(toString(index, item));
 		}
 
-		protected String toString(int idx, Integer item) {
+		protected String toString(int idx, T item) {
 			return "Index: %d Item: %s".formatted(
 				idx,
 				item != null ? item.toString() : ""
@@ -155,11 +166,37 @@ public class TestFXUtils {
 		}
 
 		@Override
-		protected void initBehavior(CellBaseBehavior<Integer> behavior) {}
+		protected void initBehavior(CellBaseBehavior<T> behavior) {}
 
 		@Override
 		protected void layoutChildren(double x, double y, double w, double h) {
 			label.resizeRelocate(x, y, w, h);
+		}
+	}
+
+	public static class UserCell extends CellBase<User> {
+		public UserCell() {}
+
+		public UserCell(User item) {super(item);}
+
+		@Override
+		public void onDeCache() {
+			counter.fCache();
+		}
+
+		@Override
+		public void onCache() {
+			counter.tCache();
+		}
+
+		@Override
+		public void dispose() {
+			counter.disposed();
+		}
+
+		@Override
+		protected SkinBase<?, ?> buildSkin() {
+			return new CellSkin<>(this);
 		}
 	}
 

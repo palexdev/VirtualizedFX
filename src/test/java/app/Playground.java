@@ -1,7 +1,7 @@
 package app;
 
+import assets.User;
 import interactive.table.TableTestUtils.Table;
-import interactive.table.TableTestUtils.User;
 import io.github.palexdev.mfxcore.base.TriConsumer;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;

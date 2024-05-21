@@ -1,11 +1,15 @@
 package interactive.list;
 
+import assets.User;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.cells.CellBase;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
+import io.github.palexdev.virtualizedfx.list.VFXListSkin;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -24,6 +28,8 @@ import java.util.Comparator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
+import static assets.User.faker;
+import static assets.User.users;
 import static interactive.TestFXUtils.*;
 import static interactive.list.ListTestUtils.List;
 import static interactive.list.ListTestUtils.assertState;
@@ -40,7 +46,9 @@ public class ListTests {
 	void start(Stage stage) {stage.show();}
 
 	@BeforeEach
-	void setup() {counter.reset();}
+	void setup() {
+		resetCounters();
+	}
 
 	@Test
 	void testInitAndGeometry(FxRobot robot) {
@@ -290,7 +298,7 @@ public class ListTests {
 			list.setCellFactory(i -> new SimpleCell(i) {
 				@Override
 				protected SkinBase<?, ?> buildSkin() {
-					return new CellSkin(this) {
+					return new CellSkin<>(this) {
 						protected String toString(int idx, Integer item) {
 							return "New Factory! Index: %d Item: %s".formatted(
 								idx,
@@ -914,5 +922,55 @@ public class ListTests {
 		robot.interact(() -> list.setSpacing(0.0));
 		assertState(list, IntegerRange.of(33, 49));
 		assertCounter(0, 1, 6, 6, 6, 0, 0);
+	}
+
+	@Test
+	void testManualUpdate(FxRobot robot) {
+		StackPane pane = setupStage();
+		VFXList<User, UserCell> list = new VFXList<>(users(20), u -> {
+			UserCell cell = new UserCell(u);
+			counter.created();
+			return cell;
+		}) {
+			@Override
+			protected SkinBase<?, ?> buildSkin() {
+				return new VFXListSkin<>(this) {
+					@Override
+					protected void onLayoutCompleted(boolean done) {
+						super.onLayoutCompleted(done);
+						if (done) counter.layout();
+					}
+				};
+			}
+		};
+		robot.interact(() -> pane.getChildren().add(list));
+
+		// Assert Init
+		assertEquals(list.getRange(), IntegerRange.of(0, 16));
+		assertCounter(17, 1, 17, 17, 0, 0, 0);
+
+		// Get text before change cell 5
+		UserCell cell5 = list.getState().getCellsByIndexUnmodifiable().get(5);
+		String text5 = ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText();
+
+		// Change item 5
+		robot.interact(() -> list.getItems().get(5).setFirstName(faker.name().firstName()));
+		assertEquals(text5, ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText()); // No automatic update
+
+		// Force update (all)
+		robot.interact(() -> list.update());
+		assertNotEquals(text5, ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText());
+
+		// Get text before change cell 7
+		UserCell cell7 = list.getState().getCellsByIndexUnmodifiable().get(7);
+		String text7 = ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText();
+
+		// Change item 7
+		robot.interact(() -> list.getItems().get(7).setFirstName(faker.name().firstName()));
+		assertEquals(text7, ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText()); // No automatic update
+
+		// Force update (single)
+		robot.interact(() -> list.update(7));
+		assertNotEquals(text7, ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText());
 	}
 }

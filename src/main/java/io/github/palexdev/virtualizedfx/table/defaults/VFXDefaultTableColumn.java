@@ -80,7 +80,8 @@ public class VFXDefaultTableColumn<T, C extends TableCell<T>> extends VFXTableCo
 	/**
 	 * Specifies the side on which the icon will be placed.
 	 * <p></p>
-	 * {@link HPos#CENTER} is ignored by the default skin, the icon will be placed to the right. // TODO change this
+	 * By setting the alignment to {@link HPos#CENTER} the default skin, {@link VFXDefaultTableColumnSkin}, will hide the
+	 * text and show only the icon at the center.
 	 * <p></p>
 	 * This is settable via CSS with the "-vfx-icon-alignment" property.
 	 */

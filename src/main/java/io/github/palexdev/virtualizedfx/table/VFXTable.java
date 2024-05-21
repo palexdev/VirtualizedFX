@@ -18,6 +18,7 @@ import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.TableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
+import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.grid.VFXGrid;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.properties.VFXTableStateProperty;
@@ -158,7 +159,7 @@ import java.util.function.Supplier;
  * Their behavior depends on the set {@link ColumnsLayoutMode}.
  * In {@link ColumnsLayoutMode#VARIABLE} mode, columns will be resized to make their header and all their "children" cells fit the content.
  * In {@link ColumnsLayoutMode#FIXED} mode, since columns can't have different size, the algorithm chooses the greatest
- * needed width among all the columns and then sets the {@link #columnsSizeProperty()}. // TODO implement
+ * needed width among all the columns and then sets the {@link #columnsSizeProperty()}.
  * Of course, the width computation is done on the currently shown items, meaning that if you scroll and there are now
  * items that are even bigger than the current set width, then you'll have to autosize again.
  * <p> - Columns' indexes. Since columns are stored in a list, there is not a fast way to retrieve
@@ -172,7 +173,6 @@ import java.util.function.Supplier;
  * list, that may involve having duplicates in it, it's recommended to use a temporary new list and then use 'setAll'.
  * {@link VFXTableColumn} offers a utility method to swap to columns, so please use {@link VFXTableColumn#swapColumns(VFXTable, int, int)}
  * or {@link VFXTableColumn#swapColumns(ObservableList, int, int)} instead of {@link Collections#swap(List, int, int)}.
- * <p> - // TODO implement manual update for all containers
  *
  * @param <T> the type of items in the table
  */
@@ -338,10 +338,6 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 		return column.getIndex();
 	}
 
-	public void update() {
-		// TODO implement
-	}
-
 	/**
 	 * Setter for the {@link #stateProperty()}.
 	 */
@@ -393,6 +389,31 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 	//================================================================================
 	// Overridden Methods
 	//================================================================================
+
+	/**
+	 * {@inheritDoc}
+	 * <p></p>
+	 * Note that this may be a costly operation due to nested loops. Since cells are inside rows we must first iterate
+	 * over the rows, then iterate on each of their cells and fire an update event on each of them.
+	 */
+	@Override
+	public void update(int... indexes) {
+		VFXTableState<T> state = getState();
+		if (state.isEmpty()) return;
+		if (indexes.length == 0) {
+			state.getRowsByIndex().values().forEach(r ->
+				r.getCellsByIndex().values().forEach(VFXContainerEvent::update)
+			);
+			return;
+		}
+
+		for (int index : indexes) {
+			VFXTableRow<T> row = state.getRowsByIndex().get(index);
+			if (row == null) continue;
+			row.getCellsByIndex().values().forEach(VFXContainerEvent::update);
+		}
+	}
+
 	@Override
 	protected SkinBase<?, ?> buildSkin() {
 		return new VFXTableSkin<>(this);

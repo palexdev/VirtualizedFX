@@ -1,6 +1,6 @@
 package misc;
 
-import interactive.table.TableTestUtils.User;
+import assets.User;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap;
 import org.junit.jupiter.api.Test;
 

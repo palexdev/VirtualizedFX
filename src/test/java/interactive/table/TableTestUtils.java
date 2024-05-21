@@ -1,18 +1,20 @@
 package interactive.table;
 
+import assets.User;
 import interactive.TestFXUtils;
 import interactive.TestFXUtils.Counter;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.events.WhenEvent;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
-import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import io.github.palexdev.mfxresources.fonts.MFXFontIcon;
 import io.github.palexdev.mfxresources.fonts.fontawesome.FontAwesomeSolid;
 import io.github.palexdev.virtualizedfx.cells.TableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
+import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.table.*;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.FixedTableHelper;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
@@ -26,13 +28,10 @@ import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
-import net.datafaker.Faker;
-import net.datafaker.providers.base.Name;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.SequencedMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -40,6 +39,7 @@ import java.util.stream.IntStream;
 
 import static interactive.TestFXUtils.FP_ASSERTIONS_DELTA;
 import static interactive.TestFXUtils.counter;
+import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TableTestUtils {
@@ -470,6 +470,14 @@ public class TableTestUtils {
 	}
 
 	public static class UserCell<E> extends VFXSimpleTableCell<User, E> {
+		private WhenEvent<?> updWhen;
+
+		{
+			updWhen = intercept(this, VFXContainerEvent.UPDATE)
+				.process(e -> invalidate())
+				.register();
+		}
+
 		public UserCell(User item, Function<User, E> extractor) {
 			super(item, extractor);
 		}
@@ -503,97 +511,8 @@ public class TableTestUtils {
 		@Override
 		public void dispose() {
 			counter.disposed();
-		}
-	}
-
-	public static class User {
-		private static int COUNT = 0;
-		private static final Faker faker = new Faker();
-		private final int id;
-		private final String firstName;
-		private final String lastName;
-		private final int birthYear;
-		private final String zodiac;
-		private final String country;
-		private final String blood;
-		private final String pet;
-
-		public User() {
-			Name name = faker.name();
-			this.id = COUNT++;
-			this.firstName = name.firstName();
-			this.lastName = name.lastName();
-			this.birthYear = faker.number().numberBetween(1930, 2024);
-			this.zodiac = faker.zodiac().sign();
-			this.country = faker.country().name();
-			this.blood = faker.bloodtype().bloodGroup();
-			this.pet = faker.animal().name();
-		}
-
-		public User(String firstName, String lastName, int birthYear) {
-			this.id = COUNT++;
-			this.firstName = firstName;
-			this.lastName = lastName;
-			this.birthYear = birthYear;
-			this.zodiac = "";
-			this.country = "";
-			this.blood = "";
-			this.pet = "";
-		}
-
-		public static ObservableList<User> users(int cnt) {
-			return IntStream.range(0, cnt)
-				.mapToObj(i -> new User())
-				.collect(FXCollectors.toList());
-		}
-
-		public int id() {
-			return id;
-		}
-
-		public String firstName() {return firstName;}
-
-		public String lastName() {return lastName;}
-
-		public int birthYear() {return birthYear;}
-
-		public String zodiac() {
-			return zodiac;
-		}
-
-		public String country() {
-			return country;
-		}
-
-		public String blood() {
-			return blood;
-		}
-
-		public String animal() {
-			return pet;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj == this) return true;
-			if (obj == null || obj.getClass() != this.getClass()) return false;
-			var that = (User) obj;
-			return Objects.equals(this.firstName, that.firstName) &&
-				Objects.equals(this.lastName, that.lastName) &&
-				this.birthYear == that.birthYear;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(firstName, lastName, birthYear);
-		}
-
-		@Override
-		public String toString() {
-			return "User[" +
-				"firstName=" + firstName + ", " +
-				"lastName=" + lastName + ", " +
-				"birthYear=" + birthYear + ']';
+			updWhen.dispose();
+			updWhen = null;
 		}
 	}
 

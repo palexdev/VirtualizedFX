@@ -1,13 +1,17 @@
 package interactive.grid;
 
+import assets.User;
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.grid.VFXGrid;
 import io.github.palexdev.virtualizedfx.grid.VFXGridHelper;
+import io.github.palexdev.virtualizedfx.grid.VFXGridSkin;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
@@ -23,12 +27,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static assets.User.faker;
+import static assets.User.users;
 import static interactive.TestFXUtils.*;
 import static interactive.grid.GridTestUtils.assertLength;
 import static interactive.grid.GridTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static utils.Utils.*;
 
 @ExtendWith(ApplicationExtension.class)
@@ -44,7 +49,9 @@ public class GridTests {
 	void start(Stage stage) {stage.show();}
 
 	@BeforeEach
-	void setup() {counter.reset();}
+	void setup() {
+		resetCounters();
+	}
 
 	@Test
 	void testHelperDefault(FxRobot robot) {
@@ -526,7 +533,7 @@ public class GridTests {
 			grid.setCellFactory(t -> new GridCell(t) {
 				@Override
 				protected SkinBase<?, ?> buildSkin() {
-					return new CellSkin(this) {
+					return new CellSkin<>(this) {
 						protected String toString(int idx, Integer item) {
 							return "New Factory! Index: %d Item: %s".formatted(
 								idx,
@@ -1420,5 +1427,57 @@ public class GridTests {
 		robot.interact(() -> removeAll(grid, 0, 3, 4, 8, 10, 11));
 		assertState(grid, IntegerRange.of(0, 5), IntegerRange.of(0, 4));
 		assertCounter(0, 1, 30, 6, 0, 0, 0);
+	}
+
+	@Test
+	void testManualUpdate(FxRobot robot) {
+		StackPane pane = setupStage();
+		VFXGrid<User, UserCell> grid = new VFXGrid<>(users(50), u -> {
+			UserCell cell = new UserCell(u);
+			counter.created();
+			return cell;
+		}) {
+			@Override
+			protected SkinBase<?, ?> buildSkin() {
+				return new VFXGridSkin<>(this) {
+					@Override
+					protected void onLayoutCompleted(boolean done) {
+						super.onLayoutCompleted(done);
+						if (done) counter.layout();
+					}
+				};
+			}
+		};
+		robot.interact(() -> pane.getChildren().add(grid));
+
+		// Test init
+		assertEquals(grid.getRowsRange(), IntegerRange.of(0, 7));
+		assertEquals(grid.getColumnsRange(), IntegerRange.of(0, 4));
+		assertCounter(40, 1, 40, 40, 0, 0, 0);
+
+		// Get text before change cell 5
+		UserCell cell5 = grid.getState().getCellsByIndexUnmodifiable().get(5);
+		String text5 = ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText();
+
+		// Change item 5
+		robot.interact(() -> grid.getItems().get(5).setFirstName(faker.name().firstName()));
+		assertEquals(text5, ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText()); // No automatic update
+
+		// Force update (all)
+		robot.interact(() -> grid.update());
+		assertNotEquals(text5, ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText());
+
+		// Get text before change cell 7
+		UserCell cell7 = grid.getState().getCellsByIndexUnmodifiable().get(7);
+		String text7 = ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText();
+
+		// Change item 7
+		robot.interact(() -> grid.getItems().get(7).setFirstName(faker.name().firstName()));
+		assertEquals(text7, ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText()); // No automatic update
+
+		// Force update (single)
+		robot.interact(() -> grid.update(7));
+		assertNotEquals(text7, ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText());
+
 	}
 }

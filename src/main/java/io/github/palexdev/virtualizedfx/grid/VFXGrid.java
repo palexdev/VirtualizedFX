@@ -18,6 +18,7 @@ import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
 import io.github.palexdev.virtualizedfx.properties.VFXGridStateProperty;
@@ -250,6 +251,22 @@ public class VFXGrid<T, C extends Cell<T>> extends Control<VFXGridManager<T, C>>
 	//================================================================================
 	// Overridden Methods
 	//================================================================================
+	@Override
+	public void update(int... indexes) {
+		VFXGridState<T, C> state = getState();
+		if (state.isEmpty()) return;
+		if (indexes.length == 0) {
+			state.getCellsByIndex().values().forEach(VFXContainerEvent::update);
+			return;
+		}
+
+		for (int index : indexes) {
+			C c = state.getCellsByIndex().get(index);
+			if (c == null) continue;
+			VFXContainerEvent.update(c);
+		}
+	}
+
 	@Override
 	public List<String> defaultStyleClasses() {
 		return List.of("vfx-grid");

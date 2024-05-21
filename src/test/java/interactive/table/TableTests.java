@@ -1,8 +1,10 @@
 package interactive.table;
 
 import assets.TestResources;
+import assets.User;
 import com.google.gson.reflect.TypeToken;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
@@ -33,10 +35,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static assets.User.faker;
+import static assets.User.users;
 import static interactive.TestFXUtils.*;
 import static interactive.table.TableTestUtils.*;
+import static interactive.table.TableTestUtils.UserCell;
 import static interactive.table.TableTestUtils.Table.emptyColumns;
-import static interactive.table.TableTestUtils.User.users;
 import static io.github.palexdev.virtualizedfx.table.VFXTableColumn.swapColumns;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,7 +78,6 @@ public class TableTests {
 
 	@BeforeEach
 	void setup() {
-		// TODO add to other tests too
 		resetCounters();
 	}
 
@@ -363,7 +366,7 @@ public class TableTests {
 		StackPane pane = setupStage();
 		Table table = new Table(users(50))
 			.addEmptyColumns(9);
-		VFXTableHelper<TableTestUtils.User> helper = table.getHelper();
+		VFXTableHelper<User> helper = table.getHelper();
 		robot.interact(() -> pane.getChildren().add(table));
 
 		// Medium Buffer
@@ -395,7 +398,7 @@ public class TableTests {
 		StackPane pane = setupStage();
 		Table table = new Table(users(50))
 			.addEmptyColumns(9);
-		VFXTableHelper<TableTestUtils.User> helper = table.getHelper();
+		VFXTableHelper<User> helper = table.getHelper();
 		robot.interact(() -> {
 			table.setVPos(616.0);
 			table.setHPos(1240.0);
@@ -432,7 +435,7 @@ public class TableTests {
 		StackPane pane = setupStage();
 		Table table = new Table(users(50))
 			.addEmptyColumns(9);
-		VFXTableHelper<TableTestUtils.User> helper = table.getHelper();
+		VFXTableHelper<User> helper = table.getHelper();
 		robot.interact(() -> {
 			table.scrollToLastRow();
 			table.scrollToLastColumn();
@@ -468,7 +471,7 @@ public class TableTests {
 		StackPane pane = setupStage();
 		Table table = new Table(users(50))
 			.addEmptyColumns(9);
-		VFXTableHelper<TableTestUtils.User> helper = table.getHelper();
+		VFXTableHelper<User> helper = table.getHelper();
 		robot.interact(() -> pane.getChildren().add(table));
 
 		assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
@@ -1907,5 +1910,39 @@ public class TableTests {
 		for (VFXTableColumn<User, ? extends TableCell<User>> c : table.getColumns()) {
 			assertEquals(240, c.getWidth(), 5);
 		}
+	}
+
+	@Test
+	void testManualUpdate(FxRobot robot) {
+		StackPane pane = setupStage();
+		Table table = new Table(users(20));
+		robot.interact(() -> pane.getChildren().add(table));
+
+		// Assert init
+		assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+		assertCounter(112, 1, 112, 112, 0, 0, 0);
+		assertRowsCounter(16, 16, 16, 0, 0, 0);
+
+		// Get text before change row 5
+		TableCell<User> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
+		Label label5 = (Label) ((UserCell<?>) row5).getChildren().getFirst();
+		String text5 = label5.getText();
+
+		// Change item 5
+		robot.interact(() -> table.getItems().get(5).setFirstName(faker.name().firstName()));
+		assertEquals(text5, label5.getText()); // No automatic update
+
+		// Force update (all)
+		robot.interact(() -> table.update());
+		assertNotEquals(text5, label5.getText());
+
+		// Get text before change row 7
+		TableCell<User> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
+		Label label7 = (Label) ((UserCell<?>) row7).getChildren().getFirst();
+		String text7 = label7.getText();
+
+		// Change item 7
+		robot.interact(() -> table.getItems().get(7).setFirstName(faker.name().firstName()));
+		assertEquals(text7, label7.getText()); // No automatic update
 	}
 }

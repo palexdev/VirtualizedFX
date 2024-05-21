@@ -14,6 +14,7 @@ import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.Cell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.properties.VFXListStateProperty;
@@ -51,7 +52,7 @@ import java.util.function.Supplier;
  * that influence the way items are shown (how many, start, end, changes in the list, etc.) will produce a specific state.
  * This is an important concept as some of the features I'm going to mention below are due to the combination of default
  * skin + default behavior. You are allowed to change/customize the skin and the behavior as you please. BUT, beware, VFX
- *  * components are no joke, they are complex, make sure to read the documentation before!
+ * * components are no joke, they are complex, make sure to read the documentation before!
  * <p> - The items list is managed automatically (permutations, insertions, removals, updates). Compared to previous
  * algorithms, the {@link VFXListManager} adopts a much simpler strategy while still trying to keep the cell updates count
  * as low as possible to improve performance. See {@link VFXListManager#onItemsChanged()}.
@@ -216,6 +217,22 @@ public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>>
 	//================================================================================
 	// Overridden Methods
 	//================================================================================
+	@Override
+	public void update(int... indexes) {
+		VFXListState<T, C> state = getState();
+		if (state.isEmpty()) return;
+		if (indexes.length == 0) {
+			state.getCellsByIndex().values().forEach(VFXContainerEvent::update);
+			return;
+		}
+
+		for (int index : indexes) {
+			C c = state.getCellsByIndex().get(index);
+			if (c == null) continue;
+			VFXContainerEvent.update(c);
+		}
+	}
+
 	@Override
 	public List<String> defaultStyleClasses() {
 		return List.of("vfx-list");

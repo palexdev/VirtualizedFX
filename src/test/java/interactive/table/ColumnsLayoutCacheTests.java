@@ -1,8 +1,8 @@
 package interactive.table;
 
+import assets.User;
 import interactive.table.TableTestUtils.EmptyColumn;
 import interactive.table.TableTestUtils.Table;
-import interactive.table.TableTestUtils.User;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.cells.TableCell;
@@ -23,8 +23,8 @@ import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.Set;
 
+import static assets.User.users;
 import static interactive.TestFXUtils.setupStage;
-import static interactive.table.TableTestUtils.User.users;
 import static interactive.table.TableTestUtils.setColumnWidth;
 import static org.junit.jupiter.api.Assertions.*;
 import static utils.Utils.setWindowSize;

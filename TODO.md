@@ -10,3 +10,5 @@
 - Rename special EMPTY state to INVALID
 - Common interface for managers (?)
 - Look better for clone states for VFXTable
+- Reorganize tests classes/packages
+- Review cells!

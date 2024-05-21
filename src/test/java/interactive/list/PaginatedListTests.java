@@ -27,8 +27,7 @@ import java.util.Comparator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import static interactive.TestFXUtils.assertCounter;
-import static interactive.TestFXUtils.counter;
+import static interactive.TestFXUtils.*;
 import static interactive.list.ListTestUtils.PList;
 import static interactive.list.ListTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
@@ -44,7 +43,9 @@ public class PaginatedListTests {
 	void start(Stage stage) {stage.show();}
 
 	@BeforeEach
-	void setup() {counter.reset();}
+	void setup() {
+		resetCounters();
+	}
 
 	@Test
 	void testInitAndGeometry(FxRobot robot) {
