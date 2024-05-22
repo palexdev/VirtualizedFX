@@ -1,4 +1,4 @@
-package assets;
+package model;
 
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import javafx.collections.ObservableList;

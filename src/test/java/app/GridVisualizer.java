@@ -1,7 +1,6 @@
 package app;
 
-import interactive.TestFXUtils;
-import interactive.TestFXUtils.GridCell;
+import cells.TestGridCell;
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -10,6 +9,7 @@ import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils;
+import io.github.palexdev.virtualizedfx.cells.VFXLabeledCellSkin;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -122,7 +122,7 @@ public class GridVisualizer extends Application {
 		}
 	}
 
-	class ComparisonCell extends GridCell {
+	class ComparisonCell extends TestGridCell {
 		public ComparisonCell(Integer item) {
 			super(item);
 		}
@@ -137,9 +137,9 @@ public class GridVisualizer extends Application {
 
 		@Override
 		protected SkinBase<?, ?> buildSkin() {
-			return new TestFXUtils.CellSkin(this) {
+			return new VFXLabeledCellSkin<>(this) {
 				{
-					label.setStyle("-fx-border-color: blue");
+					setStyle("-fx-border-color: blue");
 				}
 			};
 		}

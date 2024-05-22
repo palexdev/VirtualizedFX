@@ -1,6 +1,7 @@
 package interactive.grid;
 
-import assets.User;
+import cells.TestCell;
+import cells.TestGridCell;
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
@@ -8,6 +9,7 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.grid.VFXGrid;
 import io.github.palexdev.virtualizedfx.grid.VFXGridHelper;
@@ -16,6 +18,7 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,13 +30,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static assets.User.faker;
-import static assets.User.users;
-import static interactive.TestFXUtils.*;
 import static interactive.grid.GridTestUtils.assertLength;
 import static interactive.grid.GridTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
+import static model.User.faker;
+import static model.User.users;
 import static org.junit.jupiter.api.Assertions.*;
+import static utils.TestFXUtils.*;
 import static utils.Utils.*;
 
 @ExtendWith(ApplicationExtension.class)
@@ -59,7 +62,7 @@ public class GridTests {
 		Grid grid = new Grid(items(50));
 		robot.interact(() -> pane.getChildren().add(grid));
 
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		assertNotNull(helper);
 		assertEquals(5, helper.maxColumns());
 		assertEquals(4, helper.visibleColumns());
@@ -75,7 +78,7 @@ public class GridTests {
 	void testHelperComplex(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(50));
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		robot.interact(() -> pane.getChildren().add(grid));
 		assertNotNull(helper);
 
@@ -413,7 +416,7 @@ public class GridTests {
 	void testBufferChangeTopLeft(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(80));
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		robot.interact(() -> {
 			grid.setColumnsNum(10); // To test both buffers
 			pane.getChildren().add(grid);
@@ -444,7 +447,7 @@ public class GridTests {
 	void testBufferChangeMiddle(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(100));
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		robot.interact(() -> {
 			grid.setColumnsNum(10);
 			grid.setHPos(300);
@@ -477,7 +480,7 @@ public class GridTests {
 	void testBufferChangeBottomRight(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(80));
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		robot.interact(() -> {
 			grid.setColumnsNum(10);
 			grid.scrollToLastColumn();
@@ -510,7 +513,7 @@ public class GridTests {
 	void testChangeFactory(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(100));
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		robot.interact(() -> {
 			grid.setColumnsNum(10); // To allow horizontal movement
 			pane.getChildren().add(grid);
@@ -530,17 +533,12 @@ public class GridTests {
 
 		// Change factory and test
 		robot.interact(() ->
-			grid.setCellFactory(t -> new GridCell(t) {
-				@Override
-				protected SkinBase<?, ?> buildSkin() {
-					return new CellSkin<>(this) {
-						protected String toString(int idx, Integer item) {
-							return "New Factory! Index: %d Item: %s".formatted(
-								idx,
-								item != null ? item.toString() : ""
-							);
-						}
-					};
+			grid.setCellFactory(t -> new TestGridCell(t) {
+				{
+					setConverter(t -> "New Factory! Index: %d Item: %s".formatted(
+						getIndex(),
+						t != null ? t.toString() : "")
+					);
 				}
 			})
 		);
@@ -1363,7 +1361,7 @@ public class GridTests {
 	void testRemoveAtEnd(FxRobot robot) {
 		StackPane pane = setupStage();
 		Grid grid = new Grid(items(100));
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		robot.interact(() -> {
 			grid.setColumnsNum(10);
 			pane.getChildren().add(grid);
@@ -1432,8 +1430,8 @@ public class GridTests {
 	@Test
 	void testManualUpdate(FxRobot robot) {
 		StackPane pane = setupStage();
-		VFXGrid<User, UserCell> grid = new VFXGrid<>(users(50), u -> {
-			UserCell cell = new UserCell(u);
+		VFXGrid<User, VFXCell<User>> grid = new VFXGrid<>(users(50), u -> {
+			TestCell<User> cell = new TestCell<>(u);
 			counter.created();
 			return cell;
 		}) {
@@ -1456,28 +1454,30 @@ public class GridTests {
 		assertCounter(40, 1, 40, 40, 0, 0, 0);
 
 		// Get text before change cell 5
-		UserCell cell5 = grid.getState().getCellsByIndexUnmodifiable().get(5);
-		String text5 = ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText();
+		VFXCell<User> cell5 = grid.getState().getCellsByIndexUnmodifiable().get(5);
+		Label label5 = (Label) cell5.toNode().lookup(".label");
+		String text5 = label5.getText();
 
 		// Change item 5
 		robot.interact(() -> grid.getItems().get(5).setFirstName(faker.name().firstName()));
-		assertEquals(text5, ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText()); // No automatic update
+		assertEquals(text5, label5.getText()); // No automatic update
 
 		// Force update (all)
 		robot.interact(() -> grid.update());
-		assertNotEquals(text5, ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText());
+		assertNotEquals(text5, label5.getText());
 
 		// Get text before change cell 7
-		UserCell cell7 = grid.getState().getCellsByIndexUnmodifiable().get(7);
-		String text7 = ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText();
+		VFXCell<User> cell7 = grid.getState().getCellsByIndexUnmodifiable().get(7);
+		Label label7 = (Label) cell7.toNode().lookup(".label");
+		String text7 = label7.getText();
 
 		// Change item 7
 		robot.interact(() -> grid.getItems().get(7).setFirstName(faker.name().firstName()));
-		assertEquals(text7, ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText()); // No automatic update
+		assertEquals(text7, label7.getText()); // No automatic update
 
 		// Force update (single)
 		robot.interact(() -> grid.update(7));
-		assertNotEquals(text7, ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText());
+		assertNotEquals(text7, label7.getText());
 
 	}
 }

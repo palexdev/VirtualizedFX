@@ -1,7 +1,7 @@
 package misc;
 
-import assets.User;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap;
+import model.User;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

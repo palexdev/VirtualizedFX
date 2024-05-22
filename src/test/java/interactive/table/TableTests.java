@@ -1,8 +1,6 @@
 package interactive.table;
 
-import assets.FXUser;
 import assets.TestResources;
-import assets.User;
 import com.google.gson.reflect.TypeToken;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -32,6 +30,8 @@ import javafx.collections.ObservableList;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import model.FXUser;
+import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,15 +44,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static assets.FXUser.fxusers;
-import static assets.User.faker;
-import static assets.User.users;
-import static interactive.TestFXUtils.*;
 import static interactive.table.TableTestUtils.*;
 import static interactive.table.TableTestUtils.Table.emptyColumns;
 import static io.github.palexdev.virtualizedfx.table.VFXTableColumn.swapColumns;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
+import static model.FXUser.fxusers;
+import static model.User.faker;
+import static model.User.users;
 import static org.junit.jupiter.api.Assertions.*;
+import static utils.TestFXUtils.*;
 import static utils.Utils.*;
 
 @ExtendWith(ApplicationExtension.class)

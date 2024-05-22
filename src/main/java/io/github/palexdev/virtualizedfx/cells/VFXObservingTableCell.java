@@ -161,7 +161,10 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
 			);
 			events(
 				intercept(VFXObservingTableCell.this, VFXContainerEvent.UPDATE)
-					.process(e -> update())
+					.process(e -> {
+						update();
+						e.consume();
+					})
 			);
 		}
 

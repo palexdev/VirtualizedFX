@@ -38,22 +38,22 @@ import java.util.function.Function;
 public interface VFXMappingTableCell<T, E> extends VFXTableCell<T> {
 
 	/**
-	 * @return the function used to extract a value E from an item T
+	 * @return the function used to extract a value {@link E} from an item {@link T}
 	 */
 	Function<T, E> getExtractor();
 
 	/**
-	 * Sets the function used to extract a value E from an item T
+	 * Sets the function used to extract a value {@link E} from an item {@link T}
 	 */
 	VFXMappingTableCell<T, E> setExtractor(Function<T, E> extractor);
 
 	/**
-	 * @return the {@link StringConverter} used to convert an extracted value E to a String
+	 * @return the {@link StringConverter} used to convert an extracted value {@link E} to a {@code String}
 	 */
 	StringConverter<E> getConverter();
 
 	/**
-	 * Sets the {@link StringConverter} used to convert an extracted value E to a String
+	 * Sets the {@link StringConverter} used to convert an extracted value {@link E} to a {@code String}
 	 */
 	VFXMappingTableCell<T, E> setConverter(StringConverter<E> converter);
 

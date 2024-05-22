@@ -1,8 +1,10 @@
 package interactive.list;
 
-import interactive.TestFXUtils.SimpleCell;
+import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListSkin;
@@ -18,9 +20,9 @@ import org.opentest4j.AssertionFailedError;
 import java.util.Map;
 import java.util.function.Function;
 
-import static interactive.TestFXUtils.counter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static utils.TestFXUtils.counter;
 
 public class ListTestUtils {
 	//================================================================================
@@ -31,9 +33,9 @@ public class ListTestUtils {
 	//================================================================================
 	// Methods
 	//================================================================================
-	static void assertState(VFXList<Integer, SimpleCell> list, IntegerRange range) {
-		VFXListState<Integer, SimpleCell> state = list.getState();
-		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
+	static void assertState(VFXList<Integer, VFXCell<Integer>> list, IntegerRange range) {
+		VFXListState<Integer, VFXCell<Integer>> state = list.getState();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		if (Utils.INVALID_RANGE.equals(range)) {
 			assertEquals(VFXListState.INVALID, state);
 			return;
@@ -42,10 +44,10 @@ public class ListTestUtils {
 		assertEquals(helper.range(), range);
 		assertEquals(helper.totalNum(), state.size());
 
-		Map<Integer, SimpleCell> cells = state.getCellsByIndexUnmodifiable();
+		Map<Integer, VFXCell<Integer>> cells = state.getCellsByIndexUnmodifiable();
 		ObservableList<Integer> items = list.getItems();
 		for (Integer index : range) {
-			SimpleCell cell = cells.get(index);
+			VFXCell<Integer> cell = cells.get(index);
 			try {
 				assertNotNull(cell);
 			} catch (AssertionFailedError error) {
@@ -53,13 +55,15 @@ public class ListTestUtils {
 				System.err.println("Null cell for index: " + index);
 				throw error;
 			}
-			assertEquals(index, cell.getIndex());
-			assertEquals(items.get(index), cell.getItem());
+			if (cell instanceof VFXCellBase<Integer> cb) {
+				assertEquals(index, cb.getIndex());
+				assertEquals(items.get(index), cb.getItem());
+			}
 			assertPosition(list, index - range.getMin(), cell);
 		}
 	}
 
-	static void assertPosition(VFXList<Integer, SimpleCell> list, int iteration, SimpleCell cell) {
+	static void assertPosition(VFXList<Integer, VFXCell<Integer>> list, int iteration, VFXCell<Integer> cell) {
 		Orientation o = list.getOrientation();
 		Function<Bounds, Double> inParentPos = (o == Orientation.VERTICAL) ? Bounds::getMinY : Bounds::getMinX;
 		double pos = iteration * list.getHelper().getTotalCellSize();
@@ -69,17 +73,17 @@ public class ListTestUtils {
 	//================================================================================
 	// Internal Classes
 	//================================================================================
-	public static class List extends VFXList<Integer, SimpleCell> {
+	public static class List extends VFXList<Integer, VFXCell<Integer>> {
 		public List(ObservableList<Integer> items) {
-			this(items, SimpleCell::new);
+			this(items, TestCell::new);
 		}
 
-		public List(ObservableList<Integer> items, Function<Integer, SimpleCell> cellFactory) {
+		public List(ObservableList<Integer> items, Function<Integer, VFXCell<Integer>> cellFactory) {
 			super(items, cellFactory);
 		}
 
 		@Override
-		public void setCellFactory(Function<Integer, SimpleCell> cellFactory) {
+		public void setCellFactory(Function<Integer, VFXCell<Integer>> cellFactory) {
 			super.setCellFactory(cellFactory.andThen(c -> {
 				counter.created();
 				return c;
@@ -98,17 +102,17 @@ public class ListTestUtils {
 		}
 	}
 
-	public static class PList extends VFXPaginatedList<Integer, SimpleCell> {
+	public static class PList extends VFXPaginatedList<Integer, VFXCell<Integer>> {
 		public PList(ObservableList<Integer> items) {
-			this(items, SimpleCell::new);
+			this(items, TestCell::new);
 		}
 
-		public PList(ObservableList<Integer> items, Function<Integer, SimpleCell> cellFactory) {
+		public PList(ObservableList<Integer> items, Function<Integer, VFXCell<Integer>> cellFactory) {
 			super(items, cellFactory);
 		}
 
 		@Override
-		public void setCellFactory(Function<Integer, SimpleCell> cellFactory) {
+		public void setCellFactory(Function<Integer, VFXCell<Integer>> cellFactory) {
 			super.setCellFactory(cellFactory.andThen(c -> {
 				counter.created();
 				return c;

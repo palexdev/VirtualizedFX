@@ -1,11 +1,11 @@
 package interactive.list;
 
-import assets.User;
+import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
-import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
@@ -16,6 +16,7 @@ import javafx.geometry.Orientation;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,14 +29,14 @@ import java.util.Comparator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import static assets.User.faker;
-import static assets.User.users;
-import static interactive.TestFXUtils.*;
 import static interactive.list.ListTestUtils.List;
 import static interactive.list.ListTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
+import static model.User.faker;
+import static model.User.users;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static utils.TestFXUtils.*;
 import static utils.Utils.items;
 import static utils.Utils.setWindowSize;
 
@@ -178,7 +179,7 @@ public class ListTests {
 	void testBufferChangeTop(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(20));
-		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Standard buffer -> 17 cells (4 buffer)
@@ -206,7 +207,7 @@ public class ListTests {
 	void testBufferChangeBottom(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(20));
-		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setVPos(Double.MAX_VALUE);
@@ -244,7 +245,7 @@ public class ListTests {
 	void testBufferChangeMiddle(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(50));
-		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setVPos(600);
@@ -278,7 +279,7 @@ public class ListTests {
 	void testChangeFactory(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(50));
-		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Test init
@@ -295,17 +296,12 @@ public class ListTests {
 
 		// Change factory and test
 		robot.interact(() ->
-			list.setCellFactory(i -> new SimpleCell(i) {
-				@Override
-				protected SkinBase<?, ?> buildSkin() {
-					return new CellSkin<>(this) {
-						protected String toString(int idx, Integer item) {
-							return "New Factory! Index: %d Item: %s".formatted(
-								idx,
-								item != null ? item.toString() : ""
-							);
-						}
-					};
+			list.setCellFactory(i -> new TestCell<>(i) {
+				{
+					setConverter(t -> "New Factory! Index: %d Item: %s".formatted(
+						getIndex(),
+						t != null ? t.toString() : ""
+					));
 				}
 			}));
 
@@ -320,7 +316,7 @@ public class ListTests {
 	@Test
 	void testFitToViewport(FxRobot robot) {
 		StackPane pane = setupStage();
-		List list = new List(items(30), i -> new SimpleCell(i) {
+		List list = new List(items(30), i -> new TestCell<>(i) {
 			@Override
 			protected double computePrefWidth(double height) {
 				if (getItem() != null && getItem() == 0) return 800.0;
@@ -335,14 +331,14 @@ public class ListTests {
 
 		// Test init
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(VFXCellBase::toNode)
+			.map(VFXCell::toNode)
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Disable and test again
 		robot.interact(() -> list.setFitToViewport(false));
 		assertEquals(800.0, list.getHelper().getVirtualMaxX());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(VFXCellBase::toNode)
+			.map(VFXCell::toNode)
 			.forEach(n -> assertNotEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Scroll to max and then disable again
@@ -352,7 +348,7 @@ public class ListTests {
 		robot.interact(() -> list.setFitToViewport(true));
 		assertEquals(0.0, list.getHPos());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(VFXCellBase::toNode)
+			.map(VFXCell::toNode)
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 	}
 
@@ -360,7 +356,7 @@ public class ListTests {
 	void testChangeCellSizeTop(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(50));
-		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Test init, why not
@@ -385,7 +381,7 @@ public class ListTests {
 	void testChangeCellSizeMiddle(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(50));
-		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setVPos(600.0);
@@ -419,7 +415,7 @@ public class ListTests {
 	void testChangeCellSizeBottom(FxRobot robot) {
 		StackPane pane = setupStage();
 		List list = new List(items(50));
-		VFXListHelper<Integer, SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setVPos(Double.MAX_VALUE);
@@ -842,7 +838,7 @@ public class ListTests {
 		assertCounter(17, 2, 17, 17, 0, 0, 0);
 
 		// Change factory
-		robot.interact(() -> list.setCellFactory(i -> new SimpleCell(i) {
+		robot.interact(() -> list.setCellFactory(i -> new TestCell<>(i) {
 			@Override
 			protected double computePrefWidth(double height) {
 				return 500.0;
@@ -927,8 +923,8 @@ public class ListTests {
 	@Test
 	void testManualUpdate(FxRobot robot) {
 		StackPane pane = setupStage();
-		VFXList<User, UserCell> list = new VFXList<>(users(20), u -> {
-			UserCell cell = new UserCell(u);
+		VFXList<User, VFXCell<User>> list = new VFXList<>(users(20), u -> {
+			TestCell<User> cell = new TestCell<>(u);
 			counter.created();
 			return cell;
 		}) {
@@ -950,27 +946,29 @@ public class ListTests {
 		assertCounter(17, 1, 17, 17, 0, 0, 0);
 
 		// Get text before change cell 5
-		UserCell cell5 = list.getState().getCellsByIndexUnmodifiable().get(5);
-		String text5 = ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText();
+		VFXCell<User> cell5 = list.getState().getCellsByIndexUnmodifiable().get(5);
+		Label label5 = (Label) cell5.toNode().lookup(".label");
+		String text5 = label5.getText();
 
 		// Change item 5
 		robot.interact(() -> list.getItems().get(5).setFirstName(faker.name().firstName()));
-		assertEquals(text5, ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText()); // No automatic update
+		assertEquals(text5, label5.getText()); // No automatic update
 
 		// Force update (all)
 		robot.interact(() -> list.update());
-		assertNotEquals(text5, ((Label) cell5.getChildrenUnmodifiable().getFirst()).getText());
+		assertNotEquals(text5, label5.getText());
 
 		// Get text before change cell 7
-		UserCell cell7 = list.getState().getCellsByIndexUnmodifiable().get(7);
-		String text7 = ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText();
+		VFXCell<User> cell7 = list.getState().getCellsByIndexUnmodifiable().get(7);
+		Label label7 = (Label) cell7.toNode().lookup(".label");
+		String text7 = label7.getText();
 
 		// Change item 7
 		robot.interact(() -> list.getItems().get(7).setFirstName(faker.name().firstName()));
-		assertEquals(text7, ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText()); // No automatic update
+		assertEquals(text7, label7.getText()); // No automatic update
 
 		// Force update (single)
 		robot.interact(() -> list.update(7));
-		assertNotEquals(text7, ((Label) cell7.getChildrenUnmodifiable().getFirst()).getText());
+		assertNotEquals(text7, label7.getText());
 	}
 }

@@ -1,4 +1,4 @@
-package assets;
+package model;
 
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import javafx.beans.property.IntegerProperty;
@@ -10,7 +10,7 @@ import net.datafaker.providers.base.Name;
 
 import java.util.stream.IntStream;
 
-import static assets.User.faker;
+import static model.User.faker;
 
 public class FXUser {
 	private final StringProperty firstName = new SimpleStringProperty();

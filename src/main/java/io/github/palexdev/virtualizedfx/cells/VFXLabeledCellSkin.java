@@ -7,7 +7,8 @@ import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.geometry.Pos;
+import javafx.geometry.HPos;
+import javafx.geometry.VPos;
 
 import java.beans.EventHandler;
 
@@ -18,8 +19,9 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * Simple skin implementation to be used with any descendant of {@link VFXCellBase}.
  * <p>
  * This will display the data specified by the {@link VFXCellBase#itemProperty()} as a {@code String} in a {@link Label}.
- * It's the only children of this skin, it is positioned according to the {@link VFXCellBase#alignmentProperty()}.
- * Also, the label's graphic property is bound to {@link VFXCellBase#graphicProperty()}.
+ * It's the only children of this skin, takes all the available space and has the following properties bound to the cell:
+ * <p> - the alignment property bound to {@link VFXCellBase#alignmentProperty()}
+ * <p> - the graphic property bound to {@link VFXCellBase#graphicProperty()}.
  * <p>
  * The label's text will be updated on two occasions:
  * <p> 1) when the {@link VFXCellBase#itemProperty()} is invalidated
@@ -47,6 +49,7 @@ public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBeha
 
 		// Init label
 		label = new Label();
+		label.alignmentProperty().bind(cell.alignmentProperty());
 		label.graphicProperty().bind(cell.graphicProperty());
 
 		// Finalize init
@@ -76,7 +79,10 @@ public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBeha
 		);
 		events(
 			intercept(cell, VFXContainerEvent.UPDATE)
-				.process(e -> update())
+				.process(e -> {
+					update();
+					e.consume();
+				})
 		);
 	}
 
@@ -110,8 +116,7 @@ public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBeha
 
 	@Override
 	protected void layoutChildren(double x, double y, double w, double h) {
-		VFXCellBase<T> cell = getSkinnable();
-		Pos pos = cell.getAlignment();
-		layoutInArea(label, x, y, w, h, 0, pos.getHpos(), pos.getVpos());
+		label.resize(w, h);
+		positionInArea(label, x, y, w, h, 0, HPos.LEFT, VPos.CENTER);
 	}
 }

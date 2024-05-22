@@ -1,8 +1,5 @@
 package interactive.table;
 
-import assets.User;
-import interactive.TestFXUtils;
-import interactive.TestFXUtils.Counter;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -25,7 +22,10 @@ import javafx.geometry.Bounds;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
+import model.User;
 import org.opentest4j.AssertionFailedError;
+import utils.TestFXUtils;
+import utils.TestFXUtils.Counter;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,9 +34,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static interactive.TestFXUtils.FP_ASSERTIONS_DELTA;
-import static interactive.TestFXUtils.counter;
 import static org.junit.jupiter.api.Assertions.*;
+import static utils.TestFXUtils.FP_ASSERTIONS_DELTA;
+import static utils.TestFXUtils.counter;
 
 public class TableTestUtils {
 	//================================================================================

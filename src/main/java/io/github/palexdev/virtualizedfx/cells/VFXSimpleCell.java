@@ -7,6 +7,7 @@ import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import javafx.util.StringConverter;
 
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Simple extension of {@link VFXCellBase} which by default uses the skin {@link VFXLabeledCellSkin} to display its data
@@ -63,12 +64,27 @@ public class VFXSimpleCell<T> extends VFXCellBase<T> {
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
+
+	/**
+	 * @return the {@link StringConverter} used to convert an item {@link T} to a {@code String}
+	 */
 	public StringConverter<T> getConverter() {
 		return converter;
 	}
 
+	/**
+	 * Sets the {@link StringConverter} used to convert an extracted value {@link T} to a {@code String}
+	 */
 	public VFXSimpleCell<T> setConverter(StringConverter<T> converter) {
 		this.converter = converter;
 		return this;
+	}
+
+	/**
+	 * Allows easily setting a {@link StringConverter} for the cell by just giving a {@link Function} as parameter,
+	 * makes use of {@link FunctionalStringConverter#to(Function)}.
+	 */
+	public VFXSimpleCell<T> setConverter(Function<T, String> fn) {
+		return setConverter(FunctionalStringConverter.to(fn));
 	}
 }

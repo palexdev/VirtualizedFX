@@ -1,13 +1,9 @@
 package interactive.list;
 
-import interactive.TestFXUtils;
+import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.controls.Label;
-import io.github.palexdev.mfxcore.controls.SkinBase;
-import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
-import io.github.palexdev.virtualizedfx.cells.CellBaseBehavior;
-import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import javafx.collections.FXCollections;
@@ -21,18 +17,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
+import utils.TestFXUtils;
 import utils.Utils;
 
 import java.util.Comparator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import static interactive.TestFXUtils.*;
 import static interactive.list.ListTestUtils.PList;
 import static interactive.list.ListTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static utils.TestFXUtils.*;
 import static utils.Utils.items;
 import static utils.Utils.setWindowSize;
 
@@ -50,7 +47,7 @@ public class PaginatedListTests {
 	@Test
 	void testInitAndGeometry(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
-		PList list = new PList(items(20), TestFXUtils.SimpleCell::new);
+		PList list = new PList(items(20), TestCell::new);
 		robot.interact(() -> pane.getChildren().add(list));
 
 		assertState(list, IntegerRange.of(0, 13));
@@ -85,7 +82,7 @@ public class PaginatedListTests {
 	@Test
 	void testInitAndGeometryAtBottom(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
-		PList list = new PList(items(50), TestFXUtils.SimpleCell::new);
+		PList list = new PList(items(50), TestCell::new);
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.scrollToLast();
@@ -115,7 +112,7 @@ public class PaginatedListTests {
 	@Test
 	void testPopulateCache(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
-		PList list = new PList(items(20), TestFXUtils.SimpleCell::new);
+		PList list = new PList(items(20), TestCell::new);
 		list.populateCache(); // 10 by default
 		counter.reset(); // Cells created by cache do not count
 		robot.interact(() -> pane.getChildren().add(list));
@@ -206,7 +203,7 @@ public class PaginatedListTests {
 	void testBufferChangeTop(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
 		PList list = new PList(items((20)));
-		VFXListHelper<Integer, TestFXUtils.SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Standard buffer -> 14 cells (4 buffer)
@@ -234,7 +231,7 @@ public class PaginatedListTests {
 	void testBufferChangeBottom(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
 		PList list = new PList(items(20));
-		VFXListHelper<Integer, TestFXUtils.SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.scrollToLast();
@@ -272,7 +269,7 @@ public class PaginatedListTests {
 	void testBufferChangeMiddle(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
 		PList list = new PList(items(50));
-		VFXListHelper<Integer, TestFXUtils.SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setPage(2);
@@ -306,7 +303,7 @@ public class PaginatedListTests {
 	void testChangeFactory(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
 		PList list = new PList(items((50)));
-		VFXListHelper<Integer, TestFXUtils.SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Test init
@@ -323,49 +320,12 @@ public class PaginatedListTests {
 
 		// Change factory and test
 		robot.interact(() ->
-			list.setCellFactory(i -> new TestFXUtils.SimpleCell(i) {
-				@Override
-				protected SkinBase<?, ?> buildSkin() {
-					return new SkinBase<>(this) {
-						final Label label = new Label();
-
-						{
-							VFXCellBase<Integer> cell = getSkinnable();
-							listeners(
-								When.onInvalidated(cell.indexProperty())
-									.then(i -> {
-										counter.index();
-										update();
-									})
-									.executeNow(),
-								When.onInvalidated(cell.itemProperty())
-									.then(i -> {
-										counter.item();
-										update();
-									})
-									.executeNow()
-							);
-							label.setStyle("-fx-border-color: red");
-							getChildren().add(label);
-						}
-
-						private void update() {
-							int idx = getIndex();
-							Integer it = getItem();
-							label.setText("New Factory! Index: %d Item: %s".formatted(
-								idx,
-								it != null ? it.toString() : ""
-							));
-						}
-
-						@Override
-						protected void layoutChildren(double x, double y, double w, double h) {
-							label.resizeRelocate(x, y, w, h);
-						}
-
-						@Override
-						protected void initBehavior(CellBaseBehavior<Integer> behavior) {}
-					};
+			list.setCellFactory(i -> new TestCell<>(i) {
+				{
+					setConverter(t -> "New Factory! Index: %d Item: %s".formatted(
+						getIndex(),
+						t != null ? t.toString() : "")
+					);
 				}
 			}));
 
@@ -380,7 +340,7 @@ public class PaginatedListTests {
 	@Test
 	void testFitToViewport(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
-		PList list = new PList(items(30), i -> new TestFXUtils.SimpleCell(i) {
+		PList list = new PList(items(30), i -> new TestCell<>(i) {
 			@Override
 			protected double computePrefWidth(double height) {
 				if (getItem() != null && getItem() == 0) return 800.0;
@@ -395,14 +355,14 @@ public class PaginatedListTests {
 
 		// Test init
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(VFXCellBase::toNode)
+			.map(VFXCell::toNode)
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Disable and test again
 		robot.interact(() -> list.setFitToViewport(false));
 		assertEquals(800.0, list.getHelper().getVirtualMaxX());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(VFXCellBase::toNode)
+			.map(VFXCell::toNode)
 			.forEach(n -> assertNotEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Scroll to max and then disable again
@@ -412,7 +372,7 @@ public class PaginatedListTests {
 		robot.interact(() -> list.setFitToViewport(true));
 		assertEquals(0.0, list.getHPos());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(VFXCellBase::toNode)
+			.map(VFXCell::toNode)
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 	}
 
@@ -420,7 +380,7 @@ public class PaginatedListTests {
 	void testChangeCellSizeTop(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
 		PList list = new PList(items(50));
-		VFXListHelper<Integer, TestFXUtils.SimpleCell> helper = list.getHelper();
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> pane.getChildren().add(list));
 
 		// Test init, why not
@@ -444,8 +404,8 @@ public class PaginatedListTests {
 	@Test
 	void testChangeCellSizeMiddle(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
-		PList list = new PList(items(50), TestFXUtils.SimpleCell::new);
-		VFXListHelper<Integer, TestFXUtils.SimpleCell> helper = list.getHelper();
+		PList list = new PList(items(50), TestCell::new);
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.setPage(2);
@@ -478,8 +438,8 @@ public class PaginatedListTests {
 	@Test
 	void testChangeCellSizeBottom(FxRobot robot) {
 		StackPane pane = TestFXUtils.setupStage();
-		PList list = new PList(items(50), TestFXUtils.SimpleCell::new);
-		VFXListHelper<Integer, TestFXUtils.SimpleCell> helper = list.getHelper();
+		PList list = new PList(items(50), TestCell::new);
+		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 		robot.interact(() -> {
 			pane.getChildren().add(list);
 			list.scrollToLast();
@@ -909,7 +869,7 @@ public class PaginatedListTests {
 		assertCounter(14, 2, 14, 14, 0, 0, 0);
 
 		// Change factory
-		robot.interact(() -> list.setCellFactory(i -> new TestFXUtils.SimpleCell(i) {
+		robot.interact(() -> list.setCellFactory(i -> new TestCell<>(i) {
 			@Override
 			protected double computePrefWidth(double height) {
 				return 500.0;

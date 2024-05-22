@@ -1,6 +1,5 @@
 package interactive.table;
 
-import assets.User;
 import interactive.table.TableTestUtils.EmptyColumn;
 import interactive.table.TableTestUtils.Table;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
@@ -12,6 +11,7 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.collections.ObservableList;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import model.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
@@ -23,10 +23,10 @@ import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.Set;
 
-import static assets.User.users;
-import static interactive.TestFXUtils.setupStage;
 import static interactive.table.TableTestUtils.setColumnWidth;
+import static model.User.users;
 import static org.junit.jupiter.api.Assertions.*;
+import static utils.TestFXUtils.setupStage;
 import static utils.Utils.setWindowSize;
 
 @ExtendWith(ApplicationExtension.class)

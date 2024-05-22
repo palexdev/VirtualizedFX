@@ -1,10 +1,11 @@
 package interactive.grid;
 
-import interactive.TestFXUtils.GridCell;
-import interactive.TestFXUtils.SimpleCell;
+import cells.TestGridCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
+import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.grid.VFXGrid;
 import io.github.palexdev.virtualizedfx.grid.VFXGridHelper;
@@ -18,8 +19,8 @@ import org.opentest4j.AssertionFailedError;
 import java.util.SequencedMap;
 import java.util.function.Function;
 
-import static interactive.TestFXUtils.counter;
 import static org.junit.jupiter.api.Assertions.*;
+import static utils.TestFXUtils.counter;
 
 public class GridTestUtils {
 
@@ -31,9 +32,9 @@ public class GridTestUtils {
 	//================================================================================
 	// Methods
 	//================================================================================
-	static void assertState(VFXGrid<Integer, SimpleCell> grid, IntegerRange rowsRange, IntegerRange columnsRange) {
-		VFXGridState<Integer, SimpleCell> state = grid.getState();
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+	static void assertState(VFXGrid<Integer, VFXCell<Integer>> grid, IntegerRange rowsRange, IntegerRange columnsRange) {
+		VFXGridState<Integer, VFXCell<Integer>> state = grid.getState();
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		int nColumns = helper.maxColumns();
 		if (Utils.INVALID_RANGE.equals(rowsRange) || Utils.INVALID_RANGE.equals(columnsRange)) {
 			assertEquals(VFXGridState.INVALID, state);
@@ -44,13 +45,13 @@ public class GridTestUtils {
 		assertEquals(helper.columnsRange(), columnsRange);
 		assertEquals(helper.totalCells(), state.size());
 
-		SequencedMap<Integer, SimpleCell> cells = state.getCellsByIndexUnmodifiable();
+		SequencedMap<Integer, VFXCell<Integer>> cells = state.getCellsByIndexUnmodifiable();
 		ObservableList<Integer> items = grid.getItems();
 		int i = 0, j = 0;
 		for (Integer rIdx : rowsRange) {
 			for (Integer cIdx : columnsRange) {
 				int linear = GridUtils.subToInd(nColumns, rIdx, cIdx);
-				SimpleCell cell = cells.get(linear);
+				VFXCell<Integer> cell = cells.get(linear);
 				if (linear >= items.size()) {
 					assertNull(cell);
 				} else {
@@ -61,8 +62,10 @@ public class GridTestUtils {
 						throw error;
 					}
 
-					assertEquals(linear, cell.getIndex());
-					assertEquals(items.get(linear), cell.getItem());
+					if (cell instanceof VFXCellBase<Integer> cb) {
+						assertEquals(linear, cb.getIndex());
+						assertEquals(items.get(linear), cb.getItem());
+					}
 					assertPosition(grid, i, j, cell);
 				}
 				j++;
@@ -72,14 +75,14 @@ public class GridTestUtils {
 		}
 	}
 
-	static void assertLength(VFXGrid<Integer, SimpleCell> grid, double vLength, double hLength) {
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+	static void assertLength(VFXGrid<Integer, VFXCell<Integer>> grid, double vLength, double hLength) {
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		assertEquals(hLength, helper.getVirtualMaxX());
 		assertEquals(vLength, helper.getVirtualMaxY());
 	}
 
-	static void assertPosition(VFXGrid<Integer, SimpleCell> grid, int rIdxIt, int cIdxIt, SimpleCell cell) {
-		VFXGridHelper<Integer, SimpleCell> helper = grid.getHelper();
+	static void assertPosition(VFXGrid<Integer, VFXCell<Integer>> grid, int rIdxIt, int cIdxIt, VFXCell<Integer> cell) {
+		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
 		Bounds bounds = cell.toNode().getBoundsInParent();
 		double cw = helper.getTotalCellSize().getWidth();
 		double ch = helper.getTotalCellSize().getHeight();
@@ -89,7 +92,8 @@ public class GridTestUtils {
 			assertEquals(x, bounds.getMinX());
 			assertEquals(y, bounds.getMinY());
 		} catch (AssertionFailedError err) {
-			System.err.printf("Failed position assertion for cell at [%d:%d] with item %d%n", rIdxIt, cIdxIt, cell.getItem());
+			Integer item = (cell instanceof VFXCellBase<Integer> cb) ? cb.getItem() : null;
+			System.err.printf("Failed position assertion for cell at [%d:%d] with item %d%n", rIdxIt, cIdxIt, item);
 			throw err;
 		}
 	}
@@ -97,18 +101,18 @@ public class GridTestUtils {
 	//================================================================================
 	// Internal Classes
 	//================================================================================
-	public static class Grid extends VFXGrid<Integer, SimpleCell> {
+	public static class Grid extends VFXGrid<Integer, VFXCell<Integer>> {
 		public Grid(ObservableList<Integer> items) {
-			this(items, GridCell::new);
+			this(items, TestGridCell::new);
 		}
 
-		public Grid(ObservableList<Integer> items, Function<Integer, SimpleCell> cellFactory) {
+		public Grid(ObservableList<Integer> items, Function<Integer, VFXCell<Integer>> cellFactory) {
 			super(items, cellFactory);
 			setBufferSize(BufferSize.SMALL);
 		}
 
 		@Override
-		public void setCellFactory(Function<Integer, SimpleCell> cellFactory) {
+		public void setCellFactory(Function<Integer, VFXCell<Integer>> cellFactory) {
 			super.setCellFactory(cellFactory.andThen(c -> {
 				counter.created();
 				return c;

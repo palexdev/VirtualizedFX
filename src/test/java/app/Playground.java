@@ -1,6 +1,5 @@
 package app;
 
-import assets.User;
 import interactive.table.TableTestUtils.Table;
 import io.github.palexdev.mfxcore.base.TriConsumer;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
@@ -22,6 +21,7 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import model.User;
 
 import static utils.Utils.debugView;
 
