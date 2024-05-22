@@ -19,6 +19,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * <p>
  * This will display the data specified by the {@link VFXCellBase#itemProperty()} as a {@code String} in a {@link Label}.
  * It's the only children of this skin, it is positioned according to the {@link VFXCellBase#alignmentProperty()}.
+ * Also, the label's graphic property is bound to {@link VFXCellBase#graphicProperty()}.
  * <p>
  * The label's text will be updated on two occasions:
  * <p> 1) when the {@link VFXCellBase#itemProperty()} is invalidated
@@ -46,6 +47,7 @@ public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBeha
 
 		// Init label
 		label = new Label();
+		label.graphicProperty().bind(cell.graphicProperty());
 
 		// Finalize init
 		addListeners();

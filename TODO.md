@@ -4,11 +4,6 @@
 - Implement paginated Grid (?)
 - Implement paginated Table
 
-## Refactor
-
-- Common interface for managers (?)
-- Add graphic property to CellBase
-
 ## Misc
 
 - Look better for clone states for VFXTable

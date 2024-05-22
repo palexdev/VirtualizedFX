@@ -62,6 +62,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
 	//================================================================================
 	private final IntegerProperty index = new SimpleIntegerProperty(-1);
 	private final ObjectProperty<T> item = new SimpleObjectProperty<>();
+	private final ObjectProperty<Node> graphic = new SimpleObjectProperty<>();
 
 	//================================================================================
 	// Constructors
@@ -213,5 +214,20 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
 
 	public void setItem(T item) {
 		this.item.set(item);
+	}
+
+	public Node getGraphic() {
+		return graphic.get();
+	}
+
+	/**
+	 * Allows adding a {@code Node} to the cell. To be precise, how this property is used depends on the skin implementation.
+	 */
+	public ObjectProperty<Node> graphicProperty() {
+		return graphic;
+	}
+
+	public void setGraphic(Node graphic) {
+		this.graphic.set(graphic);
 	}
 }
