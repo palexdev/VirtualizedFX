@@ -6,21 +6,19 @@ import interactive.TestFXUtils.Counter;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
-import io.github.palexdev.mfxcore.events.WhenEvent;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.mfxresources.fonts.MFXFontIcon;
 import io.github.palexdev.mfxresources.fonts.fontawesome.FontAwesomeSolid;
-import io.github.palexdev.virtualizedfx.cells.TableCell;
+import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
+import io.github.palexdev.virtualizedfx.cells.base.TableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
-import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.table.*;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.FixedTableHelper;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
@@ -38,7 +36,6 @@ import java.util.stream.IntStream;
 
 import static interactive.TestFXUtils.FP_ASSERTIONS_DELTA;
 import static interactive.TestFXUtils.counter;
-import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TableTestUtils {
@@ -469,13 +466,6 @@ public class TableTestUtils {
 	}
 
 	public static class UserCell<E> extends VFXSimpleTableCell<User, E> {
-		private WhenEvent<?> updWhen;
-
-		{
-			updWhen = intercept(this, VFXContainerEvent.UPDATE)
-				.process(e -> invalidate())
-				.register();
-		}
 
 		public UserCell(User item, Function<User, E> extractor) {
 			super(item, extractor);
@@ -510,8 +500,6 @@ public class TableTestUtils {
 		@Override
 		public void dispose() {
 			counter.disposed();
-			updWhen.dispose();
-			updWhen = null;
 		}
 	}
 
@@ -533,7 +521,6 @@ public class TableTestUtils {
 		public EmptyCell(User item, EmptyColumn column) {
 			super(item, u -> "");
 			setExtractor(u -> data(column));
-			invalidate();
 		}
 
 		String data(EmptyColumn column) {

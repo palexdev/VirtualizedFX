@@ -8,7 +8,7 @@ import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.events.WhenEvent;
 import io.github.palexdev.mfxcore.utils.EnumUtils;
-import io.github.palexdev.virtualizedfx.cells.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.TableCell;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import javafx.application.Application;

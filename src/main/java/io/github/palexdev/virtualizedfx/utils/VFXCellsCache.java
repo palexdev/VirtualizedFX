@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.utils;
 
-import io.github.palexdev.virtualizedfx.cells.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.Cell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 
 import java.util.Collection;

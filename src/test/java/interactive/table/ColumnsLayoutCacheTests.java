@@ -5,7 +5,7 @@ import interactive.table.TableTestUtils.EmptyColumn;
 import interactive.table.TableTestUtils.Table;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
-import io.github.palexdev.virtualizedfx.cells.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.TableCell;
 import io.github.palexdev.virtualizedfx.table.ColumnsLayoutCache;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;

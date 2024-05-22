@@ -1,11 +1,18 @@
 package io.github.palexdev.virtualizedfx.cells;
 
+import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
+import io.github.palexdev.virtualizedfx.cells.base.Cell;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleablePropertyFactory;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 
 import java.util.List;
@@ -19,7 +26,14 @@ import java.util.function.Supplier;
  * <p>
  * Unusually, this enforces the structuring of cells as specified by the {@code MVC} pattern. In fact, this extends
  * {@link Control}, expects behaviors of type {@link CellBaseBehavior} and doesn't come with a default skin.
- * The default style class is 'cell-base'. Needless to say, also implements {@link Cell}.
+ * <p>
+ * The idea is to make the skin implementation responsible for how data is represented (a String, a Node, processing, etc.).
+ * A downside of such approach is that for some reason, users are a bit reluctant in making or customizing skins, however,
+ * I can assure you it's no big deal at all. Also, never forget that {@code VirtualizedFX} containers <b>do not</b>
+ * enforce the usage of {@link CellBase} or any of its implementations, if you are more comfortable using a simpler
+ * cell system you are free do it.
+ * <p>
+ * The default style class is 'cell-base'.
  * <p></p>
  * <b>A word on performance</b>
  * As also stated in the javadocs of {@link #updateIndex(int)} and {@link #updateItem(Object)}, to simplify the internal
@@ -38,6 +52,9 @@ import java.util.function.Supplier;
  * {@code Person} objects with the same attributes but different references you may want to update the property (so that the
  * reference is correct) but not perform any operation that strictly depends on the attributes (if a label displays the attributes,
  * there's no need to re-compute the text)
+ *
+ * @see #alignmentProperty()
+ * @see Cell
  */
 public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implements Cell<T>, VFXStyleable {
 	//================================================================================
@@ -49,19 +66,15 @@ public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implement
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public CellBase() {
-		initialize();
-	}
-
 	public CellBase(T item) {
-		this();
+		initialize();
 		updateItem(item);
 	}
 
 	//================================================================================
 	// Methods
 	//================================================================================
-	protected void initialize() {
+	private void initialize() {
 		getStyleClass().setAll(defaultStyleClasses());
 		setDefaultBehaviorProvider();
 	}
@@ -102,6 +115,70 @@ public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implement
 	@Override
 	public Supplier<CellBaseBehavior<T>> defaultBehaviorProvider() {
 		return () -> new CellBaseBehavior<>(this);
+	}
+
+	//================================================================================
+	// Styleable Properties
+	//================================================================================
+	private final StyleableObjectProperty<Pos> alignment = new StyleableObjectProperty<>(
+		StyleableProperties.ALIGNMENT,
+		this,
+		"alignment",
+		Pos.CENTER_LEFT
+	) {
+		@Override
+		protected void invalidated() {
+			requestLayout();
+		}
+	};
+
+	public Pos getAlignment() {
+		return alignment.get();
+	}
+
+	/**
+	 * Specifies the alignment of the displayed data. How this is used depends on the skin implementation.
+	 * <p>
+	 * This is settable via CSS with the "-fx-alignment" property.
+	 */
+	public StyleableObjectProperty<Pos> alignmentProperty() {
+		return alignment;
+	}
+
+	public void setAlignment(Pos alignment) {
+		this.alignment.set(alignment);
+	}
+
+	//================================================================================
+	// CssMetaData
+	//================================================================================
+	private static class StyleableProperties {
+		private static final StyleablePropertyFactory<CellBase<?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+		private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
+
+		private static final CssMetaData<CellBase<?>, Pos> ALIGNMENT =
+			FACTORY.createEnumCssMetaData(
+				Pos.class,
+				"-fx-alignment",
+				CellBase::alignmentProperty,
+				Pos.CENTER_LEFT
+			);
+
+		static {
+			cssMetaDataList = StyleUtils.cssMetaDataList(
+				Control.getClassCssMetaData(),
+				ALIGNMENT
+			);
+		}
+	}
+
+	public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+		return StyleableProperties.cssMetaDataList;
+	}
+
+	@Override
+	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+		return getClassCssMetaData();
 	}
 
 	//================================================================================

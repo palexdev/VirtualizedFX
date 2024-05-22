@@ -2,7 +2,7 @@ package io.github.palexdev.virtualizedfx.list.paginated;
 
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.observables.When;
-import io.github.palexdev.virtualizedfx.cells.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.Cell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import io.github.palexdev.virtualizedfx.list.VFXListSkin;

@@ -1,5 +1,6 @@
-package io.github.palexdev.virtualizedfx.cells;
+package io.github.palexdev.virtualizedfx.cells.base;
 
+import io.github.palexdev.virtualizedfx.cells.CellBase;
 import javafx.scene.Node;
 
 /**

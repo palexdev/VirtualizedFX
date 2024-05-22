@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.table;
 
-import io.github.palexdev.virtualizedfx.cells.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.TableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
 import javafx.beans.InvalidationListener;

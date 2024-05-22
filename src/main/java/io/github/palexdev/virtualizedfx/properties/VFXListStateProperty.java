@@ -18,7 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.properties;
 
-import io.github.palexdev.virtualizedfx.cells.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.Cell;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 

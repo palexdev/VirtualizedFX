@@ -2,7 +2,7 @@ package jmh;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.GridUtils;
-import io.github.palexdev.virtualizedfx.cells.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.Cell;
 import javafx.scene.Node;
 
 import java.util.SequencedMap;

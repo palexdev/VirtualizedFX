@@ -1,5 +1,6 @@
 ## New features
 
+- Implement VFXScrollPane
 - Implement paginated Grid (?)
 - Implement paginated Table
 
@@ -7,9 +8,7 @@
 
 - Common interface for managers (?)
 - Rename cells to VFXxxx (?)
-- Make table cells use a Skin (?)
-- Optimize cells to update only if and invalidation occurred (?)
-- Review cells!
+- Add graphic property to CellBase
 
 ## Misc
 

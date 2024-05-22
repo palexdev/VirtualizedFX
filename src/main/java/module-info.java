@@ -10,6 +10,7 @@ module VirtualizedFX {
 	exports io.github.palexdev.virtualizedfx.base;
 
 	// Cells
+	exports io.github.palexdev.virtualizedfx.cells.base;
 	exports io.github.palexdev.virtualizedfx.cells;
 
 	// Enums

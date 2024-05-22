@@ -68,8 +68,6 @@ public class TestFXUtils {
 	// Inner Classes
 	//================================================================================
 	public static class SimpleCell extends CellBase<Integer> {
-		public SimpleCell() {}
-
 		public SimpleCell(Integer item) {super(item);}
 
 		@Override
@@ -94,8 +92,6 @@ public class TestFXUtils {
 	}
 
 	public static class GridCell extends SimpleCell {
-		public GridCell() {}
-
 		public GridCell(Integer item) {super(item);}
 
 
@@ -175,8 +171,6 @@ public class TestFXUtils {
 	}
 
 	public static class UserCell extends CellBase<User> {
-		public UserCell() {}
-
 		public UserCell(User item) {super(item);}
 
 		@Override

@@ -1,4 +1,4 @@
-package io.github.palexdev.virtualizedfx.cells;
+package io.github.palexdev.virtualizedfx.cells.base;
 
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
@@ -45,7 +45,7 @@ public interface MappingTableCell<T, E> extends TableCell<T> {
 	/**
 	 * Sets the function used to extract a value E from an item T
 	 */
-	void setExtractor(Function<T, E> extractor);
+	MappingTableCell<T, E> setExtractor(Function<T, E> extractor);
 
 	/**
 	 * @return the {@link StringConverter} used to convert an extracted value E to a String
@@ -55,19 +55,13 @@ public interface MappingTableCell<T, E> extends TableCell<T> {
 	/**
 	 * Sets the {@link StringConverter} used to convert an extracted value E to a String
 	 */
-	void setConverter(StringConverter<E> converter);
+	MappingTableCell<T, E> setConverter(StringConverter<E> converter);
 
 	/**
 	 * Allows easily setting a {@link StringConverter} for the cell by just giving a {@link Function} as parameter,
 	 * makes use of {@link FunctionalStringConverter#to(Function)}.
 	 */
-	default void setConverter(Function<E, String> converter) {
-		setConverter(FunctionalStringConverter.to(converter));
+	default MappingTableCell<T, E> setConverter(Function<E, String> fn) {
+		return setConverter(FunctionalStringConverter.to(fn));
 	}
-
-	/**
-	 * This method should be used by cells to define the logic to update themselves when any of their properties change.
-	 * Depends on the cell implementation.
-	 */
-	default void invalidate() {}
 }

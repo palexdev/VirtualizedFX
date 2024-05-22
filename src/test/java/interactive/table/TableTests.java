@@ -1,27 +1,36 @@
 package interactive.table;
 
+import assets.FXUser;
 import assets.TestResources;
 import assets.User;
 import com.google.gson.reflect.TypeToken;
+import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
+import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.mfxeffects.animations.Animations.KeyFrames;
 import io.github.palexdev.mfxeffects.animations.Animations.SequentialBuilder;
 import io.github.palexdev.mfxeffects.animations.Animations.TimelineBuilder;
 import io.github.palexdev.mfxeffects.enums.Interpolators;
-import io.github.palexdev.virtualizedfx.cells.TableCell;
+import io.github.palexdev.mfxresources.fonts.MFXFontIcon;
+import io.github.palexdev.mfxresources.fonts.fontawesome.FontAwesomeSolid;
+import io.github.palexdev.virtualizedfx.cells.VFXObservingTableCell;
+import io.github.palexdev.virtualizedfx.cells.base.TableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
 import io.github.palexdev.virtualizedfx.table.VFXTableState;
+import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,11 +44,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static assets.FXUser.fxusers;
 import static assets.User.faker;
 import static assets.User.users;
 import static interactive.TestFXUtils.*;
 import static interactive.table.TableTestUtils.*;
-import static interactive.table.TableTestUtils.UserCell;
 import static interactive.table.TableTestUtils.Table.emptyColumns;
 import static io.github.palexdev.virtualizedfx.table.VFXTableColumn.swapColumns;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
@@ -1925,7 +1934,7 @@ public class TableTests {
 
 		// Get text before change row 5
 		TableCell<User> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
-		Label label5 = (Label) ((UserCell<?>) row5).getChildren().getFirst();
+		Label label5 = (Label) row5.toNode().lookup(".label");
 		String text5 = label5.getText();
 
 		// Change item 5
@@ -1938,11 +1947,113 @@ public class TableTests {
 
 		// Get text before change row 7
 		TableCell<User> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
-		Label label7 = (Label) ((UserCell<?>) row7).getChildren().getFirst();
+		Label label7 = (Label) row7.toNode().lookup(".label");
 		String text7 = label7.getText();
 
 		// Change item 7
 		robot.interact(() -> table.getItems().get(7).setFirstName(faker.name().firstName()));
 		assertEquals(text7, label7.getText()); // No automatic update
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	void testAutomaticUpdate(FxRobot robot) {
+		StackPane pane = setupStage();
+		// Prepare table
+		VFXTable<FXUser> table = new VFXTable<>(fxusers(20));
+		table.setColumnsSize(Size.of(180, 32));
+		CSSFragment.Builder.build()
+			.addSelector(".vfx-table")
+			.border("#353839")
+			.closeSelector()
+			.addSelector(".vfx-table > .viewport > .columns")
+			.border("transparent transparent #353839 transparent")
+			.closeSelector()
+			.addSelector(".vfx-table > .viewport > .columns > .vfx-column")
+			.padding("0px 10px 0px 10px")
+			.border("transparent #353839 transparent transparent")
+			.closeSelector()
+			.addSelector(".vfx-table > .viewport > .columns > .vfx-column:hover > .overlay")
+			.addSelector(".vfx-table > .viewport > .columns > .vfx-column:dragged > .overlay")
+			.background("rgba(53, 56, 57, 0.1)")
+			.closeSelector()
+			.addSelector(".vfx-table > .viewport > .rows > .vfx-row")
+			.border("#353839")
+			.borderInsets("1.25px")
+			.addStyle("-fx-border-width: 0.5px")
+			.closeSelector()
+			.addSelector(".vfx-table > .viewport > .rows > .vfx-row > .table-cell")
+			.padding("0px 10px 0px 10px")
+			.closeSelector()
+			.applyOn(table);
+
+		int ICON_SIZE = 18;
+		Color ICON_COLOR = Color.rgb(53, 57, 53);
+
+		VFXDefaultTableColumn<FXUser, VFXObservingTableCell<FXUser, String>> firstNameColumn = new VFXDefaultTableColumn<>("First name");
+		firstNameColumn.setCellFactory(u -> new VFXObservingTableCell<>(u, FXUser::firstNameProperty));
+		firstNameColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.USER, ICON_SIZE, ICON_COLOR));
+		VFXDefaultTableColumn<FXUser, VFXObservingTableCell<FXUser, String>> lastNameColumn = new VFXDefaultTableColumn<>("Last name");
+		lastNameColumn.setCellFactory(u -> new VFXObservingTableCell<>(u, FXUser::lastNameProperty));
+		lastNameColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.USER, ICON_SIZE, ICON_COLOR));
+		VFXDefaultTableColumn<FXUser, VFXObservingTableCell<FXUser, Number>> birthColumn = new VFXDefaultTableColumn<>("Birth year");
+		birthColumn.setCellFactory(u -> new VFXObservingTableCell<>(u, FXUser::birthYearProperty));
+		birthColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.CAKE_CANDLES, ICON_SIZE, ICON_COLOR));
+		VFXDefaultTableColumn<FXUser, VFXObservingTableCell<FXUser, String>> zodiacColumn = new VFXDefaultTableColumn<>("Zodiac Sign");
+		zodiacColumn.setCellFactory(u -> new VFXObservingTableCell<>(u, FXUser::zodiacProperty));
+		zodiacColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.STAR, ICON_SIZE, ICON_COLOR));
+		VFXDefaultTableColumn<FXUser, VFXObservingTableCell<FXUser, String>> countryColumn = new VFXDefaultTableColumn<>("Country");
+		countryColumn.setCellFactory(u -> new VFXObservingTableCell<>(u, FXUser::countryProperty));
+		countryColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.GLOBE, ICON_SIZE, ICON_COLOR));
+		VFXDefaultTableColumn<FXUser, VFXObservingTableCell<FXUser, String>> bloodColumn = new VFXDefaultTableColumn<>("Blood");
+		bloodColumn.setCellFactory(u -> new VFXObservingTableCell<>(u, FXUser::bloodProperty));
+		bloodColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.DROPLET, ICON_SIZE, ICON_COLOR));
+		VFXDefaultTableColumn<FXUser, VFXObservingTableCell<FXUser, String>> animalColumn = new VFXDefaultTableColumn<>("Pet");
+		animalColumn.setCellFactory(u -> new VFXObservingTableCell<>(u, FXUser::petProperty));
+		animalColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.PAW, ICON_SIZE, ICON_COLOR));
+		table.getColumns().addAll(firstNameColumn, lastNameColumn, birthColumn, zodiacColumn, countryColumn, bloodColumn, animalColumn);
+		robot.interact(() -> pane.getChildren().add(table));
+
+		// Assert init
+		assertEquals(IntegerRange.of(0, 15), table.getRowsRange());
+		assertEquals(IntegerRange.of(0, 6), table.getColumnsRange());
+
+		// Get text before change row 5
+		TableCell<FXUser> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
+		Label label5 = (Label) row5.toNode().lookup(".label");
+		String text5 = label5.getText();
+
+		// Change item 5
+		robot.interact(() -> table.getItems().get(5).setFirstName(faker.name().firstName()));
+		assertNotEquals(text5, label5.getText());
+
+		// Get text before change row 7
+		TableCell<FXUser> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
+		Label label7 = (Label) row7.toNode().lookup(".label");
+		String text7 = label7.getText();
+
+		// Change item 7
+		robot.interact(() -> table.getItems().get(7).setFirstName(faker.name().firstName()));
+		assertNotEquals(text7, label7.getText());
+
+		// Scroll to check everything is ok
+		VFXTableHelper<FXUser> helper = table.getHelper();
+		Animation a1 = TimelineBuilder.build()
+			.add(KeyFrames.of(500, table.vPosProperty(), helper.maxVScroll(), Interpolator.LINEAR))
+			.getAnimation();
+		robot.interact(a1::play);
+		sleep(550);
+
+		Animation a2 = TimelineBuilder.build()
+			.add(KeyFrames.of(500, table.hPosProperty(), helper.maxHScroll(), Interpolator.LINEAR))
+			.getAnimation();
+		robot.interact(a2::play);
+		sleep(550);
+
+		Animation a3 = TimelineBuilder.build()
+			.add(KeyFrames.of(500, table.vPosProperty(), 0.0, Interpolators.LINEAR))
+			.getAnimation();
+		robot.interact(a3::play);
+		sleep(550);
 	}
 }

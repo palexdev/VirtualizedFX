@@ -6,9 +6,9 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProp
 import io.github.palexdev.mfxcore.controls.Labeled;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
-import io.github.palexdev.virtualizedfx.cells.TableCell;
+import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
+import io.github.palexdev.virtualizedfx.cells.base.TableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXTableColumnBehavior;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -168,7 +168,7 @@ public abstract class VFXTableColumn<T, C extends TableCell<T>> extends Labeled<
 	 */
 	@SuppressWarnings("unchecked")
 	protected Function<T, C> defaultCellFactory() {
-		return t -> (C) new VFXSimpleTableCell<>(t, t1 -> t1);
+		return t -> (C) new VFXSimpleTableCell<>(t, t1 -> (t1 != null) ? Function.identity() : null);
 	}
 
 	/**

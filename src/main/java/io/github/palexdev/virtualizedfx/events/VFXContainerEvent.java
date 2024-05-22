@@ -1,7 +1,7 @@
 package io.github.palexdev.virtualizedfx.events;
 
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
-import io.github.palexdev.virtualizedfx.cells.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.Cell;
 import javafx.event.Event;
 import javafx.event.EventTarget;
 import javafx.event.EventType;
