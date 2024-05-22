@@ -18,14 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.properties;
 
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
 /**
  * Convenience property that extends {@link ReadOnlyObjectWrapper} for {@link VFXListState}.
  */
-public class VFXListStateProperty<T, C extends Cell<T>> extends ReadOnlyObjectWrapper<VFXListState<T, C>> {
+public class VFXListStateProperty<T, C extends VFXCell<T>> extends ReadOnlyObjectWrapper<VFXListState<T, C>> {
 
 	//================================================================================
 	// Constructors

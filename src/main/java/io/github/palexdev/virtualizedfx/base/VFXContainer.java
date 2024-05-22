@@ -27,7 +27,7 @@ public interface VFXContainer<T> {
 	 * // Let's say I have a User class with 'firstName' and 'lastName' fields (we also have both getters and setters)
 	 * // Now, let's assume I have a UserCell class used by the VFXContainer to display User objects (in a label for example)
 	 * // This is a part of its implementation...
-	 * public class UserCell extends Label implements Cell<User> {
+	 * public class UserCell extends Label implements VFXCell<User> {
 	 *     private final ObjectProperty<User> item = new SimpleObjectProperty<>() {
 	 *         @Overridden
 	 *         protected void invalidated() {

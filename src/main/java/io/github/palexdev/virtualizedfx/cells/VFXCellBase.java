@@ -4,7 +4,7 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectPrope
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -30,7 +30,7 @@ import java.util.function.Supplier;
  * The idea is to make the skin implementation responsible for how data is represented (a String, a Node, processing, etc.).
  * A downside of such approach is that for some reason, users are a bit reluctant in making or customizing skins, however,
  * I can assure you it's no big deal at all. Also, never forget that {@code VirtualizedFX} containers <b>do not</b>
- * enforce the usage of {@link CellBase} or any of its implementations, if you are more comfortable using a simpler
+ * enforce the usage of {@link VFXCellBase} or any of its implementations, if you are more comfortable using a simpler
  * cell system you are free do it.
  * <p>
  * The default style class is 'cell-base'.
@@ -54,9 +54,9 @@ import java.util.function.Supplier;
  * there's no need to re-compute the text)
  *
  * @see #alignmentProperty()
- * @see Cell
+ * @see VFXCell
  */
-public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implements Cell<T>, VFXStyleable {
+public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implements VFXCell<T>, VFXStyleable {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -66,7 +66,7 @@ public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implement
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public CellBase(T item) {
+	public VFXCellBase(T item) {
 		initialize();
 		updateItem(item);
 	}
@@ -153,14 +153,14 @@ public abstract class CellBase<T> extends Control<CellBaseBehavior<T>> implement
 	// CssMetaData
 	//================================================================================
 	private static class StyleableProperties {
-		private static final StyleablePropertyFactory<CellBase<?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+		private static final StyleablePropertyFactory<VFXCellBase<?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
 		private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
-		private static final CssMetaData<CellBase<?>, Pos> ALIGNMENT =
+		private static final CssMetaData<VFXCellBase<?>, Pos> ALIGNMENT =
 			FACTORY.createEnumCssMetaData(
 				Pos.class,
 				"-fx-alignment",
-				CellBase::alignmentProperty,
+				VFXCellBase::alignmentProperty,
 				Pos.CENTER_LEFT
 			);
 

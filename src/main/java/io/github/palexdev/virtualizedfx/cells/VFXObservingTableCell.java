@@ -100,7 +100,7 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
 	 * <p></p>
 	 * The {@link #update()} method is overridden and functions quite differently, make sure to carefully read the documentation.
 	 * The {@link #addListeners()} method has also been modified to call {@link #onItemChanged()} rather than {@link #update()}
-	 * directly when the {@link CellBase#itemProperty()} changes.
+	 * directly when the {@link VFXCellBase#itemProperty()} changes.
 	 */
 	public class VFXObservingTableCellSkin extends VFXLabeledCellSkin<T> {
 		//================================================================================
@@ -111,7 +111,7 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
 		//================================================================================
 		// Constructors
 		//================================================================================
-		public VFXObservingTableCellSkin(CellBase<T> cell) {
+		public VFXObservingTableCellSkin(VFXCellBase<T> cell) {
 			super(cell);
 		}
 
@@ -123,7 +123,7 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
 		 * The auto-updating feature of this cell implementation is no magic. A simple {@link InvalidationListener}
 		 * is attached to the extracted property to call {@link #update()} when it changes.
 		 * <p>
-		 * This method does exactly this. When the {@link CellBase#itemProperty()} changes it also means that the property
+		 * This method does exactly this. When the {@link VFXCellBase#itemProperty()} changes it also means that the property
 		 * extracted by {@link #getProperty()} is now invalid, and so is the previous listener.
 		 * <p>
 		 * Simply re-builds the listener when this happens, and by invoking {@link #getProperty()} we also validate the
@@ -143,7 +143,7 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
 		//================================================================================
 
 		/**
-		 * Adds an {@link InvalidationListener} on the {@link CellBase#itemProperty()} to call {@link #onItemChanged()} when it changes,
+		 * Adds an {@link InvalidationListener} on the {@link VFXCellBase#itemProperty()} to call {@link #onItemChanged()} when it changes,
 		 * and an {@link EventHandler} to support "manual" updates through events of type {@link VFXContainerEvent#UPDATE}
 		 * (although this should not be needed here).
 		 * <p>

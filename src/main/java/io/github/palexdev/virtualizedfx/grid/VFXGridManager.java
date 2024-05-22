@@ -3,7 +3,7 @@ package io.github.palexdev.virtualizedfx.grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
@@ -42,7 +42,7 @@ import java.util.Set;
  * to {@code true} before the invalidation, so that the other method will exit immediately. It's reset back to false
  * after the computation or if any of the checks before the actual computation fails.
  */
-public class VFXGridManager<T, C extends Cell<T>> extends BehaviorBase<VFXGrid<T, C>> {
+public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGrid<T, C>> {
 	//================================================================================
 	// Properties
 	//================================================================================

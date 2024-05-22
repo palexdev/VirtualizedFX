@@ -12,7 +12,7 @@ import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.HorizontalHelper;
@@ -39,7 +39,7 @@ import java.util.function.Supplier;
  * The default style class is: '.vfx-list'.
  * <p>
  * Extends {@link Control}, implements {@link VFXContainer}, has its own skin implementation {@link VFXListSkin}
- * and behavior {@link VFXListManager}. Uses cells of type {@link Cell}.
+ * and behavior {@link VFXListManager}. Uses cells of type {@link VFXCell}.
  * <p>
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
  * {@link VFXListState} when changing. The state determines which and how items are displayed in the container.
@@ -84,7 +84,7 @@ import java.util.function.Supplier;
  * avoids creating new cells when needed if some are already present in it. The most crucial aspect for this kind of
  * virtualization is to avoid creating nodes, as this is the most expensive operation. Not only nodes need
  * to be created but also added to the container and then laid out.
- * Instead, it's much more likely that the {@link Cell#updateItem(Object)} will be simple and faster.
+ * Instead, it's much more likely that the {@link VFXCell#updateItem(Object)} will be simple and faster.
  * Note that to make the cache more generic, thus allowing its usage in more cases, a recent refactor,
  * removed the dependency on the container itself and replaced it with the cell factory. Since the cache can also populate
  * itself with "empty" cells, it must know how to create them. The cache's cell factory is automatically synchronized with
@@ -95,7 +95,7 @@ import java.util.function.Supplier;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXList<T, C extends Cell<T>> extends Control<VFXListManager<T, C>> implements VFXContainer<T>, VFXStyleable {
+public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, C>> implements VFXContainer<T>, VFXStyleable {
 	//================================================================================
 	// Properties
 	//================================================================================

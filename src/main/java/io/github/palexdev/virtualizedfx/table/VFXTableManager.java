@@ -2,7 +2,7 @@ package io.github.palexdev.virtualizedfx.table;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.enums.GeometryChangeType;
 import io.github.palexdev.virtualizedfx.utils.ExcludingRange;
@@ -104,7 +104,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 
 		if (gct == GeometryChangeType.WIDTH && !newState.isLayoutNeeded()) {
 			wasGeometryChange = true;
-			VFXTableColumn<T, ? extends TableCell<T>> last = table.getColumns().getLast();
+			VFXTableColumn<T, ? extends VFXTableCell<T>> last = table.getColumns().getLast();
 			table.requestViewportLayout(last);
 			wasGeometryChange = false;
 		}
@@ -436,7 +436,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * This is one of those methods that do not really change the table's state, rather it updates the rows' state,
 	 * see {@link VFXTableState}. If the replacement was done, then the table's state is set to a clone of the current one.
 	 */
-	protected void onCellFactoryChanged(VFXTableColumn<T, TableCell<T>> column) {
+	protected void onCellFactoryChanged(VFXTableColumn<T, VFXTableCell<T>> column) {
 		VFXTable<T> table = getNode();
 		VFXTableState<T> state = table.getState();
 		boolean updated = false;

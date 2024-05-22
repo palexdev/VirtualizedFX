@@ -2,7 +2,7 @@ package jmh;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.GridUtils;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.scene.Node;
 
 import java.util.SequencedMap;
@@ -74,7 +74,7 @@ public class JMHCommons {
 		}
 	}
 
-	public static class MockCell implements Cell<Integer> {
+	public static class MockCell implements VFXCell<Integer> {
 		private Integer index = -1;
 		private Integer item;
 		private String text = "";

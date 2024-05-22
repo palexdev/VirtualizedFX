@@ -3,8 +3,8 @@ package interactive;
 import assets.User;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
-import io.github.palexdev.virtualizedfx.cells.CellBase;
 import io.github.palexdev.virtualizedfx.cells.CellBaseBehavior;
+import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -67,7 +67,7 @@ public class TestFXUtils {
 	//================================================================================
 	// Inner Classes
 	//================================================================================
-	public static class SimpleCell extends CellBase<Integer> {
+	public static class SimpleCell extends VFXCellBase<Integer> {
 		public SimpleCell(Integer item) {super(item);}
 
 		@Override
@@ -105,10 +105,10 @@ public class TestFXUtils {
 		}
 	}
 
-	public static class CellSkin<T> extends SkinBase<CellBase<T>, CellBaseBehavior<T>> {
+	public static class CellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBehavior<T>> {
 		protected final Label label;
 
-		public CellSkin(CellBase<T> cell) {
+		public CellSkin(VFXCellBase<T> cell) {
 			super(cell);
 
 			label = new Label();
@@ -124,7 +124,7 @@ public class TestFXUtils {
 		}
 
 		protected void addListeners() {
-			CellBase<T> cell = getSkinnable();
+			VFXCellBase<T> cell = getSkinnable();
 			listeners(
 				onInvalidated(cell.indexProperty())
 					.then(v -> {
@@ -148,7 +148,7 @@ public class TestFXUtils {
 		}
 
 		protected void update() {
-			CellBase<T> cell = getSkinnable();
+			VFXCellBase<T> cell = getSkinnable();
 			int index = cell.getIndex();
 			T item = cell.getItem();
 			label.setText(toString(index, item));
@@ -170,7 +170,7 @@ public class TestFXUtils {
 		}
 	}
 
-	public static class UserCell extends CellBase<User> {
+	public static class UserCell extends VFXCellBase<User> {
 		public UserCell(User item) {super(item);}
 
 		@Override

@@ -9,7 +9,7 @@ import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -34,7 +34,7 @@ import java.util.Optional;
  * This value, however, is dynamic, since the size of each node is computed only once it is laid out. This means that the absolute
  * maximum value is only found when all items have been displayed at least once.
  */
-public interface VFXListHelper<T, C extends Cell<T>> {
+public interface VFXListHelper<T, C extends VFXCell<T>> {
 
 	/**
 	 * @return the index of the first visible item
@@ -132,7 +132,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	 *
 	 * @param layoutIndex the absolute index of the given node/cell, see {@link VFXListSkin#layout()}
 	 */
-	void layout(int layoutIndex, Cell<T> cell);
+	void layout(int layoutIndex, VFXCell<T> cell);
 
 
 	/**
@@ -217,7 +217,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	 * <p> - the virtual max y as a {@link ReadOnlyDoubleWrapper}
 	 * <p> - the viewport's position, {@link #viewportPositionProperty()} as a {@link PositionProperty}
 	 */
-	abstract class AbstractHelper<T, C extends Cell<T>> implements VFXListHelper<T, C> {
+	abstract class AbstractHelper<T, C extends VFXCell<T>> implements VFXListHelper<T, C> {
 		protected final VFXList<T, C> list;
 		protected final IntegerRangeProperty range = new IntegerRangeProperty();
 		protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
@@ -288,7 +288,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	 * The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
 	 * the cell size and the spacing
 	 */
-	class VerticalHelper<T, C extends Cell<T>> extends AbstractHelper<T, C> {
+	class VerticalHelper<T, C extends VFXCell<T>> extends AbstractHelper<T, C> {
 
 		public VerticalHelper(VFXList<T, C> list) {
 			super(list);
@@ -424,7 +424,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 * computed by {@link #computeSize(Node)}, and the height is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int layoutIndex, Cell<T> cell) {
+		public void layout(int layoutIndex, VFXCell<T> cell) {
 			Node node = cell.toNode();
 			double y = getTotalCellSize() * layoutIndex;
 			double w = computeSize(node);
@@ -478,7 +478,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 	 * The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
 	 * the cell size and the spacing
 	 */
-	class HorizontalHelper<T, C extends Cell<T>> extends AbstractHelper<T, C> {
+	class HorizontalHelper<T, C extends VFXCell<T>> extends AbstractHelper<T, C> {
 
 		public HorizontalHelper(VFXList<T, C> list) {
 			super(list);
@@ -614,7 +614,7 @@ public interface VFXListHelper<T, C extends Cell<T>> {
 		 * computed by {@link #computeSize(Node)}, and the width is given by the {@link VFXList#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int layoutIndex, Cell<T> cell) {
+		public void layout(int layoutIndex, VFXCell<T> cell) {
 			Node node = cell.toNode();
 			double x = getTotalCellSize() * layoutIndex;
 			double w = list.getCellSize();

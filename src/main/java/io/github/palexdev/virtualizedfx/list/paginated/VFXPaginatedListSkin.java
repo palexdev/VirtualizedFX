@@ -2,7 +2,7 @@ package io.github.palexdev.virtualizedfx.list.paginated;
 
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.observables.When;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import io.github.palexdev.virtualizedfx.list.VFXListSkin;
@@ -23,7 +23,7 @@ import javafx.scene.control.SkinBase;
  * As for the layout, the only thing that changes is that the container's size will adapt to the cell size and the number
  * of cells per page, the exact computation is described and done by {@link #getLength()}.
  */
-public class VFXPaginatedListSkin<T, C extends Cell<T>> extends VFXListSkin<T, C> {
+public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T, C> {
 	//================================================================================
 	// Properties
 	//================================================================================

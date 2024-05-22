@@ -5,7 +5,7 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.mfxcore.utils.fx.TextMeasurementCache;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.geometry.HPos;
@@ -33,7 +33,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * For {@link HPos#LEFT} and {@link HPos#RIGHT}, the 'icon' is going to be placed to the left and right respectively of the
  * label. For {@link HPos#CENTER} only the 'icon' will be visible at the center of the area, the label will be hidden.
  */
-public class VFXDefaultTableColumnSkin<T, C extends TableCell<T>> extends SkinBase<VFXTableColumn<T, C>, VFXTableColumnBehavior<T, C>> {
+public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends SkinBase<VFXTableColumn<T, C>, VFXTableColumnBehavior<T, C>> {
 	//================================================================================
 	// Properties
 	//================================================================================

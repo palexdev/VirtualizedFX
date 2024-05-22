@@ -1,7 +1,7 @@
 package io.github.palexdev.virtualizedfx.utils;
 
 import io.github.palexdev.mfxcore.collections.CircularQueue;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -11,7 +11,7 @@ import java.util.LinkedList;
  * <p>
  * Basically the same as {@link CircularQueue}, but automatically invokes {@link C#dispose()} on cell that are discarded.
  */
-public class CellsQueue<T, C extends Cell<T>> extends LinkedList<C> {
+public class CellsQueue<T, C extends VFXCell<T>> extends LinkedList<C> {
 	//================================================================================
 	// Properties
 	//================================================================================

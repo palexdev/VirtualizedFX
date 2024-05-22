@@ -1,7 +1,7 @@
 package io.github.palexdev.virtualizedfx.list;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
@@ -29,7 +29,7 @@ import java.util.SequencedMap;
  */
 // NullPointerException warnings due to special INVALID state
 @SuppressWarnings({"DataFlowIssue", "rawtypes", "SameParameterValue"})
-public class VFXListState<T, C extends Cell<T>> {
+public class VFXListState<T, C extends VFXCell<T>> {
 	//================================================================================
 	// Static Properties
 	//================================================================================
@@ -41,10 +41,10 @@ public class VFXListState<T, C extends Cell<T>> {
 	 */
 	public static final VFXListState INVALID = new VFXListState<>() {
 		@Override
-		protected Cell<Object> removeCell(int index) {return null;}
+		protected VFXCell<Object> removeCell(int index) {return null;}
 
 		@Override
-		protected Cell<Object> removeCell(Object item) {return null;}
+		protected VFXCell<Object> removeCell(Object item) {return null;}
 
 		@Override
 		protected void dispose() {}
@@ -77,7 +77,7 @@ public class VFXListState<T, C extends Cell<T>> {
 
 	/**
 	 * Retrieves the item at the given index from {@link VFXList#itemsProperty()} and delegates to
-	 * {@link #addCell(int, Object, Cell)}.
+	 * {@link #addCell(int, Object, VFXCell)}.
 	 *
 	 * @see StateMap
 	 */

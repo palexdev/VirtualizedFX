@@ -2,7 +2,7 @@ package io.github.palexdev.virtualizedfx.grid;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.GridUtils;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
@@ -86,7 +86,7 @@ import java.util.*;
  * @see StateMap
  */
 @SuppressWarnings({"rawtypes", "SameParameterValue"})
-public class VFXGridState<T, C extends Cell<T>> {
+public class VFXGridState<T, C extends VFXCell<T>> {
 	//================================================================================
 	// Static Properties
 	//================================================================================
@@ -98,15 +98,15 @@ public class VFXGridState<T, C extends Cell<T>> {
 	 */
 	public static final VFXGridState INVALID = new VFXGridState() {
 		@Override
-		protected Cell<Object> removeCell(int index) {
+		protected VFXCell<Object> removeCell(int index) {
 			return null;
 		}
 
 		@Override
-		protected Cell removeCell(Object item) {return null;}
+		protected VFXCell removeCell(Object item) {return null;}
 
 		@Override
-		protected Cell removeCell(int rIndex, int cIndex) {return null;}
+		protected VFXCell removeCell(int rIndex, int cIndex) {return null;}
 
 		@Override
 		protected void dispose() {}
@@ -144,7 +144,7 @@ public class VFXGridState<T, C extends Cell<T>> {
 	//================================================================================
 
 	/**
-	 * Converts the given row and column indexes to a linear index and delegates to {@link #addCell(int, Object, Cell)}.
+	 * Converts the given row and column indexes to a linear index and delegates to {@link #addCell(int, Object, VFXCell)}.
 	 */
 	protected void addCell(int rIndex, int cIndex, C cell) {
 		int linear = GridUtils.subToInd(nColumns, rIndex, cIndex);
@@ -152,7 +152,7 @@ public class VFXGridState<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Delegates to {@link #addCell(int, Object, Cell)}.
+	 * Delegates to {@link #addCell(int, Object, VFXCell)}.
 	 */
 	protected void addCell(int index, C cell) {
 		addCell(index, grid.getItems().get(index), cell);

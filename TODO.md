@@ -7,7 +7,6 @@
 ## Refactor
 
 - Common interface for managers (?)
-- Rename cells to VFXxxx (?)
 - Add graphic property to CellBase
 
 ## Misc

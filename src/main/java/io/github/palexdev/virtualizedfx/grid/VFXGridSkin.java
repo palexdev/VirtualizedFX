@@ -4,7 +4,7 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -37,7 +37,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
  * by overriding the {@link #DEFAULT_SIZE} variable.
  */
-public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, VFXGridManager<T, C>> {
+public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>, VFXGridManager<T, C>> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -172,7 +172,7 @@ public class VFXGridSkin<T, C extends Cell<T>> extends SkinBase<VFXGrid<T, C>, V
 	 * managed for the {@link VFXGrid}. In other words, it doesn't matter whether our range is [1, 5] or [4, 6] or whatever,
 	 * the layout index will always start from 0 and increment towards the end of the range.
 	 * <p>
-	 * The layout is performed by {@link VFXGridHelper#layout(int, int, Cell)}, the two aforementioned counters are passed
+	 * The layout is performed by {@link VFXGridHelper#layout(int, int, VFXCell)}, the two aforementioned counters are passed
 	 * as arguments.
 	 * <p></p>
 	 * <pre>

@@ -1,7 +1,7 @@
 package io.github.palexdev.virtualizedfx.table.defaults;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
@@ -59,11 +59,11 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 	protected void updateColumns(IntegerRange columnsRange, boolean columnsChanged) {
 		if (!columnsChanged && super.columnsRange.equals(columnsRange)) return;
 		VFXTable<T> table = getTable();
-		RowsStateMap<T, TableCell<T>> nCells = new RowsStateMap<>();
+		RowsStateMap<T, VFXTableCell<T>> nCells = new RowsStateMap<>();
 		boolean update = false;
 		for (Integer index : columnsRange) {
-			VFXTableColumn<T, TableCell<T>> column = (VFXTableColumn<T, TableCell<T>>) table.getColumns().get(index);
-			TableCell<T> cell = cells.remove(column);
+			VFXTableColumn<T, VFXTableCell<T>> column = (VFXTableColumn<T, VFXTableCell<T>>) table.getColumns().get(index);
+			VFXTableCell<T> cell = cells.remove(column);
 
 			// Commons
 			if (cell != null) {
@@ -75,7 +75,7 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 
 			// New columns
 			update = true;
-			TableCell<T> nCell = getCell(index, column, true);
+			VFXTableCell<T> nCell = getCell(index, column, true);
 			if (nCell != null) nCells.put(index, column, nCell);
 		}
 
@@ -96,13 +96,13 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 	 * and one only column (the one that built it). So, the collection will contain at most one single element.
 	 * <p>
 	 * First we remove the cells from the map by the given column using {@link RowsStateMap#remove(Object)}.
-	 * If it is not {@code null} then we cache it with {@link #saveCell(VFXTableColumn, TableCell)}, and remove it from
+	 * If it is not {@code null} then we cache it with {@link #saveCell(VFXTableColumn, VFXTableCell)}, and remove it from
 	 * the children list.
 	 * <p>
 	 * As for the new cell, we request a new one by calling {@link #getCell(int, VFXTableColumn, boolean)}
 	 * (we don't use the cache as the cells stored in it may be invalid if the cell factory changed).
 	 * The cell is added to the state map, to the children list and finally sized and positioned by calling
-	 * {@link VFXTableHelper#layoutCell(int, TableCell)}.
+	 * {@link VFXTableHelper#layoutCell(int, VFXTableCell)}.
 	 * <p>
 	 * Note that to get a new cell, and to lay out it, we need two different indexes. The index of the column is retrieved
 	 * by using {@link VFXTable#indexOf(VFXTableColumn)} and it's needed to update the cell. The other index is an important
@@ -114,12 +114,12 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 	 * @return whether the substitution was done successfully
 	 */
 	@Override
-	protected boolean replaceCells(VFXTableColumn<T, TableCell<T>> column) {
+	protected boolean replaceCells(VFXTableColumn<T, VFXTableCell<T>> column) {
 		VFXTable<T> table = getTable();
 		VFXTableHelper<T> helper = table.getHelper();
 		if (!IntegerRange.inRangeOf(column.getIndex(), columnsRange)) return false;
 
-		TableCell<T> oCell = cells.remove(column);
+		VFXTableCell<T> oCell = cells.remove(column);
 		if (oCell != null) {
 			getChildren().remove(oCell.toNode());
 			saveCell(column, oCell);
@@ -127,7 +127,7 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 
 		int cIdx = table.indexOf(column);
 		int lIdx = (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) ? cIdx - columnsRange.getMin() : cIdx;
-		TableCell<T> nCell = getCell(cIdx, column, false);
+		VFXTableCell<T> nCell = getCell(cIdx, column, false);
 		if (nCell == null) return false;
 
 		Node nNode = nCell.toNode();

@@ -9,7 +9,7 @@ import javafx.util.StringConverter;
 import java.util.List;
 
 /**
- * Simple extension of {@link CellBase} which by default uses the skin {@link VFXLabeledCellSkin} to display its data
+ * Simple extension of {@link VFXCellBase} which by default uses the skin {@link VFXLabeledCellSkin} to display its data
  * as text. This also expands the default style classes to be: '.cell-base' and '.cell'.
  * <p></p>
  * <b>Q:</b> Why not extend Labeled rather than Control? (Also considering that the default skin uses a Label)
@@ -17,13 +17,13 @@ import java.util.List;
  * <b>A:</b> Long story short, for flexibility. While it's true that in the vast majority of user cases, cells will just
  * display their data as a String, it's not always the case. Extending {@link Control} does not allow users
  * to set the label's properties (font, text color, etc.) directly (you can still do it by CSS or by using
- * {@link CSSFragment} in code!!), but it indeed makes the architecture more flexible. See also {@link CellBase}
+ * {@link CSSFragment} in code!!), but it indeed makes the architecture more flexible. See also {@link VFXCellBase}
  * <p></p>
  * <b>Note:</b> to make this even more flexible, I decided to add a {@link StringConverter} to convert an item {@link T}
  * to the {@code String} visualized by the label. However, to make use of it, the cell extends inline the {@link VFXLabeledCellSkin}
  * here {@link #buildSkin()} to override its {@link VFXLabeledCellSkin#update()} method.
  */
-public class VFXSimpleCell<T> extends CellBase<T> {
+public class VFXSimpleCell<T> extends VFXCellBase<T> {
 	//================================================================================
 	// Properties
 	//================================================================================

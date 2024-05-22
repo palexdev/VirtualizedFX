@@ -2,8 +2,8 @@ package io.github.palexdev.virtualizedfx.cells;
 
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
-import io.github.palexdev.virtualizedfx.cells.base.MappingTableCell;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXMappingTableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableRow;
@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * Extension of {@link CellBase} which also implements {@link MappingTableCell}. Uses an inline extension of {@link VFXLabeledCellSkin}
+ * Extension of {@link VFXCellBase} which also implements {@link VFXMappingTableCell}. Uses an inline extension of {@link VFXLabeledCellSkin}
  * as the default skin (see below why). This is intended to be used with models that do not use JavaFX's properties.
  * Expands the default style classes to be: ".cell-base" and ".table-cell".
  * <p>
@@ -29,11 +29,11 @@ import java.util.function.Function;
  * The method {@link #buildSkin()} will build an inline extension of {@link VFXLabeledCellSkin} to override its
  * {@link VFXLabeledCellSkin#update()} method and make use of the converter.
  */
-public class VFXSimpleTableCell<T, E> extends CellBase<T> implements MappingTableCell<T, E> {
+public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappingTableCell<T, E> {
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final ReadOnlyObjectWrapper<VFXTableColumn<T, ? extends TableCell<T>>> column = new ReadOnlyObjectWrapper<>();
+	private final ReadOnlyObjectWrapper<VFXTableColumn<T, ? extends VFXTableCell<T>>> column = new ReadOnlyObjectWrapper<>();
 	private final ReadOnlyObjectWrapper<VFXTableRow<T>> row = new ReadOnlyObjectWrapper<>();
 	private Function<T, E> extractor;
 	private StringConverter<E> converter;
@@ -97,7 +97,7 @@ public class VFXSimpleTableCell<T, E> extends CellBase<T> implements MappingTabl
 	}
 
 	@Override
-	public void updateColumn(VFXTableColumn<T, ? extends TableCell<T>> column) {
+	public void updateColumn(VFXTableColumn<T, ? extends VFXTableCell<T>> column) {
 		setColumn(column);
 	}
 
@@ -109,18 +109,18 @@ public class VFXSimpleTableCell<T, E> extends CellBase<T> implements MappingTabl
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
-	public VFXTableColumn<T, ? extends TableCell<T>> getColumn() {
+	public VFXTableColumn<T, ? extends VFXTableCell<T>> getColumn() {
 		return column.get();
 	}
 
 	/**
 	 * Specifies the instance of the column that created this cell.
 	 */
-	public ReadOnlyObjectProperty<VFXTableColumn<T, ? extends TableCell<T>>> columnProperty() {
+	public ReadOnlyObjectProperty<VFXTableColumn<T, ? extends VFXTableCell<T>>> columnProperty() {
 		return column.getReadOnlyProperty();
 	}
 
-	protected void setColumn(VFXTableColumn<T, ? extends TableCell<T>> column) {
+	protected void setColumn(VFXTableColumn<T, ? extends VFXTableCell<T>> column) {
 		this.column.set(column);
 	}
 

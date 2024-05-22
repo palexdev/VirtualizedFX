@@ -18,7 +18,7 @@ import io.github.palexdev.mfxeffects.enums.Interpolators;
 import io.github.palexdev.mfxresources.fonts.MFXFontIcon;
 import io.github.palexdev.mfxresources.fonts.fontawesome.FontAwesomeSolid;
 import io.github.palexdev.virtualizedfx.cells.VFXObservingTableCell;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
@@ -572,7 +572,7 @@ public class TableTests {
 
 		// Change cell factory of column 5
 		robot.interact(() -> {
-			VFXTableColumn<User, TableCell<User>> column = (VFXTableColumn<User, TableCell<User>>) table.getColumns().get(5);
+			VFXTableColumn<User, VFXTableCell<User>> column = (VFXTableColumn<User, VFXTableCell<User>>) table.getColumns().get(5);
 			column.setCellFactory(u -> Table.factory(u, User::blood, c -> StyleUtils.setBackground(c, ColorUtils.getRandomColor(0.2))));
 		});
 		VFXTableState<User> c1State = table.getState();
@@ -583,7 +583,7 @@ public class TableTests {
 
 		// Change cell factory of column 5 to null
 		robot.interact(() -> {
-			VFXTableColumn<User, TableCell<User>> column = (VFXTableColumn<User, TableCell<User>>) table.getColumns().get(5);
+			VFXTableColumn<User, VFXTableCell<User>> column = (VFXTableColumn<User, VFXTableCell<User>>) table.getColumns().get(5);
 			column.setCellFactory(null);
 		});
 		assertEquals(c1State, table.getState());
@@ -607,7 +607,7 @@ public class TableTests {
 		// State should not change
 		VFXTableState<User> oState = table.getState();
 		robot.interact(() -> {
-			VFXTableColumn<User, TableCell<User>> column = (VFXTableColumn<User, TableCell<User>>) table.getColumns().getLast();
+			VFXTableColumn<User, VFXTableCell<User>> column = (VFXTableColumn<User, VFXTableCell<User>>) table.getColumns().getLast();
 			column.setCellFactory(u -> Table.factory(u, u1 -> "Outside", c -> StyleUtils.setBackground(c, ColorUtils.getRandomColor(0.2))));
 		});
 		assertFalse(table.getState().isClone());
@@ -622,7 +622,7 @@ public class TableTests {
 
 		// Now change factory, nothing should happen
 		robot.interact(() -> {
-			VFXTableColumn<User, TableCell<User>> column = (VFXTableColumn<User, TableCell<User>>) table.getColumns().get(5);
+			VFXTableColumn<User, VFXTableCell<User>> column = (VFXTableColumn<User, VFXTableCell<User>>) table.getColumns().get(5);
 			column.setCellFactory(u -> Table.factory(u, User::blood, c -> StyleUtils.setBackground(c, ColorUtils.getRandomColor(0.2))));
 		});
 		assertState(table, INVALID_RANGE, IntegerRange.of(3, 9));
@@ -1746,7 +1746,7 @@ public class TableTests {
 		// And the supposed width which is 250.0
 		// The thing is, the actual width does not change because of the "partial layout" mechanism.
 		// Since the last column is not visible anymore, it is not updated, thus it still has the old width
-		VFXTableColumn<User, ? extends TableCell<User>> last = table.getColumns().getLast();
+		VFXTableColumn<User, ? extends VFXTableCell<User>> last = table.getColumns().getLast();
 		assertEquals(300, last.getWidth());
 		assertEquals(250, table.getHelper().getColumnWidth(last), 1); // Fucking scaling settings may make the tests fail for no real reason
 	}
@@ -1810,7 +1810,7 @@ public class TableTests {
 		robot.interact(() -> {
 			// Change columns width before
 			table.setColumnsWidth(150);
-			for (VFXTableColumn<User, ? extends TableCell<User>> c : table.getColumns()) {
+			for (VFXTableColumn<User, ? extends VFXTableCell<User>> c : table.getColumns()) {
 				if (c.getWidth() == 250.0) continue;
 				c.resize(-1);
 			}
@@ -1890,7 +1890,7 @@ public class TableTests {
 			384.0
 		};
 		for (int i = 0; i < table.getColumns().size(); i++) {
-			VFXTableColumn<User, ? extends TableCell<User>> c = table.getColumns().get(i);
+			VFXTableColumn<User, ? extends VFXTableCell<User>> c = table.getColumns().get(i);
 			try {
 				assertEquals(vals[i], c.getWidth(), 5);
 			} catch (AssertionError er) {
@@ -1916,7 +1916,7 @@ public class TableTests {
 			pane.getChildren().add(table);
 		});
 
-		for (VFXTableColumn<User, ? extends TableCell<User>> c : table.getColumns()) {
+		for (VFXTableColumn<User, ? extends VFXTableCell<User>> c : table.getColumns()) {
 			assertEquals(240, c.getWidth(), 5);
 		}
 	}
@@ -1933,7 +1933,7 @@ public class TableTests {
 		assertRowsCounter(16, 16, 16, 0, 0, 0);
 
 		// Get text before change row 5
-		TableCell<User> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
+		VFXTableCell<User> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
 		Label label5 = (Label) row5.toNode().lookup(".label");
 		String text5 = label5.getText();
 
@@ -1946,7 +1946,7 @@ public class TableTests {
 		assertNotEquals(text5, label5.getText());
 
 		// Get text before change row 7
-		TableCell<User> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
+		VFXTableCell<User> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
 		Label label7 = (Label) row7.toNode().lookup(".label");
 		String text7 = label7.getText();
 
@@ -2019,7 +2019,7 @@ public class TableTests {
 		assertEquals(IntegerRange.of(0, 6), table.getColumnsRange());
 
 		// Get text before change row 5
-		TableCell<FXUser> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
+		VFXTableCell<FXUser> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
 		Label label5 = (Label) row5.toNode().lookup(".label");
 		String text5 = label5.getText();
 
@@ -2028,7 +2028,7 @@ public class TableTests {
 		assertNotEquals(text5, label5.getText());
 
 		// Get text before change row 7
-		TableCell<FXUser> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
+		VFXTableCell<FXUser> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
 		Label label7 = (Label) row7.toNode().lookup(".label");
 		String text7 = label7.getText();
 

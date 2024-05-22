@@ -5,7 +5,7 @@ import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
-import io.github.palexdev.virtualizedfx.cells.CellBase;
+import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
@@ -335,14 +335,14 @@ public class ListTests {
 
 		// Test init
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(CellBase::toNode)
+			.map(VFXCellBase::toNode)
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Disable and test again
 		robot.interact(() -> list.setFitToViewport(false));
 		assertEquals(800.0, list.getHelper().getVirtualMaxX());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(CellBase::toNode)
+			.map(VFXCellBase::toNode)
 			.forEach(n -> assertNotEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Scroll to max and then disable again
@@ -352,7 +352,7 @@ public class ListTests {
 		robot.interact(() -> list.setFitToViewport(true));
 		assertEquals(0.0, list.getHPos());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(CellBase::toNode)
+			.map(VFXCellBase::toNode)
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 	}
 

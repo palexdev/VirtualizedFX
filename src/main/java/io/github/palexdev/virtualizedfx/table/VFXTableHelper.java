@@ -12,8 +12,8 @@ import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.observables.OnInvalidated;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
@@ -204,7 +204,7 @@ public interface VFXTableHelper<T> {
 	 *
 	 * @see VFXTableRow#layoutCells()
 	 */
-	boolean layoutCell(int layoutIdx, TableCell<T> cell);
+	boolean layoutCell(int layoutIdx, VFXTableCell<T> cell);
 
 	/**
 	 * Determines and sets the ideal width for the given column, where 'ideal' means that
@@ -291,7 +291,7 @@ public interface VFXTableHelper<T> {
 	 * Basically a shortcut for {@code table.getColumn().getLast() == column)}
 	 */
 	default boolean isLastColumn(VFXTableColumn<T, ?> column) {
-		ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = getTable().getColumns();
+		ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = getTable().getColumns();
 		if (columns.isEmpty()) return false;
 		return columns.getLast() == column;
 	}
@@ -717,11 +717,11 @@ public interface VFXTableHelper<T> {
 		 * @return always true
 		 */
 		@Override
-		public boolean layoutCell(int layoutIdx, TableCell<T> cell) {
+		public boolean layoutCell(int layoutIdx, VFXTableCell<T> cell) {
 			VFXTable<T> table = getTable();
 			IntegerRange columnsRange = columnsRange();
 			int colIndex = columnsRange.getMin() + layoutIdx;
-			VFXTableColumn<T, ? extends TableCell<T>> column = table.getColumns().get(colIndex);
+			VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(colIndex);
 			Node node = cell.toNode();
 			double x = getColumnPos(layoutIdx, column);
 			double w = getColumnWidth(column);
@@ -769,7 +769,7 @@ public interface VFXTableHelper<T> {
 		public void autosizeColumns() {
 			VFXTableState<T> state = table.getState();
 			if (state == VFXTableState.INVALID) return;
-			ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
+			ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
 
 			// It may happen that the columns still have a null skin
 			// In such case, we must delay the autosize while also ensuring that layout infos are available
@@ -778,7 +778,7 @@ public interface VFXTableHelper<T> {
 			// Check this by getting the last column in range
 			// If the first's skin is still null, then most probably every other column is in the same situation
 			IntegerRange columnsRange = columnsRange();
-			VFXTableColumn<T, ? extends TableCell<T>> column = columns.get(columnsRange.getMax());
+			VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(columnsRange.getMax());
 			if (column.getSkin() == null) {
 				When.onInvalidated(column.skinProperty())
 					.condition(Objects::nonNull)
@@ -962,7 +962,7 @@ public interface VFXTableHelper<T> {
 		 * This makes the computation for index 1 easy, as it is simply is the sum {@code prevPos + col1Width}.
 		 */
 		protected double computeColumnPos(int index, double prevPos) {
-			VFXTableColumn<T, ? extends TableCell<T>> column = table.getColumns().get(index);
+			VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
 			return column.snapPositionX(prevPos + layoutCache.getColumnWidth(column));
 		}
 
@@ -1012,7 +1012,7 @@ public interface VFXTableHelper<T> {
 			// Initialize bindings
 			columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
-					ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
+					ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
 					if (columns.isEmpty()) return Utils.INVALID_RANGE;
 					return IntegerRange.of(0, columns.size() - 1);
 				})
@@ -1161,14 +1161,14 @@ public interface VFXTableHelper<T> {
 		 * {@link #layoutColumn(int, VFXTableColumn)}. Obviously, to do so, we first need to get the cell's corresponding
 		 * column from {@link VFXTable#getColumns()} by the given index.
 		 * <p></p>
-		 * Note: the pre/post layout hooks defined by {@link Cell} are called even if the cell will only be set to
+		 * Note: the pre/post layout hooks defined by {@link VFXCell} are called even if the cell will only be set to
 		 * hidden. This allows implementations to perform actions depending on the visibility state without relying on
 		 * listeners.
 		 */
 		@Override
-		public boolean layoutCell(int layoutIdx, TableCell<T> cell) {
-			ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
-			VFXTableColumn<T, ? extends TableCell<T>> column = columns.get(layoutIdx);
+		public boolean layoutCell(int layoutIdx, VFXTableCell<T> cell) {
+			ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
+			VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(layoutIdx);
 			Node node = cell.toNode();
 			cell.beforeLayout();
 			if (!isInViewport(column)) {
@@ -1289,7 +1289,7 @@ public interface VFXTableHelper<T> {
 		public void scrollToIndex(Orientation orientation, int index) {
 			if (orientation == Orientation.HORIZONTAL) {
 				try {
-					VFXTableColumn<T, ? extends TableCell<T>> column = table.getColumns().get(index);
+					VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
 					table.setHPos(getColumnPos(table.indexOf(column), column));
 				} catch (Exception ignored) {}
 			} else {

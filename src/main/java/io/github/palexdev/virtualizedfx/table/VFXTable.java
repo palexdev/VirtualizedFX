@@ -15,7 +15,7 @@ import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
@@ -46,7 +46,7 @@ import java.util.function.Supplier;
  * The default style class is: '.vfx-table'.
  * <p>
  * Extends {@link Control}, implements {@link VFXContainer}, has its own skin implementation {@link VFXTableSkin}
- * and behavior {@link VFXTableManager}. Uses cells of type {@link TableCell}.
+ * and behavior {@link VFXTableManager}. Uses cells of type {@link VFXTableCell}.
  * <p>
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
  * {@link VFXTableState} when changing. The state determines how and which items are displayed in the container.
@@ -206,7 +206,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 			cache.setCellFactory(get());
 		}
 	};
-	private final ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = FXCollections.observableArrayList();
+	private final ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = FXCollections.observableArrayList();
 	private final ReadOnlyObjectWrapper<VFXTableHelper<T>> helper = new ReadOnlyObjectWrapper<>() {
 		@Override
 		public void set(VFXTableHelper<T> newValue) {
@@ -256,7 +256,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 		initialize();
 	}
 
-	public VFXTable(ObservableList<T> items, Collection<VFXTableColumn<T, ? extends TableCell<T>>> columns) {
+	public VFXTable(ObservableList<T> items, Collection<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns) {
 		cache = createCache();
 		setItems(items);
 		this.columns.setAll(columns);
@@ -279,7 +279,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 	 */
 	public void autosizeColumn(int index) {
 		try {
-			VFXTableColumn<T, ? extends TableCell<T>> column = columns.get(index);
+			VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(index);
 			if (column == null) return;
 			autosizeColumn(column);
 		} catch (Exception ignored) {}
@@ -972,7 +972,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 	/**
 	 * This is the observable list containing all the table's columns.
 	 */
-	public ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> getColumns() {
+	public ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> getColumns() {
 		return columns;
 	}
 

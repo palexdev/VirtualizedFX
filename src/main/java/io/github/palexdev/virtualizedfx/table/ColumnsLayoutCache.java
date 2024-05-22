@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.table;
 
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
 import javafx.beans.InvalidationListener;
@@ -151,10 +151,10 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 	public ColumnsLayoutCache<T> init() {
 		if (!init) {
 			preInitCheck();
-			ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
+			ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
 			if (!columns.isEmpty()) {
 				lColumn = columns.getLast();
-				for (VFXTableColumn<T, ? extends TableCell<T>> c : columns) cache.put(c, new LayoutInfo(c));
+				for (VFXTableColumn<T, ? extends VFXTableCell<T>> c : columns) cache.put(c, new LayoutInfo(c));
 			}
 			columns.addListener(clListener);
 			table.columnsSizeProperty().addListener(csListener);
@@ -242,7 +242,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 	 * </pre>
 	 */
 	public double getColumnPos(int index) {
-		VFXTableColumn<T, ? extends TableCell<T>> column = table.getColumns().get(index);
+		VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
 		LayoutInfo li = cache.get(column);
 		double pos = li.getPos();
 		if (index == 0) {
@@ -318,14 +318,14 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 	 * than trying to guess which one is still good and which not. We also call {@link #invalidate()} and {@link #invalidateLast()}.
 	 */
 	private void handleColumns(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
-		ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
+		ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
 		if (columns.isEmpty()) {
 			clear();
 			invalidate();
 			return;
 		}
 
-		VFXTableColumn<T, ? extends TableCell<T>> last = columns.getLast();
+		VFXTableColumn<T, ? extends VFXTableCell<T>> last = columns.getLast();
 		if (last != lColumn) {
 			// Invalidate the previous last's binding
 			invalidateLast();
@@ -578,12 +578,12 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 		// Position
 		//================================================================================
 		public double getPos(int index) {
-			ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
+			ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
 			return get(columns.get(index)).getPos();
 		}
 
 		private void setPos(int index, double pos) {
-			ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
+			ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
 			if (index > columns.size() - 1) return;
 			get(columns.get(index)).setPos(pos);
 		}
@@ -750,7 +750,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 
 				private void invalidatePartial() {
 					VFXTable<T> table = getTable();
-					ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
+					ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
 					int index = getIndex();
 					int size = columns.size();
 					for (int i = index; i < size; i++) {

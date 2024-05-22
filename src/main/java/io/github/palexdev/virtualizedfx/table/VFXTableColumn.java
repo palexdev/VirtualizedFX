@@ -7,7 +7,7 @@ import io.github.palexdev.mfxcore.controls.Labeled;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXTableColumnBehavior;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
@@ -70,7 +70,7 @@ import java.util.function.Supplier;
  * @param <T> the type of data in the table
  * @param <C> the type of cells this column will produce
  */
-public abstract class VFXTableColumn<T, C extends TableCell<T>> extends Labeled<VFXTableColumnBehavior<T, C>> implements VFXStyleable {
+public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Labeled<VFXTableColumnBehavior<T, C>> implements VFXStyleable {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -119,7 +119,7 @@ public abstract class VFXTableColumn<T, C extends TableCell<T>> extends Labeled<
 	 * to a temporary array, swap the columns in that, and finally use {@link ObservableList#setAll(Object[])}.
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public static <T> void swapColumns(ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns, int i, int j) {
+	public static <T> void swapColumns(ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns, int i, int j) {
 		VFXTableColumn[] arr = columns.toArray(VFXTableColumn[]::new);
 		VFXTableColumn tmp = arr[i];
 		arr[i] = arr[j];
@@ -184,7 +184,7 @@ public abstract class VFXTableColumn<T, C extends TableCell<T>> extends Labeled<
 		VFXTable<T> table = getTable();
 		if (table == null) return;
 		VFXTableManager<T> manager = table.getBehavior();
-		manager.onCellFactoryChanged((VFXTableColumn<T, TableCell<T>>) this);
+		manager.onCellFactoryChanged((VFXTableColumn<T, VFXTableCell<T>>) this);
 		cache.clear();
 	}
 

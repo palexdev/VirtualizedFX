@@ -5,7 +5,7 @@ import interactive.table.TableTestUtils.EmptyColumn;
 import interactive.table.TableTestUtils.Table;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.ColumnsLayoutCache;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
@@ -435,7 +435,7 @@ public class ColumnsLayoutCacheTests {
 
 		protected double computeColumnPos(int index, double prevPos) {
 			VFXTable<User> table = getTable();
-			VFXTableColumn<User, ? extends TableCell<User>> column = table.getColumns().get(index);
+			VFXTableColumn<User, ? extends VFXTableCell<User>> column = table.getColumns().get(index);
 			return prevPos + getColumnWidth(column);
 		}
 
@@ -469,7 +469,7 @@ public class ColumnsLayoutCacheTests {
 
 		void assertInvalid(Integer... idxs) {
 			Set<Integer> set = Set.of(idxs);
-			ObservableList<VFXTableColumn<User, ? extends TableCell<User>>> columns = getTable().getColumns();
+			ObservableList<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns = getTable().getColumns();
 			for (int i = 0; i < columns.size(); i++) {
 				VFXTableColumn<User, ?> column = columns.get(i);
 				ColumnsLayoutCache<User>.LayoutInfo li = getCacheMap().get(column);
@@ -483,9 +483,9 @@ public class ColumnsLayoutCacheTests {
 		}
 
 		void assertPosInvalid(int min, int max) {
-			ObservableList<VFXTableColumn<User, ? extends TableCell<User>>> columns = getTable().getColumns();
+			ObservableList<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns = getTable().getColumns();
 			for (int i = min; i <= max; i++) {
-				VFXTableColumn<User, ? extends TableCell<User>> c = columns.get(i);
+				VFXTableColumn<User, ? extends VFXTableCell<User>> c = columns.get(i);
 				assertEquals(-1.0, getCacheMap().get(c).getPos());
 			}
 		}

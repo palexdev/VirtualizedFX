@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.list.paginated;
 
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 
 /**
@@ -8,9 +8,9 @@ import io.github.palexdev.virtualizedfx.list.VFXListHelper;
  * to override the behavior of {@link #visibleNum()}, so that it always returns the value of cells per page
  * ({@link VFXPaginatedList#cellsPerPageProperty()}).
  */
-public interface VFXPaginatedListHelper<T, C extends Cell<T>> extends VFXListHelper<T, C> {
+public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXListHelper<T, C> {
 
-	class VerticalHelper<T, C extends Cell<T>> extends VFXListHelper.VerticalHelper<T, C> implements VFXPaginatedListHelper<T, C> {
+	class VerticalHelper<T, C extends VFXCell<T>> extends VFXListHelper.VerticalHelper<T, C> implements VFXPaginatedListHelper<T, C> {
 		public VerticalHelper(VFXPaginatedList<T, C> list) {
 			super(list);
 		}
@@ -51,7 +51,7 @@ public interface VFXPaginatedListHelper<T, C extends Cell<T>> extends VFXListHel
 		}
 	}
 
-	class HorizontalHelper<T, C extends Cell<T>> extends VFXListHelper.HorizontalHelper<T, C> implements VFXPaginatedListHelper<T, C> {
+	class HorizontalHelper<T, C extends VFXCell<T>> extends VFXListHelper.HorizontalHelper<T, C> implements VFXPaginatedListHelper<T, C> {
 		public HorizontalHelper(VFXPaginatedList<T, C> list) {
 			super(list);
 		}

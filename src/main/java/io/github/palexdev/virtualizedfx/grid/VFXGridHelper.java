@@ -11,7 +11,7 @@ import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -27,7 +27,7 @@ import java.util.Optional;
  * it's still a nice way to adhere to the encapsulation and separation of concerns principles.
  * Has one concrete implementation: {@link DefaultHelper}.
  */
-public interface VFXGridHelper<T, C extends Cell<T>> {
+public interface VFXGridHelper<T, C extends VFXCell<T>> {
 
 	/**
 	 * @return the maximum number of columns the grid can have. This value is essentially the same as
@@ -167,7 +167,7 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	 *
 	 * @see VFXGridSkin#layout()
 	 */
-	void layout(int rowLayoutIndex, int columnLayoutIndex, Cell<T> cell);
+	void layout(int rowLayoutIndex, int columnLayoutIndex, VFXCell<T> cell);
 
 	/**
 	 * @return the total size of each cell, given by the {@link VFXGrid#cellSizeProperty()} summed to the horizontal and
@@ -323,7 +323,7 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 	 * The computations have the following dependencies: the number of items, the number of columns, the cell size and
 	 * the horizontal/vertical spacing (respectively).
 	 */
-	class DefaultHelper<T, C extends Cell<T>> implements VFXGridHelper<T, C> {
+	class DefaultHelper<T, C extends VFXCell<T>> implements VFXGridHelper<T, C> {
 		protected final VFXGrid<T, C> grid;
 		protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
 		protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
@@ -599,7 +599,7 @@ public interface VFXGridHelper<T, C extends Cell<T>> {
 		 * {@code totalCellHeight * rowIndex}, the width and height are given by the {@link VFXGrid#cellSizeProperty()}.
 		 */
 		@Override
-		public void layout(int rowLayoutIndex, int columnLayoutIndex, Cell<T> cell) {
+		public void layout(int rowLayoutIndex, int columnLayoutIndex, VFXCell<T> cell) {
 			Node node = cell.toNode();
 			double x = getTotalCellSize().getWidth() * columnLayoutIndex;
 			double y = getTotalCellSize().getHeight() * rowLayoutIndex;

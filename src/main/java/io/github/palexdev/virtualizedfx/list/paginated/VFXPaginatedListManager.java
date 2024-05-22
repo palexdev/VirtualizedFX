@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.list.paginated;
 
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import javafx.scene.Parent;
@@ -15,7 +15,7 @@ import javafx.scene.Parent;
  * It also modifies some of the behaviors already defined in {@link VFXListManager} because the paginated variant should
  * respond differently in some cases, and also to optimize performance as much as possible.
  */
-public class VFXPaginatedListManager<T, C extends Cell<T>> extends VFXListManager<T, C> {
+public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListManager<T, C> {
 
 	//================================================================================
 	// Constructors

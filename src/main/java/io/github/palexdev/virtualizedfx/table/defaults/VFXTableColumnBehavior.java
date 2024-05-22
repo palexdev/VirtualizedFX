@@ -3,7 +3,7 @@ package io.github.palexdev.virtualizedfx.table.defaults;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.enums.Zone;
 import io.github.palexdev.mfxcore.utils.resize.RegionDragResizer;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
@@ -20,7 +20,7 @@ import static io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableCol
  * <p> 2) the table's instance must not be {@code null}
  * <p> 3) the table's layout mode must be set to {@link ColumnsLayoutMode#VARIABLE}.
  */
-public class VFXTableColumnBehavior<T, C extends TableCell<T>> extends BehaviorBase<VFXTableColumn<T, C>> {
+public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends BehaviorBase<VFXTableColumn<T, C>> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -52,7 +52,7 @@ public class VFXTableColumnBehavior<T, C extends TableCell<T>> extends BehaviorB
 			resizer.uninstall();
 			return;
 		}
-		resizer.makeResizable();
+		if (resizer != null) resizer.makeResizable();
 	}
 
 	/**
@@ -78,22 +78,16 @@ public class VFXTableColumnBehavior<T, C extends TableCell<T>> extends BehaviorB
 					super.handleDragged(event);
 					column.pseudoClassStateChanged(DRAGGED, true);
 				}
-				if (column.getTable() == null || column.getTable().getColumnsLayoutMode() == ColumnsLayoutMode.FIXED)
-					return;
 			}
 
 			@Override
 			protected void handleMoved(MouseEvent event) {
 				if (canResize()) super.handleMoved(event);
-				if (column.getTable() == null || column.getTable().getColumnsLayoutMode() == ColumnsLayoutMode.FIXED)
-					return;
 			}
 
 			@Override
 			protected void handlePressed(MouseEvent event) {
 				if (canResize()) super.handlePressed(event);
-				if (column.getTable() == null || column.getTable().getColumnsLayoutMode() == ColumnsLayoutMode.FIXED)
-					return;
 			}
 
 			@Override

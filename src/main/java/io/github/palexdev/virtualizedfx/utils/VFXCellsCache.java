@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.utils;
 
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 
 import java.util.Collection;
@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * Simple cache implementation for virtualized containers that produce cells of type {@link  Cell}.
+ * Simple cache implementation for virtualized containers that produce cells of type {@link  VFXCell}.
  * Cells are stored in a {@link CellsQueue}, a special extension of {@link LinkedList}.
  * The cache can be limited in the maximum number of cells to keep by setting its capacity, see {@link VFXList#cacheCapacityProperty()}.
  * Cells won't be added if the capacity is reached and will be disposed immediately instead.
@@ -40,18 +40,18 @@ import java.util.function.Function;
  * <p> - The {@link #populate()} method could not work because the cells are produced with {@code null} items. So, these
  * cells would require a separate collection. This would also make controlling the cache capacity a bit harder, as well as
  * add and poll operations.
- * <p> - The mapping [Item -> Cell] raises the problem of updating the cache when the items list changes.
+ * <p> - The mapping [Item -> VFXCell] raises the problem of updating the cache when the items list changes.
  * If an item is removed from the list, and a mapping is present in the cache, then it becomes invalid. Which means that
  * the cell associated with that item would need to be disposed or moved to the other collection.
  * <p> - T items come from "outside". In this new version of {@code VirtualizedFX}, to simplify the handling of changes in
- * the items' list, mappings of type [Item -> Cell] are used in the state. But to avoid memory leaks, old maps are always
+ * the items' list, mappings of type [Item -> VFXCell] are used in the state. But to avoid memory leaks, old maps are always
  * cleaned, so that there is not any reference to old items. So, again, we would have to manage this aspect too for the cache.
  * <p></p>
  * Ultimately, the number of cons and the implementation complexity they pose make me think that the refactor would not
  * be worth the effort. Especially considering that I have no empiric proof that it would be more efficient, JMH tests
  * would be required, which is even more work and thus adds up to the cons.
  */
-public class VFXCellsCache<T, C extends Cell<T>> {
+public class VFXCellsCache<T, C extends VFXCell<T>> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -74,7 +74,7 @@ public class VFXCellsCache<T, C extends Cell<T>> {
 
 	/**
 	 * Fills the cache to its limit. Can be useful to 'pre-populate' the cache before init time, making cells already
-	 * available and just in need of an update ({@link Cell#updateIndex(int)}, {@link Cell#updateItem(Object)}).
+	 * available and just in need of an update ({@link VFXCell#updateIndex(int)}, {@link VFXCell#updateItem(Object)}).
 	 *
 	 * @throws NullPointerException if {@link #getCellFactory()} returns {@code null}
 	 */
@@ -90,7 +90,7 @@ public class VFXCellsCache<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Adds the given cells to the queue. For successfully cached cells, {@link Cell#onCache()} will automatically be invoked.
+	 * Adds the given cells to the queue. For successfully cached cells, {@link VFXCell#onCache()} will automatically be invoked.
 	 */
 	@SafeVarargs
 	public final VFXCellsCache<T, C> cache(C... cells) {
@@ -101,7 +101,7 @@ public class VFXCellsCache<T, C extends Cell<T>> {
 	}
 
 	/**
-	 * Adds the given cells to the queue. For successfully cached cells, {@link Cell#onCache()} will automatically be invoked.
+	 * Adds the given cells to the queue. For successfully cached cells, {@link VFXCell#onCache()} will automatically be invoked.
 	 */
 	public VFXCellsCache<T, C> cache(Collection<C> cells) {
 		for (C c : cells) {
@@ -112,7 +112,7 @@ public class VFXCellsCache<T, C extends Cell<T>> {
 
 	/**
 	 * Removes one cell from the cache, specifically from the queue's head, so the oldest cached cell.
-	 * Beware this can return a {@code null} value, if it's not, {@link Cell#onDeCache()} is automatically invoked.
+	 * Beware this can return a {@code null} value, if it's not, {@link VFXCell#onDeCache()} is automatically invoked.
 	 */
 	public C take() {
 		C c = queue.poll();
@@ -140,7 +140,7 @@ public class VFXCellsCache<T, C extends Cell<T>> {
 	 * Disposes and removes all the cells from the cache.
 	 */
 	public VFXCellsCache<T, C> clear() {
-		queue.forEach(Cell::dispose);
+		queue.forEach(VFXCell::dispose);
 		queue.clear();
 		return this;
 	}

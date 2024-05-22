@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.cells.base;
 
-import io.github.palexdev.virtualizedfx.cells.CellBase;
+import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
 import javafx.scene.Node;
 
 /**
@@ -18,7 +18,7 @@ import javafx.scene.Node;
  *
  * @param <T> the type of item to display
  */
-public interface Cell<T> {
+public interface VFXCell<T> {
 
 	/**
 	 * Converts the cell to a {@link Node}.
@@ -27,7 +27,7 @@ public interface Cell<T> {
 	 * <pre>
 	 * {@code
 	 * // Example 1
-	 * public class SimpleCell<T> extends Label implements Cell<T> {
+	 * public class SimpleCell<T> extends Label implements VFXCell<T> {
 	 *     ...
 	 *     ...
 	 *
@@ -38,7 +38,7 @@ public interface Cell<T> {
 	 * }
 	 *
 	 * // Example 2
-	 * public class SimpleCell<T> implements Cell<T> {
+	 * public class SimpleCell<T> implements VFXCell<T> {
 	 *     private final Label label = ...;
 	 *     ...
 	 *     ...
@@ -60,7 +60,7 @@ public interface Cell<T> {
 	 * operations happen when the index changes, for performance reasons, I recommend you to first ensure the new index really
 	 * is different.
 	 * <p>
-	 * See {@link CellBase} and read how this is handled.
+	 * See {@link VFXCellBase} and read how this is handled.
 	 */
 	void updateIndex(int index);
 
@@ -71,7 +71,7 @@ public interface Cell<T> {
 	 * operations happen when the item changes, for performance reasons, I recommend you to first ensure the new item really
 	 * is different.
 	 * <p>
-	 * See {@link CellBase} and read how this is handled.
+	 * See {@link VFXCellBase} and read how this is handled.
 	 */
 	void updateItem(T item);
 

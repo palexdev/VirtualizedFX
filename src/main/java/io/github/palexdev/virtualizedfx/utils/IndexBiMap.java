@@ -1,6 +1,6 @@
 package io.github.palexdev.virtualizedfx.utils;
 
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 
 import java.util.*;
@@ -204,7 +204,7 @@ public class IndexBiMap<K, V> {
 	 */
 	public void put(Integer index, K key, V val) {
 		if (index == null || key == null || val == null)
-			throw new NullPointerException("Cannot add entry [Index:%s; Item:%s; Cell:%s] in state map".formatted(index, key, val));
+			throw new NullPointerException("Cannot add entry [Index:%s; Item:%s; VFXCell:%s] in state map".formatted(index, key, val));
 		byIndex.put(index, val);
 		byKey.computeIfAbsent(key, k -> new LinkedHashSet<>()).add(index);
 	}
@@ -402,9 +402,9 @@ public class IndexBiMap<K, V> {
 	/**
 	 * Extension of {@link IndexBiMap} that introduces polling methods: {@link #pollFirst()}, {@link #pollLast()}.
 	 * <p>
-	 * Also base class to map the items of a {@code VirtualizedFX} container to {@link Cell} instances.
+	 * Also base class to map the items of a {@code VirtualizedFX} container to {@link VFXCell} instances.
 	 */
-	public static class StateMapBase<K, T, C extends Cell<T>> extends IndexBiMap<K, C> {
+	public static class StateMapBase<K, T, C extends VFXCell<T>> extends IndexBiMap<K, C> {
 		/**
 		 * Removes the first entry from the {@code byIndex} map by using {@link SequencedMap#pollFirstEntry()}.
 		 * <p>
@@ -429,17 +429,17 @@ public class IndexBiMap<K, V> {
 	}
 
 	/**
-	 * Extension of {@link StateMapBase} which uses mappings of type: {@code [Integer -> Cell]}, {@code [T -> Collection<Integer>]}
-	 * and {@code [T -> Integer -> Cell]}.
+	 * Extension of {@link StateMapBase} which uses mappings of type: {@code [Integer -> VFXCell]}, {@code [T -> Collection<Integer>]}
+	 * and {@code [T -> Integer -> VFXCell]}.
 	 * <p>
 	 * Used by some {@code VirtualizedFX}'s containers to store the state of the viewport, allowing high usability of
 	 * cells, which translates to high performance.
 	 */
-	public static class StateMap<T, C extends Cell<T>> extends StateMapBase<T, T, C> {}
+	public static class StateMap<T, C extends VFXCell<T>> extends StateMapBase<T, T, C> {}
 
 	/**
-	 * Extension of {@link StateMapBase} which uses mappings of type: {@code [Integer -> Cell]}, {@code [Column -> Collection<Integer>]}
-	 * and {@code [Column -> Integer -> Cell]}.
+	 * Extension of {@link StateMapBase} which uses mappings of type: {@code [Integer -> VFXCell]}, {@code [Column -> Collection<Integer>]}
+	 * and {@code [Column -> Integer -> VFXCell]}.
 	 * <p>
 	 * Used by the table rows to store their state, allowing high re-usability of cells, which translates to high performance.
 	 * <p>
@@ -453,10 +453,10 @@ public class IndexBiMap<K, V> {
 	 * By having mappings, we can quickly separate the cells that need to be updates from the ones that are ready to go.
 	 */
 	@SuppressWarnings("rawtypes")
-	public static class RowsStateMap<T, C extends Cell<T>> extends StateMapBase<VFXTableColumn<T, ?>, T, C> {
+	public static class RowsStateMap<T, C extends VFXCell<T>> extends StateMapBase<VFXTableColumn<T, ?>, T, C> {
 		public static final RowsStateMap EMPTY = new RowsStateMap<>() {
 			@Override
-			public void put(Integer index, VFXTableColumn<Object, ?> key, Cell<Object> val) {}
+			public void put(Integer index, VFXTableColumn<Object, ?> key, VFXCell<Object> val) {}
 		};
 
 		/**

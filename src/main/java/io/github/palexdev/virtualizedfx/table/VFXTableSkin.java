@@ -3,7 +3,7 @@ package io.github.palexdev.virtualizedfx.table;
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.enums.GeometryChangeType;
 import javafx.beans.InvalidationListener;
@@ -359,7 +359,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 	 * of the changed column. Each column is resized and repositioned by {@link VFXTableHelper#layoutColumn(int, VFXTableColumn)}.
 	 * Then iterates over the rows given by {@link VFXTableState#getRowsByIndex()}, iterates over then and resizes all
 	 * of them by using {@link VFXTableHelper#layoutRow(int, VFXTableRow)}. In a nested loop, for each row, it updates
-	 * only the cells from the aforementioned start index, uses {@link VFXTableHelper#layoutCell(int, TableCell)}.
+	 * only the cells from the aforementioned start index, uses {@link VFXTableHelper#layoutCell(int, VFXTableCell)}.
 	 * <p>
 	 * Finally calls {@link #onLayoutCompleted(boolean)} with {@code true} as parameter.
 	 */
@@ -377,7 +377,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 			helper.layoutColumn(layoutIndex, column);
 			state.getRowsByIndex().values().forEach(r -> {
 				r.resize(table.getVirtualMaxX(), r.getHeight());
-				TableCell<T> cell = r.getCells().get(cIndex);
+				VFXTableCell<T> cell = r.getCells().get(cIndex);
 				helper.layoutCell(layoutIndex, cell);
 			});
 			onLayoutCompleted(true);
@@ -394,7 +394,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
 
 		// If it's VARIABLE mode, and it's not the last column, then it means we can actually do some optimization.
 		// Rather than looping over all the columns, we just need to update those starting from the index that changed.
-		ObservableList<VFXTableColumn<T, ? extends TableCell<T>>> columns = table.getColumns();
+		ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
 		IntegerRange range = IntegerRange.of(cIndex, columns.size() - 1);
 		range.forEach(i -> helper.layoutColumn(i, columns.get(i)));
 

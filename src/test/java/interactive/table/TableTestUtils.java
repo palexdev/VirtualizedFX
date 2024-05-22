@@ -11,7 +11,7 @@ import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.mfxresources.fonts.MFXFontIcon;
 import io.github.palexdev.mfxresources.fonts.fontawesome.FontAwesomeSolid;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.*;
@@ -86,11 +86,11 @@ public class TableTestUtils {
 			assertEquals(cellsNum, state.cellsNum());
 		}
 
-		ObservableList<VFXTableColumn<User, ? extends TableCell<User>>> columns = table.getColumns();
+		ObservableList<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns = table.getColumns();
 		int j = 0;
 		for (Integer cIdx : columnsRange) {
 			try {
-				VFXTableColumn<User, ? extends TableCell<User>> column = columns.get(cIdx);
+				VFXTableColumn<User, ? extends VFXTableCell<User>> column = columns.get(cIdx);
 				assertNotNull(column);
 				assertNotNull(column.getTable());
 				assertEquals(cIdx, column.getIndex());
@@ -127,10 +127,10 @@ public class TableTestUtils {
 			assertEquals(items.get(rIdx), row.getItem());
 			assertLayout(table, i, row);
 
-			SequencedMap<Integer, TableCell<User>> cells = row.getCellsUnmodifiable();
+			SequencedMap<Integer, VFXTableCell<User>> cells = row.getCellsUnmodifiable();
 			j = 0;
 			for (Integer cIdx : columnsRange) {
-				TableCell<User> cell = null;
+				VFXTableCell<User> cell = null;
 				try {
 					cell = cells.get(cIdx);
 					assertNotNull(cell);
@@ -175,7 +175,7 @@ public class TableTestUtils {
 		rowsCounter.reset();
 	}
 
-	static void assertLayout(VFXTable<User> table, int cIdx, VFXTableColumn<User, ? extends TableCell<User>> column) {
+	static void assertLayout(VFXTable<User> table, int cIdx, VFXTableColumn<User, ? extends VFXTableCell<User>> column) {
 		VFXTableHelper<User> helper = table.getHelper();
 		Bounds bounds = column.getBoundsInParent();
 		double x = 0;
@@ -184,7 +184,7 @@ public class TableTestUtils {
 		if (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) {
 			x = cIdx * table.getColumnsSize().getWidth();
 		} else {
-			for (VFXTableColumn<User, ? extends TableCell<User>> c : table.getColumns()) {
+			for (VFXTableColumn<User, ? extends VFXTableCell<User>> c : table.getColumns()) {
 				if (c == column) break;
 				x += helper.getColumnWidth(c);
 			}
@@ -220,8 +220,8 @@ public class TableTestUtils {
 		if (cell == null) return;
 		VFXTableHelper<User> helper = table.getHelper();
 		int cellIdx = cell.getIndex();
-		ObservableList<VFXTableColumn<User, ? extends TableCell<User>>> columns = table.getColumns();
-		VFXTableColumn<User, ? extends TableCell<User>> column = columns.get(cellIdx);
+		ObservableList<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns = table.getColumns();
+		VFXTableColumn<User, ? extends VFXTableCell<User>> column = columns.get(cellIdx);
 		Bounds bounds = cell.toNode().getBoundsInParent();
 
 		double x = 0;
@@ -306,11 +306,11 @@ public class TableTestUtils {
 			this(items, columns());
 		}
 
-		public Table(ObservableList<User> items, Collection<VFXTableColumn<User, ? extends TableCell<User>>> columns) {
+		public Table(ObservableList<User> items, Collection<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns) {
 			super(items, columns);
 		}
 
-		static Collection<VFXTableColumn<User, ? extends TableCell<User>>> columns() {
+		static Collection<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns() {
 			int ICON_SIZE = 18;
 			Color ICON_COLOR = Color.rgb(53, 57, 53);
 
@@ -393,7 +393,7 @@ public class TableTestUtils {
 		protected Function<ColumnsLayoutMode, VFXTableHelper<User>> defaultHelperFactory() {
 			return mode -> mode == ColumnsLayoutMode.FIXED ? new FixedTableHelper<>(this) : new VariableTableHelper<>(this) {
 				@Override
-				public boolean layoutCell(int layoutIdx, TableCell<User> node) {
+				public boolean layoutCell(int layoutIdx, VFXTableCell<User> node) {
 					if (super.layoutCell(layoutIdx, node)) {
 						counter.layout();
 						return true;

@@ -6,8 +6,8 @@ import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
-import io.github.palexdev.virtualizedfx.cells.CellBase;
 import io.github.palexdev.virtualizedfx.cells.CellBaseBehavior;
+import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import javafx.collections.FXCollections;
@@ -330,7 +330,7 @@ public class PaginatedListTests {
 						final Label label = new Label();
 
 						{
-							CellBase<Integer> cell = getSkinnable();
+							VFXCellBase<Integer> cell = getSkinnable();
 							listeners(
 								When.onInvalidated(cell.indexProperty())
 									.then(i -> {
@@ -395,14 +395,14 @@ public class PaginatedListTests {
 
 		// Test init
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(CellBase::toNode)
+			.map(VFXCellBase::toNode)
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Disable and test again
 		robot.interact(() -> list.setFitToViewport(false));
 		assertEquals(800.0, list.getHelper().getVirtualMaxX());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(CellBase::toNode)
+			.map(VFXCellBase::toNode)
 			.forEach(n -> assertNotEquals(400.0, n.getLayoutBounds().getWidth()));
 
 		// Scroll to max and then disable again
@@ -412,7 +412,7 @@ public class PaginatedListTests {
 		robot.interact(() -> list.setFitToViewport(true));
 		assertEquals(0.0, list.getHPos());
 		list.getState().getCellsByIndexUnmodifiable().values().stream()
-			.map(CellBase::toNode)
+			.map(VFXCellBase::toNode)
 			.forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 	}
 

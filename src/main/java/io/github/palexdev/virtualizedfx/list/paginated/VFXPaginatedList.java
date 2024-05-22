@@ -7,7 +7,7 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXPaginated;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
  * {@link #helperFactoryProperty()} that produces helpers of type {@link VFXListHelper}, don't do that!
  * You may end up with invalid states, thus a broken component.
  */
-public class VFXPaginatedList<T, C extends Cell<T>> extends VFXList<T, C> implements VFXPaginated<T> {
+public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> implements VFXPaginated<T> {
 	//================================================================================
 	// Properties
 	//================================================================================

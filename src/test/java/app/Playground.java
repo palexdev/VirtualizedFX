@@ -8,7 +8,7 @@ import io.github.palexdev.mfxcore.builders.bindings.StringBindingBuilder;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.events.WhenEvent;
 import io.github.palexdev.mfxcore.utils.EnumUtils;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import javafx.application.Application;
@@ -37,7 +37,7 @@ public class Playground extends Application {
 		table.autosizeColumns();
 
 		table.getColumns().forEach(c -> c.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-			VFXDefaultTableColumn<User, ? extends TableCell<User>> dc = (VFXDefaultTableColumn<User, ? extends TableCell<User>>) c;
+			VFXDefaultTableColumn<User, ? extends VFXTableCell<User>> dc = (VFXDefaultTableColumn<User, ? extends VFXTableCell<User>>) c;
 			if (e.getButton() == MouseButton.PRIMARY) {
 				dc.setIconAlignment(
 					EnumUtils.next(HPos.class, dc.getIconAlignment())

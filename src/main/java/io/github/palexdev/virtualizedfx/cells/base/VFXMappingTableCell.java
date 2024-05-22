@@ -8,7 +8,7 @@ import javafx.util.StringConverter;
 import java.util.function.Function;
 
 /**
- * Extension of {@link TableCell} to propose users a specific way of using {@link VFXTable}.
+ * Extension of {@link VFXTableCell} to propose users a specific way of using {@link VFXTable}.
  * I structured this virtualized container with this API in mind. Each {@link VFXTableColumn} should produce cells
  * that display from an object {@link  T} that comes from the model, a piece of data {@link E} which is part of {@link T}.
  * Consider this example:
@@ -35,7 +35,7 @@ import java.util.function.Function;
  * @param <T> the data type in the table
  * @param <E> the data type the cell is going to use from items of type {@link T}
  */
-public interface MappingTableCell<T, E> extends TableCell<T> {
+public interface VFXMappingTableCell<T, E> extends VFXTableCell<T> {
 
 	/**
 	 * @return the function used to extract a value E from an item T
@@ -45,7 +45,7 @@ public interface MappingTableCell<T, E> extends TableCell<T> {
 	/**
 	 * Sets the function used to extract a value E from an item T
 	 */
-	MappingTableCell<T, E> setExtractor(Function<T, E> extractor);
+	VFXMappingTableCell<T, E> setExtractor(Function<T, E> extractor);
 
 	/**
 	 * @return the {@link StringConverter} used to convert an extracted value E to a String
@@ -55,13 +55,13 @@ public interface MappingTableCell<T, E> extends TableCell<T> {
 	/**
 	 * Sets the {@link StringConverter} used to convert an extracted value E to a String
 	 */
-	MappingTableCell<T, E> setConverter(StringConverter<E> converter);
+	VFXMappingTableCell<T, E> setConverter(StringConverter<E> converter);
 
 	/**
 	 * Allows easily setting a {@link StringConverter} for the cell by just giving a {@link Function} as parameter,
 	 * makes use of {@link FunctionalStringConverter#to(Function)}.
 	 */
-	default MappingTableCell<T, E> setConverter(Function<E, String> fn) {
+	default VFXMappingTableCell<T, E> setConverter(Function<E, String> fn) {
 		return setConverter(FunctionalStringConverter.to(fn));
 	}
 }

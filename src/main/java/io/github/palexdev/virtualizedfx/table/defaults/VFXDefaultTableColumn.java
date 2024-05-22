@@ -3,7 +3,7 @@ package io.github.palexdev.virtualizedfx.table.defaults;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
-import io.github.palexdev.virtualizedfx.cells.base.TableCell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.css.*;
@@ -22,7 +22,7 @@ import java.util.List;
  * This behavior is defined in the default skin.
  * <p> - the {@link #overlayOnHeaderProperty()} makes the aforementioned node cover the column's header too
  */
-public class VFXDefaultTableColumn<T, C extends TableCell<T>> extends VFXTableColumn<T, C> {
+public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTableColumn<T, C> {
 	//================================================================================
 	// Properties
 	//================================================================================

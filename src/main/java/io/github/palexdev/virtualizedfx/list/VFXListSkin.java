@@ -3,7 +3,7 @@ package io.github.palexdev.virtualizedfx.list;
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Orientation;
 import javafx.scene.layout.Pane;
@@ -29,7 +29,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
  * by overriding the {@link #DEFAULT_SIZE} variable.
  */
-public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, VFXListManager<T, C>> {
+public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>, VFXListManager<T, C>> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -165,7 +165,7 @@ public class VFXListSkin<T, C extends Cell<T>> extends SkinBase<VFXList<T, C>, V
 	 * The loop on the cells uses an external {@code i} variable that tracks the iteration count. This is because cells in the
 	 * state are already ordered by their index (since the state uses a {@link TreeMap}), and the layout is 'absolute'.
 	 * Meaning that the index of the cell is irrelevant for its position, we just care about which comes before/after.
-	 * The layout is performed by {@link VFXListHelper#layout(int, Cell)}, the index given to that method is the
+	 * The layout is performed by {@link VFXListHelper#layout(int, VFXCell)}, the index given to that method is the
 	 * {@code i} variable.
 	 * <p></p>
 	 * <pre>

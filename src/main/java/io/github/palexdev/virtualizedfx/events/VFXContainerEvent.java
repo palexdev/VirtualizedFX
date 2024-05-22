@@ -1,7 +1,7 @@
 package io.github.palexdev.virtualizedfx.events;
 
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
-import io.github.palexdev.virtualizedfx.cells.base.Cell;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.event.Event;
 import javafx.event.EventTarget;
 import javafx.event.EventType;
@@ -37,7 +37,7 @@ public class VFXContainerEvent extends Event {
 	//================================================================================
 	// Static Methods
 	//================================================================================
-	public static <T> void update(Cell<T> cell) {
+	public static <T> void update(VFXCell<T> cell) {
 		if (cell == null) return; // Avoid null targets
 		Node node = cell.toNode();
 		fireEvent(node, new VFXContainerEvent(null, node, UPDATE));

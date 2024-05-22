@@ -15,13 +15,13 @@ import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
- * Simple skin implementation to be used with any descendant of {@link CellBase}.
+ * Simple skin implementation to be used with any descendant of {@link VFXCellBase}.
  * <p>
- * This will display the data specified by the {@link CellBase#itemProperty()} as a {@code String} in a {@link Label}.
- * It's the only children of this skin, it is positioned according to the {@link CellBase#alignmentProperty()}.
+ * This will display the data specified by the {@link VFXCellBase#itemProperty()} as a {@code String} in a {@link Label}.
+ * It's the only children of this skin, it is positioned according to the {@link VFXCellBase#alignmentProperty()}.
  * <p>
  * The label's text will be updated on two occasions:
- * <p> 1) when the {@link CellBase#itemProperty()} is invalidated
+ * <p> 1) when the {@link VFXCellBase#itemProperty()} is invalidated
  * <p> 2) when an event of type {@link VFXContainerEvent#UPDATE} reaches the cell
  * <p>
  * You can modify {@link #addListeners()} to change such behavior. For example, rather than using an {@link InvalidationListener}
@@ -32,7 +32,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * <p>
  * Last but not least, the label's text is updated by the {@link #update()} method.
  */
-public class VFXLabeledCellSkin<T> extends SkinBase<CellBase<T>, CellBaseBehavior<T>> {
+public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBehavior<T>> {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -41,7 +41,7 @@ public class VFXLabeledCellSkin<T> extends SkinBase<CellBase<T>, CellBaseBehavio
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public VFXLabeledCellSkin(CellBase<T> cell) {
+	public VFXLabeledCellSkin(VFXCellBase<T> cell) {
 		super(cell);
 
 		// Init label
@@ -57,7 +57,7 @@ public class VFXLabeledCellSkin<T> extends SkinBase<CellBase<T>, CellBaseBehavio
 	//================================================================================
 
 	/**
-	 * Adds an {@link InvalidationListener} on the {@link CellBase#itemProperty()} to call {@link #update()} when it changes,
+	 * Adds an {@link InvalidationListener} on the {@link VFXCellBase#itemProperty()} to call {@link #update()} when it changes,
 	 * and an {@link EventHandler} to support "manual" updates through events of type {@link VFXContainerEvent#UPDATE}.
 	 * <p>
 	 * (Uses {@link When} and {@link WhenEvent} constructs).
@@ -66,7 +66,7 @@ public class VFXLabeledCellSkin<T> extends SkinBase<CellBase<T>, CellBaseBehavio
 	 * @see #events(WhenEvent[])
 	 */
 	protected void addListeners() {
-		CellBase<T> cell = getSkinnable();
+		VFXCellBase<T> cell = getSkinnable();
 		listeners(
 			onInvalidated(cell.itemProperty())
 				.then(t -> update())
@@ -79,12 +79,12 @@ public class VFXLabeledCellSkin<T> extends SkinBase<CellBase<T>, CellBaseBehavio
 	}
 
 	/**
-	 * This is responsible for updating the label's text using the value specified by the {@link CellBase#itemProperty()}.
+	 * This is responsible for updating the label's text using the value specified by the {@link VFXCellBase#itemProperty()}.
 	 * <p>
 	 * If the item is {@code null} sets the text to an empty string, otherwise calls {@code toString()} on it.
 	 */
 	protected void update() {
-		CellBase<T> cell = getSkinnable();
+		VFXCellBase<T> cell = getSkinnable();
 		T item = cell.getItem();
 		if (item == null) {
 			label.setText("");
@@ -108,7 +108,7 @@ public class VFXLabeledCellSkin<T> extends SkinBase<CellBase<T>, CellBaseBehavio
 
 	@Override
 	protected void layoutChildren(double x, double y, double w, double h) {
-		CellBase<T> cell = getSkinnable();
+		VFXCellBase<T> cell = getSkinnable();
 		Pos pos = cell.getAlignment();
 		layoutInArea(label, x, y, w, h, 0, pos.getHpos(), pos.getVpos());
 	}
