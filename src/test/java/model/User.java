@@ -71,7 +71,7 @@ public class User {
 		return blood;
 	}
 
-	public String animal() {
+	public String pet() {
 		return pet;
 	}
 

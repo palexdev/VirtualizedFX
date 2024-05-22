@@ -111,6 +111,24 @@ public interface VFXContainer<T> {
 
 	ReadOnlyDoubleProperty virtualMaxYProperty();
 
+	default double getMaxVScroll() {
+		return maxVScrollProperty().get();
+	}
+
+	/**
+	 * Specifies the maximum possible value for {@link #vPosProperty()}.
+	 */
+	ReadOnlyDoubleProperty maxVScrollProperty();
+
+	default double getMaxHScroll() {
+		return maxHScrollProperty().get();
+	}
+
+	/**
+	 * Specifies the maximum possible value for {@link #hPosProperty()}
+	 */
+	ReadOnlyDoubleProperty maxHScrollProperty();
+
 	default double getVPos() {
 		return vPosProperty().get();
 	}

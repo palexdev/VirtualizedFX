@@ -113,16 +113,6 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 	}
 
 	/**
-	 * @return the maximum amount of pixels the container can scroll on the horizontal direction
-	 */
-	double maxHScroll();
-
-	/**
-	 * @return the maximum amount of pixels the container can scroll on the vertical direction
-	 */
-	double maxVScroll();
-
-	/**
 	 * Specifies the total number of pixels on the x-axis.
 	 */
 	ReadOnlyDoubleProperty virtualMaxXProperty();
@@ -145,6 +135,30 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 	default double getVirtualMaxY() {
 		return virtualMaxYProperty().get();
 	}
+
+	/**
+	 * @return the maximum possible vertical position.
+	 */
+	default double getMaxVScroll() {
+		return maxVScrollProperty().get();
+	}
+
+	/**
+	 * Specifies the maximum possible vertical position.
+	 */
+	ReadOnlyDoubleProperty maxVScrollProperty();
+
+	/**
+	 * @return the maximum possible horizontal position.
+	 */
+	default double getMaxHScroll() {
+		return maxHScrollProperty().get();
+	}
+
+	/**
+	 * Specifies the maximum possible horizontal position.
+	 */
+	ReadOnlyDoubleProperty maxHScrollProperty();
 
 	/**
 	 * Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
@@ -237,7 +251,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 	/**
 	 * Forces the {@link VFXGrid#vPosProperty()} and {@link VFXGrid#hPosProperty()} to be invalidated.
 	 * This is simply done by calling the respective setters with their current respective values. Those two properties
-	 * will automatically call {@link #maxVScroll()} and {@link #maxHScroll()} to ensure the values are correct.
+	 * will automatically call {@link #getMaxVScroll()} and {@link #getMaxHScroll()} to ensure the values are correct.
 	 * Automatically invoked by the {@link VFXGridManager} when needed.
 	 */
 	default void invalidatePos() {
@@ -329,6 +343,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 		protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
 		protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
 		protected final ReadOnlyDoubleWrapper virtualMaxY = new ReadOnlyDoubleWrapper();
+		protected final ReadOnlyDoubleWrapper maxHScroll = new ReadOnlyDoubleWrapper();
+		protected final ReadOnlyDoubleWrapper maxVScroll = new ReadOnlyDoubleWrapper();
 		protected final PositionProperty viewportPosition = new PositionProperty();
 		protected final SizeProperty totalCellSize = new SizeProperty(Size.empty());
 
@@ -382,6 +398,17 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 				.setMapper(() -> (maxRows() * getTotalCellSize().getHeight()) - grid.getVSpacing())
 				.addSources(grid.sizeProperty(), grid.columnsNumProperty(), grid.cellSizeProperty())
 				.addSources(grid.vSpacingProperty())
+				.get()
+			);
+
+			maxHScroll.bind(DoubleBindingBuilder.build()
+				.setMapper(() -> Math.max(0, getVirtualMaxX() - grid.getWidth()))
+				.addSources(virtualMaxX, grid.widthProperty())
+				.get()
+			);
+			maxVScroll.bind(DoubleBindingBuilder.build()
+				.setMapper(() -> Math.max(0, getVirtualMaxY() - grid.getHeight()))
+				.addSources(virtualMaxY, grid.heightProperty())
 				.get()
 			);
 
@@ -557,26 +584,6 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 			return rowsRange;
 		}
 
-		/**
-		 * {@inheritDoc}
-		 * <p></p>
-		 * Given by {@code virtualMaxX - gridWidth}, cannot be negative.
-		 */
-		@Override
-		public double maxHScroll() {
-			return Math.max(0, getVirtualMaxX() - grid.getWidth());
-		}
-
-		/**
-		 * {@inheritDoc}
-		 * <p></p>
-		 * Given by {@code virtualMaxY - gridHeight}, cannot be negative.
-		 */
-		@Override
-		public double maxVScroll() {
-			return Math.max(0, getVirtualMaxY() - grid.getHeight());
-		}
-
 		@Override
 		public ReadOnlyDoubleProperty virtualMaxXProperty() {
 			return virtualMaxX.getReadOnlyProperty();
@@ -585,6 +592,16 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 		@Override
 		public ReadOnlyDoubleProperty virtualMaxYProperty() {
 			return virtualMaxY.getReadOnlyProperty();
+		}
+
+		@Override
+		public ReadOnlyDoubleProperty maxVScrollProperty() {
+			return maxVScroll.getReadOnlyProperty();
+		}
+
+		@Override
+		public ReadOnlyDoubleProperty maxHScrollProperty() {
+			return maxHScroll.getReadOnlyProperty();
 		}
 
 		@Override

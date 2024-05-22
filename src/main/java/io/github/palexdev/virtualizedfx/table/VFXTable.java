@@ -233,11 +233,11 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 	};
 	private final DoubleProperty vPos = PropUtils.clampedDoubleProperty(
 		() -> 0.0,
-		() -> getHelper().maxVScroll()
+		this::getMaxVScroll
 	);
 	private final DoubleProperty hPos = PropUtils.clampedDoubleProperty(
 		() -> 0.0,
-		() -> getHelper().maxHScroll()
+		this::getMaxHScroll
 	);
 	private final VFXTableStateProperty<T> state = new VFXTableStateProperty<>(VFXTableState.INVALID);
 	private final ViewportLayoutRequestProperty<T> needsViewportLayout = new ViewportLayoutRequestProperty<>();
@@ -504,6 +504,22 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 	@Override
 	public ReadOnlyDoubleProperty virtualMaxYProperty() {
 		return getHelper().virtualMaxYProperty();
+	}
+
+	/**
+	 * Delegate for {@link VFXTableHelper#maxVScrollProperty()}.
+	 */
+	@Override
+	public ReadOnlyDoubleProperty maxVScrollProperty() {
+		return getHelper().maxVScrollProperty();
+	}
+
+	/**
+	 * Delegate for {@link VFXTableHelper#maxHScrollProperty()}.
+	 */
+	@Override
+	public ReadOnlyDoubleProperty maxHScrollProperty() {
+		return getHelper().maxHScrollProperty();
 	}
 
 	/**

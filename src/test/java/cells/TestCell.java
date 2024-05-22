@@ -3,9 +3,7 @@ package cells;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.virtualizedfx.cells.VFXLabeledCellSkin;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleCell;
-import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 
-import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static utils.TestFXUtils.counter;
 
@@ -58,13 +56,6 @@ public class TestCell<T> extends VFXSimpleCell<T> {
 						.then(v -> {
 							counter.item();
 							update();
-						})
-				);
-				events(
-					intercept(TestCell.this, VFXContainerEvent.UPDATE)
-						.process(e -> {
-							update();
-							e.consume();
 						})
 				);
 			}

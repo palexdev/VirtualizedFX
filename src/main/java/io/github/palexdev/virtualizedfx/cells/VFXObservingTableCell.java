@@ -13,7 +13,6 @@ import java.beans.EventHandler;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
@@ -158,13 +157,6 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
 				onInvalidated(itemProperty())
 					.then(t -> onItemChanged())
 					.executeNow()
-			);
-			events(
-				intercept(VFXObservingTableCell.this, VFXContainerEvent.UPDATE)
-					.process(e -> {
-						update();
-						e.consume();
-					})
 			);
 		}
 

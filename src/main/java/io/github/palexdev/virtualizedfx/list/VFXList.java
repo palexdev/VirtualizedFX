@@ -140,11 +140,11 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
 	};
 	private final DoubleProperty vPos = PropUtils.clampedDoubleProperty(
 		() -> 0.0,
-		() -> getHelper().maxVScroll()
+		this::getMaxVScroll
 	);
 	private final DoubleProperty hPos = PropUtils.clampedDoubleProperty(
 		() -> 0.0,
-		() -> getHelper().maxHScroll()
+		this::getMaxHScroll
 	);
 
 	private final VFXListStateProperty<T, C> state = new VFXListStateProperty<>(VFXListState.INVALID);
@@ -295,6 +295,22 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
 	@Override
 	public ReadOnlyDoubleProperty virtualMaxYProperty() {
 		return getHelper().virtualMaxYProperty();
+	}
+
+	/**
+	 * Delegate for {@link VFXListHelper#maxVScrollProperty()}.
+	 */
+	@Override
+	public ReadOnlyDoubleProperty maxVScrollProperty() {
+		return getHelper().maxVScrollProperty();
+	}
+
+	/**
+	 * Delegate for {@link VFXListHelper#maxHScrollProperty()}.
+	 */
+	@Override
+	public ReadOnlyDoubleProperty maxHScrollProperty() {
+		return getHelper().maxHScrollProperty();
 	}
 
 	/**

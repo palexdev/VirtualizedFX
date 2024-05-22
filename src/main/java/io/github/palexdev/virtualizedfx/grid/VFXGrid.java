@@ -19,8 +19,6 @@ import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
-import io.github.palexdev.virtualizedfx.list.VFXListHelper;
-import io.github.palexdev.virtualizedfx.list.VFXListState;
 import io.github.palexdev.virtualizedfx.properties.VFXGridStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.*;
@@ -157,11 +155,11 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
 	};
 	private final DoubleProperty vPos = PropUtils.clampedDoubleProperty(
 		() -> 0.0,
-		() -> getHelper().maxVScroll()
+		this::getMaxVScroll
 	);
 	private final DoubleProperty hPos = PropUtils.clampedDoubleProperty(
 		() -> 0.0,
-		() -> getHelper().maxHScroll()
+		this::getMaxHScroll
 	);
 
 	private final VFXGridStateProperty<T, C> state = new VFXGridStateProperty<>(VFXGridState.INVALID);
@@ -310,24 +308,42 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
 	public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {return getState().getCellsByIndexUnmodifiable();}
 
 	/**
-	 * Delegate for {@link VFXListState#getCellsByItemUnmodifiable()}
+	 * Delegate for {@link VFXGridState#getCellsByItemUnmodifiable()}
 	 */
 	public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
 		return getState().getCellsByItemUnmodifiable();
 	}
 
 	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}.
+	 * Delegate for {@link VFXGridHelper#virtualMaxXProperty()}.
 	 */
+	@Override
 	public ReadOnlyDoubleProperty virtualMaxXProperty() {
 		return getHelper().virtualMaxXProperty();
 	}
 
 	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxYProperty()}.
+	 * Delegate for {@link VFXGridHelper#virtualMaxYProperty()}.
 	 */
+	@Override
 	public ReadOnlyDoubleProperty virtualMaxYProperty() {
 		return getHelper().virtualMaxYProperty();
+	}
+
+	/**
+	 * Delegate for {@link VFXGridHelper#maxVScrollProperty()}.
+	 */
+	@Override
+	public ReadOnlyDoubleProperty maxVScrollProperty() {
+		return getHelper().maxVScrollProperty();
+	}
+
+	/**
+	 * Delegate for {@link VFXGridHelper#maxHScrollProperty()}.
+	 */
+	@Override
+	public ReadOnlyDoubleProperty maxHScrollProperty() {
+		return getHelper().maxHScrollProperty();
 	}
 
 	/**

@@ -348,7 +348,7 @@ public class TableTests {
 		assertCounter(0, 0, 0, 0, 0, 0, 0);
 
 		Animation a2 = TimelineBuilder.build()
-			.add(KeyFrames.of(500, table.hPosProperty(), helper.maxHScroll(), Interpolators.LINEAR))
+			.add(KeyFrames.of(500, table.hPosProperty(), table.getMaxHScroll(), Interpolators.LINEAR))
 			.getAnimation();
 		robot.interact(a2::play);
 		sleep(550);
@@ -1842,7 +1842,7 @@ public class TableTests {
 				(int) (table.getColumnsSize().getWidth() + 1),
 				240
 			)));
-			table.setHPos(table.getHelper().maxHScroll() / 2.0);
+			table.setHPos(table.getMaxHScroll() / 2.0);
 			pane.getChildren().add(table);
 		});
 
@@ -2039,13 +2039,13 @@ public class TableTests {
 		// Scroll to check everything is ok
 		VFXTableHelper<FXUser> helper = table.getHelper();
 		Animation a1 = TimelineBuilder.build()
-			.add(KeyFrames.of(500, table.vPosProperty(), helper.maxVScroll(), Interpolator.LINEAR))
+			.add(KeyFrames.of(500, table.vPosProperty(), table.getMaxVScroll(), Interpolator.LINEAR))
 			.getAnimation();
 		robot.interact(a1::play);
 		sleep(550);
 
 		Animation a2 = TimelineBuilder.build()
-			.add(KeyFrames.of(500, table.hPosProperty(), helper.maxHScroll(), Interpolator.LINEAR))
+			.add(KeyFrames.of(500, table.hPosProperty(), table.getMaxHScroll(), Interpolator.LINEAR))
 			.getAnimation();
 		robot.interact(a2::play);
 		sleep(550);

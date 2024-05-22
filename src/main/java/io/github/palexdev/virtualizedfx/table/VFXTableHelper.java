@@ -108,16 +108,6 @@ public interface VFXTableHelper<T> {
 	}
 
 	/**
-	 * @return the maximum amount of pixels the container can scroll on the horizontal direction
-	 */
-	double maxHScroll();
-
-	/**
-	 * @return the maximum amount of pixels the container can scroll on the vertical direction
-	 */
-	double maxVScroll();
-
-	/**
 	 * Specifies the total number of pixels on the x-axis.
 	 */
 	ReadOnlyDoubleProperty virtualMaxXProperty();
@@ -140,6 +130,30 @@ public interface VFXTableHelper<T> {
 	default double getVirtualMaxY() {
 		return virtualMaxYProperty().get();
 	}
+
+	/**
+	 * @return the maximum possible vertical position.
+	 */
+	default double getMaxVScroll() {
+		return maxVScrollProperty().get();
+	}
+
+	/**
+	 * Specifies the maximum possible vertical position.
+	 */
+	ReadOnlyDoubleProperty maxVScrollProperty();
+
+	/**
+	 * @return the maximum possible horizontal position.
+	 */
+	default double getMaxHScroll() {
+		return maxHScrollProperty().get();
+	}
+
+	/**
+	 * Specifies the maximum possible horizontal position.
+	 */
+	ReadOnlyDoubleProperty maxHScrollProperty();
 
 	/**
 	 * Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
@@ -242,7 +256,7 @@ public interface VFXTableHelper<T> {
 	/**
 	 * Forces the {@link VFXTable#vPosProperty()} and {@link VFXTable#hPosProperty()} to be invalidated.
 	 * This is simply done by calling the respective setters with their current respective values. Those two properties
-	 * will automatically call {@link #maxVScroll()} and {@link #maxHScroll()} to ensure the values are correct.
+	 * will automatically call {@link #getMaxVScroll()} and {@link #getMaxHScroll()} to ensure the values are correct.
 	 * Automatically invoked by the {@link VFXTableManager} when needed.
 	 */
 	default void invalidatePos() {
@@ -350,6 +364,8 @@ public interface VFXTableHelper<T> {
 		protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
 		protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
 		protected final ReadOnlyDoubleWrapper virtualMaxY = new ReadOnlyDoubleWrapper();
+		protected final ReadOnlyDoubleWrapper maxHScroll = new ReadOnlyDoubleWrapper();
+		protected final ReadOnlyDoubleWrapper maxVScroll = new ReadOnlyDoubleWrapper();
 		protected final PositionProperty viewportPosition = new PositionProperty();
 
 		public AbstractHelper(VFXTable<T> table) {
@@ -360,7 +376,18 @@ public interface VFXTableHelper<T> {
 		/**
 		 * Bindings and listeners should be initialized here, automatically called after the table instance is set.
 		 */
-		protected abstract void initBindings();
+		protected void initBindings() {
+			maxHScroll.bind(DoubleBindingBuilder.build()
+				.setMapper(() -> Math.max(0, getVirtualMaxX() - table.getWidth()))
+				.addSources(virtualMaxX, table.widthProperty())
+				.get()
+			);
+			maxVScroll.bind(DoubleBindingBuilder.build()
+				.setMapper(() -> Math.max(0, getVirtualMaxY() - getViewportHeight()))
+				.addSources(virtualMaxY, table.heightProperty(), table.columnsSizeProperty())
+				.get()
+			);
+		}
 
 		/**
 		 * {@inheritDoc}
@@ -431,26 +458,6 @@ public interface VFXTableHelper<T> {
 			return rowsRange;
 		}
 
-		/**
-		 * {@inheritDoc}
-		 * <p></p>
-		 * Given by {@code Math.max(0, virtualMaxX - tableWidth)}.
-		 */
-		@Override
-		public double maxHScroll() {
-			return Math.max(0, getVirtualMaxX() - table.getWidth());
-		}
-
-		/**
-		 * {@inheritDoc}
-		 * <p></p>
-		 * Given by {@code Math.max(0, virtualMaxY - viewportHeight)}.
-		 */
-		@Override
-		public double maxVScroll() {
-			return Math.max(0, getVirtualMaxY() - getViewportHeight());
-		}
-
 		@Override
 		public ReadOnlyDoubleProperty virtualMaxXProperty() {
 			return virtualMaxX;
@@ -459,6 +466,16 @@ public interface VFXTableHelper<T> {
 		@Override
 		public ReadOnlyDoubleProperty virtualMaxYProperty() {
 			return virtualMaxY;
+		}
+
+		@Override
+		public ReadOnlyDoubleProperty maxVScrollProperty() {
+			return maxVScroll.getReadOnlyProperty();
+		}
+
+		@Override
+		public ReadOnlyDoubleProperty maxHScrollProperty() {
+			return maxHScroll.getReadOnlyProperty();
 		}
 
 		@Override
@@ -541,6 +558,7 @@ public interface VFXTableHelper<T> {
 
 		@Override
 		protected void initBindings() {
+			super.initBindings();
 			columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
 				.setMapper(() -> {
 					if (table.getWidth() <= 0) return Utils.INVALID_RANGE;
@@ -1002,6 +1020,7 @@ public interface VFXTableHelper<T> {
 
 		@Override
 		protected void initBindings() {
+			super.initBindings();
 			// Initialize layout cache
 			layoutCache = new ColumnsLayoutCache<>(table)
 				.setWidthFunction(this::computeColumnWidth)

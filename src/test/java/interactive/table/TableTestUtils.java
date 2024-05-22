@@ -254,9 +254,8 @@ public class TableTestUtils {
 	}
 
 	static void assertScrollable(VFXTable<User> table, double maxVScroll, double maxHScroll) {
-		VFXTableHelper<User> helper = table.getHelper();
-		assertEquals(maxVScroll, helper.maxVScroll());
-		assertEquals(maxHScroll, helper.maxHScroll());
+		assertEquals(maxVScroll, table.getMaxVScroll());
+		assertEquals(maxHScroll, table.getMaxHScroll());
 	}
 
 	static void setRandomColumnWidth(VFXTable<User> table, double w) {
@@ -339,7 +338,7 @@ public class TableTestUtils {
 			bloodColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.DROPLET, ICON_SIZE, ICON_COLOR));
 
 			TestColumn<String> animalColumn = new TestColumn<>("Pet", priority());
-			animalColumn.setCellFactory(u -> factory(u, User::animal));
+			animalColumn.setCellFactory(u -> factory(u, User::pet));
 			animalColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.PAW, ICON_SIZE, ICON_COLOR));
 
 			return List.of(firstNameColumn, lastNameColumn, birthColumn, zodiacColumn, countryColumn, bloodColumn, animalColumn);

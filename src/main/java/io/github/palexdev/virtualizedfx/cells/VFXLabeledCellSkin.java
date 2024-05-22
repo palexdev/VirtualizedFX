@@ -77,13 +77,6 @@ public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBeha
 				.then(t -> update())
 				.executeNow()
 		);
-		events(
-			intercept(cell, VFXContainerEvent.UPDATE)
-				.process(e -> {
-					update();
-					e.consume();
-				})
-		);
 	}
 
 	/**
@@ -106,7 +99,15 @@ public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBeha
 	//================================================================================
 	@Override
 	protected void initBehavior(CellBaseBehavior<T> behavior) {
+		VFXCellBase<T> cell = getSkinnable();
 		behavior.init();
+		events(
+			intercept(cell, VFXContainerEvent.UPDATE)
+				.process(e -> {
+					update();
+					e.consume();
+				})
+		);
 	}
 
 	@Override
