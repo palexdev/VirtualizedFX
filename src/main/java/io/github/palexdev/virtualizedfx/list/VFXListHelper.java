@@ -429,6 +429,10 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 				return fW;
 			}
 			double nW = LayoutUtils.boundWidth(node);
+			if (nW == 0) {
+				node.applyCss();
+				nW = LayoutUtils.boundWidth(node);
+			}
 			if (nW > virtualMaxX.get()) virtualMaxX.set(nW);
 			return nW;
 		}
@@ -599,6 +603,10 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 				return fH;
 			}
 			double nH = LayoutUtils.boundHeight(node);
+			if (nH == 0) {
+				node.applyCss();
+				nH = LayoutUtils.boundHeight(node);
+			}
 			if (nH > virtualMaxY.get()) virtualMaxY.set(nH);
 			return nH;
 		}
