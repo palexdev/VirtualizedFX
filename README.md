@@ -5,6 +5,8 @@
 ![GitHub](https://img.shields.io/github/license/palexdev/virtualizedfx?style=flat-square)
 ---
 
+<h1 align="center"><strong>Now that the rewrite is completed and the default branch has been switched this is considered deprecated and won't be maintained anymore!</strong></h1>
+
 <h3 align="center">VirtualizedFX</h3>
 VirtualizedFX is yet another attempt at creating an efficient and flexible virtual flow for JavaFX. For those who don't
 know what a VirtualFlow is I suggest you reading these articles which also helped me a lot in the realization of
