@@ -454,15 +454,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 		double hBarX = hBarPadding.getLeft() + hBarOffset;
 		double hBarY = (hBarPos == VPos.TOP) ? hBarPadding.getTop() : totalHeight - hBarH - hBarPadding.getBottom();
 
-		if (layoutMode != LayoutMode.COMPACT ||
-			hBarPolicy != ScrollBarPolicy.NEVER &&
-				!hBar.isVisible())
-			vBarH -= hBarH;
-
-		if (layoutMode != LayoutMode.COMPACT ||
-			vBarPolicy != ScrollBarPolicy.NEVER &&
-				!vBar.isVisible())
-			hBarW -= vBarW;
+		if (hBarPolicy != ScrollBarPolicy.NEVER && hBar.isVisible()) vBarH -= hBarH;
+		if (vBarPolicy != ScrollBarPolicy.NEVER && vBar.isVisible()) hBarW -= vBarW;
 
 		vBar.resizeRelocate(vBarX, vBarY, vBarW, vBarH);
 		hBar.resizeRelocate(hBarX, hBarY, hBarW, hBarH);
