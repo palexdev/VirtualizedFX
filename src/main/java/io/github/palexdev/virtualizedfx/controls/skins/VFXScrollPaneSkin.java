@@ -11,8 +11,8 @@ import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollPaneBehavior;
-import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
+import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import javafx.animation.Animation;
 import javafx.beans.InvalidationListener;
 import javafx.css.PseudoClass;
@@ -193,7 +193,7 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 		// HBar
 		hBar.scrollBoundsProperty().bind(pane.contentBoundsProperty());
 		hBar.visibleProperty().bind(BooleanBindingBuilder.build()
-			.setMapper(() -> hBar.getVisibleAmount() < 1.0 && pane.getHBarPolicy() != ScrollPaneEnums.ScrollBarPolicy.NEVER)
+			.setMapper(() -> hBar.getVisibleAmount() < 1.0 && pane.getHBarPolicy() != ScrollBarPolicy.NEVER)
 			.addSources(pane.contentBoundsProperty(), pane.hBarPolicyProperty())
 			.get()
 		);
@@ -210,7 +210,7 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 		// VBar
 		vBar.scrollBoundsProperty().bind(pane.contentBoundsProperty());
 		vBar.visibleProperty().bind(BooleanBindingBuilder.build()
-			.setMapper(() -> vBar.getVisibleAmount() < 1.0 && pane.getVBarPolicy() != ScrollPaneEnums.ScrollBarPolicy.NEVER)
+			.setMapper(() -> vBar.getVisibleAmount() < 1.0 && pane.getVBarPolicy() != ScrollBarPolicy.NEVER)
 			.addSources(pane.contentBoundsProperty(), pane.vBarPolicyProperty())
 			.get()
 		);
@@ -381,11 +381,11 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 		VFXScrollPane pane = getSkinnable();
 		Node content = pane.getContent();
 		LayoutMode layoutMode = pane.getLayoutMode();
-		ScrollPaneEnums.ScrollBarPolicy vBarPolicy = pane.getVBarPolicy();
+		ScrollBarPolicy vBarPolicy = pane.getVBarPolicy();
 
 		double contentW = (content != null) ? LayoutUtils.boundWidth(content) : 0.0;
 		double prefW = leftInset + contentW + rightInset;
-		if (layoutMode == LayoutMode.DEFAULT && vBarPolicy != ScrollPaneEnums.ScrollBarPolicy.NEVER)
+		if (layoutMode == LayoutMode.DEFAULT && vBarPolicy != ScrollBarPolicy.NEVER)
 			prefW += LayoutUtils.boundWidth(vBar);
 		return prefW;
 	}
@@ -395,11 +395,11 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 		VFXScrollPane pane = getSkinnable();
 		Node content = pane.getContent();
 		LayoutMode layoutMode = pane.getLayoutMode();
-		ScrollPaneEnums.ScrollBarPolicy hBarPolicy = pane.getHBarPolicy();
+		ScrollBarPolicy hBarPolicy = pane.getHBarPolicy();
 
 		double contentH = (content != null) ? LayoutUtils.boundHeight(content) : 0.0;
 		double prefH = topInset + contentH + bottomInset;
-		if (layoutMode == LayoutMode.DEFAULT && hBarPolicy != ScrollPaneEnums.ScrollBarPolicy.NEVER)
+		if (layoutMode == LayoutMode.DEFAULT && hBarPolicy != ScrollBarPolicy.NEVER)
 			prefH += LayoutUtils.boundHeight(hBar);
 		return prefH;
 	}
@@ -410,8 +410,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 		LayoutMode layoutMode = pane.getLayoutMode();
 		HPos vBarPos = pane.getVBarPos().toHPos();
 		VPos hBarPos = pane.getHBarPos().toVPos();
-		ScrollPaneEnums.ScrollBarPolicy vBarPolicy = pane.getVBarPolicy();
-		ScrollPaneEnums.ScrollBarPolicy hBarPolicy = pane.getHBarPolicy();
+		ScrollBarPolicy vBarPolicy = pane.getVBarPolicy();
+		ScrollBarPolicy hBarPolicy = pane.getHBarPolicy();
 
 		double vBarOffset = pane.getVBarOffset();
 		Insets vBarPadding = pane.getVBarPadding();
@@ -435,20 +435,20 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 		double hBarY = (hBarPos == VPos.TOP) ? hBarPadding.getTop() : totalHeight - hBarH - hBarPadding.getBottom();
 
 		if (layoutMode != LayoutMode.COMPACT ||
-			hBarPolicy != ScrollPaneEnums.ScrollBarPolicy.NEVER &&
+			hBarPolicy != ScrollBarPolicy.NEVER &&
 				!hBar.isVisible())
 			vBarH -= hBarH;
 
 		if (layoutMode != LayoutMode.COMPACT ||
-			vBarPolicy != ScrollPaneEnums.ScrollBarPolicy.NEVER &&
+			vBarPolicy != ScrollBarPolicy.NEVER &&
 				!vBar.isVisible())
 			hBarW -= vBarW;
 
 		vBar.resizeRelocate(vBarX, vBarY, vBarW, vBarH);
 		hBar.resizeRelocate(hBarX, hBarY, hBarW, hBarH);
 
-		double viewW = (layoutMode == LayoutMode.DEFAULT && vBarPolicy != ScrollPaneEnums.ScrollBarPolicy.NEVER) ? w - vBarW : w;
-		double viewH = (layoutMode == LayoutMode.DEFAULT && hBarPolicy != ScrollPaneEnums.ScrollBarPolicy.NEVER) ? h - hBarH : h;
+		double viewW = (layoutMode == LayoutMode.DEFAULT && vBarPolicy != ScrollBarPolicy.NEVER) ? w - vBarW : w;
+		double viewH = (layoutMode == LayoutMode.DEFAULT && hBarPolicy != ScrollBarPolicy.NEVER) ? h - hBarH : h;
 		viewport.resizeRelocate(snappedLeftInset(), snappedTopInset(), viewW, viewH);
 	}
 

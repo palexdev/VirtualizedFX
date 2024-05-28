@@ -11,8 +11,10 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.HorizontalHelper;
@@ -95,7 +97,7 @@ import java.util.function.Supplier;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, C>> implements VFXContainer<T>, VFXStyleable {
+public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, C>> implements VFXContainer<T>, VFXStyleable, VFXScrollable {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -248,7 +250,11 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
 		return () -> new VFXListManager<>(this);
 	}
 
-	//================================================================================
+	@Override
+	public VFXScrollPane makeScrollable() {
+		return new VFXScrollPane(this).bindTo(this);
+	}
+//================================================================================
 	// Delegate Methods
 	//================================================================================
 

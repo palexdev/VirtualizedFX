@@ -85,7 +85,8 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
 	/**
 	 * Creates the following bindings:
 	 * <p> - binds the {@link VFXScrollBar#visibleProperty()} to make the component visible only if the visible amount
-	 * is greater than 0 and lesser than 1.0. The visible amount is given by {@link VFXScrollBar#getVisibleAmount()}.
+	 * is greater than 0 and lesser than 1.0. The visible amount is given by {@link VFXScrollBar#getVisibleAmount()}
+	 * (only if it is not already bound!!).
 	 * <p></p>
 	 * <p>
 	 * Adds the following listeners:
@@ -109,14 +110,18 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
 			.addSources(bar.valueProperty(), bar.buttonsGapProperty())
 			.addSources(thumb.widthProperty(), thumb.heightProperty())
 			.get();
-		bar.visibleProperty().bind(BooleanBindingBuilder.build()
-			.setMapper(() -> {
-				double visibleAmount = bar.getVisibleAmount();
-				return visibleAmount > 0 && visibleAmount < 1.0;
-			})
-			.addSources(bar.scrollBoundsProperty(), bar.orientationProperty())
-			.get()
-		);
+		// Bind visibility only if it's not already bound
+		// Quick workaround for visibility bound overwrite in VFXScrollPaneSkin
+		if (!bar.visibleProperty().isBound()) {
+			bar.visibleProperty().bind(BooleanBindingBuilder.build()
+				.setMapper(() -> {
+					double visibleAmount = bar.getVisibleAmount();
+					return visibleAmount > 0 && visibleAmount < 1.0;
+				})
+				.addSources(bar.scrollBoundsProperty(), bar.orientationProperty())
+				.get()
+			);
+		}
 
 		// Listeners
 		listeners(

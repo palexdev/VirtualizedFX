@@ -1,15 +1,17 @@
 package app;
 
-import interactive.table.TableTestUtils;
+import cells.TestCell;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.virtualizedfx.VFXResources;
+import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
-import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
+import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedList;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import model.User;
 
 import static model.User.users;
 import static utils.Utils.debugView;
@@ -21,19 +23,17 @@ public class Playground extends Application {
 		StackPane pane = new StackPane();
 		pane.setAlignment(Pos.CENTER);
 
-		TableTestUtils.Table container = new TableTestUtils.Table(users(100));
-		container.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
-		container.autosizeColumns();
-		container.setMinWidth(400);
+		VFXPaginatedList<User, TestCell<User>> container = new VFXPaginatedList<>(users(120), TestCell::new);
+		container.setCellsPerPage(15);
+		container.setFitToViewport(false);
 
-		VFXScrollPane sp = new VFXScrollPane(container).bindTo(container);
+		VFXScrollPane sp = container.makeScrollable();
 		sp.setSmoothScroll(true);
 		sp.setDragToScroll(true);
 		//sp.setDragSmoothScroll(true);
 		//sp.setShowButtons(true);
 		sp.getStylesheets().add(VFXResources.loadResource("VFXScrollPane.css"));
-		//sp.setVMin(0.25 * container.getMaxVScroll());
-		//sp.setVMax(0.75 * container.getMaxVScroll());
+		VFXScrollable.setSpeed(sp, container, true);
 		CSSFragment.Builder.build()
 			.addSelector(".vfx-scroll-pane")
 			.padding("5px")

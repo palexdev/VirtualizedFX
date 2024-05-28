@@ -8,6 +8,8 @@ import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXPaginated;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
+import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
@@ -211,6 +213,24 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
 	@Override
 	public void scrollToLast() {
 		setPage(getMaxPage());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p></p>
+	 * Note that a paginated component cannot scroll on the virtualized axis. The list uses both the x or y axis
+	 * for virtualization depending on the {@link #orientationProperty()}, which means you will be able to scroll only
+	 * in the opposite direction (e.g. VERTICAL -> horizontal scroll).
+	 */
+	@Override
+	public VFXScrollPane makeScrollable() {
+		// The policy is enough to hide the bar for which scroll is disabled by the pagination feature
+		// And this should also be enough in theory to prevent JavaFX exceptions due to bidirectionally binding the
+		// scroll positions (call to bindTo(this))
+		VFXScrollPane pane = new VFXScrollPane(this).bindTo(this);
+		pane.vBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.VERTICAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
+		pane.hBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.HORIZONTAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
+		return pane;
 	}
 
 	//================================================================================
