@@ -9,6 +9,7 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectPrope
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
@@ -94,12 +95,40 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 	// ScrollBars Properties & Config
 	//================================================================================
 	private final DoubleProperty hMin = new SimpleDoubleProperty(0.0);
-	private final DoubleProperty hVal = new SimpleDoubleProperty(0.0);
-	private final DoubleProperty hMax = new SimpleDoubleProperty(Double.MAX_VALUE);
+	private final DoubleProperty hVal = new SimpleDoubleProperty(0.0) {
+		@Override
+		public void set(double newValue) {
+			super.set(NumberUtils.clamp(
+				newValue,
+				Math.max(0.0, getHMin()),
+				Math.min(getMaxScroll(Orientation.HORIZONTAL), getHMax())
+			));
+		}
+	};
+	private final DoubleProperty hMax = new SimpleDoubleProperty(Double.MAX_VALUE) {
+		@Override
+		protected void invalidated() {
+			invalidateValue(Orientation.HORIZONTAL);
+		}
+	};
 
 	private final DoubleProperty vMin = new SimpleDoubleProperty(0.0);
-	private final DoubleProperty vVal = new SimpleDoubleProperty(0.0);
-	private final DoubleProperty vMax = new SimpleDoubleProperty(Double.MAX_VALUE);
+	private final DoubleProperty vVal = new SimpleDoubleProperty(0.0) {
+		@Override
+		public void set(double newValue) {
+			super.set(NumberUtils.clamp(
+				newValue,
+				Math.max(0.0, getVMin()),
+				Math.min(getMaxScroll(Orientation.VERTICAL), getVMax())
+			));
+		}
+	};
+	private final DoubleProperty vMax = new SimpleDoubleProperty(Double.MAX_VALUE) {
+		@Override
+		protected void invalidated() {
+			invalidateValue(Orientation.VERTICAL);
+		}
+	};
 
 	private final ObjectProperty<Orientation> orientation = new SimpleObjectProperty<>(Orientation.VERTICAL);
 	private final FunctionProperty<VFXScrollBar, VFXScrollBarBehavior> hBarBehavior = PropUtils.function(VFXScrollBarBehavior::new);
@@ -173,6 +202,41 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 			.get()
 		);
 	}
+
+	/**
+	 * Shortcut for {@code setValue(getValue())}. This will cause the {@link #hValProperty()} or the {@link #vValProperty()}
+	 * (depending on the given orientation) to be withing the bounds specified by the respective min and max properties.
+	 */
+	protected void invalidateValue(Orientation o) {
+		if (o == Orientation.VERTICAL) {
+			setVVal(getVVal());
+		} else {
+			setHVal(getHVal());
+		}
+	}
+
+	//================================================================================
+	// Delegate Methods
+	//================================================================================
+
+	/**
+	 * Delegate for {@link ScrollBounds#visibleAmount(Orientation)}
+	 *
+	 * @see ScrollBounds
+	 */
+	public double getVisibleAmount(Orientation o) {
+		return getContentBounds().visibleAmount(o);
+	}
+
+	/**
+	 * Delegate for {@link ScrollBounds#maxScroll(Orientation)}
+	 *
+	 * @see ScrollBounds
+	 */
+	public double getMaxScroll(Orientation o) {
+		return getContentBounds().maxScroll(o);
+	}
+
 
 	//================================================================================
 	// Overridden Methods
@@ -968,6 +1032,34 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 		this.hVal.set(hVal);
 	}
 
+	/**
+	 * Increments the {@link #hValProperty()} by the amount specified by the {@link #hUnitIncrementProperty()}.
+	 */
+	public void huIncrement() {
+		setHVal(getHVal() + getHUnitIncrement());
+	}
+
+	/**
+	 * Decrements the {@link #hValProperty()} by the amount specified by the {@link #hUnitIncrementProperty()}.
+	 */
+	public void huDecrement() {
+		setHVal(getHVal() - getHUnitIncrement());
+	}
+
+	/**
+	 * Increments the {@link #hValProperty()} by the amount specified by the {@link #hTrackIncrementProperty()}.
+	 */
+	public void htIncrement() {
+		setHVal(getHVal() + getHTrackIncrement());
+	}
+
+	/**
+	 * Decrements the {@link #hValProperty()} by the amount specified by the {@link #hTrackIncrementProperty()}.
+	 */
+	public void htDecrement() {
+		setHVal(getHVal() - getHTrackIncrement());
+	}
+
 	public double getHMax() {
 		return hMax.get();
 	}
@@ -1011,6 +1103,34 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 
 	public void setVVal(double vVal) {
 		this.vVal.set(vVal);
+	}
+
+	/**
+	 * Increments the {@link #vValProperty()} by the amount specified by the {@link #vUnitIncrementProperty()}.
+	 */
+	public void vuIncrement() {
+		setVVal(getVVal() + getVUnitIncrement());
+	}
+
+	/**
+	 * Decrements the {@link #vValProperty()} by the amount specified by the {@link #vUnitIncrementProperty()}.
+	 */
+	public void vuDecrement() {
+		setVVal(getVVal() - getVUnitIncrement());
+	}
+
+	/**
+	 * Increments the {@link #vValProperty()} by the amount specified by the {@link #vTrackIncrementProperty()}.
+	 */
+	public void vtIncrement() {
+		setVVal(getVVal() + getVTrackIncrement());
+	}
+
+	/**
+	 * Decrements the {@link #vValProperty()} by the amount specified by the {@link #vTrackIncrementProperty()}.
+	 */
+	public void vtDecrement() {
+		setHVal(getVVal() - getVTrackIncrement());
 	}
 
 	public double getVMax() {

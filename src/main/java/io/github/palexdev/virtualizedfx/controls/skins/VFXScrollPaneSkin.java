@@ -21,6 +21,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
@@ -362,7 +363,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 					case HORIZONTAL -> c.isShiftDown() ? vBar : hBar;
 				};
 				if (target.isVisible()) target.getBehavior().scroll(c);
-			}))
+			})),
+			intercept(pane, KeyEvent.KEY_PRESSED).process(behavior::keyPressed)
 		);
 	}
 

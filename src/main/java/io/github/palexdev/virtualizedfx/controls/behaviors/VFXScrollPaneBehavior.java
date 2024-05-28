@@ -12,8 +12,12 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import io.github.palexdev.virtualizedfx.utils.ScrollBounds;
 import javafx.animation.Interpolator;
 import javafx.geometry.Orientation;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
+
+import static javafx.scene.input.KeyCode.*;
 
 /**
  * Extension of {@link BehaviorBase} and default behavior implementation for {@link VFXScrollPane}.
@@ -149,6 +153,40 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
 				mt.play();
 				dragStart.setY(me.getY());
 			}
+		}
+	}
+
+	/**
+	 * Action performed when {@link KeyEvent#KEY_PRESSED} events occurs.
+	 */
+	@Override
+	public void keyPressed(KeyEvent e) {
+		VFXScrollPane pane = getNode();
+		Orientation o = pane.getOrientation();
+		boolean canHScroll = isScrollBarVisible(Orientation.HORIZONTAL);
+		boolean canVScroll = isScrollBarVisible(Orientation.VERTICAL);
+		switch (e.getCode()) {
+			case HOME -> {
+				if (o == Orientation.VERTICAL && canVScroll) pane.setVVal(0);
+				if (o == Orientation.HORIZONTAL && canHScroll) pane.setHVal(0);
+			}
+			case END -> {
+				if (o == Orientation.VERTICAL && canVScroll) pane.setVVal(Double.MAX_VALUE);
+				if (o == Orientation.HORIZONTAL && canHScroll) pane.setHVal(Double.MAX_VALUE);
+			}
+			case PAGE_UP -> {
+				if (o == Orientation.VERTICAL && canVScroll) pane.vtDecrement();
+				if (o == Orientation.HORIZONTAL && canHScroll) pane.htDecrement();
+			}
+			case PAGE_DOWN -> {
+				if (o == Orientation.VERTICAL && canVScroll) pane.vtIncrement();
+				if (o == Orientation.HORIZONTAL && canHScroll) pane.htIncrement();
+			}
+			case KeyCode c when c == UP && canVScroll -> pane.vuDecrement();
+			case KeyCode c when c == DOWN && canVScroll -> pane.vuIncrement();
+			case KeyCode c when c == LEFT && canHScroll -> pane.huDecrement();
+			case KeyCode c when c == RIGHT && canHScroll -> pane.huIncrement();
+			default -> {}
 		}
 	}
 }
