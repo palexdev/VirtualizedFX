@@ -12,7 +12,11 @@ module VirtualizedFX {
 	// Cells
 	exports io.github.palexdev.virtualizedfx.cells;
 	exports io.github.palexdev.virtualizedfx.cells.base;
-	exports io.github.palexdev.virtualizedfx.cells;
+
+	// Controls
+	exports io.github.palexdev.virtualizedfx.controls;
+	exports io.github.palexdev.virtualizedfx.controls.behaviors;
+	exports io.github.palexdev.virtualizedfx.controls.skins;
 
 	// Enums
 	exports io.github.palexdev.virtualizedfx.enums;
