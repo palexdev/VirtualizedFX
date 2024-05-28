@@ -365,6 +365,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 					double y = -(pixelsToFirst + visibleAmountFirst);
 					return Position.of(x, y);
 				})
+				.addSources(list.layoutBoundsProperty())
 				.addSources(list.hPosProperty(), list.vPosProperty())
 				.addSources(list.cellSizeProperty(), list.spacingProperty())
 				.get()
@@ -539,6 +540,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 					double y = -(pixelsToFirst + visibleAmountFirst);
 					return Position.of(x, y);
 				})
+				.addSources(list.layoutBoundsProperty())
 				.addSources(list.hPosProperty(), list.vPosProperty())
 				.addSources(list.cellSizeProperty(), list.spacingProperty())
 				.get()

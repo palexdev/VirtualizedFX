@@ -433,6 +433,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 					return Position.of(x, y);
 
 				})
+				.addSources(grid.layoutBoundsProperty())
 				.addSources(grid.vPosProperty(), grid.hPosProperty())
 				.addSources(grid.cellSizeProperty())
 				.addSources(grid.hSpacingProperty(), grid.vSpacingProperty())

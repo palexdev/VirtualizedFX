@@ -631,6 +631,7 @@ public interface VFXTableHelper<T> {
 					}
 					return Position.of(x, y);
 				})
+				.addSources(table.layoutBoundsProperty())
 				.addSources(table.vPosProperty(), table.hPosProperty())
 				.addSources(table.rowsHeightProperty(), table.columnsSizeProperty())
 				.get()
@@ -1083,6 +1084,7 @@ public interface VFXTableHelper<T> {
 					}
 					return Position.of(x, y);
 				})
+				.addSources(table.layoutBoundsProperty())
 				.addSources(table.vPosProperty(), table.hPosProperty())
 				.addSources(table.rowsHeightProperty(), table.columnsSizeProperty())
 				.get()
