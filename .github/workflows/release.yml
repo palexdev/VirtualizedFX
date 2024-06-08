@@ -2,9 +2,9 @@ name: 'Release'
 
 on:
   push:
-    branches: [ rewrite ]
+    branches: [ main ]
   pull_request:
-    branches: [ rewrite ]
+    branches: [ main ]
 
 env:
   ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
@@ -62,7 +62,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build -x test -x processCSS
+        run: ./gradlew build -x test
 
       - name: Release
         run: ./gradlew publish releaseRepository

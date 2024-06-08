@@ -1,10 +1,10 @@
-name: Build rewrite
+name: 'Build'
 
 on:
   push:
-    branches: [ rewrite ]
+    branches: [ main ]
   pull_request:
-    branches: [ rewrite ]
+    branches: [ main ]
 
 env:
   ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
