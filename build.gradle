@@ -10,7 +10,6 @@ group 'io.github.palexdev'
 version "$vfx"
 
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
@@ -27,7 +26,9 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation "org.testfx:testfx-core:$testfx"
     testImplementation "org.testfx:testfx-junit5:$testfx"
-    testImplementation "io.github.palexdev:scenicview:$scenicView"
+    testImplementation("io.github.palexdev:scenicview:$scenicView") {
+        exclude(group: "org.openjfx")
+    }
     testImplementation "net.datafaker:datafaker:$dataFaker"
     testImplementation "com.google.code.gson:gson:$gson"
 }
