@@ -18,12 +18,12 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.enums.GeometryChangeType;
-import io.github.palexdev.virtualizedfx.utils.ExcludingRange;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
@@ -265,7 +265,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * If the row is found, we update it by index and add it to the new state. Note that the index is also excluded from the range.
 	 * <p>
 	 * Now that 'common' rows have been properly updated, the remaining items are processed by the
-	 * {@link #remainingAlgorithm(ExcludingRange, VFXTableState)}.
+	 * {@link #remainingAlgorithm(ExcludingIntegerRange, VFXTableState)}.
 	 * <p></p>
 	 * <p> 1) This is one of those methods that to produce a valid new state needs to validate the table's positions,
 	 * so it calls {@link VFXTableHelper#invalidatePos()}
@@ -287,7 +287,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		// Compute rows ranges and new state
 		VFXTableState<T> current = table.getState();
 		IntegerRange rowsRange = helper.rowsRange();
-		ExcludingRange eRange = ExcludingRange.of(rowsRange);
+		ExcludingIntegerRange eRange = ExcludingIntegerRange.of(rowsRange);
 		VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, current.getColumnsRange());
 
 		// First update by index
@@ -604,7 +604,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * it's enough to move the rows from the current state to the new state. For indexes which are not found
 	 * in the current state, a new row is either taken from the old state, taken from cache or created by the row factory.
 	 * <p>
-	 * (The last operations are delegated to the {@link #remainingAlgorithm(ExcludingRange, VFXTableState)}).
+	 * (The last operations are delegated to the {@link #remainingAlgorithm(ExcludingIntegerRange, VFXTableState)}).
 	 * <p>
 	 * Note that the columns range parameter is only needed to ensure each row is displaying the correct cells by invoking
 	 * {@link VFXTableRow#updateColumns(IntegerRange, boolean)}. We don't know when this is needed and when not, we simply
@@ -617,7 +617,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		if (Utils.INVALID_RANGE.equals(rowsRange)) return;
 		VFXTable<T> table = getNode();
 		VFXTableState<T> current = table.getState();
-		ExcludingRange eRange = ExcludingRange.of(rowsRange);
+		ExcludingIntegerRange eRange = ExcludingIntegerRange.of(rowsRange);
 		if (!current.isEmpty()) {
 			for (Integer idx : rowsRange) {
 				VFXTableRow<T> row = current.removeRow(idx);
@@ -646,10 +646,10 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * <p> - See {@link Utils#intersection}: used to find the intersection between two ranges
 	 * <p> - See {@link #rangeCheck(IntegerRange, boolean, boolean)}: used to validate the intersection range, both parameters
 	 * are false!
-	 * <p> - See {@link #remainingAlgorithm(ExcludingRange, VFXTableState)}: the second part of the algorithm is delegated to this
+	 * <p> - See {@link #remainingAlgorithm(ExcludingIntegerRange, VFXTableState)}: the second part of the algorithm is delegated to this
 	 * method
 	 *
-	 * @see ExcludingRange
+	 * @see ExcludingIntegerRange
 	 */
 	protected VFXTableState<T> intersectionAlgorithm() {
 		VFXTable<T> table = getNode();
@@ -657,7 +657,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 
 		// New range
 		IntegerRange rowsRange = helper.rowsRange();
-		ExcludingRange eRange = ExcludingRange.of(rowsRange);
+		ExcludingIntegerRange eRange = ExcludingIntegerRange.of(rowsRange);
 
 		// Current and new states, intersection between current and new range
 		VFXTableState<T> current = table.getState();
@@ -695,7 +695,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * After a row is retrieved from any of the three sources, this calls {@link VFXTableRow#updateColumns(IntegerRange, boolean)}
 	 * to ensure it is displaying the correct cells.
 	 */
-	protected void remainingAlgorithm(ExcludingRange eRange, VFXTableState<T> newState) {
+	protected void remainingAlgorithm(ExcludingIntegerRange eRange, VFXTableState<T> newState) {
 		VFXTable<T> table = getNode();
 		VFXTableHelper<T> helper = table.getHelper();
 		VFXTableState<T> current = table.getState();
