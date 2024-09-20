@@ -338,6 +338,9 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the list's positions by invoking
 	 * {@link VFXListHelper#invalidatePos()}.
+	 * <p></p>
+	 * Note that this will request the layout computation, {@link VFXList#requestViewportLayout()}, even if the cells
+	 * didn't change for obvious reasons.
 	 */
 	protected void onCellSizeChanged() {
 		invalidatingPos = true;
@@ -354,6 +357,7 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
 
 		if (disposeCurrent()) newState.setCellsChanged(true);
 		list.update(newState);
+		if (!newState.haveCellsChanged()) list.requestViewportLayout();
 		invalidatingPos = false;
 	}
 

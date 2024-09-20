@@ -472,7 +472,8 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 	 * is delegated to the {@link #intersectionAlgorithm()}.
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the table's positions by invoking
-	 * {@link VFXTableHelper#invalidatePos()}.
+	 * {@link VFXTableHelper#invalidatePos()}. Also, it will request the layout computation,
+	 * {@link VFXTable#requestViewportLayout()}, even if the cells didn't change for obvious reasons.
 	 */
 	protected void onRowHeightChanged() {
 		invalidatingPos = true;
@@ -489,6 +490,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 
 		if (disposeCurrent()) newState.setRowsChanged(true);
 		table.update(newState);
+		if (!newState.haveRowsChanged()) table.requestViewportLayout();
 		invalidatingPos = false;
 	}
 

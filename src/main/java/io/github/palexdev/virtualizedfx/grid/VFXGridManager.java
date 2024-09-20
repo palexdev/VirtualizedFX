@@ -22,8 +22,6 @@ import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-import io.github.palexdev.virtualizedfx.list.VFXList;
-import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
@@ -256,6 +254,9 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the grid's positions by invoking
 	 * {@link VFXGridHelper#invalidatePos()}.
+	 * <p></p>
+	 * Note that this will request the layout computation, {@link VFXGrid#requestViewportLayout()}, even if the cells
+	 * didn't change for obvious reasons.
 	 */
 	protected void onCellSizeChanged() {
 		invalidatingPos = true;
@@ -275,7 +276,8 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
 		moveReuseCreateAlgorithm(rowsRange, columnsRange, newState);
 		if (disposeCurrent()) newState.setCellsChanged(true);
 		grid.update(newState);
-		invalidatingPos = true;
+		if (!newState.haveCellsChanged()) grid.requestViewportLayout();
+		invalidatingPos = false;
 	}
 
 	/**
@@ -286,8 +288,8 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
 	 * the computation for the new state is delegated to the {@link #moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXGridState)}.
 	 * <p></p>
 	 * Note that to compute a valid new state, it is important to also validate the grid's positions by invoking
-	 * {@link VFXListHelper#invalidatePos()}. Also, this will request the layout computation,
-	 * {@link VFXList#requestViewportLayout()}, even if the cells didn't change for obvious reasons.
+	 * {@link VFXGridHelper#invalidatePos()}. Also, this will request the layout computation,
+	 * {@link VFXGrid#requestViewportLayout()}, even if the cells didn't change for obvious reasons.
 	 */
 	protected void onSpacingChanged() {
 		invalidatingPos = true;
