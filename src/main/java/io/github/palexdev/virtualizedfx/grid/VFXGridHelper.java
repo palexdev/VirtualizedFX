@@ -408,14 +408,12 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 
 			virtualMaxX.bind(DoubleBindingBuilder.build()
 				.setMapper(() -> (maxColumns() * getTotalCellSize().getWidth()) - grid.getHSpacing())
-				.addSources(grid.sizeProperty(), grid.columnsNumProperty(), grid.cellSizeProperty())
-				.addSources(grid.hSpacingProperty())
+				.addSources(grid.sizeProperty(), grid.columnsNumProperty(), totalCellSize)
 				.get()
 			);
 			virtualMaxY.bind(DoubleBindingBuilder.build()
 				.setMapper(() -> (maxRows() * getTotalCellSize().getHeight()) - grid.getVSpacing())
-				.addSources(grid.sizeProperty(), grid.columnsNumProperty(), grid.cellSizeProperty())
-				.addSources(grid.vSpacingProperty())
+				.addSources(grid.sizeProperty(), grid.columnsNumProperty(), totalCellSize)
 				.get()
 			);
 
