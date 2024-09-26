@@ -34,102 +34,154 @@ import javafx.geometry.Orientation;
  * specifically for {@link VFXContainer}.
  */
 public interface VFXScrollable {
-	/**
-	 * This multiplier is applied to the unit increment of a {@link VFXScrollPane} to determine the track increment.
-	 * <p>
-	 * So, if I have a unit increment of 30px, pressing on the track would result in a (30px * mul)px scroll.
-	 */
-	double TRACK_MULTIPLIER = 5.0;
+    /**
+     * This multiplier is applied to the unit increment of a {@link VFXScrollPane} to determine the track increment.
+     * <p>
+     * So, if I have a unit increment of 30px, pressing on the track would result in a (30px * mul)px scroll.
+     */
+    double TRACK_MULTIPLIER = 5.0;
 
-	/**
-	 * Wraps this in a {@link VFXScrollPane} to enable scrolling.
-	 */
-	VFXScrollPane makeScrollable();
+    /**
+     * Wraps this in a {@link VFXScrollPane} to enable scrolling.
+     */
+    VFXScrollPane makeScrollable();
 
-	/**
-	 * Sets the unit increment and track increment for both scroll bars of the given {@link VFXScrollPane}, optionally
-	 * binds the properties if the {@code bind} parameter is {@code true}.
-	 * <p>
-	 * The unit increment is set to sizes specified by {@link VFXGrid#cellSizeProperty()} (width/height according to the scroll bar orientation).
-	 * <p>
-	 * The track increment is set to be the unit increment multiplied by {@link #TRACK_MULTIPLIER} (you can change it since
-	 * it's a public variable).
-	 */
-	static void setSpeed(VFXScrollPane vsp, VFXGrid<?, ?> grid, boolean bind) {
-		if (bind) {
-			vsp.hUnitIncrementProperty().bind(grid.cellSizeProperty().map(Size::getWidth));
-			vsp.hTrackIncrementProperty().bind(vsp.hUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
-			vsp.vUnitIncrementProperty().bind(grid.cellSizeProperty().map(Size::getHeight));
-			vsp.vTrackIncrementProperty().bind(vsp.vUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
-			return;
-		}
-		vsp.setHUnitIncrement(grid.getCellSize().getWidth());
-		vsp.setHTrackIncrement(grid.getCellSize().getWidth() * 1.5);
-		vsp.setVUnitIncrement(grid.getCellSize().getHeight());
-		vsp.setVTrackIncrement(grid.getCellSize().getHeight() * 1.5);
-	}
+    /**
+     * Sets the unit and track increments for both the scroll bars of the given {@link VFXScrollPane}, optionally binds
+     * the relative properties if the {@code bind} parameter is {@code true}.
+     * <pre> Formulas:
+     * {@code
+     * - vUnitIncrement  -> cellWidth * multiplier
+     * - vTrackIncrement -> vUnitIncrement * TRACK_MULTIPLIER
+     * - hUnitIncrement  -> cellHeight * multiplier
+     * - hTrackIncrement -> hUnitIncrement * TRACK_MULTIPLIER
+     * }
+     * </pre>
+     *
+     * @see VFXGrid#cellSizeProperty()
+     * @see #TRACK_MULTIPLIER
+     */
+    static void setSpeed(VFXScrollPane vsp, VFXGrid<?, ?> grid, double multiplier, boolean bind) {
+        if (bind) {
+            vsp.hUnitIncrementProperty().bind(grid.cellSizeProperty().map(s -> s.getWidth() * multiplier));
+            vsp.hTrackIncrementProperty().bind(vsp.hUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
+            vsp.vUnitIncrementProperty().bind(grid.cellSizeProperty().map(s -> s.getHeight() * multiplier));
+            vsp.vTrackIncrementProperty().bind(vsp.vUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
+            return;
+        }
+        vsp.setHUnitIncrement(grid.getCellSize().getWidth() * multiplier);
+        vsp.setHTrackIncrement(vsp.getHUnitIncrement() * TRACK_MULTIPLIER);
+        vsp.setVUnitIncrement(grid.getCellSize().getHeight() * multiplier);
+        vsp.setVTrackIncrement(vsp.getVUnitIncrement() * TRACK_MULTIPLIER);
+    }
 
-	/**
-	 * Sets the unit increment and track increment for both scroll bars of the given {@link VFXScrollPane}, optionally
-	 * binds the properties if the {@code bind} parameter is {@code true}.
-	 * <p>
-	 * The unit increment is set to according to the {@link VFXList#orientationProperty()} and is the value specified by
-	 * {@link VFXList#cellSizeProperty()}. The increment for the opposite orientation is set to a default of 30px.
-	 * <p>
-	 * The track increment is set to be the unit increment multiplied by {@link #TRACK_MULTIPLIER} (you can change it since
-	 * it's a public variable).
-	 */
-	static void setSpeed(VFXScrollPane vsp, VFXList<?, ?> list, boolean bind) {
-		if (bind) {
-			vsp.hUnitIncrementProperty().bind(DoubleBindingBuilder.build()
-				.setMapper(() -> (list.getOrientation() == Orientation.HORIZONTAL) ? list.getCellSize() : 30.0)
-				.addSources(list.orientationProperty(), list.cellSizeProperty())
-				.get()
-			);
-			vsp.hTrackIncrementProperty().bind(vsp.hUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
-			vsp.vUnitIncrementProperty().bind(DoubleBindingBuilder.build()
-				.setMapper(() -> (list.getOrientation() == Orientation.VERTICAL) ? list.getCellSize() : 30.0)
-				.addSources(list.orientationProperty(), list.cellSizeProperty())
-				.get()
-			);
-			vsp.vTrackIncrementProperty().bind(vsp.vUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
-			return;
-		}
-		Orientation o = list.getOrientation();
-		if (o == Orientation.VERTICAL) {
-			vsp.setVUnitIncrement(list.getCellSize());
-			vsp.setVTrackIncrement(list.getCellSize() * TRACK_MULTIPLIER);
-			vsp.setHUnitIncrement(30.0);
-			vsp.setHTrackIncrement(45.0);
-		} else {
-			vsp.setHUnitIncrement(list.getCellSize());
-			vsp.setHTrackIncrement(list.getCellSize() * TRACK_MULTIPLIER);
-			vsp.setVUnitIncrement(30.0);
-			vsp.setVTrackIncrement(45.0);
-		}
-	}
+    /**
+     * Same as {@link #setSpeed(VFXScrollPane, VFXGrid, double, boolean)} with the {@code multiplier} parameter set to
+     * {@code 1.0}.
+     */
+    static void setSpeed(VFXScrollPane vsp, VFXGrid<?, ?> grid, boolean bind) {
+        setSpeed(vsp, grid, 1.0, bind);
+    }
 
-	/**
-	 * Sets the unit increment and track increment for both scroll bars of the given {@link VFXScrollPane}, optionally
-	 * binds the properties if the {@code bind} parameter is {@code true}.
-	 * <p>
-	 * The horizontal unit increment is set to half the width specified by {@link VFXTable#columnsSizeProperty()}, while
-	 * the track increment is the whole size.
-	 * <p>
-	 * The vertical unit increment is set to {@link VFXTable#rowsHeightProperty()}, while the track increment is the same
-	 * value multiplied by {@link #TRACK_MULTIPLIER}.
-	 */
-	static void setSpeed(VFXScrollPane vsp, VFXTable<?> table, boolean bind) {
-		if (bind) {
-			vsp.hUnitIncrementProperty().bind(table.columnsSizeProperty().map(s -> s.getWidth() * 0.5));
-			vsp.hTrackIncrementProperty().bind(table.columnsSizeProperty().map(Size::getWidth));
-			vsp.vUnitIncrementProperty().bind(table.rowsHeightProperty());
-			vsp.vTrackIncrementProperty().bind(vsp.vUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
-			return;
-		}
-		vsp.setHUnitIncrement(table.getColumnsSize().getWidth() * 0.5);
-		vsp.setHTrackIncrement(table.getColumnsSize().getWidth());
-		vsp.setVUnitIncrement(table.getRowsHeight());
-		vsp.setVTrackIncrement(table.getRowsHeight() * TRACK_MULTIPLIER);
-	}
+    /**
+     * Sets the unit and track increments for both the scroll bars of the given {@link VFXScrollPane}, optionally binds
+     * the relative properties if the {@code bind} parameter is {@code true}.
+     * <pre> Formulas (VERTICAL):
+     * {@code
+     * - hUnitIncrement  -> oppositeSpeed.width
+     * - hTrackIncrement -> hUnitIncrement * TRACK_MULTIPLIER
+     * - vUnitIncrement  -> cellSize * multiplier
+     * - vTrackIncrement -> vUnitIncrement * TRACK_MULTIPLIER
+     * }
+     * </pre>
+     *
+     * <p></p>
+     *
+     * <pre> Formulas (HORIZONTAL):
+     * {@code
+     * - hUnitIncrement  -> cellSize * multiplier
+     * - hTrackIncrement -> hUnitIncrement * TRACK_MULTIPLIER
+     * - vUnitIncrement  -> oppositeSpeed.height
+     * - vTrackIncrement -> vUnitIncrement * TRACK_MULTIPLIER
+     * }
+     * </pre>
+     *
+     * @see VFXList#cellSizeProperty()
+     * @see #TRACK_MULTIPLIER
+     */
+    static void setSpeed(VFXScrollPane vsp, VFXList<?, ?> list, Size oppositeSpeed, double multiplier, boolean bind) {
+        if (bind) {
+            vsp.hUnitIncrementProperty().bind(DoubleBindingBuilder.build()
+                .setMapper(() -> (list.getOrientation() == Orientation.HORIZONTAL) ? list.getCellSize() * multiplier : oppositeSpeed.getWidth())
+                .addSources(list.orientationProperty(), list.cellSizeProperty())
+                .get()
+            );
+            vsp.hTrackIncrementProperty().bind(vsp.hUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
+            vsp.vUnitIncrementProperty().bind(DoubleBindingBuilder.build()
+                .setMapper(() -> (list.getOrientation() == Orientation.VERTICAL) ? list.getCellSize() * multiplier : oppositeSpeed.getHeight())
+                .addSources(list.orientationProperty(), list.cellSizeProperty())
+                .get()
+            );
+            vsp.vTrackIncrementProperty().bind(vsp.vUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
+            return;
+        }
+        Orientation o = list.getOrientation();
+        if (o == Orientation.VERTICAL) {
+            vsp.setVUnitIncrement(list.getCellSize() * multiplier);
+            vsp.setVTrackIncrement(list.getCellSize() * multiplier * TRACK_MULTIPLIER);
+            vsp.setHUnitIncrement(oppositeSpeed.getWidth());
+            vsp.setHTrackIncrement(oppositeSpeed.getWidth() * TRACK_MULTIPLIER);
+        } else {
+            vsp.setHUnitIncrement(list.getCellSize() * multiplier);
+            vsp.setHTrackIncrement(list.getCellSize() * multiplier * TRACK_MULTIPLIER);
+            vsp.setVUnitIncrement(oppositeSpeed.getHeight());
+            vsp.setVTrackIncrement(oppositeSpeed.getHeight() * TRACK_MULTIPLIER);
+        }
+    }
+
+    /**
+     * Same as {@link #setSpeed(VFXScrollPane, VFXList, Size, double, boolean)} with the {@code multiplier} parameter
+     * set to {@code 1.0}.
+     */
+    static void setSpeed(VFXScrollPane vsp, VFXList<?, ?> list, Size oppositeSpeed, boolean bind) {
+        setSpeed(vsp, list, oppositeSpeed, 1.0, bind);
+    }
+
+    /**
+     * Sets the unit and track increments for both scroll bars of the given {@link VFXScrollPane}, optionally
+     * binds the relative properties if the {@code bind} parameter is {@code true}.
+     * <pre> Formulas:
+     * {@code
+     * - hUnitIncrement  -> columnWidth * cMultiplier
+     * - hTrackIncrement -> hUnitIncrement * (0.5 + cMultiplier)
+     * - vUnitIncrement  -> rowsHeight * rMultiplier
+     * - vTrackIncrement -> vUnitIncrement * TRACK_MULTIPLIER
+     * }
+     * </pre>
+     *
+     * @see VFXTable#columnsSizeProperty()
+     * @see VFXTable#rowsHeightProperty()
+     * @see #TRACK_MULTIPLIER
+     */
+    static void setSpeed(VFXScrollPane vsp, VFXTable<?> table, double cMultiplier, double rMultiplier, boolean bind) {
+        if (bind) {
+            vsp.hUnitIncrementProperty().bind(table.columnsSizeProperty().map(s -> s.getWidth() * cMultiplier));
+            vsp.hTrackIncrementProperty().bind(vsp.hUnitIncrementProperty().multiply(0.5 + cMultiplier));
+            vsp.vUnitIncrementProperty().bind(table.rowsHeightProperty().multiply(rMultiplier));
+            vsp.vTrackIncrementProperty().bind(vsp.vUnitIncrementProperty().multiply(TRACK_MULTIPLIER));
+            return;
+        }
+        vsp.setHUnitIncrement(table.getColumnsSize().getWidth() * cMultiplier);
+        vsp.setHTrackIncrement(vsp.getHUnitIncrement() * (0.5 + cMultiplier));
+        vsp.setVUnitIncrement(table.getRowsHeight() * rMultiplier);
+        vsp.setVTrackIncrement(vsp.getVUnitIncrement() * TRACK_MULTIPLIER);
+    }
+
+    /**
+     * Same as {@link #setSpeed(VFXScrollPane, VFXTable, double, double, boolean)} with {@code 1.0} as both the
+     * {@code cMultiplier} and {@code rMultiplier} parameters.
+     */
+    static void setSpeed(VFXScrollPane vsp, VFXTable<?> table, boolean bind) {
+        setSpeed(vsp, table, 1.0, 1.0, bind);
+    }
 }
