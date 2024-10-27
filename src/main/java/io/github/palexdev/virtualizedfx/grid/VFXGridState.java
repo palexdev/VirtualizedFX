@@ -105,221 +105,221 @@ import java.util.*;
  */
 @SuppressWarnings({"rawtypes", "SameParameterValue"})
 public class VFXGridState<T, C extends VFXCell<T>> {
-	//================================================================================
-	// Static Properties
-	//================================================================================
-	/**
-	 * Special instance of {@code VFXGridState} used to indicate that no cells can be present in the viewport at
-	 * a certain time. The reasons can be many, for example, no cell factory, invalid range, {@literal width/height <= 0}, etc...
-	 * <p>
-	 * This and {@link #isEmpty()} are two total different things!!
-	 */
-	public static final VFXGridState INVALID = new VFXGridState() {
-		@Override
-		protected VFXCell<Object> removeCell(int index) {
-			return null;
-		}
+    //================================================================================
+    // Static Properties
+    //================================================================================
+    /**
+     * Special instance of {@code VFXGridState} used to indicate that no cells can be present in the viewport at
+     * a certain time. The reasons can be many, for example, no cell factory, invalid range, {@literal width/height <= 0}, etc...
+     * <p>
+     * This and {@link #isEmpty()} are two total different things!!
+     */
+    public static final VFXGridState INVALID = new VFXGridState() {
+        @Override
+        protected VFXCell<Object> removeCell(int index) {
+            return null;
+        }
 
-		@Override
-		protected VFXCell removeCell(Object item) {return null;}
+        @Override
+        protected VFXCell removeCell(Object item) {return null;}
 
-		@Override
-		protected VFXCell removeCell(int rIndex, int cIndex) {return null;}
+        @Override
+        protected VFXCell removeCell(int rIndex, int cIndex) {return null;}
 
-		@Override
-		protected void dispose() {}
-	};
+        @Override
+        protected void dispose() {}
+    };
 
-	//================================================================================
-	// Properties
-	//================================================================================
-	private final VFXGrid<T, C> grid;
-	private final IntegerRange rowsRange;
-	private final IntegerRange columnsRange;
-	private final int nColumns;
-	private final StateMap<T, C> cells = new StateMap<>();
-	private boolean cellsChanged = false;
+    //================================================================================
+    // Properties
+    //================================================================================
+    private final VFXGrid<T, C> grid;
+    private final IntegerRange rowsRange;
+    private final IntegerRange columnsRange;
+    private final int nColumns;
+    private final StateMap<T, C> cells = new StateMap<>();
+    private boolean cellsChanged = false;
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	private VFXGridState() {
-		this.grid = null;
-		this.rowsRange = Utils.INVALID_RANGE;
-		this.columnsRange = Utils.INVALID_RANGE;
-		this.nColumns = 0;
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    private VFXGridState() {
+        this.grid = null;
+        this.rowsRange = Utils.INVALID_RANGE;
+        this.columnsRange = Utils.INVALID_RANGE;
+        this.nColumns = 0;
+    }
 
-	public VFXGridState(VFXGrid<T, C> grid, IntegerRange rowsRange, IntegerRange columnsRange) {
-		this.grid = grid;
-		this.rowsRange = rowsRange;
-		this.columnsRange = columnsRange;
-		this.nColumns = grid.getHelper().maxColumns();
-	}
+    public VFXGridState(VFXGrid<T, C> grid, IntegerRange rowsRange, IntegerRange columnsRange) {
+        this.grid = grid;
+        this.rowsRange = rowsRange;
+        this.columnsRange = columnsRange;
+        this.nColumns = grid.getHelper().maxColumns();
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
+    //================================================================================
+    // Methods
+    //================================================================================
 
-	/**
-	 * Converts the given row and column indexes to a linear index and delegates to {@link #addCell(int, Object, VFXCell)}.
-	 */
-	protected void addCell(int rIndex, int cIndex, C cell) {
-		int linear = GridUtils.subToInd(nColumns, rIndex, cIndex);
-		addCell(linear, grid.getItems().get(linear), cell);
-	}
+    /**
+     * Converts the given row and column indexes to a linear index and delegates to {@link #addCell(int, Object, VFXCell)}.
+     */
+    protected void addCell(int rIndex, int cIndex, C cell) {
+        int linear = GridUtils.subToInd(nColumns, rIndex, cIndex);
+        addCell(linear, grid.getItems().get(linear), cell);
+    }
 
-	/**
-	 * Delegates to {@link #addCell(int, Object, VFXCell)}.
-	 */
-	protected void addCell(int index, C cell) {
-		addCell(index, grid.getItems().get(index), cell);
-	}
+    /**
+     * Delegates to {@link #addCell(int, Object, VFXCell)}.
+     */
+    protected void addCell(int index, C cell) {
+        addCell(index, grid.getItems().get(index), cell);
+    }
 
-	/**
-	 * Adds the given cell to the {@link StateMap} of this state object.
-	 */
-	protected void addCell(int index, T item, C cell) {
-		cells.put(index, item, cell);
-	}
+    /**
+     * Adds the given cell to the {@link StateMap} of this state object.
+     */
+    protected void addCell(int index, T item, C cell) {
+        cells.put(index, item, cell);
+    }
 
-	/**
-	 * Delegates to {@link #removeCell(int)} by first converting the given row and column indexes to a linear index.
-	 */
-	protected C removeCell(int rIndex, int cIndex) {
-		return removeCell(GridUtils.subToInd(nColumns, rIndex, cIndex));
-	}
+    /**
+     * Delegates to {@link #removeCell(int)} by first converting the given row and column indexes to a linear index.
+     */
+    protected C removeCell(int rIndex, int cIndex) {
+        return removeCell(GridUtils.subToInd(nColumns, rIndex, cIndex));
+    }
 
-	/**
-	 * Removes a cell from the {@link StateMap} for the given linear index. If the cell is not found, the next attempt
-	 * is to remove it by the item at the given linear index in the {@link VFXGrid#itemsProperty()}.
-	 */
-	protected C removeCell(int index) {
-		C c = cells.remove(index);
-		if (c == null) c = removeCell(grid.getItems().get(index));
-		return c;
-	}
+    /**
+     * Removes a cell from the {@link StateMap} for the given linear index. If the cell is not found, the next attempt
+     * is to remove it by the item at the given linear index in the {@link VFXGrid#itemsProperty()}.
+     */
+    protected C removeCell(int index) {
+        C c = cells.remove(index);
+        if (c == null) c = removeCell(grid.getItems().get(index));
+        return c;
+    }
 
-	/**
-	 * Removes a cell from the {@link StateMap} for the given item.
-	 */
-	protected C removeCell(T item) {
-		return cells.remove(item);
-	}
+    /**
+     * Removes a cell from the {@link StateMap} for the given item.
+     */
+    protected C removeCell(T item) {
+        return cells.remove(item);
+    }
 
-	/**
-	 * Disposes this state object by: caching all the cells ({@link VFXCellsCache#cache(Collection)}), and then
-	 * clearing the {@link StateMap} by calling {@link StateMap#clear()}.
-	 *
-	 * @see StateMap
-	 */
-	protected void dispose() {
-		VFXCellsCache<T, C> cache = grid.getCache();
-		cache.cache(getCellsByIndex().values());
-		cells.clear();
-	}
+    /**
+     * Disposes this state object by: caching all the cells ({@link VFXCellsCache#cache(Collection)}), and then
+     * clearing the {@link StateMap} by calling {@link StateMap#clear()}.
+     *
+     * @see StateMap
+     */
+    protected void dispose() {
+        VFXCellsCache<T, C> cache = grid.getCache();
+        cache.cache(getCellsByIndex().values());
+        cells.clear();
+    }
 
-	//================================================================================
-	// Getters/Setters
-	//================================================================================
+    //================================================================================
+    // Getters/Setters
+    //================================================================================
 
-	/**
-	 * @return the {@link VFXGrid} instance this state is associated to
-	 */
-	public VFXGrid<T, C> getGrid() {
-		return grid;
-	}
+    /**
+     * @return the {@link VFXGrid} instance this state is associated to
+     */
+    public VFXGrid<T, C> getGrid() {
+        return grid;
+    }
 
-	/**
-	 * @return the range of rows to display
-	 */
-	public IntegerRange getRowsRange() {
-		return rowsRange;
-	}
+    /**
+     * @return the range of rows to display
+     */
+    public IntegerRange getRowsRange() {
+        return rowsRange;
+    }
 
-	/**
-	 * @return the range of columns to display
-	 */
-	public IntegerRange getColumnsRange() {
-		return columnsRange;
-	}
+    /**
+     * @return the range of columns to display
+     */
+    public IntegerRange getColumnsRange() {
+        return columnsRange;
+    }
 
-	/**
-	 * @return the map containing the cells
-	 * @see StateMap
-	 */
-	protected StateMap<T, C> getCells() {
-		return cells;
-	}
+    /**
+     * @return the map containing the cells
+     * @see StateMap
+     */
+    protected StateMap<T, C> getCells() {
+        return cells;
+    }
 
-	/**
-	 * @return the map containing the cells by their index
-	 */
-	protected SequencedMap<Integer, C> getCellsByIndex() {
-		return cells.getByIndex();
-	}
+    /**
+     * @return the map containing the cells by their index
+     */
+    protected SequencedMap<Integer, C> getCellsByIndex() {
+        return cells.getByIndex();
+    }
 
-	/**
-	 * @return the list containing the cells by their item, as entries because of possible duplicates
-	 * @see StateMap#resolve()
-	 */
-	protected List<Map.Entry<T, C>> getCellsByItem() {
-		return cells.resolve();
-	}
+    /**
+     * @return the list containing the cells by their item, as entries because of possible duplicates
+     * @see StateMap#resolve()
+     */
+    protected List<Map.Entry<T, C>> getCellsByItem() {
+        return cells.resolve();
+    }
 
-	/**
-	 * @return the map containing the cells by their index, unmodifiable
-	 */
-	public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {
-		return Collections.unmodifiableSequencedMap(cells.getByIndex());
-	}
+    /**
+     * @return the map containing the cells by their index, unmodifiable
+     */
+    public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {
+        return Collections.unmodifiableSequencedMap(cells.getByIndex());
+    }
 
-	/**
-	 * @return the list containing the cells by their item, as entries because of possible duplicates, unmodifiable
-	 * @see StateMap#resolve()
-	 */
-	public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
-		return Collections.unmodifiableList(cells.resolve());
-	}
+    /**
+     * @return the list containing the cells by their item, as entries because of possible duplicates, unmodifiable
+     * @see StateMap#resolve()
+     */
+    public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
+        return Collections.unmodifiableList(cells.resolve());
+    }
 
-	/**
-	 * @return converts the cells' map to a list of nodes by calling {@link C#toNode()} on each cell
-	 */
-	public List<Node> getNodes() {
-		return getCellsByIndex().values().stream()
-			.map(C::toNode)
-			.toList();
-	}
+    /**
+     * @return converts the cells' map to a list of nodes by calling {@link C#toNode()} on each cell
+     */
+    public List<Node> getNodes() {
+        return getCellsByIndex().values().stream()
+            .map(C::toNode)
+            .toList();
+    }
 
-	/**
-	 * @return the number of cells in the {@link StateMap}
-	 */
-	public int size() {
-		return cells.size();
-	}
+    /**
+     * @return the number of cells in the {@link StateMap}
+     */
+    public int size() {
+        return cells.size();
+    }
 
-	/**
-	 * @return whether the {@link StateMap} is empty
-	 * @see StateMap
-	 */
-	public boolean isEmpty() {
-		return cells.isEmpty();
-	}
+    /**
+     * @return whether the {@link StateMap} is empty
+     * @see StateMap
+     */
+    public boolean isEmpty() {
+        return cells.isEmpty();
+    }
 
-	/**
-	 * @return whether the cells have changed since the last state. This is used to indicate if more or less cells are
-	 * present in this state compared to the old one. Used by the default skin to check whether the viewport has to
-	 * update its children or not.
-	 * @see VFXGridSkin
-	 */
-	public boolean haveCellsChanged() {
-		return cellsChanged;
-	}
+    /**
+     * @return whether the cells have changed since the last state. This is used to indicate if more or less cells are
+     * present in this state compared to the old one. Used by the default skin to check whether the viewport has to
+     * update its children or not.
+     * @see VFXGridSkin
+     */
+    public boolean haveCellsChanged() {
+        return cellsChanged;
+    }
 
-	/**
-	 * @see #haveCellsChanged()
-	 */
-	protected void setCellsChanged(boolean cellsChanged) {
-		this.cellsChanged = cellsChanged;
-	}
+    /**
+     * @see #haveCellsChanged()
+     */
+    protected void setCellsChanged(boolean cellsChanged) {
+        this.cellsChanged = cellsChanged;
+    }
 }

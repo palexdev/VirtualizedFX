@@ -26,20 +26,20 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
  */
 public class VFXTableStateProperty<T> extends ReadOnlyObjectWrapper<VFXTableState<T>> {
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXTableStateProperty() {}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXTableStateProperty() {}
 
-	public VFXTableStateProperty(VFXTableState<T> initialValue) {
-		super(initialValue);
-	}
+    public VFXTableStateProperty(VFXTableState<T> initialValue) {
+        super(initialValue);
+    }
 
-	public VFXTableStateProperty(Object bean, String name) {
-		super(bean, name);
-	}
+    public VFXTableStateProperty(Object bean, String name) {
+        super(bean, name);
+    }
 
-	public VFXTableStateProperty(Object bean, String name, VFXTableState<T> initialValue) {
-		super(bean, name, initialValue);
-	}
+    public VFXTableStateProperty(Object bean, String name, VFXTableState<T> initialValue) {
+        super(bean, name, initialValue);
+    }
 }

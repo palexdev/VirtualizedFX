@@ -43,66 +43,66 @@ import java.util.function.Function;
  * here {@link #buildSkin()} to override its {@link VFXLabeledCellSkin#update()} method.
  */
 public class VFXSimpleCell<T> extends VFXCellBase<T> {
-	//================================================================================
-	// Properties
-	//================================================================================
-	private StringConverter<T> converter;
+    //================================================================================
+    // Properties
+    //================================================================================
+    private StringConverter<T> converter;
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXSimpleCell(T item) {
-		this(item, FunctionalStringConverter.to(t -> (t != null) ? t.toString() : ""));
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXSimpleCell(T item) {
+        this(item, FunctionalStringConverter.to(t -> (t != null) ? t.toString() : ""));
+    }
 
-	public VFXSimpleCell(T item, StringConverter<T> converter) {
-		super(item);
-		this.converter = converter;
-	}
+    public VFXSimpleCell(T item, StringConverter<T> converter) {
+        super(item);
+        this.converter = converter;
+    }
 
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
-	@Override
-	public List<String> defaultStyleClasses() {
-		return List.of("cell-base", "cell");
-	}
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+    @Override
+    public List<String> defaultStyleClasses() {
+        return List.of("cell-base", "cell");
+    }
 
-	@Override
-	protected SkinBase<?, ?> buildSkin() {
-		return new VFXLabeledCellSkin<>(this) {
-			@Override
-			protected void update() {
-				T item = getItem();
-				label.setText(converter.toString(item));
-			}
-		};
-	}
+    @Override
+    protected SkinBase<?, ?> buildSkin() {
+        return new VFXLabeledCellSkin<>(this) {
+            @Override
+            protected void update() {
+                T item = getItem();
+                label.setText(converter.toString(item));
+            }
+        };
+    }
 
-	//================================================================================
-	// Getters/Setters
-	//================================================================================
+    //================================================================================
+    // Getters/Setters
+    //================================================================================
 
-	/**
-	 * @return the {@link StringConverter} used to convert an item {@link T} to a {@code String}
-	 */
-	public StringConverter<T> getConverter() {
-		return converter;
-	}
+    /**
+     * @return the {@link StringConverter} used to convert an item {@link T} to a {@code String}
+     */
+    public StringConverter<T> getConverter() {
+        return converter;
+    }
 
-	/**
-	 * Sets the {@link StringConverter} used to convert an extracted value {@link T} to a {@code String}
-	 */
-	public VFXSimpleCell<T> setConverter(StringConverter<T> converter) {
-		this.converter = converter;
-		return this;
-	}
+    /**
+     * Sets the {@link StringConverter} used to convert an extracted value {@link T} to a {@code String}
+     */
+    public VFXSimpleCell<T> setConverter(StringConverter<T> converter) {
+        this.converter = converter;
+        return this;
+    }
 
-	/**
-	 * Allows easily setting a {@link StringConverter} for the cell by just giving a {@link Function} as parameter,
-	 * makes use of {@link FunctionalStringConverter#to(Function)}.
-	 */
-	public VFXSimpleCell<T> setConverter(Function<T, String> fn) {
-		return setConverter(FunctionalStringConverter.to(fn));
-	}
+    /**
+     * Allows easily setting a {@link StringConverter} for the cell by just giving a {@link Function} as parameter,
+     * makes use of {@link FunctionalStringConverter#to(Function)}.
+     */
+    public VFXSimpleCell<T> setConverter(Function<T, String> fn) {
+        return setConverter(FunctionalStringConverter.to(fn));
+    }
 }

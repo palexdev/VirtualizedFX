@@ -33,32 +33,32 @@ import static utils.Utils.debugView;
 
 public class Playground extends Application {
 
-	@Override
-	public void start(Stage primaryStage) {
-		StackPane pane = new StackPane();
-		pane.setAlignment(Pos.CENTER);
+    @Override
+    public void start(Stage primaryStage) {
+        StackPane pane = new StackPane();
+        pane.setAlignment(Pos.CENTER);
 
-		TableTestUtils.Table container = new TableTestUtils.Table(users(100));
+        TableTestUtils.Table container = new TableTestUtils.Table(users(100));
 
-		VFXScrollPane sp = container.makeScrollable();
-		sp.setSmoothScroll(true);
-		sp.setDragToScroll(true);
-		//sp.setDragSmoothScroll(true);
-		//sp.setShowButtons(true);
-		//sp.setVBarPolicy(ScrollBarPolicy.NEVER);
-		VFXScrollable.setSpeed(sp, container, 0.5, 0.5, true);
-		CSSFragment.Builder.build()
-			.addSelector(".vfx-scroll-pane")
-			.padding("5px")
-			.closeSelector()
-			.applyOn(sp);
+        VFXScrollPane sp = container.makeScrollable();
+        sp.setSmoothScroll(true);
+        sp.setDragToScroll(true);
+        //sp.setDragSmoothScroll(true);
+        //sp.setShowButtons(true);
+        //sp.setVBarPolicy(ScrollBarPolicy.NEVER);
+        VFXScrollable.setSpeed(sp, container, 0.5, 0.5, true);
+        CSSFragment.Builder.build()
+            .addSelector(".vfx-scroll-pane")
+            .padding("5px")
+            .closeSelector()
+            .applyOn(sp);
 
-		pane.getChildren().addAll(sp);
-		Scene scene = new Scene(pane, 600, 400);
-		primaryStage.setScene(scene);
-		primaryStage.show();
-		primaryStage.centerOnScreen();
+        pane.getChildren().addAll(sp);
+        Scene scene = new Scene(pane, 600, 400);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+        primaryStage.centerOnScreen();
 
-		debugView(null, pane);
-	}
+        debugView(null, pane);
+    }
 }

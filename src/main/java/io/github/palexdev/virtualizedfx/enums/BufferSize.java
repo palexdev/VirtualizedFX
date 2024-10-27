@@ -25,22 +25,22 @@ package io.github.palexdev.virtualizedfx.enums;
  * The size of the buffer is given by the constant's ordinal + 1, {@link #val()}.
  */
 public enum BufferSize {
-	SMALL,
-	MEDIUM,
-	BIG,
-	;
+    SMALL,
+    MEDIUM,
+    BIG,
+    ;
 
-	/**
-	 * @return the constant's {@link #ordinal()} + 1
-	 */
-	public int val() {
-		return ordinal() + 1;
-	}
+    /**
+     * @return the constant's {@link #ordinal()} + 1
+     */
+    public int val() {
+        return ordinal() + 1;
+    }
 
-	/**
-	 * @return the standard, recommended buffer size, which is {@link #MEDIUM} (2)
-	 */
-	public static BufferSize standard() {
-		return MEDIUM;
-	}
+    /**
+     * @return the standard, recommended buffer size, which is {@link #MEDIUM} (2)
+     */
+    public static BufferSize standard() {
+        return MEDIUM;
+    }
 }

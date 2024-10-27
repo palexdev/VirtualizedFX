@@ -27,10 +27,10 @@ import io.github.palexdev.mfxcore.behavior.BehaviorBase;
  */
 public class CellBaseBehavior<T> extends BehaviorBase<VFXCellBase<T>> {
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public CellBaseBehavior(VFXCellBase<T> cell) {
-		super(cell);
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public CellBaseBehavior(VFXCellBase<T> cell) {
+        super(cell);
+    }
 }

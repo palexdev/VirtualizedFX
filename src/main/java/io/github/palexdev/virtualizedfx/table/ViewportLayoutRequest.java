@@ -52,77 +52,77 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ViewportLayoutRequest<T> {
-	//================================================================================
-	// Static Properties
-	//================================================================================
-	public static final ViewportLayoutRequest NULL = new ViewportLayoutRequest<>();
-	public static final ViewportLayoutRequest EMPTY = new ViewportLayoutRequest<>();
+    //================================================================================
+    // Static Properties
+    //================================================================================
+    public static final ViewportLayoutRequest NULL = new ViewportLayoutRequest<>();
+    public static final ViewportLayoutRequest EMPTY = new ViewportLayoutRequest<>();
 
-	//================================================================================
-	// Properties
-	//================================================================================
-	private final VFXTableColumn<T, ?> column;
-	private boolean wasDone = false;
+    //================================================================================
+    // Properties
+    //================================================================================
+    private final VFXTableColumn<T, ?> column;
+    private boolean wasDone = false;
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	private ViewportLayoutRequest() {
-		this.column = null;
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    private ViewportLayoutRequest() {
+        this.column = null;
+    }
 
-	public ViewportLayoutRequest(VFXTableColumn<T, ?> column) {
-		assert column != null;
-		this.column = column;
-	}
+    public ViewportLayoutRequest(VFXTableColumn<T, ?> column) {
+        assert column != null;
+        this.column = column;
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
+    //================================================================================
+    // Methods
+    //================================================================================
 
-	/**
-	 * @return whether this instance is not equal to the special object {@link #NULL}.
-	 */
-	public boolean isValid() {
-		return this != NULL;
-	}
+    /**
+     * @return whether this instance is not equal to the special object {@link #NULL}.
+     */
+    public boolean isValid() {
+        return this != NULL;
+    }
 
-	/**
-	 * @return whether the column instance passed to this request is not {@code null}.
-	 */
-	public boolean isPartial() {
-		return column != null;
-	}
+    /**
+     * @return whether the column instance passed to this request is not {@code null}.
+     */
+    public boolean isPartial() {
+        return column != null;
+    }
 
-	/**
-	 * @return the column's instance that will serve as an indicator for a partial layout computation
-	 */
-	public VFXTableColumn<T, ?> column() {
-		return column;
-	}
+    /**
+     * @return the column's instance that will serve as an indicator for a partial layout computation
+     */
+    public VFXTableColumn<T, ?> column() {
+        return column;
+    }
 
-	/**
-	 * @return whether it was possible to fulfill the layout request
-	 */
-	public boolean wasDone() {
-		return wasDone;
-	}
+    /**
+     * @return whether it was possible to fulfill the layout request
+     */
+    public boolean wasDone() {
+        return wasDone;
+    }
 
-	protected ViewportLayoutRequest<T> setWasDone(boolean wasDone) {
-		this.wasDone = wasDone;
-		return this;
-	}
+    protected ViewportLayoutRequest<T> setWasDone(boolean wasDone) {
+        this.wasDone = wasDone;
+        return this;
+    }
 
-	//================================================================================
-	// Inner Classes
-	//================================================================================
-	public static class ViewportLayoutRequestProperty<T> extends ReadOnlyObjectWrapper<ViewportLayoutRequest<T>> {
-		public ViewportLayoutRequestProperty() {
-			super(NULL);
-		}
+    //================================================================================
+    // Inner Classes
+    //================================================================================
+    public static class ViewportLayoutRequestProperty<T> extends ReadOnlyObjectWrapper<ViewportLayoutRequest<T>> {
+        public ViewportLayoutRequestProperty() {
+            super(NULL);
+        }
 
-		public boolean isValid() {
-			return get().isValid();
-		}
-	}
+        public boolean isValid() {
+            return get().isValid();
+        }
+    }
 }

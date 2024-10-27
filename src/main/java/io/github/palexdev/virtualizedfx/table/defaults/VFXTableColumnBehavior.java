@@ -39,96 +39,96 @@ import static io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableCol
  * <p> 3) the table's layout mode must be set to {@link ColumnsLayoutMode#VARIABLE}.
  */
 public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends BehaviorBase<VFXTableColumn<T, C>> {
-	//================================================================================
-	// Properties
-	//================================================================================
-	protected RegionDragResizer resizer;
+    //================================================================================
+    // Properties
+    //================================================================================
+    protected RegionDragResizer resizer;
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXTableColumnBehavior(VFXTableColumn<T, C> column) {
-		super(column);
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXTableColumnBehavior(VFXTableColumn<T, C> column) {
+        super(column);
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
+    //================================================================================
+    // Methods
+    //================================================================================
 
-	/**
-	 * This method is responsible for enabling/disabling the {@link RegionDragResizer} by using {@link RegionDragResizer#makeResizable()}
-	 * or {@link RegionDragResizer#uninstall()}.
-	 * <p>
-	 * Beware, this is automatically called by the default skin when needed. Neither the resizer nor this class check whether
-	 * it is already enabled, which means that additional calls may add the same handlers multiple times, causing potential
-	 * memory leaks!
-	 */
-	protected void onResizableChanged() {
-		VFXTableColumn<T, C> column = getNode();
-		boolean resizable = column.isGestureResizable();
-		if (!resizable && resizer != null) {
-			resizer.uninstall();
-			return;
-		}
-		if (resizer != null) resizer.makeResizable();
-	}
+    /**
+     * This method is responsible for enabling/disabling the {@link RegionDragResizer} by using {@link RegionDragResizer#makeResizable()}
+     * or {@link RegionDragResizer#uninstall()}.
+     * <p>
+     * Beware, this is automatically called by the default skin when needed. Neither the resizer nor this class check whether
+     * it is already enabled, which means that additional calls may add the same handlers multiple times, causing potential
+     * memory leaks!
+     */
+    protected void onResizableChanged() {
+        VFXTableColumn<T, C> column = getNode();
+        boolean resizable = column.isGestureResizable();
+        if (!resizable && resizer != null) {
+            resizer.uninstall();
+            return;
+        }
+        if (resizer != null) resizer.makeResizable();
+    }
 
-	/**
-	 * The {@link RegionDragResizer} used here is an inline custom extension which uses this method to determine whether
-	 * the column can be resized or not.
-	 */
-	protected boolean canResize() {
-		VFXTableColumn<T, C> column = getNode();
-		VFXTable<T> table = column.getTable();
-		return table != null && table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE;
-	}
+    /**
+     * The {@link RegionDragResizer} used here is an inline custom extension which uses this method to determine whether
+     * the column can be resized or not.
+     */
+    protected boolean canResize() {
+        VFXTableColumn<T, C> column = getNode();
+        VFXTable<T> table = column.getTable();
+        return table != null && table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE;
+    }
 
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
-	@Override
-	public void init() {
-		VFXTableColumn<T, C> column = getNode();
-		resizer = new RegionDragResizer(column) {
-			@Override
-			protected void handleDragged(MouseEvent event) {
-				if (canResize()) {
-					super.handleDragged(event);
-					column.pseudoClassStateChanged(DRAGGED, true);
-				}
-			}
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+    @Override
+    public void init() {
+        VFXTableColumn<T, C> column = getNode();
+        resizer = new RegionDragResizer(column) {
+            @Override
+            protected void handleDragged(MouseEvent event) {
+                if (canResize()) {
+                    super.handleDragged(event);
+                    column.pseudoClassStateChanged(DRAGGED, true);
+                }
+            }
 
-			@Override
-			protected void handleMoved(MouseEvent event) {
-				if (canResize()) super.handleMoved(event);
-			}
+            @Override
+            protected void handleMoved(MouseEvent event) {
+                if (canResize()) super.handleMoved(event);
+            }
 
-			@Override
-			protected void handlePressed(MouseEvent event) {
-				if (canResize()) super.handlePressed(event);
-			}
+            @Override
+            protected void handlePressed(MouseEvent event) {
+                if (canResize()) super.handlePressed(event);
+            }
 
-			@Override
-			protected void handleReleased(MouseEvent event) {
-				super.handleReleased(event);
-				column.pseudoClassStateChanged(DRAGGED, false);
-			}
-		};
-		resizer.setMinWidthFunction(r -> column.getTable().getColumnsSize().getWidth());
-		resizer.setAllowedZones(Zone.CENTER_RIGHT);
-		resizer.setResizeHandler((node, x, y, w, h) -> column.resize(w));
-		if (column.isGestureResizable()) resizer.makeResizable();
-	}
+            @Override
+            protected void handleReleased(MouseEvent event) {
+                super.handleReleased(event);
+                column.pseudoClassStateChanged(DRAGGED, false);
+            }
+        };
+        resizer.setMinWidthFunction(r -> column.getTable().getColumnsSize().getWidth());
+        resizer.setAllowedZones(Zone.CENTER_RIGHT);
+        resizer.setResizeHandler((node, x, y, w, h) -> column.resize(w));
+        if (column.isGestureResizable()) resizer.makeResizable();
+    }
 
-	/**
-	 * {@inheritDoc}
-	 * <p></p>
-	 * Also disposed the {@link RegionDragResizer}.
-	 */
-	@Override
-	public void dispose() {
-		resizer.dispose();
-		resizer = null;
-		super.dispose();
-	}
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * Also disposed the {@link RegionDragResizer}.
+     */
+    @Override
+    public void dispose() {
+        resizer.dispose();
+        resizer = null;
+        super.dispose();
+    }
 }

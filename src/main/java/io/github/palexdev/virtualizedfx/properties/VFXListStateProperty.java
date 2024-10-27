@@ -27,20 +27,20 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
  */
 public class VFXListStateProperty<T, C extends VFXCell<T>> extends ReadOnlyObjectWrapper<VFXListState<T, C>> {
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXListStateProperty() {}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXListStateProperty() {}
 
-	public VFXListStateProperty(VFXListState<T, C> initialValue) {
-		super(initialValue);
-	}
+    public VFXListStateProperty(VFXListState<T, C> initialValue) {
+        super(initialValue);
+    }
 
-	public VFXListStateProperty(Object bean, String name) {
-		super(bean, name);
-	}
+    public VFXListStateProperty(Object bean, String name) {
+        super(bean, name);
+    }
 
-	public VFXListStateProperty(Object bean, String name, VFXListState<T, C> initialValue) {
-		super(bean, name, initialValue);
-	}
+    public VFXListStateProperty(Object bean, String name, VFXListState<T, C> initialValue) {
+        super(bean, name, initialValue);
+    }
 }

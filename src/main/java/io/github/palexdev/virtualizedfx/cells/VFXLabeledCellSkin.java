@@ -54,88 +54,88 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * Last but not least, the label's text is updated by the {@link #update()} method.
  */
 public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBehavior<T>> {
-	//================================================================================
-	// Properties
-	//================================================================================
-	protected final Label label;
+    //================================================================================
+    // Properties
+    //================================================================================
+    protected final Label label;
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXLabeledCellSkin(VFXCellBase<T> cell) {
-		super(cell);
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXLabeledCellSkin(VFXCellBase<T> cell) {
+        super(cell);
 
-		// Init label
-		label = new Label();
-		label.alignmentProperty().bind(cell.alignmentProperty());
-		label.graphicProperty().bind(cell.graphicProperty());
+        // Init label
+        label = new Label();
+        label.alignmentProperty().bind(cell.alignmentProperty());
+        label.graphicProperty().bind(cell.graphicProperty());
 
-		// Finalize init
-		addListeners();
-		getChildren().add(label);
-	}
+        // Finalize init
+        addListeners();
+        getChildren().add(label);
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
+    //================================================================================
+    // Methods
+    //================================================================================
 
-	/**
-	 * Adds an {@link InvalidationListener} on the {@link VFXCellBase#itemProperty()} to call {@link #update()} when it changes,
-	 * and an {@link EventHandler} to support "manual" updates through events of type {@link VFXContainerEvent#UPDATE}.
-	 * <p>
-	 * (Uses {@link When} and {@link WhenEvent} constructs).
-	 *
-	 * @see #listeners(When[])
-	 * @see #events(WhenEvent[])
-	 */
-	protected void addListeners() {
-		VFXCellBase<T> cell = getSkinnable();
-		listeners(
-			onInvalidated(cell.itemProperty())
-				.then(t -> update())
-				.executeNow()
-		);
-	}
+    /**
+     * Adds an {@link InvalidationListener} on the {@link VFXCellBase#itemProperty()} to call {@link #update()} when it changes,
+     * and an {@link EventHandler} to support "manual" updates through events of type {@link VFXContainerEvent#UPDATE}.
+     * <p>
+     * (Uses {@link When} and {@link WhenEvent} constructs).
+     *
+     * @see #listeners(When[])
+     * @see #events(WhenEvent[])
+     */
+    protected void addListeners() {
+        VFXCellBase<T> cell = getSkinnable();
+        listeners(
+            onInvalidated(cell.itemProperty())
+                .then(t -> update())
+                .executeNow()
+        );
+    }
 
-	/**
-	 * This is responsible for updating the label's text using the value specified by the {@link VFXCellBase#itemProperty()}.
-	 * <p>
-	 * If the item is {@code null} sets the text to an empty string, otherwise calls {@code toString()} on it.
-	 */
-	protected void update() {
-		VFXCellBase<T> cell = getSkinnable();
-		T item = cell.getItem();
-		if (item == null) {
-			label.setText("");
-			return;
-		}
-		label.setText(item.toString());
-	}
+    /**
+     * This is responsible for updating the label's text using the value specified by the {@link VFXCellBase#itemProperty()}.
+     * <p>
+     * If the item is {@code null} sets the text to an empty string, otherwise calls {@code toString()} on it.
+     */
+    protected void update() {
+        VFXCellBase<T> cell = getSkinnable();
+        T item = cell.getItem();
+        if (item == null) {
+            label.setText("");
+            return;
+        }
+        label.setText(item.toString());
+    }
 
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
-	@Override
-	protected void initBehavior(CellBaseBehavior<T> behavior) {
-		VFXCellBase<T> cell = getSkinnable();
-		behavior.init();
-		events(
-			intercept(cell, VFXContainerEvent.UPDATE)
-				.process(e -> {
-					update();
-					e.consume();
-				})
-		);
-	}
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+    @Override
+    protected void initBehavior(CellBaseBehavior<T> behavior) {
+        VFXCellBase<T> cell = getSkinnable();
+        behavior.init();
+        events(
+            intercept(cell, VFXContainerEvent.UPDATE)
+                .process(e -> {
+                    update();
+                    e.consume();
+                })
+        );
+    }
 
-	@Override
-	protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
-		return leftInset + label.prefWidth(-1) + rightInset;
-	}
+    @Override
+    protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
+        return leftInset + label.prefWidth(-1) + rightInset;
+    }
 
-	@Override
-	protected void layoutChildren(double x, double y, double w, double h) {
-		label.resize(w, h);
-		positionInArea(label, x, y, w, h, 0, HPos.LEFT, VPos.CENTER);
-	}
+    @Override
+    protected void layoutChildren(double x, double y, double w, double h) {
+        label.resize(w, h);
+        positionInArea(label, x, y, w, h, 0, HPos.LEFT, VPos.CENTER);
+    }
 }

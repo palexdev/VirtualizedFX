@@ -43,114 +43,114 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static utils.TestFXUtils.counter;
 
 public class ListTestUtils {
-	//================================================================================
-	// Constructors
-	//================================================================================
-	private ListTestUtils() {}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    private ListTestUtils() {}
 
-	//================================================================================
-	// Methods
-	//================================================================================
-	static void assertState(VFXList<Integer, VFXCell<Integer>> list, IntegerRange range) {
-		VFXListState<Integer, VFXCell<Integer>> state = list.getState();
-		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
+    //================================================================================
+    // Methods
+    //================================================================================
+    static void assertState(VFXList<Integer, VFXCell<Integer>> list, IntegerRange range) {
+        VFXListState<Integer, VFXCell<Integer>> state = list.getState();
+        VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
 
-		assertNotNull(list.getCellFactory().getOwner());
+        assertNotNull(list.getCellFactory().getOwner());
 
-		if (Utils.INVALID_RANGE.equals(range)) {
-			assertEquals(VFXListState.INVALID, state);
-			return;
-		}
+        if (Utils.INVALID_RANGE.equals(range)) {
+            assertEquals(VFXListState.INVALID, state);
+            return;
+        }
 
-		assertEquals(helper.range(), range);
-		assertEquals(helper.totalNum(), state.size());
+        assertEquals(helper.range(), range);
+        assertEquals(helper.totalNum(), state.size());
 
-		Map<Integer, VFXCell<Integer>> cells = state.getCellsByIndexUnmodifiable();
-		ObservableList<Integer> items = list.getItems();
-		for (Integer index : range) {
-			VFXCell<Integer> cell = cells.get(index);
-			try {
-				assertNotNull(cell);
-			} catch (AssertionFailedError error) {
-				// For debug purposes
-				System.err.println("Null cell for index: " + index);
-				throw error;
-			}
-			if (cell instanceof VFXCellBase<Integer> cb) {
-				assertEquals(index, cb.getIndex());
-				assertEquals(items.get(index), cb.getItem());
-			}
-			assertPosition(list, index - range.getMin(), cell);
-		}
-	}
+        Map<Integer, VFXCell<Integer>> cells = state.getCellsByIndexUnmodifiable();
+        ObservableList<Integer> items = list.getItems();
+        for (Integer index : range) {
+            VFXCell<Integer> cell = cells.get(index);
+            try {
+                assertNotNull(cell);
+            } catch (AssertionFailedError error) {
+                // For debug purposes
+                System.err.println("Null cell for index: " + index);
+                throw error;
+            }
+            if (cell instanceof VFXCellBase<Integer> cb) {
+                assertEquals(index, cb.getIndex());
+                assertEquals(items.get(index), cb.getItem());
+            }
+            assertPosition(list, index - range.getMin(), cell);
+        }
+    }
 
-	static void assertPosition(VFXList<Integer, VFXCell<Integer>> list, int iteration, VFXCell<Integer> cell) {
-		Orientation o = list.getOrientation();
-		Function<Bounds, Double> inParentPos = (o == Orientation.VERTICAL) ? Bounds::getMinY : Bounds::getMinX;
-		double pos = iteration * list.getHelper().getTotalCellSize();
-		assertEquals(pos, inParentPos.apply(cell.toNode().getBoundsInParent()));
-	}
+    static void assertPosition(VFXList<Integer, VFXCell<Integer>> list, int iteration, VFXCell<Integer> cell) {
+        Orientation o = list.getOrientation();
+        Function<Bounds, Double> inParentPos = (o == Orientation.VERTICAL) ? Bounds::getMinY : Bounds::getMinX;
+        double pos = iteration * list.getHelper().getTotalCellSize();
+        assertEquals(pos, inParentPos.apply(cell.toNode().getBoundsInParent()));
+    }
 
-	//================================================================================
-	// Internal Classes
-	//================================================================================
-	public static class List extends VFXList<Integer, VFXCell<Integer>> {
-		public List(ObservableList<Integer> items) {
-			this(items, TestCell::new);
-		}
+    //================================================================================
+    // Internal Classes
+    //================================================================================
+    public static class List extends VFXList<Integer, VFXCell<Integer>> {
+        public List(ObservableList<Integer> items) {
+            this(items, TestCell::new);
+        }
 
-		public List(ObservableList<Integer> items, Function<Integer, VFXCell<Integer>> cellFactory) {
-			super(items, cellFactory);
-		}
+        public List(ObservableList<Integer> items, Function<Integer, VFXCell<Integer>> cellFactory) {
+            super(items, cellFactory);
+        }
 
-		@Override
-		public void setCellFactory(Function<Integer, VFXCell<Integer>> cellFactory) {
-			super.setCellFactory(cellFactory.andThen(c -> {
-				counter.created();
-				return c;
-			}));
-		}
+        @Override
+        public void setCellFactory(Function<Integer, VFXCell<Integer>> cellFactory) {
+            super.setCellFactory(cellFactory.andThen(c -> {
+                counter.created();
+                return c;
+            }));
+        }
 
-		@Override
-		protected SkinBase<?, ?> buildSkin() {
-			return new VFXListSkin<>(this) {
-				@Override
-				protected void onLayoutCompleted(boolean done) {
-					super.onLayoutCompleted(done);
-					if (done) counter.layout();
-				}
-			};
-		}
-	}
+        @Override
+        protected SkinBase<?, ?> buildSkin() {
+            return new VFXListSkin<>(this) {
+                @Override
+                protected void onLayoutCompleted(boolean done) {
+                    super.onLayoutCompleted(done);
+                    if (done) counter.layout();
+                }
+            };
+        }
+    }
 
-	public static class PList extends VFXPaginatedList<Integer, VFXCell<Integer>> {
-		public PList(ObservableList<Integer> items) {
-			this(items, TestCell::new);
-		}
+    public static class PList extends VFXPaginatedList<Integer, VFXCell<Integer>> {
+        public PList(ObservableList<Integer> items) {
+            this(items, TestCell::new);
+        }
 
-		public PList(ObservableList<Integer> items, Function<Integer, VFXCell<Integer>> cellFactory) {
-			super(items, cellFactory);
-		}
+        public PList(ObservableList<Integer> items, Function<Integer, VFXCell<Integer>> cellFactory) {
+            super(items, cellFactory);
+        }
 
-		@Override
-		public void setCellFactory(Function<Integer, VFXCell<Integer>> cellFactory) {
-			super.setCellFactory(cellFactory.andThen(c -> {
-				counter.created();
-				return c;
-			}));
-		}
+        @Override
+        public void setCellFactory(Function<Integer, VFXCell<Integer>> cellFactory) {
+            super.setCellFactory(cellFactory.andThen(c -> {
+                counter.created();
+                return c;
+            }));
+        }
 
-		@Override
-		protected SkinBase<?, ?> buildSkin() {
-			return new VFXPaginatedListSkin<>(this) {
-				@Override
-				protected void onLayoutCompleted(boolean done) {
-					super.onLayoutCompleted(done);
-					if (done) counter.layout();
-				}
-			};
-		}
-	}
+        @Override
+        protected SkinBase<?, ?> buildSkin() {
+            return new VFXPaginatedListSkin<>(this) {
+                @Override
+                protected void onLayoutCompleted(boolean done) {
+                    super.onLayoutCompleted(done);
+                    if (done) counter.layout();
+                }
+            };
+        }
+    }
 
 }
 

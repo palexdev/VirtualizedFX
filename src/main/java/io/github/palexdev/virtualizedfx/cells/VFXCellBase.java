@@ -76,203 +76,203 @@ import javafx.scene.Node;
  * @see VFXCell
  */
 public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implements VFXCell<T>, VFXStyleable {
-	//================================================================================
-	// Properties
-	//================================================================================
-	private VFXContainer<T> container;
-	private final IntegerProperty index = new SimpleIntegerProperty(-1);
-	private final ObjectProperty<T> item = new SimpleObjectProperty<>();
-	private final ObjectProperty<Node> graphic = new SimpleObjectProperty<>();
+    //================================================================================
+    // Properties
+    //================================================================================
+    private VFXContainer<T> container;
+    private final IntegerProperty index = new SimpleIntegerProperty(-1);
+    private final ObjectProperty<T> item = new SimpleObjectProperty<>();
+    private final ObjectProperty<Node> graphic = new SimpleObjectProperty<>();
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXCellBase(T item) {
-		initialize();
-		updateItem(item);
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXCellBase(T item) {
+        initialize();
+        updateItem(item);
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
-	private void initialize() {
-		getStyleClass().setAll(defaultStyleClasses());
-		setDefaultBehaviorProvider();
-	}
+    //================================================================================
+    // Methods
+    //================================================================================
+    private void initialize() {
+        getStyleClass().setAll(defaultStyleClasses());
+        setDefaultBehaviorProvider();
+    }
 
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
-	@Override
-	public List<String> defaultStyleClasses() {
-		return List.of("cell-base");
-	}
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+    @Override
+    public List<String> defaultStyleClasses() {
+        return List.of("cell-base");
+    }
 
-	@Override
-	public Supplier<CellBaseBehavior<T>> defaultBehaviorProvider() {
-		return () -> new CellBaseBehavior<>(this);
-	}
+    @Override
+    public Supplier<CellBaseBehavior<T>> defaultBehaviorProvider() {
+        return () -> new CellBaseBehavior<>(this);
+    }
 
-	@Override
-	public Node toNode() {
-		return this;
-	}
+    @Override
+    public Node toNode() {
+        return this;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 * <p></p>
-	 * Updates the {@link #itemProperty()}.
-	 */
-	@Override
-	public void updateItem(T item) {
-		setItem(item);
-	}
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * Updates the {@link #itemProperty()}.
+     */
+    @Override
+    public void updateItem(T item) {
+        setItem(item);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 * <p></p>
-	 * Updates the {@link #indexProperty()}.
-	 */
-	@Override
-	public void updateIndex(int index) {
-		setIndex(index);
-	}
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * Updates the {@link #indexProperty()}.
+     */
+    @Override
+    public void updateIndex(int index) {
+        setIndex(index);
+    }
 
-	/**
-	 * Stores the {@link VFXContainer} instance that owns this cell.
-	 * <p>
-	 * The implementation disallows subsequent calls.
-	 * In other words, once the instance is set (and not null), it will not be replaced.
-	 */
-	@Override
-	public void onCreated(VFXContainer<T> container) {
-		if (this.container == null) {
-			this.container = container;
-		}
-	}
+    /**
+     * Stores the {@link VFXContainer} instance that owns this cell.
+     * <p>
+     * The implementation disallows subsequent calls.
+     * In other words, once the instance is set (and not null), it will not be replaced.
+     */
+    @Override
+    public void onCreated(VFXContainer<T> container) {
+        if (this.container == null) {
+            this.container = container;
+        }
+    }
 
-	@Override
-	public void dispose() {
-		container = null;
-	}
+    @Override
+    public void dispose() {
+        container = null;
+    }
 
-	//================================================================================
-	// Styleable Properties
-	//================================================================================
-	private final StyleableObjectProperty<Pos> alignment = new StyleableObjectProperty<>(
-		StyleableProperties.ALIGNMENT,
-		this,
-		"alignment",
-		Pos.CENTER_LEFT
-	) {
-		@Override
-		protected void invalidated() {
-			requestLayout();
-		}
-	};
+    //================================================================================
+    // Styleable Properties
+    //================================================================================
+    private final StyleableObjectProperty<Pos> alignment = new StyleableObjectProperty<>(
+        StyleableProperties.ALIGNMENT,
+        this,
+        "alignment",
+        Pos.CENTER_LEFT
+    ) {
+        @Override
+        protected void invalidated() {
+            requestLayout();
+        }
+    };
 
-	public Pos getAlignment() {
-		return alignment.get();
-	}
+    public Pos getAlignment() {
+        return alignment.get();
+    }
 
-	/**
-	 * Specifies the alignment of the displayed data. How this is used depends on the skin implementation.
-	 * <p>
-	 * This is settable via CSS with the "-fx-alignment" property.
-	 */
-	public StyleableObjectProperty<Pos> alignmentProperty() {
-		return alignment;
-	}
+    /**
+     * Specifies the alignment of the displayed data. How this is used depends on the skin implementation.
+     * <p>
+     * This is settable via CSS with the "-fx-alignment" property.
+     */
+    public StyleableObjectProperty<Pos> alignmentProperty() {
+        return alignment;
+    }
 
-	public void setAlignment(Pos alignment) {
-		this.alignment.set(alignment);
-	}
+    public void setAlignment(Pos alignment) {
+        this.alignment.set(alignment);
+    }
 
-	//================================================================================
-	// CssMetaData
-	//================================================================================
-	private static class StyleableProperties {
-		private static final StyleablePropertyFactory<VFXCellBase<?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
-		private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
+    //================================================================================
+    // CssMetaData
+    //================================================================================
+    private static class StyleableProperties {
+        private static final StyleablePropertyFactory<VFXCellBase<?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+        private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
-		private static final CssMetaData<VFXCellBase<?>, Pos> ALIGNMENT =
-			FACTORY.createEnumCssMetaData(
-				Pos.class,
-				"-fx-alignment",
-				VFXCellBase::alignmentProperty,
-				Pos.CENTER_LEFT
-			);
+        private static final CssMetaData<VFXCellBase<?>, Pos> ALIGNMENT =
+            FACTORY.createEnumCssMetaData(
+                Pos.class,
+                "-fx-alignment",
+                VFXCellBase::alignmentProperty,
+                Pos.CENTER_LEFT
+            );
 
-		static {
-			cssMetaDataList = StyleUtils.cssMetaDataList(
-				Control.getClassCssMetaData(),
-				ALIGNMENT
-			);
-		}
-	}
+        static {
+            cssMetaDataList = StyleUtils.cssMetaDataList(
+                Control.getClassCssMetaData(),
+                ALIGNMENT
+            );
+        }
+    }
 
-	public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-		return StyleableProperties.cssMetaDataList;
-	}
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.cssMetaDataList;
+    }
 
-	@Override
-	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
-		return getClassCssMetaData();
-	}
+    @Override
+    protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
+    }
 
-	//================================================================================
-	// Getters/Setters
-	//================================================================================
+    //================================================================================
+    // Getters/Setters
+    //================================================================================
 
-	/**
-	 * @return the {@link VFXContainer} instance that owns this cell
-	 */
-	public VFXContainer<T> getContainer() {
-		return container;
-	}
+    /**
+     * @return the {@link VFXContainer} instance that owns this cell
+     */
+    public VFXContainer<T> getContainer() {
+        return container;
+    }
 
-	public int getIndex() {
-		return index.get();
-	}
+    public int getIndex() {
+        return index.get();
+    }
 
-	/**
-	 * Specifies the cell's index.
-	 */
-	public IntegerProperty indexProperty() {
-		return index;
-	}
+    /**
+     * Specifies the cell's index.
+     */
+    public IntegerProperty indexProperty() {
+        return index;
+    }
 
-	public void setIndex(int index) {
-		this.index.set(index);
-	}
+    public void setIndex(int index) {
+        this.index.set(index);
+    }
 
-	public T getItem() {
-		return item.get();
-	}
+    public T getItem() {
+        return item.get();
+    }
 
-	/**
-	 * Specifies the cell's item.
-	 */
-	public ObjectProperty<T> itemProperty() {
-		return item;
-	}
+    /**
+     * Specifies the cell's item.
+     */
+    public ObjectProperty<T> itemProperty() {
+        return item;
+    }
 
-	public void setItem(T item) {
-		this.item.set(item);
-	}
+    public void setItem(T item) {
+        this.item.set(item);
+    }
 
-	public Node getGraphic() {
-		return graphic.get();
-	}
+    public Node getGraphic() {
+        return graphic.get();
+    }
 
-	/**
-	 * Allows adding a {@code Node} to the cell. To be precise, how this property is used depends on the skin implementation.
-	 */
-	public ObjectProperty<Node> graphicProperty() {
-		return graphic;
-	}
+    /**
+     * Allows adding a {@code Node} to the cell. To be precise, how this property is used depends on the skin implementation.
+     */
+    public ObjectProperty<Node> graphicProperty() {
+        return graphic;
+    }
 
-	public void setGraphic(Node graphic) {
-		this.graphic.set(graphic);
-	}
+    public void setGraphic(Node graphic) {
+        this.graphic.set(graphic);
+    }
 }

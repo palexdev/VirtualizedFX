@@ -70,117 +70,117 @@ import io.github.palexdev.virtualizedfx.properties.CellFactory;
  * would be required, which is even more work and thus adds up to the cons.
  */
 public class VFXCellsCache<T, C extends VFXCell<T>> {
-	//================================================================================
-	// Properties
-	//================================================================================
-	private final CellFactory<T, C> cellFactory;
-	private final CellsQueue<T, C> queue = new CellsQueue<>(0);
+    //================================================================================
+    // Properties
+    //================================================================================
+    private final CellFactory<T, C> cellFactory;
+    private final CellsQueue<T, C> queue = new CellsQueue<>(0);
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXCellsCache(CellFactory<T, C> cellFactory) {
-		this.cellFactory = cellFactory;
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXCellsCache(CellFactory<T, C> cellFactory) {
+        this.cellFactory = cellFactory;
+    }
 
-	public VFXCellsCache(CellFactory<T, C> cellFactory, int capacity) {
-		this.cellFactory = cellFactory;
-		queue.setCapacity(capacity);
-	}
+    public VFXCellsCache(CellFactory<T, C> cellFactory, int capacity) {
+        this.cellFactory = cellFactory;
+        queue.setCapacity(capacity);
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
+    //================================================================================
+    // Methods
+    //================================================================================
 
-	/**
-	 * Fills the cache to its limit. Can be useful to 'pre-populate' the cache before init time, making cells already
-	 * available and just in need of an update ({@link VFXCell#updateIndex(int)}, {@link VFXCell#updateItem(Object)}).
-	 *
-	 * @throws NullPointerException if {@link #getCellFactory()} returns {@code null}
-	 */
-	public VFXCellsCache<T, C> populate() {
-		if (queue.size() == queue.getCapacity()) return this; // Already at capacity
-		if (cellFactory == null) throw new NullPointerException("Cannot populate cache as the cell factory is null");
+    /**
+     * Fills the cache to its limit. Can be useful to 'pre-populate' the cache before init time, making cells already
+     * available and just in need of an update ({@link VFXCell#updateIndex(int)}, {@link VFXCell#updateItem(Object)}).
+     *
+     * @throws NullPointerException if {@link #getCellFactory()} returns {@code null}
+     */
+    public VFXCellsCache<T, C> populate() {
+        if (queue.size() == queue.getCapacity()) return this; // Already at capacity
+        if (cellFactory == null) throw new NullPointerException("Cannot populate cache as the cell factory is null");
 
-		do {
-			C c = cellFactory.create(null);
-			queue.add(c);
-		} while (queue.size() != queue.getCapacity());
-		return this;
-	}
+        do {
+            C c = cellFactory.create(null);
+            queue.add(c);
+        } while (queue.size() != queue.getCapacity());
+        return this;
+    }
 
-	/**
-	 * Adds the given cells to the queue. For successfully cached cells, {@link VFXCell#onCache()} will automatically be invoked.
-	 */
-	@SafeVarargs
-	public final VFXCellsCache<T, C> cache(C... cells) {
-		for (C c : cells) {
-			if (queue.add(c)) c.onCache();
-		}
-		return this;
-	}
+    /**
+     * Adds the given cells to the queue. For successfully cached cells, {@link VFXCell#onCache()} will automatically be invoked.
+     */
+    @SafeVarargs
+    public final VFXCellsCache<T, C> cache(C... cells) {
+        for (C c : cells) {
+            if (queue.add(c)) c.onCache();
+        }
+        return this;
+    }
 
-	/**
-	 * Adds the given cells to the queue. For successfully cached cells, {@link VFXCell#onCache()} will automatically be invoked.
-	 */
-	public VFXCellsCache<T, C> cache(Collection<C> cells) {
-		for (C c : cells) {
-			if (queue.add(c)) c.onCache();
-		}
-		return this;
-	}
+    /**
+     * Adds the given cells to the queue. For successfully cached cells, {@link VFXCell#onCache()} will automatically be invoked.
+     */
+    public VFXCellsCache<T, C> cache(Collection<C> cells) {
+        for (C c : cells) {
+            if (queue.add(c)) c.onCache();
+        }
+        return this;
+    }
 
-	/**
-	 * Removes one cell from the cache, specifically from the queue's head, so the oldest cached cell.
-	 * Beware this can return a {@code null} value, if it's not, {@link VFXCell#onDeCache()} is automatically invoked.
-	 */
-	public C take() {
-		C c = queue.poll();
-		if (c != null) c.onDeCache();
-		return c;
-	}
+    /**
+     * Removes one cell from the cache, specifically from the queue's head, so the oldest cached cell.
+     * Beware this can return a {@code null} value, if it's not, {@link VFXCell#onDeCache()} is automatically invoked.
+     */
+    public C take() {
+        C c = queue.poll();
+        if (c != null) c.onDeCache();
+        return c;
+    }
 
-	/**
-	 * Wraps the result of {@link #take()} in an {@link Optional} instance.
-	 */
-	public Optional<C> tryTake() {
-		return Optional.ofNullable(take());
-	}
+    /**
+     * Wraps the result of {@link #take()} in an {@link Optional} instance.
+     */
+    public Optional<C> tryTake() {
+        return Optional.ofNullable(take());
+    }
 
-	/**
-	 * Removed the specified cell from the cache's queue. The removed cell is also disposed.
-	 */
-	public VFXCellsCache<T, C> remove(C cell) {
-		boolean removed = queue.remove(cell);
-		if (removed) cell.dispose();
-		return this;
-	}
+    /**
+     * Removed the specified cell from the cache's queue. The removed cell is also disposed.
+     */
+    public VFXCellsCache<T, C> remove(C cell) {
+        boolean removed = queue.remove(cell);
+        if (removed) cell.dispose();
+        return this;
+    }
 
-	/**
-	 * Disposes and removes all the cells from the cache.
-	 */
-	public VFXCellsCache<T, C> clear() {
-		queue.forEach(VFXCell::dispose);
-		queue.clear();
-		return this;
-	}
+    /**
+     * Disposes and removes all the cells from the cache.
+     */
+    public VFXCellsCache<T, C> clear() {
+        queue.forEach(VFXCell::dispose);
+        queue.clear();
+        return this;
+    }
 
-	/**
-	 * @return the number of cached cells
-	 */
-	public int size() {
-		return queue.size();
-	}
+    /**
+     * @return the number of cached cells
+     */
+    public int size() {
+        return queue.size();
+    }
 
-	/**
-	 * Sets the cache's capacity.
-	 */
-	public VFXCellsCache<T, C> setCapacity(int capacity) {
-		queue.setCapacity(capacity);
-		return this;
-	}
+    /**
+     * Sets the cache's capacity.
+     */
+    public VFXCellsCache<T, C> setCapacity(int capacity) {
+        queue.setCapacity(capacity);
+        return this;
+    }
 
-	public CellFactory<T, C> getCellFactory() {
-		return cellFactory;
-	}
+    public CellFactory<T, C> getCellFactory() {
+        return cellFactory;
+    }
 }

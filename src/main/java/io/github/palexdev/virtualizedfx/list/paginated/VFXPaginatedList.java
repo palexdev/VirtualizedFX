@@ -86,233 +86,233 @@ import java.util.stream.Collectors;
  * You may end up with invalid states, thus a broken component.
  */
 public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> implements VFXPaginated<T> {
-	//================================================================================
-	// Properties
-	//================================================================================
-	private final IntegerProperty page = PropUtils.clampedIntProperty(
-		() -> 0,
-		this::getMaxPage
-	);
-	private final ReadOnlyIntegerWrapper maxPage = new ReadOnlyIntegerWrapper();
+    //================================================================================
+    // Properties
+    //================================================================================
+    private final IntegerProperty page = PropUtils.clampedIntProperty(
+        () -> 0,
+        this::getMaxPage
+    );
+    private final ReadOnlyIntegerWrapper maxPage = new ReadOnlyIntegerWrapper();
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXPaginatedList() {
-		super();
-		initialize();
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXPaginatedList() {
+        super();
+        initialize();
+    }
 
-	public VFXPaginatedList(ObservableList<T> items, Function<T, C> cellFactory) {
-		super(items, cellFactory);
-		initialize();
-	}
+    public VFXPaginatedList(ObservableList<T> items, Function<T, C> cellFactory) {
+        super(items, cellFactory);
+        initialize();
+    }
 
-	public VFXPaginatedList(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
-		super(items, cellFactory, orientation);
-		initialize();
-	}
+    public VFXPaginatedList(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
+        super(items, cellFactory, orientation);
+        initialize();
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
-	private void initialize() {
-		maxPage.bind(IntegerBindingBuilder.build()
-			.setMapper(this::computeMaxPage)
-			.addSources(sizeProperty(), cellsPerPageProperty())
-			.get()
-		);
-	}
+    //================================================================================
+    // Methods
+    //================================================================================
+    private void initialize() {
+        maxPage.bind(IntegerBindingBuilder.build()
+            .setMapper(this::computeMaxPage)
+            .addSources(sizeProperty(), cellsPerPageProperty())
+            .get()
+        );
+    }
 
-	/**
-	 * Computes the range of visible items for the current page. The computation is done by using the
-	 * {@link VFXPaginatedListHelper}. The range doesn't include the buffer cells!
-	 */
-	public IntegerRange getVisibleRange() {
-		if (isEmpty()) return Utils.INVALID_RANGE;
-		VFXListHelper<T, C> helper = getHelper();
-		int first = helper.firstVisible();
-		int last = Math.min(first + getCellsPerPage() - 1, size() - 1);
-		return IntegerRange.of(first, last);
-	}
+    /**
+     * Computes the range of visible items for the current page. The computation is done by using the
+     * {@link VFXPaginatedListHelper}. The range doesn't include the buffer cells!
+     */
+    public IntegerRange getVisibleRange() {
+        if (isEmpty()) return Utils.INVALID_RANGE;
+        VFXListHelper<T, C> helper = getHelper();
+        int first = helper.firstVisible();
+        int last = Math.min(first + getCellsPerPage() - 1, size() - 1);
+        return IntegerRange.of(first, last);
+    }
 
-	/**
-	 * By using the {@link IntegerRange} computed by {@link #getVisibleRange()}, filters the {@link StateMap}
-	 * (from the current state {@link #stateProperty()}), and returns a map of the visible cells by their index.
-	 */
-	public Map<Integer, C> getVisibleCellsByIndex() {
-		IntegerRange range = getVisibleRange();
-		if (Utils.INVALID_RANGE.equals(range)) return Map.of();
-		return getCellsByIndexUnmodifiable().entrySet().stream()
-			.filter(e -> IntegerRange.inRangeOf(e.getKey(), range))
-			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-	}
+    /**
+     * By using the {@link IntegerRange} computed by {@link #getVisibleRange()}, filters the {@link StateMap}
+     * (from the current state {@link #stateProperty()}), and returns a map of the visible cells by their index.
+     */
+    public Map<Integer, C> getVisibleCellsByIndex() {
+        IntegerRange range = getVisibleRange();
+        if (Utils.INVALID_RANGE.equals(range)) return Map.of();
+        return getCellsByIndexUnmodifiable().entrySet().stream()
+            .filter(e -> IntegerRange.inRangeOf(e.getKey(), range))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
 
-	/**
-	 * By using the {@link IntegerRange} computed by {@link #getVisibleRange()}, filters the {@link StateMap}
-	 * (from the current state {@link #stateProperty()}), and returns a map of the visible cells by the displayed item.
-	 */
-	public Map<T, C> getVisibleCellsByItem() {
-		IntegerRange range = getVisibleRange();
-		if (Utils.INVALID_RANGE.equals(range)) return Map.of();
-		Map<T, C> map = new HashMap<>();
-		SequencedMap<Integer, C> byIndex = getCellsByIndexUnmodifiable();
-		for (Integer i : range) {
-			T t = getItems().get(i);
-			map.put(t, byIndex.get(i));
-		}
-		return map;
-	}
+    /**
+     * By using the {@link IntegerRange} computed by {@link #getVisibleRange()}, filters the {@link StateMap}
+     * (from the current state {@link #stateProperty()}), and returns a map of the visible cells by the displayed item.
+     */
+    public Map<T, C> getVisibleCellsByItem() {
+        IntegerRange range = getVisibleRange();
+        if (Utils.INVALID_RANGE.equals(range)) return Map.of();
+        Map<T, C> map = new HashMap<>();
+        SequencedMap<Integer, C> byIndex = getCellsByIndexUnmodifiable();
+        for (Integer i : range) {
+            T t = getItems().get(i);
+            map.put(t, byIndex.get(i));
+        }
+        return map;
+    }
 
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
 
-	@Override
-	public List<String> defaultStyleClasses() {
-		return List.of("vfx-list", "paginated");
-	}
+    @Override
+    public List<String> defaultStyleClasses() {
+        return List.of("vfx-list", "paginated");
+    }
 
-	/**
-	 * {@inheritDoc}
-	 * <p></p>
-	 * Overridden to use implementations of {@link VFXPaginatedListHelper} instead.
-	 */
-	@Override
-	protected Function<Orientation, VFXListHelper<T, C>> defaultHelperFactory() {
-		return o -> (o == Orientation.VERTICAL) ?
-			new VerticalHelper<>(this) :
-			new HorizontalHelper<>(this);
-	}
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * Overridden to use implementations of {@link VFXPaginatedListHelper} instead.
+     */
+    @Override
+    protected Function<Orientation, VFXListHelper<T, C>> defaultHelperFactory() {
+        return o -> (o == Orientation.VERTICAL) ?
+            new VerticalHelper<>(this) :
+            new HorizontalHelper<>(this);
+    }
 
-	@Override
-	public Supplier<VFXListManager<T, C>> defaultBehaviorProvider() {
-		return () -> new VFXPaginatedListManager<>(this);
-	}
+    @Override
+    public Supplier<VFXListManager<T, C>> defaultBehaviorProvider() {
+        return () -> new VFXPaginatedListManager<>(this);
+    }
 
-	@Override
-	protected SkinBase<?, ?> buildSkin() {
-		return new VFXPaginatedListSkin<>(this);
-	}
+    @Override
+    protected SkinBase<?, ?> buildSkin() {
+        return new VFXPaginatedListSkin<>(this);
+    }
 
-	/**
-	 * Since for the paginated variant the position is bound to the {@link #pageProperty()}, this setter won't do
-	 * anything if the current orientation is vertical. You could still use the {@link #vPosProperty()} to set the position,
-	 * but that would generate an exception. Unbinding the property would result in invalid states, so, don't do it.
-	 */
-	@Override
-	public void setVPos(double vPos) {
-		if (vPosProperty().isBound()) return;
-		super.setVPos(vPos);
-	}
+    /**
+     * Since for the paginated variant the position is bound to the {@link #pageProperty()}, this setter won't do
+     * anything if the current orientation is vertical. You could still use the {@link #vPosProperty()} to set the position,
+     * but that would generate an exception. Unbinding the property would result in invalid states, so, don't do it.
+     */
+    @Override
+    public void setVPos(double vPos) {
+        if (vPosProperty().isBound()) return;
+        super.setVPos(vPos);
+    }
 
-	/**
-	 * Since for the paginated variant the position is bound to the {@link #pageProperty()}, this setter won't do
-	 * anything if the current orientation is horizontal. You could still use the {@link #hPosProperty()} to set the position,
-	 * but that would generate an exception. Unbinding the property would result in invalid states, so, don't do it.
-	 */
-	@Override
-	public void setHPos(double hPos) {
-		if (hPosProperty().isBound()) return;
-		super.setHPos(hPos);
-	}
+    /**
+     * Since for the paginated variant the position is bound to the {@link #pageProperty()}, this setter won't do
+     * anything if the current orientation is horizontal. You could still use the {@link #hPosProperty()} to set the position,
+     * but that would generate an exception. Unbinding the property would result in invalid states, so, don't do it.
+     */
+    @Override
+    public void setHPos(double hPos) {
+        if (hPosProperty().isBound()) return;
+        super.setHPos(hPos);
+    }
 
-	/**
-	 * Shortcut for {@code setPage(0)}.
-	 */
-	@Override
-	public void scrollToFirst() {
-		setPage(0);
-	}
+    /**
+     * Shortcut for {@code setPage(0)}.
+     */
+    @Override
+    public void scrollToFirst() {
+        setPage(0);
+    }
 
-	/**
-	 * Shortcut for {@code setPage(getMaxPage())}.
-	 */
-	@Override
-	public void scrollToLast() {
-		setPage(getMaxPage());
-	}
+    /**
+     * Shortcut for {@code setPage(getMaxPage())}.
+     */
+    @Override
+    public void scrollToLast() {
+        setPage(getMaxPage());
+    }
 
-	/**
-	 * {@inheritDoc}
-	 * <p></p>
-	 * Note that a paginated component cannot scroll on the virtualized axis. The list uses both the x or y axis
-	 * for virtualization depending on the {@link #orientationProperty()}, which means you will be able to scroll only
-	 * in the opposite direction (e.g. VERTICAL -> horizontal scroll).
-	 */
-	@Override
-	public VFXScrollPane makeScrollable() {
-		// The policy is enough to hide the bar for which scroll is disabled by the pagination feature
-		// And this should also be enough in theory to prevent JavaFX exceptions due to bidirectionally binding the
-		// scroll positions (call to bindTo(this))
-		VFXScrollPane pane = new VFXScrollPane(this).bindTo(this);
-		pane.vBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.VERTICAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
-		pane.hBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.HORIZONTAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
-		return pane;
-	}
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * Note that a paginated component cannot scroll on the virtualized axis. The list uses both the x or y axis
+     * for virtualization depending on the {@link #orientationProperty()}, which means you will be able to scroll only
+     * in the opposite direction (e.g. VERTICAL -> horizontal scroll).
+     */
+    @Override
+    public VFXScrollPane makeScrollable() {
+        // The policy is enough to hide the bar for which scroll is disabled by the pagination feature
+        // And this should also be enough in theory to prevent JavaFX exceptions due to bidirectionally binding the
+        // scroll positions (call to bindTo(this))
+        VFXScrollPane pane = new VFXScrollPane(this).bindTo(this);
+        pane.vBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.VERTICAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
+        pane.hBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.HORIZONTAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
+        return pane;
+    }
 
-	//================================================================================
-	// Styleable Properties
-	//================================================================================
-	private final StyleableIntegerProperty cellsPerPage = new StyleableIntegerProperty(
-		StyleableProperties.CELLS_PER_PAGE,
-		this,
-		"cellsPerPage",
-		10
-	);
+    //================================================================================
+    // Styleable Properties
+    //================================================================================
+    private final StyleableIntegerProperty cellsPerPage = new StyleableIntegerProperty(
+        StyleableProperties.CELLS_PER_PAGE,
+        this,
+        "cellsPerPage",
+        10
+    );
 
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * Can be set in CSS via the property: '-vfx-cells-per-page'.
-	 */
-	@Override
-	public StyleableIntegerProperty cellsPerPageProperty() {
-		return cellsPerPage;
-	}
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Can be set in CSS via the property: '-vfx-cells-per-page'.
+     */
+    @Override
+    public StyleableIntegerProperty cellsPerPageProperty() {
+        return cellsPerPage;
+    }
 
-	//================================================================================
-	// CssMetaData
-	//================================================================================
-	private static class StyleableProperties {
-		private static final StyleablePropertyFactory<VFXPaginatedList<?, ?>> FACTORY = new StyleablePropertyFactory<>(VFXList.getClassCssMetaData());
-		private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
+    //================================================================================
+    // CssMetaData
+    //================================================================================
+    private static class StyleableProperties {
+        private static final StyleablePropertyFactory<VFXPaginatedList<?, ?>> FACTORY = new StyleablePropertyFactory<>(VFXList.getClassCssMetaData());
+        private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
-		private static final CssMetaData<VFXPaginatedList<?, ?>, Number> CELLS_PER_PAGE =
-			FACTORY.createSizeCssMetaData(
-				"-vfx-cells-per-page",
-				VFXPaginatedList::cellsPerPageProperty,
-				10
-			);
+        private static final CssMetaData<VFXPaginatedList<?, ?>, Number> CELLS_PER_PAGE =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-cells-per-page",
+                VFXPaginatedList::cellsPerPageProperty,
+                10
+            );
 
-		static {
-			cssMetaDataList = StyleUtils.cssMetaDataList(
-				VFXList.getClassCssMetaData(),
-				CELLS_PER_PAGE
-			);
-		}
-	}
+        static {
+            cssMetaDataList = StyleUtils.cssMetaDataList(
+                VFXList.getClassCssMetaData(),
+                CELLS_PER_PAGE
+            );
+        }
+    }
 
-	public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-		return StyleableProperties.cssMetaDataList;
-	}
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.cssMetaDataList;
+    }
 
-	@Override
-	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
-		return getClassCssMetaData();
-	}
+    @Override
+    protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
+    }
 
-	//================================================================================
-	// Getters/Setters
-	//================================================================================
+    //================================================================================
+    // Getters/Setters
+    //================================================================================
 
-	@Override
-	public IntegerProperty pageProperty() {
-		return page;
-	}
+    @Override
+    public IntegerProperty pageProperty() {
+        return page;
+    }
 
-	@Override
-	public ReadOnlyIntegerProperty maxPageProperty() {
-		return maxPage.getReadOnlyProperty();
-	}
+    @Override
+    public ReadOnlyIntegerProperty maxPageProperty() {
+        return maxPage.getReadOnlyProperty();
+    }
 }

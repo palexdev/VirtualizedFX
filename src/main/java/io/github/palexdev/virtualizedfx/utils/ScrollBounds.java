@@ -29,114 +29,114 @@ import java.util.Objects;
  * The reason this is not a {@code record} is to allow methods to be overridden if needed.
  */
 public final class ScrollBounds {
-	//================================================================================
-	// Static Properties
-	//================================================================================
-	public static final ScrollBounds ZERO = new ScrollBounds();
+    //================================================================================
+    // Static Properties
+    //================================================================================
+    public static final ScrollBounds ZERO = new ScrollBounds();
 
-	//================================================================================
-	// Properties
-	//================================================================================
-	private final double contentWidth;
-	private final double contentHeight;
-	private final double viewportWidth;
-	private final double viewportHeight;
+    //================================================================================
+    // Properties
+    //================================================================================
+    private final double contentWidth;
+    private final double contentHeight;
+    private final double viewportWidth;
+    private final double viewportHeight;
 
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	private ScrollBounds() {
-		this(0, 0, 0, 0);
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    private ScrollBounds() {
+        this(0, 0, 0, 0);
+    }
 
-	public ScrollBounds(double contentWidth, double contentHeight, double viewportWidth, double viewportHeight) {
-		this.contentWidth = contentWidth;
-		this.contentHeight = contentHeight;
-		this.viewportWidth = viewportWidth;
-		this.viewportHeight = viewportHeight;
-	}
+    public ScrollBounds(double contentWidth, double contentHeight, double viewportWidth, double viewportHeight) {
+        this.contentWidth = contentWidth;
+        this.contentHeight = contentHeight;
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
+    //================================================================================
+    // Methods
+    //================================================================================
 
-	/**
-	 * Computes how much content is visible by using its size and the view area's size. The value is a percentage in
-	 * the range [0.0, 1.0].
-	 *
-	 * @param o the orientation determines which size to use, width or height
-	 */
-	public double visibleAmount(Orientation o) {
-		return (o == Orientation.VERTICAL) ?
-			viewportHeight / contentHeight :
-			viewportWidth / contentWidth;
-	}
+    /**
+     * Computes how much content is visible by using its size and the view area's size. The value is a percentage in
+     * the range [0.0, 1.0].
+     *
+     * @param o the orientation determines which size to use, width or height
+     */
+    public double visibleAmount(Orientation o) {
+        return (o == Orientation.VERTICAL) ?
+            viewportHeight / contentHeight :
+            viewportWidth / contentWidth;
+    }
 
-	/**
-	 * Computes the maximum number of scrollable pixels by using the content's size and the view area's size:
-	 * {@code Math.max(0, contentSize - viewportSize)}.
-	 * <p>
-	 *
-	 * @param o the orientation determines which size to use, width or height
-	 */
-	public double maxScroll(Orientation o) {
-		if (o == Orientation.VERTICAL) {
-			return Math.max(0, contentHeight - viewportHeight);
-		}
-		return Math.max(0, contentWidth - viewportWidth);
-	}
+    /**
+     * Computes the maximum number of scrollable pixels by using the content's size and the view area's size:
+     * {@code Math.max(0, contentSize - viewportSize)}.
+     * <p>
+     *
+     * @param o the orientation determines which size to use, width or height
+     */
+    public double maxScroll(Orientation o) {
+        if (o == Orientation.VERTICAL) {
+            return Math.max(0, contentHeight - viewportHeight);
+        }
+        return Math.max(0, contentWidth - viewportWidth);
+    }
 
-	//================================================================================
-	// Getters
-	//================================================================================
+    //================================================================================
+    // Getters
+    //================================================================================
 
-	/**
-	 * @return the content's width
-	 */
-	public double contentWidth() {return contentWidth;}
+    /**
+     * @return the content's width
+     */
+    public double contentWidth() {return contentWidth;}
 
-	/**
-	 * @return the content's height
-	 */
-	public double contentHeight() {return contentHeight;}
+    /**
+     * @return the content's height
+     */
+    public double contentHeight() {return contentHeight;}
 
-	/**
-	 * @return the view area's width
-	 */
-	public double viewportWidth() {return viewportWidth;}
+    /**
+     * @return the view area's width
+     */
+    public double viewportWidth() {return viewportWidth;}
 
-	/**
-	 * @return the view area's height
-	 */
-	public double viewportHeight() {return viewportHeight;}
+    /**
+     * @return the view area's height
+     */
+    public double viewportHeight() {return viewportHeight;}
 
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == this) return true;
-		if (obj == null || obj.getClass() != this.getClass()) return false;
-		var that = (ScrollBounds) obj;
-		return Double.doubleToLongBits(this.contentWidth) == Double.doubleToLongBits(that.contentWidth) &&
-			Double.doubleToLongBits(this.contentHeight) == Double.doubleToLongBits(that.contentHeight) &&
-			Double.doubleToLongBits(this.viewportWidth) == Double.doubleToLongBits(that.viewportWidth) &&
-			Double.doubleToLongBits(this.viewportHeight) == Double.doubleToLongBits(that.viewportHeight);
-	}
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || obj.getClass() != this.getClass()) return false;
+        var that = (ScrollBounds) obj;
+        return Double.doubleToLongBits(this.contentWidth) == Double.doubleToLongBits(that.contentWidth) &&
+               Double.doubleToLongBits(this.contentHeight) == Double.doubleToLongBits(that.contentHeight) &&
+               Double.doubleToLongBits(this.viewportWidth) == Double.doubleToLongBits(that.viewportWidth) &&
+               Double.doubleToLongBits(this.viewportHeight) == Double.doubleToLongBits(that.viewportHeight);
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(contentWidth, contentHeight, viewportWidth, viewportHeight);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(contentWidth, contentHeight, viewportWidth, viewportHeight);
+    }
 
-	@Override
-	public String toString() {
-		return "ScrollBounds[" +
-			"contentWidth=" + contentWidth + ", " +
-			"contentHeight=" + contentHeight + ", " +
-			"viewportWidth=" + viewportWidth + ", " +
-			"viewportHeight=" + viewportHeight + ']';
-	}
+    @Override
+    public String toString() {
+        return "ScrollBounds[" +
+               "contentWidth=" + contentWidth + ", " +
+               "contentHeight=" + contentHeight + ", " +
+               "viewportWidth=" + viewportWidth + ", " +
+               "viewportHeight=" + viewportHeight + ']';
+    }
 
 }

@@ -30,15 +30,15 @@ import io.github.palexdev.virtualizedfx.table.VFXTableRow;
  */
 public interface VFXTableCell<T> extends VFXCell<T> {
 
-	/**
-	 * Automatically called by the {@link VFXTable} subsystem on all its cells to allow storing the instance
-	 * of the column that created them.
-	 */
-	default void updateColumn(VFXTableColumn<T, ? extends VFXTableCell<T>> column) {}
+    /**
+     * Automatically called by the {@link VFXTable} subsystem on all its cells to allow storing the instance
+     * of the column that created them.
+     */
+    default void updateColumn(VFXTableColumn<T, ? extends VFXTableCell<T>> column) {}
 
-	/**
-	 * Automatically called by the {@link VFXTable} subsystem on all its cells to allow storing the instance of
-	 * the row that contains them.
-	 */
-	default void updateRow(VFXTableRow<T> row) {}
+    /**
+     * Automatically called by the {@link VFXTable} subsystem on all its cells to allow storing the instance of
+     * the row that contains them.
+     */
+    default void updateRow(VFXTableRow<T> row) {}
 }

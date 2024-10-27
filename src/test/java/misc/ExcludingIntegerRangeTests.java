@@ -29,92 +29,92 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ExcludingIntegerRangeTests {
 
-	@Test
-	public void testIterator1() {
-		ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
-		range.excludeAll(5, 7);
-		Iterator<Integer> iterator = range.iterator();
+    @Test
+    public void testIterator1() {
+        ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
+        range.excludeAll(5, 7);
+        Iterator<Integer> iterator = range.iterator();
 
-		assertTrue(iterator.hasNext());
-		assertEquals(3, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(4, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(6, iterator.next().intValue());
-		assertFalse(iterator.hasNext());
-		assertThrows(NoSuchElementException.class, iterator::next);
-	}
+        assertTrue(iterator.hasNext());
+        assertEquals(3, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(4, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(6, iterator.next().intValue());
+        assertFalse(iterator.hasNext());
+        assertThrows(NoSuchElementException.class, iterator::next);
+    }
 
-	@Test
-	public void testIterator2() {
-		ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
-		range.excludeAll(3, 5);
-		Iterator<Integer> iterator = range.iterator();
+    @Test
+    public void testIterator2() {
+        ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
+        range.excludeAll(3, 5);
+        Iterator<Integer> iterator = range.iterator();
 
-		assertTrue(iterator.hasNext());
-		assertEquals(4, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(6, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(7, iterator.next().intValue());
-		assertFalse(iterator.hasNext());
-		assertThrows(NoSuchElementException.class, iterator::next);
-	}
+        assertTrue(iterator.hasNext());
+        assertEquals(4, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(6, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(7, iterator.next().intValue());
+        assertFalse(iterator.hasNext());
+        assertThrows(NoSuchElementException.class, iterator::next);
+    }
 
-	@Test
-	public void testIteratorWithNoExclusions() {
-		ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
-		Iterator<Integer> iterator = range.iterator();
+    @Test
+    public void testIteratorWithNoExclusions() {
+        ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
+        Iterator<Integer> iterator = range.iterator();
 
-		assertTrue(iterator.hasNext());
-		assertEquals(3, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(4, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(5, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(6, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(7, iterator.next().intValue());
-		assertFalse(iterator.hasNext());
-	}
+        assertTrue(iterator.hasNext());
+        assertEquals(3, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(4, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(5, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(6, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(7, iterator.next().intValue());
+        assertFalse(iterator.hasNext());
+    }
 
-	@Test
-	public void testIteratorWithAllExclusions1() {
-		ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
-		range.excludeAll(IntegerRange.of(3, 7));
-		Iterator<Integer> iterator = range.iterator();
+    @Test
+    public void testIteratorWithAllExclusions1() {
+        ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
+        range.excludeAll(IntegerRange.of(3, 7));
+        Iterator<Integer> iterator = range.iterator();
 
-		assertFalse(iterator.hasNext());
-		assertThrows(NoSuchElementException.class, iterator::next);
-	}
+        assertFalse(iterator.hasNext());
+        assertThrows(NoSuchElementException.class, iterator::next);
+    }
 
-	@Test
-	public void testIteratorWithAllExclusions2() {
-		ExcludingIntegerRange range = new ExcludingIntegerRange(0, 0);
-		range.exclude(0);
-		Iterator<Integer> iterator = range.iterator();
+    @Test
+    public void testIteratorWithAllExclusions2() {
+        ExcludingIntegerRange range = new ExcludingIntegerRange(0, 0);
+        range.exclude(0);
+        Iterator<Integer> iterator = range.iterator();
 
-		assertFalse(iterator.hasNext());
-		assertThrows(NoSuchElementException.class, iterator::next);
-	}
+        assertFalse(iterator.hasNext());
+        assertThrows(NoSuchElementException.class, iterator::next);
+    }
 
-	@Test
-	public void testIteratorWithOutOfRangeExclusions() {
-		ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
-		range.excludeAll(2, 8);
-		Iterator<Integer> iterator = range.iterator();
+    @Test
+    public void testIteratorWithOutOfRangeExclusions() {
+        ExcludingIntegerRange range = new ExcludingIntegerRange(3, 7);
+        range.excludeAll(2, 8);
+        Iterator<Integer> iterator = range.iterator();
 
-		assertTrue(iterator.hasNext());
-		assertEquals(3, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(4, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(5, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(6, iterator.next().intValue());
-		assertTrue(iterator.hasNext());
-		assertEquals(7, iterator.next().intValue());
-		assertFalse(iterator.hasNext());
-	}
+        assertTrue(iterator.hasNext());
+        assertEquals(3, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(4, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(5, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(6, iterator.next().intValue());
+        assertTrue(iterator.hasNext());
+        assertEquals(7, iterator.next().intValue());
+        assertFalse(iterator.hasNext());
+    }
 }

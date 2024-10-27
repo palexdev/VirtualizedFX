@@ -118,635 +118,635 @@ import javafx.scene.shape.Rectangle;
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, C>>
-	implements VFXContainer<T>, WithCellFactory<T, C>, VFXStyleable, VFXScrollable {
-	//================================================================================
-	// Properties
-	//================================================================================
-	private final VFXCellsCache<T, C> cache;
-	private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList()) {
-		@Override
-		public void set(ObservableList<T> newValue) {
-			if (newValue == null) newValue = FXCollections.observableArrayList();
-			super.set(newValue);
-		}
-	};
-	private final CellFactory<T, C> cellFactory = new CellFactory<>(this);
-	private final ReadOnlyObjectWrapper<VFXListHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
-		@Override
-		public void set(VFXListHelper<T, C> newValue) {
-			if (newValue == null)
-				throw new NullPointerException("List helper cannot be null!");
-			VFXListHelper<T, C> oldValue = get();
-			if (oldValue != null) oldValue.dispose();
-			super.set(newValue);
-		}
-	};
-	private final FunctionProperty<Orientation, VFXListHelper<T, C>> helperFactory = new FunctionProperty<>(defaultHelperFactory()) {
-		@Override
-		public void set(Function<Orientation, VFXListHelper<T, C>> newValue) {
-			if (newValue == null)
-				throw new NullPointerException("List helper factory cannot be null!");
-			super.set(newValue);
-		}
+    implements VFXContainer<T>, WithCellFactory<T, C>, VFXStyleable, VFXScrollable {
+    //================================================================================
+    // Properties
+    //================================================================================
+    private final VFXCellsCache<T, C> cache;
+    private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList()) {
+        @Override
+        public void set(ObservableList<T> newValue) {
+            if (newValue == null) newValue = FXCollections.observableArrayList();
+            super.set(newValue);
+        }
+    };
+    private final CellFactory<T, C> cellFactory = new CellFactory<>(this);
+    private final ReadOnlyObjectWrapper<VFXListHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
+        @Override
+        public void set(VFXListHelper<T, C> newValue) {
+            if (newValue == null)
+                throw new NullPointerException("List helper cannot be null!");
+            VFXListHelper<T, C> oldValue = get();
+            if (oldValue != null) oldValue.dispose();
+            super.set(newValue);
+        }
+    };
+    private final FunctionProperty<Orientation, VFXListHelper<T, C>> helperFactory = new FunctionProperty<>(defaultHelperFactory()) {
+        @Override
+        public void set(Function<Orientation, VFXListHelper<T, C>> newValue) {
+            if (newValue == null)
+                throw new NullPointerException("List helper factory cannot be null!");
+            super.set(newValue);
+        }
 
-		@Override
-		protected void invalidated() {
-			Orientation orientation = getOrientation();
-			VFXListHelper<T, C> helper = get().apply(orientation);
-			setHelper(helper);
-		}
-	};
-	private final DoubleProperty vPos = PropUtils.clampedDoubleProperty(
-		() -> 0.0,
-		this::getMaxVScroll
-	);
-	private final DoubleProperty hPos = PropUtils.clampedDoubleProperty(
-		() -> 0.0,
-		this::getMaxHScroll
-	);
+        @Override
+        protected void invalidated() {
+            Orientation orientation = getOrientation();
+            VFXListHelper<T, C> helper = get().apply(orientation);
+            setHelper(helper);
+        }
+    };
+    private final DoubleProperty vPos = PropUtils.clampedDoubleProperty(
+        () -> 0.0,
+        this::getMaxVScroll
+    );
+    private final DoubleProperty hPos = PropUtils.clampedDoubleProperty(
+        () -> 0.0,
+        this::getMaxHScroll
+    );
 
-	private final VFXListStateProperty<T, C> state = new VFXListStateProperty<>(VFXListState.INVALID);
-	private final ReadOnlyBooleanWrapper needsViewportLayout = new ReadOnlyBooleanWrapper(false);
+    private final VFXListStateProperty<T, C> state = new VFXListStateProperty<>(VFXListState.INVALID);
+    private final ReadOnlyBooleanWrapper needsViewportLayout = new ReadOnlyBooleanWrapper(false);
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXList() {
-		cache = createCache();
-		setOrientation(Orientation.VERTICAL);
-		initialize();
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXList() {
+        cache = createCache();
+        setOrientation(Orientation.VERTICAL);
+        initialize();
+    }
 
-	public VFXList(ObservableList<T> items, Function<T, C> cellFactory) {
-		this();
-		setItems(items);
-		setCellFactory(cellFactory);
-	}
+    public VFXList(ObservableList<T> items, Function<T, C> cellFactory) {
+        this();
+        setItems(items);
+        setCellFactory(cellFactory);
+    }
 
-	public VFXList(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
-		this();
-		setItems(items);
-		setCellFactory(cellFactory);
-		setOrientation(orientation);
-	}
+    public VFXList(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
+        this();
+        setItems(items);
+        setCellFactory(cellFactory);
+        setOrientation(orientation);
+    }
 
-	//================================================================================
-	// Methods
-	//================================================================================
-	private void initialize() {
-		getStyleClass().addAll(defaultStyleClasses());
-		setDefaultBehaviorProvider();
-	}
+    //================================================================================
+    // Methods
+    //================================================================================
+    private void initialize() {
+        getStyleClass().addAll(defaultStyleClasses());
+        setDefaultBehaviorProvider();
+    }
 
-	/**
-	 * Responsible for creating the cache instance used by this container.
-	 *
-	 * @see VFXCellsCache
-	 * @see #cacheCapacityProperty()
-	 */
-	protected VFXCellsCache<T, C> createCache() {
-		return new VFXCellsCache<>(cellFactory, getCacheCapacity());
-	}
+    /**
+     * Responsible for creating the cache instance used by this container.
+     *
+     * @see VFXCellsCache
+     * @see #cacheCapacityProperty()
+     */
+    protected VFXCellsCache<T, C> createCache() {
+        return new VFXCellsCache<>(cellFactory, getCacheCapacity());
+    }
 
-	/**
-	 * Setter for the {@link #stateProperty()}.
-	 */
-	protected void update(VFXListState<T, C> state) {
-		setState(state);
-	}
+    /**
+     * Setter for the {@link #stateProperty()}.
+     */
+    protected void update(VFXListState<T, C> state) {
+        setState(state);
+    }
 
-	/**
-	 * @return the default function used to produce a {@link VFXListHelper} according to the container's orientation.
-	 */
-	protected Function<Orientation, VFXListHelper<T, C>> defaultHelperFactory() {
-		return o -> (o == Orientation.VERTICAL) ?
-			new VerticalHelper<>(this) :
-			new HorizontalHelper<>(this);
-	}
+    /**
+     * @return the default function used to produce a {@link VFXListHelper} according to the container's orientation.
+     */
+    protected Function<Orientation, VFXListHelper<T, C>> defaultHelperFactory() {
+        return o -> (o == Orientation.VERTICAL) ?
+            new VerticalHelper<>(this) :
+            new HorizontalHelper<>(this);
+    }
 
-	/**
-	 * Setter for the {@link #needsViewportLayoutProperty()}.
-	 * This sets the property to true, causing the default skin to recompute the cells' layout.
-	 */
-	public void requestViewportLayout() {
-		setNeedsViewportLayout(true);
-	}
+    /**
+     * Setter for the {@link #needsViewportLayoutProperty()}.
+     * This sets the property to true, causing the default skin to recompute the cells' layout.
+     */
+    public void requestViewportLayout() {
+        setNeedsViewportLayout(true);
+    }
 
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
-	@Override
-	public void update(int... indexes) {
-		VFXListState<T, C> state = getState();
-		if (state.isEmpty()) return;
-		if (indexes.length == 0) {
-			state.getCellsByIndex().values().forEach(VFXContainerEvent::update);
-			return;
-		}
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+    @Override
+    public void update(int... indexes) {
+        VFXListState<T, C> state = getState();
+        if (state.isEmpty()) return;
+        if (indexes.length == 0) {
+            state.getCellsByIndex().values().forEach(VFXContainerEvent::update);
+            return;
+        }
 
-		for (int index : indexes) {
-			C c = state.getCellsByIndex().get(index);
-			if (c == null) continue;
-			VFXContainerEvent.update(c);
-		}
-	}
+        for (int index : indexes) {
+            C c = state.getCellsByIndex().get(index);
+            if (c == null) continue;
+            VFXContainerEvent.update(c);
+        }
+    }
 
-	@Override
-	public List<String> defaultStyleClasses() {
-		return List.of("vfx-list");
-	}
+    @Override
+    public List<String> defaultStyleClasses() {
+        return List.of("vfx-list");
+    }
 
-	@Override
-	protected SkinBase<?, ?> buildSkin() {
-		return new VFXListSkin<>(this);
-	}
+    @Override
+    protected SkinBase<?, ?> buildSkin() {
+        return new VFXListSkin<>(this);
+    }
 
-	@Override
-	public Supplier<VFXListManager<T, C>> defaultBehaviorProvider() {
-		return () -> new VFXListManager<>(this);
-	}
+    @Override
+    public Supplier<VFXListManager<T, C>> defaultBehaviorProvider() {
+        return () -> new VFXListManager<>(this);
+    }
 
-	@Override
-	public VFXScrollPane makeScrollable() {
-		return new VFXScrollPane(this).bindTo(this);
-	}
+    @Override
+    public VFXScrollPane makeScrollable() {
+        return new VFXScrollPane(this).bindTo(this);
+    }
 //================================================================================
-	// Delegate Methods
-	//================================================================================
-
-	/**
-	 * Delegate for {@link VFXCellsCache#populate()}.
-	 */
-	public VFXList<T, C> populateCache() {
-		cache.populate();
-		return this;
-	}
-
-	/**
-	 * Delegate for {@link VFXListState#getRange()}
-	 */
-	public IntegerRange getRange() {
-		return getState().getRange();
-	}
-
-	/**
-	 * Delegate for {@link VFXListState#getCellsByIndexUnmodifiable()}
-	 */
-	public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {
-		return getState().getCellsByIndexUnmodifiable();
-	}
-
-	/**
-	 * Delegate for {@link VFXListState#getCellsByItemUnmodifiable()}
-	 */
-	public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
-		return getState().getCellsByItemUnmodifiable();
-	}
-
-	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxXProperty()}
-	 */
-	@Override
-	public ReadOnlyDoubleProperty virtualMaxXProperty() {
-		return getHelper().virtualMaxXProperty();
-	}
-
-	/**
-	 * Delegate for {@link VFXListHelper#virtualMaxYProperty()}
-	 */
-	@Override
-	public ReadOnlyDoubleProperty virtualMaxYProperty() {
-		return getHelper().virtualMaxYProperty();
-	}
-
-	/**
-	 * Delegate for {@link VFXListHelper#maxVScrollProperty()}.
-	 */
-	@Override
-	public ReadOnlyDoubleProperty maxVScrollProperty() {
-		return getHelper().maxVScrollProperty();
-	}
-
-	/**
-	 * Delegate for {@link VFXListHelper#maxHScrollProperty()}.
-	 */
-	@Override
-	public ReadOnlyDoubleProperty maxHScrollProperty() {
-		return getHelper().maxHScrollProperty();
-	}
-
-	/**
-	 * Delegate for {@link VFXListHelper#scrollBy(double)}.
-	 */
-	public void scrollBy(double pixels) {
-		getHelper().scrollBy(pixels);
-	}
-
-	/**
-	 * Delegate for {@link VFXListHelper#scrollToPixel(double)}.
-	 */
-	public void scrollToPixel(double pixel) {
-		getHelper().scrollToPixel(pixel);
-	}
-
-	/**
-	 * Delegate for {@link VFXListHelper#scrollToIndex(int)}.
-	 */
-	public void scrollToIndex(int index) {
-		getHelper().scrollToIndex(index);
-	}
-
-	/**
-	 * Shortcut for {@code scrollToIndex(0)}.
-	 */
-	public void scrollToFirst() {
-		scrollToIndex(0);
-	}
-
-	/**
-	 * Shortcut for {@code scrollToIndex(size() - 1)}.
-	 */
-	public void scrollToLast() {
-		scrollToIndex(size() - 1);
-	}
-
-	//================================================================================
-	// Styleable Properties
-	//================================================================================
-	private final StyleableDoubleProperty cellSize = new StyleableDoubleProperty(
-		StyleableProperties.CELL_SIZE,
-		this,
-		"cellSize",
-		32.0
-	);
-
-	private final StyleableDoubleProperty spacing = new StyleableDoubleProperty(
-		StyleableProperties.SPACING,
-		this,
-		"spacing",
-		0.0
-	);
-
-	private final StyleableObjectProperty<BufferSize> bufferSize = new StyleableObjectProperty<>(
-		StyleableProperties.BUFFER_SIZE,
-		this,
-		"bufferSize",
-		BufferSize.standard()
-	);
-
-	private final StyleableObjectProperty<Orientation> orientation = new StyleableObjectProperty<>(
-		StyleableProperties.ORIENTATION,
-		this,
-		"orientation"
-	) {
-		@Override
-		protected void invalidated() {
-			Orientation orientation = get();
-			VFXListHelper<T, C> helper = getHelperFactory().apply(orientation);
-			setHelper(helper);
-		}
-	};
-
-	private final StyleableBooleanProperty fitToViewport = new StyleableBooleanProperty(
-		StyleableProperties.FIT_TO_VIEWPORT,
-		this,
-		"fitToViewport",
-		true
-	);
-
-	private final StyleableDoubleProperty clipBorderRadius = new StyleableDoubleProperty(
-		StyleableProperties.CLIP_BORDER_RADIUS,
-		this,
-		"clipBorderRadius",
-		0.0
-	);
-
-	private final StyleableIntegerProperty cacheCapacity = new StyleableIntegerProperty(
-		StyleableProperties.CACHE_CAPACITY,
-		this,
-		"cacheCapacity",
-		10
-	) {
-		@Override
-		protected void invalidated() {
-			cache.setCapacity(get());
-		}
-	};
-
-	public double getCellSize() {
-		return cellSize.get();
-	}
-
-	/**
-	 * Specifies the cells' size:
-	 * <p> - Orientation.VERTICAL: size -> height
-	 * <p> - Orientation.HORIZONTAL: size -> width
-	 * <p>
-	 * Can be set in CSS via the property: '-vfx-cell-size'.
-	 */
-	public StyleableDoubleProperty cellSizeProperty() {
-		return cellSize;
-	}
-
-	public void setCellSize(double cellSize) {
-		this.cellSize.set(cellSize);
-	}
-
-	public double getSpacing() {
-		return spacing.get();
-	}
-
-	/**
-	 * Specifies the number of pixels between each cell.
-	 * <p>
-	 * Can be set in CSS via the property: '-vfx-spacing'
-	 */
-	public StyleableDoubleProperty spacingProperty() {
-		return spacing;
-	}
-
-	public void setSpacing(double spacing) {
-		this.spacing.set(spacing);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p></p>
-	 * Also, the default implementation (see {@link VFXListHelper.VerticalHelper} or {@link VFXListHelper.HorizontalHelper}), adds
-	 * double the number specified by the enum constant, because these buffer cells are added both at the top and at the
-	 * bottom of the container. The default value is {@link BufferSize#MEDIUM}.
-	 * <p>
-	 * Can be set in CSS via the property: '-vfx-buffer-size'.
-	 */
-	@Override
-	public StyleableObjectProperty<BufferSize> bufferSizeProperty() {
-		return bufferSize;
-	}
-
-	public Orientation getOrientation() {
-		return orientation.get();
-	}
-
-	/**
-	 * Specifies the orientation of the container.
-	 * <p>
-	 * Can be set in CSS via the property: '-vfx-orientation'.
-	 */
-	public StyleableObjectProperty<Orientation> orientationProperty() {
-		return orientation;
-	}
-
-	public void setOrientation(Orientation orientation) {
-		this.orientation.set(orientation);
-	}
-
-	public boolean isFitToViewport() {
-		return fitToViewport.get();
-	}
-
-	/**
-	 * Specifies whether cells should be resized to be the same size of the viewport in the opposite
-	 * direction of the current {@link #orientationProperty()}.
-	 * <p>
-	 * Can be set in CSS via the property: '-vfx-fit-to-viewport'.
-	 */
-	public StyleableBooleanProperty fitToViewportProperty() {
-		return fitToViewport;
-	}
-
-	public void setFitToViewport(boolean fitToViewport) {
-		this.fitToViewport.set(fitToViewport);
-	}
-
-	public double getClipBorderRadius() {
-		return clipBorderRadius.get();
-	}
-
-	/**
-	 * Used by the viewport's clip to set its border radius.
-	 * This is useful when you want to make a rounded container, this
-	 * prevents the content from going outside the view.
-	 * <p></p>
-	 * <b>Side note:</b> the clip is a {@link Rectangle}, now for some fucking reason,
-	 * the rectangle's arcWidth and arcHeight values used to make it round do not act like the border-radius
-	 * or background-radius properties, instead their value is usually 2 / 2.5 times the latter.
-	 * So, for a border radius of 5, you want this value to be at least 10/13.
-	 * <p>
-	 * Can be set in CSS via the property: '-vfx-clip-border-radius'.
-	 */
-	public StyleableDoubleProperty clipBorderRadiusProperty() {
-		return clipBorderRadius;
-	}
-
-	public void setClipBorderRadius(double clipBorderRadius) {
-		this.clipBorderRadius.set(clipBorderRadius);
-	}
-
-	public int getCacheCapacity() {
-		return cacheCapacity.get();
-	}
-
-	/**
-	 * Specifies the maximum number of cells the cache can contain at any time. Excess will not be added to the queue and
-	 * disposed immediately.
-	 * <p>
-	 * Can be set in CSS via the property: '-vfx-cache-capacity'.
-	 */
-	public StyleableIntegerProperty cacheCapacityProperty() {
-		return cacheCapacity;
-	}
-
-	public void setCacheCapacity(int cacheCapacity) {
-		this.cacheCapacity.set(cacheCapacity);
-	}
-
-	//================================================================================
-	// CssMetaData
-	//================================================================================
-	private static class StyleableProperties {
-		private static final StyleablePropertyFactory<VFXList<?, ?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
-		private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
-
-		private static final CssMetaData<VFXList<?, ?>, Number> CELL_SIZE =
-			FACTORY.createSizeCssMetaData(
-				"-vfx-cell-size",
-				VFXList::cellSizeProperty,
-				32.0
-			);
-
-		private static final CssMetaData<VFXList<?, ?>, Number> SPACING =
-			FACTORY.createSizeCssMetaData(
-				"-vfx-spacing",
-				VFXList::spacingProperty,
-				0.0
-			);
-
-		private static final CssMetaData<VFXList<?, ?>, BufferSize> BUFFER_SIZE =
-			FACTORY.createEnumCssMetaData(
-				BufferSize.class,
-				"-vfx-buffer-size",
-				VFXList::bufferSizeProperty,
-				BufferSize.standard()
-			);
-
-		private static final CssMetaData<VFXList<?, ?>, Orientation> ORIENTATION =
-			FACTORY.createEnumCssMetaData(
-				Orientation.class,
-				"-vfx-orientation",
-				VFXList::orientationProperty,
-				Orientation.VERTICAL
-			);
-
-		private static final CssMetaData<VFXList<?, ?>, Boolean> FIT_TO_VIEWPORT =
-			FACTORY.createBooleanCssMetaData(
-				"-vfx-fit-to-viewport",
-				VFXList::fitToViewportProperty,
-				true
-			);
-
-		private static final CssMetaData<VFXList<?, ?>, Number> CLIP_BORDER_RADIUS =
-			FACTORY.createSizeCssMetaData(
-				"-vfx-clip-border-radius",
-				VFXList::clipBorderRadiusProperty,
-				0.0
-			);
-
-		private static final CssMetaData<VFXList<?, ?>, Number> CACHE_CAPACITY =
-			FACTORY.createSizeCssMetaData(
-				"-vfx-cache-capacity",
-				VFXList::cacheCapacityProperty,
-				10
-			);
-
-		static {
-			cssMetaDataList = StyleUtils.cssMetaDataList(
-				Control.getClassCssMetaData(),
-				CELL_SIZE, SPACING, BUFFER_SIZE, ORIENTATION, FIT_TO_VIEWPORT, CLIP_BORDER_RADIUS, CACHE_CAPACITY
-			);
-		}
-	}
-
-	public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-		return StyleableProperties.cssMetaDataList;
-	}
-
-	@Override
-	protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
-		return getClassCssMetaData();
-	}
-
-	//================================================================================
-	// Getters/Setters
-	//================================================================================
-
-	/**
-	 * @return the cache instance used by this container
-	 */
-	protected VFXCellsCache<T, C> getCache() {
-		return cache;
-	}
-
-	/**
-	 * Delegate for {@link VFXCellsCache#size()}.
-	 */
-	public int cacheSize() {
-		return cache.size();
-	}
-
-	@Override
-	public ListProperty<T> itemsProperty() {
-		return items;
-	}
-
-	@Override
-	public CellFactory<T, C> getCellFactory() {
-		return cellFactory;
-	}
-
-	public VFXListHelper<T, C> getHelper() {
-		return helper.get();
-	}
-
-	/**
-	 * Specifies the instance of the {@link VFXListHelper} built by the {@link #helperFactoryProperty()}.
-	 */
-	public ReadOnlyObjectProperty<VFXListHelper<T, C>> helperProperty() {
-		return helper.getReadOnlyProperty();
-	}
-
-	protected void setHelper(VFXListHelper<T, C> helper) {
-		this.helper.set(helper);
-	}
-
-	public Function<Orientation, VFXListHelper<T, C>> getHelperFactory() {
-		return helperFactory.get();
-	}
-
-	/**
-	 * Specifies the function used to build a {@link VFXListHelper} instance depending on the container's orientation.
-	 */
-	public FunctionProperty<Orientation, VFXListHelper<T, C>> helperFactoryProperty() {
-		return helperFactory;
-	}
-
-	public void setHelperFactory(Function<Orientation, VFXListHelper<T, C>> helperFactory) {
-		this.helperFactory.set(helperFactory);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p></p>
-	 * In case the orientation is set to {@link Orientation#VERTICAL}, this is to be considered a 'virtual' position,
-	 * as the container will never reach unreasonably high values for performance reasons.
-	 * See {@link VFXListHelper.VerticalHelper} to understand how virtual scroll is handled.
-	 */
-	@Override
-	public DoubleProperty vPosProperty() {
-		return vPos;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p></p>
-	 * In case the orientation is set to {@link Orientation#HORIZONTAL}, this is to be considered a 'virtual' position,
-	 * as the container will never reach unreasonably high values for performance reasons.
-	 * See {@link VFXListHelper.HorizontalHelper} to understand how virtual scroll is handled.
-	 */
-	@Override
-	public DoubleProperty hPosProperty() {
-		return hPos;
-	}
-
-	public VFXListState<T, C> getState() {
-		return state.get();
-	}
-
-	/**
-	 * Specifies the container's current state. The state carries useful information such as the range of displayed items
-	 * and the cells ordered by index, or by item (not ordered).
-	 */
-	public ReadOnlyObjectProperty<VFXListState<T, C>> stateProperty() {
-		return state.getReadOnlyProperty();
-	}
-
-	protected void setState(VFXListState<T, C> state) {
-		this.state.set(state);
-	}
-
-	public boolean isNeedsViewportLayout() {
-		return needsViewportLayout.get();
-	}
-
-	/**
-	 * Specifies whether the viewport needs to compute the layout of its content.
-	 * <p>
-	 * Since this is read-only, layout requests must be sent by using {@link #requestViewportLayout()}.
-	 */
-	public ReadOnlyBooleanProperty needsViewportLayoutProperty() {
-		return needsViewportLayout.getReadOnlyProperty();
-	}
-
-	protected void setNeedsViewportLayout(boolean needsViewportLayout) {
-		this.needsViewportLayout.set(needsViewportLayout);
-	}
+    // Delegate Methods
+    //================================================================================
+
+    /**
+     * Delegate for {@link VFXCellsCache#populate()}.
+     */
+    public VFXList<T, C> populateCache() {
+        cache.populate();
+        return this;
+    }
+
+    /**
+     * Delegate for {@link VFXListState#getRange()}
+     */
+    public IntegerRange getRange() {
+        return getState().getRange();
+    }
+
+    /**
+     * Delegate for {@link VFXListState#getCellsByIndexUnmodifiable()}
+     */
+    public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {
+        return getState().getCellsByIndexUnmodifiable();
+    }
+
+    /**
+     * Delegate for {@link VFXListState#getCellsByItemUnmodifiable()}
+     */
+    public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
+        return getState().getCellsByItemUnmodifiable();
+    }
+
+    /**
+     * Delegate for {@link VFXListHelper#virtualMaxXProperty()}
+     */
+    @Override
+    public ReadOnlyDoubleProperty virtualMaxXProperty() {
+        return getHelper().virtualMaxXProperty();
+    }
+
+    /**
+     * Delegate for {@link VFXListHelper#virtualMaxYProperty()}
+     */
+    @Override
+    public ReadOnlyDoubleProperty virtualMaxYProperty() {
+        return getHelper().virtualMaxYProperty();
+    }
+
+    /**
+     * Delegate for {@link VFXListHelper#maxVScrollProperty()}.
+     */
+    @Override
+    public ReadOnlyDoubleProperty maxVScrollProperty() {
+        return getHelper().maxVScrollProperty();
+    }
+
+    /**
+     * Delegate for {@link VFXListHelper#maxHScrollProperty()}.
+     */
+    @Override
+    public ReadOnlyDoubleProperty maxHScrollProperty() {
+        return getHelper().maxHScrollProperty();
+    }
+
+    /**
+     * Delegate for {@link VFXListHelper#scrollBy(double)}.
+     */
+    public void scrollBy(double pixels) {
+        getHelper().scrollBy(pixels);
+    }
+
+    /**
+     * Delegate for {@link VFXListHelper#scrollToPixel(double)}.
+     */
+    public void scrollToPixel(double pixel) {
+        getHelper().scrollToPixel(pixel);
+    }
+
+    /**
+     * Delegate for {@link VFXListHelper#scrollToIndex(int)}.
+     */
+    public void scrollToIndex(int index) {
+        getHelper().scrollToIndex(index);
+    }
+
+    /**
+     * Shortcut for {@code scrollToIndex(0)}.
+     */
+    public void scrollToFirst() {
+        scrollToIndex(0);
+    }
+
+    /**
+     * Shortcut for {@code scrollToIndex(size() - 1)}.
+     */
+    public void scrollToLast() {
+        scrollToIndex(size() - 1);
+    }
+
+    //================================================================================
+    // Styleable Properties
+    //================================================================================
+    private final StyleableDoubleProperty cellSize = new StyleableDoubleProperty(
+        StyleableProperties.CELL_SIZE,
+        this,
+        "cellSize",
+        32.0
+    );
+
+    private final StyleableDoubleProperty spacing = new StyleableDoubleProperty(
+        StyleableProperties.SPACING,
+        this,
+        "spacing",
+        0.0
+    );
+
+    private final StyleableObjectProperty<BufferSize> bufferSize = new StyleableObjectProperty<>(
+        StyleableProperties.BUFFER_SIZE,
+        this,
+        "bufferSize",
+        BufferSize.standard()
+    );
+
+    private final StyleableObjectProperty<Orientation> orientation = new StyleableObjectProperty<>(
+        StyleableProperties.ORIENTATION,
+        this,
+        "orientation"
+    ) {
+        @Override
+        protected void invalidated() {
+            Orientation orientation = get();
+            VFXListHelper<T, C> helper = getHelperFactory().apply(orientation);
+            setHelper(helper);
+        }
+    };
+
+    private final StyleableBooleanProperty fitToViewport = new StyleableBooleanProperty(
+        StyleableProperties.FIT_TO_VIEWPORT,
+        this,
+        "fitToViewport",
+        true
+    );
+
+    private final StyleableDoubleProperty clipBorderRadius = new StyleableDoubleProperty(
+        StyleableProperties.CLIP_BORDER_RADIUS,
+        this,
+        "clipBorderRadius",
+        0.0
+    );
+
+    private final StyleableIntegerProperty cacheCapacity = new StyleableIntegerProperty(
+        StyleableProperties.CACHE_CAPACITY,
+        this,
+        "cacheCapacity",
+        10
+    ) {
+        @Override
+        protected void invalidated() {
+            cache.setCapacity(get());
+        }
+    };
+
+    public double getCellSize() {
+        return cellSize.get();
+    }
+
+    /**
+     * Specifies the cells' size:
+     * <p> - Orientation.VERTICAL: size -> height
+     * <p> - Orientation.HORIZONTAL: size -> width
+     * <p>
+     * Can be set in CSS via the property: '-vfx-cell-size'.
+     */
+    public StyleableDoubleProperty cellSizeProperty() {
+        return cellSize;
+    }
+
+    public void setCellSize(double cellSize) {
+        this.cellSize.set(cellSize);
+    }
+
+    public double getSpacing() {
+        return spacing.get();
+    }
+
+    /**
+     * Specifies the number of pixels between each cell.
+     * <p>
+     * Can be set in CSS via the property: '-vfx-spacing'
+     */
+    public StyleableDoubleProperty spacingProperty() {
+        return spacing;
+    }
+
+    public void setSpacing(double spacing) {
+        this.spacing.set(spacing);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * Also, the default implementation (see {@link VFXListHelper.VerticalHelper} or {@link VFXListHelper.HorizontalHelper}), adds
+     * double the number specified by the enum constant, because these buffer cells are added both at the top and at the
+     * bottom of the container. The default value is {@link BufferSize#MEDIUM}.
+     * <p>
+     * Can be set in CSS via the property: '-vfx-buffer-size'.
+     */
+    @Override
+    public StyleableObjectProperty<BufferSize> bufferSizeProperty() {
+        return bufferSize;
+    }
+
+    public Orientation getOrientation() {
+        return orientation.get();
+    }
+
+    /**
+     * Specifies the orientation of the container.
+     * <p>
+     * Can be set in CSS via the property: '-vfx-orientation'.
+     */
+    public StyleableObjectProperty<Orientation> orientationProperty() {
+        return orientation;
+    }
+
+    public void setOrientation(Orientation orientation) {
+        this.orientation.set(orientation);
+    }
+
+    public boolean isFitToViewport() {
+        return fitToViewport.get();
+    }
+
+    /**
+     * Specifies whether cells should be resized to be the same size of the viewport in the opposite
+     * direction of the current {@link #orientationProperty()}.
+     * <p>
+     * Can be set in CSS via the property: '-vfx-fit-to-viewport'.
+     */
+    public StyleableBooleanProperty fitToViewportProperty() {
+        return fitToViewport;
+    }
+
+    public void setFitToViewport(boolean fitToViewport) {
+        this.fitToViewport.set(fitToViewport);
+    }
+
+    public double getClipBorderRadius() {
+        return clipBorderRadius.get();
+    }
+
+    /**
+     * Used by the viewport's clip to set its border radius.
+     * This is useful when you want to make a rounded container, this
+     * prevents the content from going outside the view.
+     * <p></p>
+     * <b>Side note:</b> the clip is a {@link Rectangle}, now for some fucking reason,
+     * the rectangle's arcWidth and arcHeight values used to make it round do not act like the border-radius
+     * or background-radius properties, instead their value is usually 2 / 2.5 times the latter.
+     * So, for a border radius of 5, you want this value to be at least 10/13.
+     * <p>
+     * Can be set in CSS via the property: '-vfx-clip-border-radius'.
+     */
+    public StyleableDoubleProperty clipBorderRadiusProperty() {
+        return clipBorderRadius;
+    }
+
+    public void setClipBorderRadius(double clipBorderRadius) {
+        this.clipBorderRadius.set(clipBorderRadius);
+    }
+
+    public int getCacheCapacity() {
+        return cacheCapacity.get();
+    }
+
+    /**
+     * Specifies the maximum number of cells the cache can contain at any time. Excess will not be added to the queue and
+     * disposed immediately.
+     * <p>
+     * Can be set in CSS via the property: '-vfx-cache-capacity'.
+     */
+    public StyleableIntegerProperty cacheCapacityProperty() {
+        return cacheCapacity;
+    }
+
+    public void setCacheCapacity(int cacheCapacity) {
+        this.cacheCapacity.set(cacheCapacity);
+    }
+
+    //================================================================================
+    // CssMetaData
+    //================================================================================
+    private static class StyleableProperties {
+        private static final StyleablePropertyFactory<VFXList<?, ?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+        private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
+
+        private static final CssMetaData<VFXList<?, ?>, Number> CELL_SIZE =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-cell-size",
+                VFXList::cellSizeProperty,
+                32.0
+            );
+
+        private static final CssMetaData<VFXList<?, ?>, Number> SPACING =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-spacing",
+                VFXList::spacingProperty,
+                0.0
+            );
+
+        private static final CssMetaData<VFXList<?, ?>, BufferSize> BUFFER_SIZE =
+            FACTORY.createEnumCssMetaData(
+                BufferSize.class,
+                "-vfx-buffer-size",
+                VFXList::bufferSizeProperty,
+                BufferSize.standard()
+            );
+
+        private static final CssMetaData<VFXList<?, ?>, Orientation> ORIENTATION =
+            FACTORY.createEnumCssMetaData(
+                Orientation.class,
+                "-vfx-orientation",
+                VFXList::orientationProperty,
+                Orientation.VERTICAL
+            );
+
+        private static final CssMetaData<VFXList<?, ?>, Boolean> FIT_TO_VIEWPORT =
+            FACTORY.createBooleanCssMetaData(
+                "-vfx-fit-to-viewport",
+                VFXList::fitToViewportProperty,
+                true
+            );
+
+        private static final CssMetaData<VFXList<?, ?>, Number> CLIP_BORDER_RADIUS =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-clip-border-radius",
+                VFXList::clipBorderRadiusProperty,
+                0.0
+            );
+
+        private static final CssMetaData<VFXList<?, ?>, Number> CACHE_CAPACITY =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-cache-capacity",
+                VFXList::cacheCapacityProperty,
+                10
+            );
+
+        static {
+            cssMetaDataList = StyleUtils.cssMetaDataList(
+                Control.getClassCssMetaData(),
+                CELL_SIZE, SPACING, BUFFER_SIZE, ORIENTATION, FIT_TO_VIEWPORT, CLIP_BORDER_RADIUS, CACHE_CAPACITY
+            );
+        }
+    }
+
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.cssMetaDataList;
+    }
+
+    @Override
+    protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
+    }
+
+    //================================================================================
+    // Getters/Setters
+    //================================================================================
+
+    /**
+     * @return the cache instance used by this container
+     */
+    protected VFXCellsCache<T, C> getCache() {
+        return cache;
+    }
+
+    /**
+     * Delegate for {@link VFXCellsCache#size()}.
+     */
+    public int cacheSize() {
+        return cache.size();
+    }
+
+    @Override
+    public ListProperty<T> itemsProperty() {
+        return items;
+    }
+
+    @Override
+    public CellFactory<T, C> getCellFactory() {
+        return cellFactory;
+    }
+
+    public VFXListHelper<T, C> getHelper() {
+        return helper.get();
+    }
+
+    /**
+     * Specifies the instance of the {@link VFXListHelper} built by the {@link #helperFactoryProperty()}.
+     */
+    public ReadOnlyObjectProperty<VFXListHelper<T, C>> helperProperty() {
+        return helper.getReadOnlyProperty();
+    }
+
+    protected void setHelper(VFXListHelper<T, C> helper) {
+        this.helper.set(helper);
+    }
+
+    public Function<Orientation, VFXListHelper<T, C>> getHelperFactory() {
+        return helperFactory.get();
+    }
+
+    /**
+     * Specifies the function used to build a {@link VFXListHelper} instance depending on the container's orientation.
+     */
+    public FunctionProperty<Orientation, VFXListHelper<T, C>> helperFactoryProperty() {
+        return helperFactory;
+    }
+
+    public void setHelperFactory(Function<Orientation, VFXListHelper<T, C>> helperFactory) {
+        this.helperFactory.set(helperFactory);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * In case the orientation is set to {@link Orientation#VERTICAL}, this is to be considered a 'virtual' position,
+     * as the container will never reach unreasonably high values for performance reasons.
+     * See {@link VFXListHelper.VerticalHelper} to understand how virtual scroll is handled.
+     */
+    @Override
+    public DoubleProperty vPosProperty() {
+        return vPos;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p></p>
+     * In case the orientation is set to {@link Orientation#HORIZONTAL}, this is to be considered a 'virtual' position,
+     * as the container will never reach unreasonably high values for performance reasons.
+     * See {@link VFXListHelper.HorizontalHelper} to understand how virtual scroll is handled.
+     */
+    @Override
+    public DoubleProperty hPosProperty() {
+        return hPos;
+    }
+
+    public VFXListState<T, C> getState() {
+        return state.get();
+    }
+
+    /**
+     * Specifies the container's current state. The state carries useful information such as the range of displayed items
+     * and the cells ordered by index, or by item (not ordered).
+     */
+    public ReadOnlyObjectProperty<VFXListState<T, C>> stateProperty() {
+        return state.getReadOnlyProperty();
+    }
+
+    protected void setState(VFXListState<T, C> state) {
+        this.state.set(state);
+    }
+
+    public boolean isNeedsViewportLayout() {
+        return needsViewportLayout.get();
+    }
+
+    /**
+     * Specifies whether the viewport needs to compute the layout of its content.
+     * <p>
+     * Since this is read-only, layout requests must be sent by using {@link #requestViewportLayout()}.
+     */
+    public ReadOnlyBooleanProperty needsViewportLayoutProperty() {
+        return needsViewportLayout.getReadOnlyProperty();
+    }
+
+    protected void setNeedsViewportLayout(boolean needsViewportLayout) {
+        this.needsViewportLayout.set(needsViewportLayout);
+    }
 }

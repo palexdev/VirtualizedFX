@@ -55,31 +55,31 @@ import java.util.function.Function;
  */
 public interface VFXMappingTableCell<T, E> extends VFXTableCell<T> {
 
-	/**
-	 * @return the function used to extract a value {@link E} from an item {@link T}
-	 */
-	Function<T, E> getExtractor();
+    /**
+     * @return the function used to extract a value {@link E} from an item {@link T}
+     */
+    Function<T, E> getExtractor();
 
-	/**
-	 * Sets the function used to extract a value {@link E} from an item {@link T}
-	 */
-	VFXMappingTableCell<T, E> setExtractor(Function<T, E> extractor);
+    /**
+     * Sets the function used to extract a value {@link E} from an item {@link T}
+     */
+    VFXMappingTableCell<T, E> setExtractor(Function<T, E> extractor);
 
-	/**
-	 * @return the {@link StringConverter} used to convert an extracted value {@link E} to a {@code String}
-	 */
-	StringConverter<E> getConverter();
+    /**
+     * @return the {@link StringConverter} used to convert an extracted value {@link E} to a {@code String}
+     */
+    StringConverter<E> getConverter();
 
-	/**
-	 * Sets the {@link StringConverter} used to convert an extracted value {@link E} to a {@code String}
-	 */
-	VFXMappingTableCell<T, E> setConverter(StringConverter<E> converter);
+    /**
+     * Sets the {@link StringConverter} used to convert an extracted value {@link E} to a {@code String}
+     */
+    VFXMappingTableCell<T, E> setConverter(StringConverter<E> converter);
 
-	/**
-	 * Allows easily setting a {@link StringConverter} for the cell by just giving a {@link Function} as parameter,
-	 * makes use of {@link FunctionalStringConverter#to(Function)}.
-	 */
-	default VFXMappingTableCell<T, E> setConverter(Function<E, String> fn) {
-		return setConverter(FunctionalStringConverter.to(fn));
-	}
+    /**
+     * Allows easily setting a {@link StringConverter} for the cell by just giving a {@link Function} as parameter,
+     * makes use of {@link FunctionalStringConverter#to(Function)}.
+     */
+    default VFXMappingTableCell<T, E> setConverter(Function<E, String> fn) {
+        return setConverter(FunctionalStringConverter.to(fn));
+    }
 }

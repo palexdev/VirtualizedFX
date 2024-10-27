@@ -25,9 +25,9 @@ import java.util.List;
  */
 public interface VFXStyleable {
 
-	/**
-	 * @return a list containing all the component's default style classes
-	 */
-	List<String> defaultStyleClasses();
+    /**
+     * @return a list containing all the component's default style classes
+     */
+    List<String> defaultStyleClasses();
 
 }

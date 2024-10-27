@@ -27,20 +27,20 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
  */
 public class VFXGridStateProperty<T, C extends VFXCell<T>> extends ReadOnlyObjectWrapper<VFXGridState<T, C>> {
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXGridStateProperty() {}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXGridStateProperty() {}
 
-	public VFXGridStateProperty(VFXGridState<T, C> initialValue) {
-		super(initialValue);
-	}
+    public VFXGridStateProperty(VFXGridState<T, C> initialValue) {
+        super(initialValue);
+    }
 
-	public VFXGridStateProperty(Object bean, String name) {
-		super(bean, name);
-	}
+    public VFXGridStateProperty(Object bean, String name) {
+        super(bean, name);
+    }
 
-	public VFXGridStateProperty(Object bean, String name, VFXGridState<T, C> initialValue) {
-		super(bean, name, initialValue);
-	}
+    public VFXGridStateProperty(Object bean, String name, VFXGridState<T, C> initialValue) {
+        super(bean, name, initialValue);
+    }
 }

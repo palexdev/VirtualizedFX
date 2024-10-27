@@ -48,136 +48,136 @@ import java.util.function.Function;
  * {@link VFXLabeledCellSkin#update()} method and make use of the converter.
  */
 public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappingTableCell<T, E> {
-	//================================================================================
-	// Properties
-	//================================================================================
-	private final ReadOnlyObjectWrapper<VFXTableColumn<T, ? extends VFXTableCell<T>>> column = new ReadOnlyObjectWrapper<>();
-	private final ReadOnlyObjectWrapper<VFXTableRow<T>> row = new ReadOnlyObjectWrapper<>();
-	private Function<T, E> extractor;
-	private StringConverter<E> converter;
+    //================================================================================
+    // Properties
+    //================================================================================
+    private final ReadOnlyObjectWrapper<VFXTableColumn<T, ? extends VFXTableCell<T>>> column = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<VFXTableRow<T>> row = new ReadOnlyObjectWrapper<>();
+    private Function<T, E> extractor;
+    private StringConverter<E> converter;
 
-	//================================================================================
-	// Constructors
-	//================================================================================
-	public VFXSimpleTableCell(T item, Function<T, E> extractor) {
-		this(item, extractor, FunctionalStringConverter.to(t -> (t == null) ? "" : t.toString()));
-	}
+    //================================================================================
+    // Constructors
+    //================================================================================
+    public VFXSimpleTableCell(T item, Function<T, E> extractor) {
+        this(item, extractor, FunctionalStringConverter.to(t -> (t == null) ? "" : t.toString()));
+    }
 
-	public VFXSimpleTableCell(T item, Function<T, E> extractor, StringConverter<E> converter) {
-		super(item);
-		this.extractor = extractor;
-		this.converter = converter;
-	}
+    public VFXSimpleTableCell(T item, Function<T, E> extractor, StringConverter<E> converter) {
+        super(item);
+        this.extractor = extractor;
+        this.converter = converter;
+    }
 
-	//================================================================================
-	// Delegate Methods
-	//================================================================================
+    //================================================================================
+    // Delegate Methods
+    //================================================================================
 
-	/**
-	 * @return the {@link VFXTable} instance by using the {@link #rowProperty()}. {@code Null} if the row instance has
-	 * not been set yet.
-	 */
-	public VFXTable<T> getTable() {
-		return Optional.ofNullable(getRow())
-			.map(VFXTableRow::getTable)
-			.orElse(null);
-	}
+    /**
+     * @return the {@link VFXTable} instance by using the {@link #rowProperty()}. {@code Null} if the row instance has
+     * not been set yet.
+     */
+    public VFXTable<T> getTable() {
+        return Optional.ofNullable(getRow())
+            .map(VFXTableRow::getTable)
+            .orElse(null);
+    }
 
-	/**
-	 * @return the index of the row containing this cell by using the {@link #rowProperty()}. -1 if the row instance has
-	 * not been set yet.
-	 */
-	public int getRowIndex() {
-		return Optional.ofNullable(getRow())
-			.map(VFXTableRow::getIndex)
-			.orElse(-1);
-	}
+    /**
+     * @return the index of the row containing this cell by using the {@link #rowProperty()}. -1 if the row instance has
+     * not been set yet.
+     */
+    public int getRowIndex() {
+        return Optional.ofNullable(getRow())
+            .map(VFXTableRow::getIndex)
+            .orElse(-1);
+    }
 
-	//================================================================================
-	// Overridden Methods
-	//================================================================================
-	@Override
-	protected SkinBase<?, ?> buildSkin() {
-		return new VFXLabeledCellSkin<>(this) {
-			@Override
-			protected void update() {
-				T item = getItem();
-				E e = extractor.apply(item);
-				String s = converter.toString(e);
-				label.setText(s);
-			}
-		};
-	}
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+    @Override
+    protected SkinBase<?, ?> buildSkin() {
+        return new VFXLabeledCellSkin<>(this) {
+            @Override
+            protected void update() {
+                T item = getItem();
+                E e = extractor.apply(item);
+                String s = converter.toString(e);
+                label.setText(s);
+            }
+        };
+    }
 
-	@Override
-	public List<String> defaultStyleClasses() {
-		return List.of("cell-base", "table-cell");
-	}
+    @Override
+    public List<String> defaultStyleClasses() {
+        return List.of("cell-base", "table-cell");
+    }
 
-	@Override
-	public void updateColumn(VFXTableColumn<T, ? extends VFXTableCell<T>> column) {
-		setColumn(column);
-	}
+    @Override
+    public void updateColumn(VFXTableColumn<T, ? extends VFXTableCell<T>> column) {
+        setColumn(column);
+    }
 
-	@Override
-	public void updateRow(VFXTableRow<T> row) {
-		setRow(row);
-	}
+    @Override
+    public void updateRow(VFXTableRow<T> row) {
+        setRow(row);
+    }
 
-	//================================================================================
-	// Getters/Setters
-	//================================================================================
-	public VFXTableColumn<T, ? extends VFXTableCell<T>> getColumn() {
-		return column.get();
-	}
+    //================================================================================
+    // Getters/Setters
+    //================================================================================
+    public VFXTableColumn<T, ? extends VFXTableCell<T>> getColumn() {
+        return column.get();
+    }
 
-	/**
-	 * Specifies the instance of the column that created this cell.
-	 */
-	public ReadOnlyObjectProperty<VFXTableColumn<T, ? extends VFXTableCell<T>>> columnProperty() {
-		return column.getReadOnlyProperty();
-	}
+    /**
+     * Specifies the instance of the column that created this cell.
+     */
+    public ReadOnlyObjectProperty<VFXTableColumn<T, ? extends VFXTableCell<T>>> columnProperty() {
+        return column.getReadOnlyProperty();
+    }
 
-	protected void setColumn(VFXTableColumn<T, ? extends VFXTableCell<T>> column) {
-		this.column.set(column);
-	}
+    protected void setColumn(VFXTableColumn<T, ? extends VFXTableCell<T>> column) {
+        this.column.set(column);
+    }
 
-	public VFXTableRow<T> getRow() {
-		return row.get();
-	}
+    public VFXTableRow<T> getRow() {
+        return row.get();
+    }
 
-	/**
-	 * Specifies the instance of the row that contains this cell.
-	 */
-	public ReadOnlyObjectProperty<VFXTableRow<T>> rowProperty() {
-		return row.getReadOnlyProperty();
-	}
+    /**
+     * Specifies the instance of the row that contains this cell.
+     */
+    public ReadOnlyObjectProperty<VFXTableRow<T>> rowProperty() {
+        return row.getReadOnlyProperty();
+    }
 
-	protected void setRow(VFXTableRow<T> row) {
-		this.row.set(row);
-	}
+    protected void setRow(VFXTableRow<T> row) {
+        this.row.set(row);
+    }
 
 
-	@Override
-	public Function<T, E> getExtractor() {
-		return extractor;
-	}
+    @Override
+    public Function<T, E> getExtractor() {
+        return extractor;
+    }
 
-	@Override
-	public VFXSimpleTableCell<T, E> setExtractor(Function<T, E> extractor) {
-		this.extractor = extractor;
-		return this;
-	}
+    @Override
+    public VFXSimpleTableCell<T, E> setExtractor(Function<T, E> extractor) {
+        this.extractor = extractor;
+        return this;
+    }
 
-	@Override
-	public StringConverter<E> getConverter() {
-		return converter;
-	}
+    @Override
+    public StringConverter<E> getConverter() {
+        return converter;
+    }
 
-	@Override
-	public VFXSimpleTableCell<T, E> setConverter(StringConverter<E> converter) {
-		this.converter = converter;
-		return this;
-	}
+    @Override
+    public VFXSimpleTableCell<T, E> setConverter(StringConverter<E> converter) {
+        this.converter = converter;
+        return this;
+    }
 
 }

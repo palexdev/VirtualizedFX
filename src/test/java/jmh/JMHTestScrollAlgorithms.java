@@ -39,76 +39,76 @@ import static io.github.palexdev.virtualizedfx.utils.Utils.intersection;
 
 @SuppressWarnings("NewClassNamingConvention")
 public class JMHTestScrollAlgorithms {
-	private static final List<Integer> items = Utils.items(100);
-	private static final IntegerRange lastRange = IntegerRange.of(20, 49);
-	private static final IntegerRange newRange = new IntegerRange(25, 54);
-	private static final MockState oldState = MockState.generate(lastRange);
+    private static final List<Integer> items = Utils.items(100);
+    private static final IntegerRange lastRange = IntegerRange.of(20, 49);
+    private static final IntegerRange newRange = new IntegerRange(25, 54);
+    private static final MockState oldState = MockState.generate(lastRange);
 
-	@Test
-	void runBenchmarks() throws Exception {
-		Options opt = new OptionsBuilder()
-			.include(this.getClass().getName() + ".*")
-			.mode(Mode.Throughput)
-			.warmupTime(TimeValue.seconds(1))
-			.warmupIterations(6)
-			.threads(1)
-			.measurementIterations(6)
-			.forks(1)
-			.shouldFailOnError(true)
-			.shouldDoGC(true)
-			.build();
-		new Runner(opt).run();
-	}
+    @Test
+    void runBenchmarks() throws Exception {
+        Options opt = new OptionsBuilder()
+            .include(this.getClass().getName() + ".*")
+            .mode(Mode.Throughput)
+            .warmupTime(TimeValue.seconds(1))
+            .warmupIterations(6)
+            .threads(1)
+            .measurementIterations(6)
+            .forks(1)
+            .shouldFailOnError(true)
+            .shouldDoGC(true)
+            .build();
+        new Runner(opt).run();
+    }
 
-	@Benchmark
-	@OutputTimeUnit(TimeUnit.MILLISECONDS)
-	public void classicAlgorithm() {
-		MockState newState = new MockState(newRange);
-		Deque<Integer> needed = new ArrayDeque<>();
-		for (Integer index : newRange) {
-			MockCell common = oldState.removeCell(index);
-			if (common != null) {
-				newState.addCell(index, common);
-				continue;
-			}
-			needed.add(index);
-		}
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void classicAlgorithm() {
+        MockState newState = new MockState(newRange);
+        Deque<Integer> needed = new ArrayDeque<>();
+        for (Integer index : newRange) {
+            MockCell common = oldState.removeCell(index);
+            if (common != null) {
+                newState.addCell(index, common);
+                continue;
+            }
+            needed.add(index);
+        }
 
-		Iterator<MockCell> it = oldState.cells.values().iterator();
-		while (it.hasNext()) {
-			int idx = needed.removeFirst();
-			MockCell c = it.next();
-			c.updateIndex(idx);
-			c.updateItem(items.get(idx));
-			newState.addCell(idx, c);
-			it.remove();
-		}
-	}
+        Iterator<MockCell> it = oldState.cells.values().iterator();
+        while (it.hasNext()) {
+            int idx = needed.removeFirst();
+            MockCell c = it.next();
+            c.updateIndex(idx);
+            c.updateItem(items.get(idx));
+            newState.addCell(idx, c);
+            it.remove();
+        }
+    }
 
-	@Benchmark
-	@OutputTimeUnit(TimeUnit.MILLISECONDS)
-	public void alternativeAlgorithm() {
-		Set<Integer> expandedRange = IntegerRange.expandRangeToSet(newRange);
-		IntegerRange intersection = intersection(lastRange, newRange);
-		MockState newState = new MockState(newRange);
-		if (!INVALID_RANGE.equals(intersection))
-			for (Integer index : intersection) {
-				newState.addCell(index, oldState.removeCell(index));
-				expandedRange.remove(index);
-			}
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void alternativeAlgorithm() {
+        Set<Integer> expandedRange = IntegerRange.expandRangeToSet(newRange);
+        IntegerRange intersection = intersection(lastRange, newRange);
+        MockState newState = new MockState(newRange);
+        if (!INVALID_RANGE.equals(intersection))
+            for (Integer index : intersection) {
+                newState.addCell(index, oldState.removeCell(index));
+                expandedRange.remove(index);
+            }
 
-		for (Integer index : expandedRange) {
-			Integer item = items.get(index);
-			MockCell c;
-			if (!oldState.cells.isEmpty()) {
-				c = oldState.cells.pollFirstEntry().getValue();
-				c.updateIndex(index);
-				c.updateItem(item);
-			} else {
-				c = new MockCell(index);
-				c.updateIndex(index);
-			}
-			newState.addCell(index, c);
-		}
-	}
+        for (Integer index : expandedRange) {
+            Integer item = items.get(index);
+            MockCell c;
+            if (!oldState.cells.isEmpty()) {
+                c = oldState.cells.pollFirstEntry().getValue();
+                c.updateIndex(index);
+                c.updateItem(item);
+            } else {
+                c = new MockCell(index);
+                c.updateIndex(index);
+            }
+            newState.addCell(index, c);
+        }
+    }
 }
