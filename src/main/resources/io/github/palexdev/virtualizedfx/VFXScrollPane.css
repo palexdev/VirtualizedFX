@@ -23,6 +23,6 @@
 }
 
 .vfx-scroll-pane:compact {
-    -fx-vbar-padding: 10 7 14 0;
-    -fx-hbar-padding: 0 14 7 10;
+    -vfx-vbar-padding: 10 7 14 0;
+    -vfx-hbar-padding: 0 14 7 10;
 }
