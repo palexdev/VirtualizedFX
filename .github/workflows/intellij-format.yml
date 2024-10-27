@@ -1,0 +1,25 @@
+# GitHub Action for code formatting using IntelliJ IDEA
+
+name: IntelliJ Format
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache IDEA
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/work/_temp/_github_workflow/idea-cache
+          key: ${{ runner.os }}-idea-cache-v2
+      - uses: notdevcody/intellij-format-action@v2
+        with:
+          include-glob: '*.java'
+          style-settings-file: '.idea/codeStyles/Default.xml'
+          commit-message: ':art: Reformat code'
+          fail-on-changes: 'false'
