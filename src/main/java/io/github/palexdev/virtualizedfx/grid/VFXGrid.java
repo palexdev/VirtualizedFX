@@ -18,9 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
+import java.util.List;
+import java.util.Map;
+import java.util.SequencedMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
@@ -35,10 +40,12 @@ import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
+import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
+import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXGridStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.*;
@@ -50,12 +57,6 @@ import javafx.css.StyleableProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Pos;
 import javafx.scene.shape.Rectangle;
-
-import java.util.List;
-import java.util.Map;
-import java.util.SequencedMap;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Implementation of a virtualized container to show a list of items in a "2D" perspective.
@@ -131,7 +132,8 @@ import java.util.function.Supplier;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, C>> implements VFXContainer<T>, VFXStyleable, VFXScrollable {
+public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, C>>
+	implements VFXContainer<T>, WithCellFactory<T, C>, VFXStyleable, VFXScrollable {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -143,12 +145,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
 			super.set(newValue);
 		}
 	};
-	private final FunctionProperty<T, C> cellFactory = new FunctionProperty<>() {
-		@Override
-		protected void invalidated() {
-			cache.setCellFactory(get());
-		}
-	};
+	private final CellFactory<T, C> cellFactory = new CellFactory<>(this);
 	private final ReadOnlyObjectWrapper<VFXGridHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
 		@Override
 		public void set(VFXGridHelper<T, C> newValue) {
@@ -241,7 +238,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
 	 * @see #cacheCapacityProperty()
 	 */
 	protected VFXCellsCache<T, C> createCache() {
-		return new VFXCellsCache<>(null, getCacheCapacity());
+		return new VFXCellsCache<>(cellFactory, getCacheCapacity());
 	}
 
 	/**
@@ -773,23 +770,14 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
 	 * Also, despite the grid being a 2D container, we still use a 1D collection because it's much more easy and convenient
 	 * to use. Knowing the number of columns we want to divide the items by, it's enough to make the list act as a 2D collection.
 	 */
+	@Override
 	public ListProperty<T> itemsProperty() {
 		return items;
 	}
 
-	public Function<T, C> getCellFactory() {
-		return cellFactory.get();
-	}
-
-	/**
-	 * Specifies the function used to build the cells.
-	 */
-	public FunctionProperty<T, C> cellFactoryProperty() {
+	@Override
+	public CellFactory<T, C> getCellFactory() {
 		return cellFactory;
-	}
-
-	public void setCellFactory(Function<T, C> cellFactory) {
-		this.cellFactory.set(cellFactory);
 	}
 
 	public VFXGridHelper<T, C> getHelper() {

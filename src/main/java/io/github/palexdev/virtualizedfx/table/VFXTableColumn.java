@@ -18,15 +18,22 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
-import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.controls.Labeled;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
+import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
+import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
+import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXTableColumnBehavior;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -39,11 +46,6 @@ import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.scene.Node;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Base class that defines common properties and behaviors for all columns to be used with {@link VFXTable}.
@@ -88,19 +90,23 @@ import java.util.function.Supplier;
  * @param <T> the type of data in the table
  * @param <C> the type of cells this column will produce
  */
-public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Labeled<VFXTableColumnBehavior<T, C>> implements VFXStyleable {
+public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Labeled<VFXTableColumnBehavior<T, C>>
+	implements WithCellFactory<T, C>, VFXStyleable {
 	//================================================================================
 	// Properties
 	//================================================================================
 	private final VFXCellsCache<T, C> cache;
 	private final ReadOnlyObjectWrapper<VFXTable<T>> table = new ReadOnlyObjectWrapper<>();
 	private final ReadOnlyIntegerWrapper index = new ReadOnlyIntegerWrapper(-1);
-	private final FunctionProperty<T, C> cellFactory = new FunctionProperty<>(defaultCellFactory()) {
+	private final CellFactory<T, C> cellFactory = new CellFactory<>(null) {
 		@Override
-		protected void invalidated() {
-			Function<T, C> newFn = get();
-			cache.setCellFactory(newFn);
-			onCellFactoryChanged(newFn);
+		public VFXContainer<T> getOwner() {
+			return table.get();
+		}
+
+		@Override
+		protected void onInvalidated(Function<T, C> newFactory) {
+			onCellFactoryChanged(newFactory);
 		}
 	};
 
@@ -156,6 +162,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
 	// Methods
 	//================================================================================
 	private void initialize() {
+		setCellFactory(defaultCellFactory());
 		getStyleClass().setAll(defaultStyleClasses());
 		setDefaultBehaviorProvider();
 	}
@@ -178,7 +185,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
 	 * @see #cellsCacheCapacityProperty()
 	 */
 	protected VFXCellsCache<T, C> createCache() {
-		return new VFXCellsCache<>(getCellFactory(), getCellsCacheCapacity());
+		return new VFXCellsCache<>(cellFactory, getCellsCacheCapacity());
 	}
 
 	/**
@@ -392,19 +399,12 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
 		this.index.set(index);
 	}
 
-	public Function<T, C> getCellFactory() {
-		return cellFactory.get();
-	}
-
 	/**
 	 * Specifies the function used to build the cells.
 	 * See also {@link #defaultCellFactory()}.
 	 */
-	public FunctionProperty<T, C> cellFactoryProperty() {
+	@Override
+	public CellFactory<T, C> getCellFactory() {
 		return cellFactory;
-	}
-
-	public void setCellFactory(Function<T, C> cellFactory) {
-		this.cellFactory.set(cellFactory);
 	}
 }

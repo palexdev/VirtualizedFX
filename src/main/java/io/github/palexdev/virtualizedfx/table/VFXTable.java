@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
@@ -41,6 +45,7 @@ import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.grid.VFXGrid;
 import io.github.palexdev.virtualizedfx.list.VFXList;
+import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXTableStateProperty;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.FixedTableHelper;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
@@ -56,10 +61,6 @@ import javafx.css.StyleableProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
 import javafx.scene.shape.Rectangle;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Implementation of a virtualized container to show a list of items as tabular data.
@@ -209,23 +210,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 			super.set(newValue);
 		}
 	};
-	private final FunctionProperty<T, VFXTableRow<T>> rowFactory = new FunctionProperty<>() {
-		@Override
-		public void set(Function<T, VFXTableRow<T>> newValue) {
-			if (newValue != null) {
-				newValue = newValue.andThen(r -> {
-					r.setTable(VFXTable.this);
-					return r;
-				});
-			}
-			super.set(newValue);
-		}
-
-		@Override
-		protected void invalidated() {
-			cache.setCellFactory(get());
-		}
-	};
+	private final CellFactory<T, VFXTableRow<T>> rowFactory = new CellFactory<>(this);
 	private final ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = FXCollections.observableArrayList();
 	private final ReadOnlyObjectWrapper<VFXTableHelper<T>> helper = new ReadOnlyObjectWrapper<>() {
 		@Override
@@ -372,7 +357,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 	 * @see #rowsCacheCapacityProperty()
 	 */
 	protected VFXCellsCache<T, VFXTableRow<T>> createCache() {
-		return new VFXCellsCache<>(null, getRowsCacheCapacity());
+		return new VFXCellsCache<>(rowFactory, getRowsCacheCapacity());
 	}
 
 	/**
@@ -994,19 +979,19 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 	}
 
 	public Function<T, VFXTableRow<T>> getRowFactory() {
-		return rowFactory.get();
+		return rowFactory.getValue();
 	}
 
 	/**
 	 * Specifies the function used to build the table's rows.
 	 * See also {@link #defaultRowFactory()}.
 	 */
-	public FunctionProperty<T, VFXTableRow<T>> rowFactoryProperty() {
+	public CellFactory<T, VFXTableRow<T>> rowFactoryProperty() {
 		return rowFactory;
 	}
 
 	public void setRowFactory(Function<T, VFXTableRow<T>> rowFactory) {
-		this.rowFactory.set(rowFactory);
+		this.rowFactory.setValue(rowFactory);
 	}
 
 	/**

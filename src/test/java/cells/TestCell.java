@@ -43,6 +43,7 @@ public class TestCell<T> extends VFXSimpleCell<T> {
 	@Override
 	public void dispose() {
 		counter.disposed();
+		super.dispose();
 	}
 
 	@Override

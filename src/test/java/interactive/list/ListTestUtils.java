@@ -18,6 +18,9 @@
 
 package interactive.list;
 
+import java.util.Map;
+import java.util.function.Function;
+
 import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -35,9 +38,6 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import org.opentest4j.AssertionFailedError;
 
-import java.util.Map;
-import java.util.function.Function;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static utils.TestFXUtils.counter;
@@ -54,6 +54,9 @@ public class ListTestUtils {
 	static void assertState(VFXList<Integer, VFXCell<Integer>> list, IntegerRange range) {
 		VFXListState<Integer, VFXCell<Integer>> state = list.getState();
 		VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
+
+		assertNotNull(list.getCellFactory().getOwner());
+
 		if (Utils.INVALID_RANGE.equals(range)) {
 			assertEquals(VFXListState.INVALID, state);
 			return;

@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
+import java.util.TreeMap;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
@@ -26,8 +28,6 @@ import javafx.beans.InvalidationListener;
 import javafx.geometry.Orientation;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
-
-import java.util.TreeMap;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
@@ -111,7 +111,7 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>
 	 * <p> - Listener on {@link VFXList#bufferSizeProperty()}, will invoke {@link VFXListManager#onGeometryChanged()}.
 	 * Yes, it is enough to threat this change as a geometry change to avoid code duplication
 	 * <p> - Listener on {@link VFXList#itemsProperty()}, will invoke {@link VFXListManager#onItemsChanged()}
-	 * <p> - Listener on {@link VFXList#cellFactoryProperty()}, will invoke {@link VFXListManager#onCellFactoryChanged()}
+	 * <p> - Listener on {@link VFXList#getCellFactory()}, will invoke {@link VFXListManager#onCellFactoryChanged()}
 	 * <p> - Listener on {@link VFXList#fitToViewportProperty()}, will invoke {@link VFXListManager#onFitToViewportChanged()}
 	 * <p> - Listener on {@link VFXList#cellSizeProperty()}, will invoke {@link VFXListManager#onCellSizeChanged()}
 	 * <p> - Listener on {@link VFXList#spacingProperty()}, will invoke {@link VFXListManager#onSpacingChanged()}
@@ -161,7 +161,7 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>
 				.then(it -> getBehavior().onItemsChanged()),
 			// DUDE! One thing cool in JavaFX, wow, I'm impressed. This invalidation listener will trigger when changes
 			// occur in the list, or the list itself is changed, impressive!
-			onInvalidated(list.cellFactoryProperty())
+			onInvalidated(list.getCellFactory())
 				.then(f -> getBehavior().onCellFactoryChanged()),
 			onInvalidated(list.fitToViewportProperty())
 				.then(b -> getBehavior().onFitToViewportChanged()),

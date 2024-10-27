@@ -18,17 +18,18 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
+import java.util.*;
+
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
-
-import java.util.*;
 
 /**
  * Default behavior implementation for {@link VFXList}. Although, to be precise, and as the name also suggests,
@@ -188,7 +189,7 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
 	}
 
 	/**
-	 * This method is responsible for updating the list's state when the {@link VFXList#cellFactoryProperty()} changes.
+	 * This method is responsible for updating the list's state when the {@link VFXList#getCellFactory()} changes.
 	 * Unfortunately, this is always a costly operation because all cells need to be re-created, and the
 	 * {@link VFXCellsCache} cleaned. In fact, the very first operation done by this method is exactly this,
 	 * the disposal of the current/old state and the cleaning of the cache.
@@ -433,7 +434,7 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
 	 * (The last operations are delegated to the {@link #remainingAlgorithm(ExcludingIntegerRange, VFXListState)}).
 	 *
 	 * @see VFXListHelper#indexToCell(int)
-	 * @see VFXList#cellFactoryProperty()
+	 * @see VFXList#getCellFactory()
 	 */
 	protected void moveReuseCreateAlgorithm(IntegerRange range, VFXListState<T, C> newState) {
 		VFXList<T, C> list = getNode();
@@ -507,7 +508,7 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
 	 * <p></p>
 	 * <p> - See {@link VFXListHelper#indexToCell(int)}: this handles the second and third cases. If a cell can
 	 * be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
-	 * {@link VFXList#cellFactoryProperty()} to create a new one
+	 * {@link VFXList#getCellFactory()} to create a new one
 	 */
 	protected void remainingAlgorithm(ExcludingIntegerRange eRange, VFXListState<T, C> newState) {
 		VFXList<T, C> list = getNode();
@@ -543,7 +544,7 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
 	 * current state is disposed, the 'invalidatingPos' flag is reset, finally returns false.
 	 * Otherwise, does nothing and returns true.
 	 * <p></p>
-	 * <p> - See {@link VFXList#cellFactoryProperty()}
+	 * <p> - See {@link CellFactory#canCreate()}
 	 * <p> - See {@link VFXList#cellSizeProperty()}
 	 * <p> - See {@link #disposeCurrent()}: for the current state disposal
 	 *
@@ -552,7 +553,7 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
 	@SuppressWarnings("unchecked")
 	protected boolean listFactorySizeCheck() {
 		VFXList<T, C> list = getNode();
-		if (list.isEmpty() || list.getCellFactory() == null || list.getCellSize() <= 0) {
+		if (list.isEmpty() || !list.getCellFactory().canCreate() || list.getCellSize() <= 0) {
 			disposeCurrent();
 			list.update(VFXListState.INVALID);
 			invalidatingPos = false;

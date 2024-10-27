@@ -21,9 +21,9 @@ package io.github.palexdev.virtualizedfx.table;
 import java.util.Collections;
 import java.util.List;
 import java.util.SequencedMap;
-import java.util.function.Function;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
@@ -85,14 +85,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final ReadOnlyObjectWrapper<VFXTable<T>> table = new ReadOnlyObjectWrapper<>() {
-		@Override
-		public void set(VFXTable<T> newValue) {
-			VFXTable<T> oldValue = get();
-			super.set(newValue);
-			onTableSet(oldValue, newValue);
-		}
-	};
+	private VFXTable<T> table;
 	private final ReadOnlyIntegerWrapper index = new ReadOnlyIntegerWrapper(-1);
 	private final ReadOnlyObjectWrapper<T> item = new ReadOnlyObjectWrapper<>();
 	protected IntegerRange columnsRange = Utils.INVALID_RANGE;
@@ -213,9 +206,8 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
 			cell = column.cache().take();
 			cell.updateItem(item);
 		} else { // Create new otherwise
-			Function<T, VFXTableCell<T>> cellFactory = column.getCellFactory();
-			if (cellFactory == null) return null; // Take into account null generators
-			cell = cellFactory.apply(item);
+			cell = column.create(item);
+			if (cell == null) return null; // Take into account null generators
 		}
 		cell.updateRow(this);
 		cell.updateColumn(column);
@@ -281,21 +273,6 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
 		}
 	}
 
-	/**
-	 * Rows are created using the row factory specified in {@link VFXTable}. When the table receives a generator
-	 * function for rows, it automatically appends an additional function to that generator using
-	 * {@link Function#andThen(Function)}. This appended function is responsible for setting the table instance
-	 * by calling the protected method {@link #setTable(VFXTable)}.
-	 * <p>
-	 * One limitation of this approach is that initializations dependent on the table instance cannot be performed
-	 * at instantiation, as the table instance is set <b>after</b> the row is created. Therefore, if any configuration
-	 * requires the table instance, it must be applied after assignment.
-	 * <p>
-	 * This method addresses the issue by acting as a hook for the row’s table instance. It's automatically invoked
-	 * every time the {@link #tableProperty()} changes.
-	 */
-	protected void onTableSet(VFXTable<T> oldValue, VFXTable<T> newValue) {}
-
 	//================================================================================
 	// Overridden Methods
 	//================================================================================
@@ -312,6 +289,13 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
 	@Override
 	public void updateItem(T item) {
 		setItem(item);
+	}
+
+	@Override
+	public void onCreated(VFXContainer<T> container) {
+		if (table == null && container instanceof VFXTable<T> t) {
+			table = t;
+		}
 	}
 
 	@Override
@@ -333,7 +317,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
 	@Override
 	public void dispose() {
 		clear();
-		setTable(null);
+		table = null;
 	}
 
 	//================================================================================
@@ -341,18 +325,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
 	//================================================================================
 
 	public VFXTable<T> getTable() {
-		return table.get();
-	}
-
-	/**
-	 * Specifies the table's instance this row belongs to.
-	 */
-	public ReadOnlyObjectProperty<VFXTable<T>> tableProperty() {
-		return table.getReadOnlyProperty();
-	}
-
-	protected void setTable(VFXTable<T> table) {
-		this.table.set(table);
+		return table;
 	}
 
 	public int getIndex() {

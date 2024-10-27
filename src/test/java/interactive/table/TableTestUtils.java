@@ -18,6 +18,13 @@
 
 package interactive.table;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.SequencedMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.IntStream;
+
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -45,13 +52,6 @@ import org.opentest4j.AssertionFailedError;
 import utils.TestFXUtils;
 import utils.TestFXUtils.Counter;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.SequencedMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static utils.TestFXUtils.FP_ASSERTIONS_DELTA;
 import static utils.TestFXUtils.counter;
@@ -75,6 +75,9 @@ public class TableTestUtils {
 		VFXTableHelper<User> helper = table.getHelper();
 		Region columnsPane = (Region) table.lookup(".columns");
 		Region rowsPane = (Region) table.lookup(".rows");
+
+		assertNotNull(table.rowFactoryProperty().getOwner());
+
 		if (Utils.INVALID_RANGE.equals(columnsRange)) {
 			assertEquals(VFXTableState.INVALID, state);
 			// Also verify that there are no nodes in the viewport
@@ -111,6 +114,7 @@ public class TableTestUtils {
 				VFXTableColumn<User, ? extends VFXTableCell<User>> column = columns.get(cIdx);
 				assertNotNull(column);
 				assertNotNull(column.getTable());
+				assertNotNull(column.getCellFactory().getOwner());
 				assertEquals(cIdx, column.getIndex());
 				assertNotNull(column.getParent()); // Assert that the column is actually in the viewport before checking the position
 				boolean inViewport = helper.isInViewport(column);
@@ -517,6 +521,7 @@ public class TableTestUtils {
 		@Override
 		public void dispose() {
 			counter.disposed();
+			super.dispose();
 		}
 	}
 

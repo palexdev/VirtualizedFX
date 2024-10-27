@@ -18,12 +18,17 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import java.util.HashSet;
+import java.util.SequencedMap;
+import java.util.Set;
+
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.enums.GeometryChangeType;
+import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
@@ -31,11 +36,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Orientation;
-
-import java.util.HashSet;
-import java.util.SequencedMap;
-import java.util.Set;
-import java.util.function.Function;
 
 /**
  * Default behavior implementation for {@link VFXTable}. Although, to be precise, and as the name also suggests,
@@ -419,7 +419,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 
 		// At this point, we can generate a new state
 		VFXTableHelper<T> helper = table.getHelper();
-		Function<T, VFXTableRow<T>> rf = table.getRowFactory();
+		CellFactory<T, VFXTableRow<T>> rf = table.rowFactoryProperty();
 		IntegerRange rowsRange = helper.rowsRange();
 		IntegerRange columnsRange = helper.columnsRange();
 
@@ -430,7 +430,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		// The new rows will copy the state of the previous row at the same index (expect if the old state is INVALID or empty)
 		for (Integer idx : rowsRange) {
 			T item = table.getItems().get(idx);
-			VFXTableRow<T> row = rf.apply(item);
+			VFXTableRow<T> row = rf.create(item);
 			if (state != VFXTableState.INVALID && !state.isEmpty()) {
 				row.copyState(state.getRows().get(idx));
 			} else {
@@ -744,7 +744,7 @@ public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
 		VFXTable<T> table = getNode();
 		if (table.getColumns().isEmpty() ||
 			table.isEmpty() ||
-			table.getRowFactory() == null ||
+			table.rowFactoryProperty().getValue() == null ||
 			table.getRowsHeight() <= 0 ||
 			table.getWidth() <= 0 ||
 			table.getHeight() <= 0) {

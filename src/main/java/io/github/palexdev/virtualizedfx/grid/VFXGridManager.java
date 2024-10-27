@@ -18,22 +18,23 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.SequencedMap;
+import java.util.Set;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
+import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
 import javafx.geometry.Orientation;
-
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.SequencedMap;
-import java.util.Set;
 
 /**
  * Default behavior implementation for{@link VFXGrid}. Although, to be precise, and as the name also suggests,
@@ -215,7 +216,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
 	}
 
 	/**
-	 * This method is responsible for updating the grid's state when the {@link VFXGrid#cellFactoryProperty()}
+	 * This method is responsible for updating the grid's state when the {@link VFXGrid#getCellFactory()}
 	 * changes. Unfortunately, this is always a costly operation because all cells need to be re-created, and the
 	 * {@link VFXCellsCache} cleaned. In fact, the very first operation done by this method is exactly this,
 	 * the disposal of the current state and the cleaning of the cache.
@@ -427,7 +428,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
 	 * (The last operations are delegated to the {@link #remainingAlgorithm(Set, VFXGridState)}).
 	 *
 	 * @see VFXGridHelper#indexToCell(int)
-	 * @see VFXGrid#cellFactoryProperty()
+	 * @see VFXGrid#getCellFactory()
 	 */
 	protected void moveReuseCreateAlgorithm(IntegerRange rowsRange, IntegerRange columnsRange, VFXGridState<T, C> newState) {
 		VFXGrid<T, C> grid = getNode();
@@ -462,7 +463,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
 	 * <p></p>
 	 * <p> - See {@link VFXGridHelper#indexToCell(int)}: this handles the second and third cases. If a cell can
 	 * be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
-	 * {@link VFXGrid#cellFactoryProperty()} to create a new one
+	 * {@link VFXGrid#getCellFactory()} to create a new one
 	 */
 	protected void remainingAlgorithm(Set<Integer> remaining, VFXGridState<T, C> newState) {
 		VFXGrid<T, C> grid = getNode();
@@ -500,7 +501,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
 	 * <p>
 	 * Otherwise, does nothing and returns true.
 	 * <p></p>
-	 * <p> - See {@link VFXGrid#cellFactoryProperty()}
+	 * <p> - See {@link CellFactory#canCreate()}
 	 * <p> - See {@link VFXGrid#cellSizeProperty()}
 	 * <p> - See {@link #disposeCurrent()}: for the current state disposal
 	 *
@@ -509,7 +510,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
 	@SuppressWarnings("unchecked")
 	protected boolean gridFactorySizeCheck() {
 		VFXGrid<T, C> grid = getNode();
-		if (grid.isEmpty() || grid.getCellFactory() == null ||
+		if (grid.isEmpty() || !grid.getCellFactory().canCreate() ||
 			grid.getCellSize().getWidth() <= 0 || grid.getCellSize().getHeight() <= 0) {
 			disposeCurrent();
 			grid.update(VFXGridState.INVALID);

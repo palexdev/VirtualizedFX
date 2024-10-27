@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
+import java.util.SequencedMap;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
@@ -29,8 +31,6 @@ import javafx.geometry.Orientation;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
-
-import java.util.SequencedMap;
 
 import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
@@ -114,7 +114,7 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
 	 * <p> -Listener on {@link VFXGrid#hPosProperty()}, will invoke {@link VFXGridManager#onPositionChanged(Orientation)}
 	 * with {@link Orientation#HORIZONTAL} as parameter
 	 * <p> - Listener on {@link VFXGrid#columnsNumProperty()}, will invoke {@link VFXGridManager#onColumnsNumChanged()}
-	 * <p> - Listener on {@link VFXGrid#cellFactoryProperty()}, will invoke {@link VFXGridManager#onCellFactoryChanged()}
+	 * <p> - Listener on {@link VFXGrid#getCellFactory()}, will invoke {@link VFXGridManager#onCellFactoryChanged()}
 	 * <p> - Listener on {@link VFXGrid#cellSizeProperty()}, will invoke {@link VFXGridManager#onCellSizeChanged()}
 	 * <p> - Listener on {@link VFXGrid#vSpacingProperty()}, will invoke {@link VFXGridManager#onSpacingChanged()}
 	 * <p> - Listener on {@link VFXGrid#hSpacingProperty()}, will invoke {@link VFXGridManager#onSpacingChanged()}
@@ -160,7 +160,7 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
 			// Others
 			onInvalidated(grid.columnsNumProperty())
 				.then(n -> getBehavior().onColumnsNumChanged()),
-			onInvalidated(grid.cellFactoryProperty())
+			onInvalidated(grid.getCellFactory())
 				.then(f -> getBehavior().onCellFactoryChanged()),
 			onInvalidated(grid.cellSizeProperty())
 				.then(s -> getBehavior().onCellSizeChanged()),

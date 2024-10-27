@@ -18,13 +18,13 @@
 
 package io.github.palexdev.virtualizedfx.utils;
 
-import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-import io.github.palexdev.virtualizedfx.list.VFXList;
-
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.function.Function;
+
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import io.github.palexdev.virtualizedfx.list.VFXList;
+import io.github.palexdev.virtualizedfx.properties.CellFactory;
 
 /**
  * Simple cache implementation for virtualized containers that produce cells of type {@link  VFXCell}.
@@ -73,15 +73,17 @@ public class VFXCellsCache<T, C extends VFXCell<T>> {
 	//================================================================================
 	// Properties
 	//================================================================================
-	private Function<T, C> cellFactory;
+	private final CellFactory<T, C> cellFactory;
 	private final CellsQueue<T, C> queue = new CellsQueue<>(0);
 
 	//================================================================================
 	// Constructors
 	//================================================================================
-	public VFXCellsCache(Function<T, C> cellFactory) {this.cellFactory = cellFactory;}
+	public VFXCellsCache(CellFactory<T, C> cellFactory) {
+		this.cellFactory = cellFactory;
+	}
 
-	public VFXCellsCache(Function<T, C> cellFactory, int capacity) {
+	public VFXCellsCache(CellFactory<T, C> cellFactory, int capacity) {
 		this.cellFactory = cellFactory;
 		queue.setCapacity(capacity);
 	}
@@ -101,7 +103,7 @@ public class VFXCellsCache<T, C extends VFXCell<T>> {
 		if (cellFactory == null) throw new NullPointerException("Cannot populate cache as the cell factory is null");
 
 		do {
-			C c = cellFactory.apply(null);
+			C c = cellFactory.create(null);
 			queue.add(c);
 		} while (queue.size() != queue.getCapacity());
 		return this;
@@ -178,11 +180,7 @@ public class VFXCellsCache<T, C extends VFXCell<T>> {
 		return this;
 	}
 
-	public Function<T, C> getCellFactory() {
+	public CellFactory<T, C> getCellFactory() {
 		return cellFactory;
-	}
-
-	public void setCellFactory(Function<T, C> cellFactory) {
-		this.cellFactory = cellFactory;
 	}
 }

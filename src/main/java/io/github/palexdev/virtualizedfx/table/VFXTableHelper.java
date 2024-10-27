@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.IntStream;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
@@ -42,10 +46,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
-
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.IntStream;
 
 /**
  * This interface is a utility API for {@link VFXTable}, computations may change depending on the
@@ -306,7 +306,7 @@ public interface VFXTableHelper<T> {
 		VFXCellsCache<T, VFXTableRow<T>> cache = getTable().getCache();
 		Optional<VFXTableRow<T>> opt = cache.tryTake();
 		opt.ifPresent(c -> c.updateItem(item));
-		return opt.orElseGet(() -> getTable().getRowFactory().apply(item));
+		return opt.orElseGet(() -> getTable().rowFactoryProperty().create(item));
 	}
 
 	/**

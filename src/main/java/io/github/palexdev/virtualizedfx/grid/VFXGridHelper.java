@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
+import java.util.Optional;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -36,8 +38,6 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.Node;
-
-import java.util.Optional;
 
 /**
  * This interface is a utility API for {@link VFXGrid}, despite computations not depending on other properties
@@ -295,14 +295,14 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
 
 	/**
 	 * Converts the given item to a cell. The result is either on of the cells cached in {@link VFXCellsCache} that
-	 * is updated with the given item, or a totally new one created by the {@link VFXGrid#cellFactoryProperty()}.
+	 * is updated with the given item, or a totally new one created by the {@link VFXGrid#getCellFactory()}.
 	 */
 	default C itemToCell(T item) {
 		VFXGrid<T, C> grid = getGrid();
 		VFXCellsCache<T, C> cache = grid.getCache();
 		Optional<C> opt = cache.tryTake();
 		opt.ifPresent(c -> c.updateItem(item));
-		return opt.orElseGet(() -> grid.getCellFactory().apply(item));
+		return opt.orElseGet(() -> grid.create(item));
 	}
 
 	/**

@@ -18,6 +18,9 @@
 
 package interactive.grid;
 
+import java.util.SequencedMap;
+import java.util.function.Function;
+
 import cells.TestGridCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -33,9 +36,6 @@ import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import org.opentest4j.AssertionFailedError;
-
-import java.util.SequencedMap;
-import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static utils.TestFXUtils.counter;
@@ -53,6 +53,9 @@ public class GridTestUtils {
 	static void assertState(VFXGrid<Integer, VFXCell<Integer>> grid, IntegerRange rowsRange, IntegerRange columnsRange) {
 		VFXGridState<Integer, VFXCell<Integer>> state = grid.getState();
 		VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
+
+		assertNotNull(grid.getCellFactory().getOwner());
+
 		int nColumns = helper.maxColumns();
 		if (Utils.INVALID_RANGE.equals(rowsRange) || Utils.INVALID_RANGE.equals(columnsRange)) {
 			assertEquals(VFXGridState.INVALID, state);

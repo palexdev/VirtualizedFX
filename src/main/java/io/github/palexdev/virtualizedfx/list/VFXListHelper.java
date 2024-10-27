@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
+import java.util.Optional;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
@@ -35,8 +37,6 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
-
-import java.util.Optional;
 
 /**
  * This interface is a utility API for {@link VFXList} which helps to avoid if checks that depend on the container's
@@ -216,13 +216,13 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 
 	/**
 	 * Converts the given item to a cell. The result is either on of the cells cached in {@link VFXCellsCache} that
-	 * is updated with the given item, or a totally new one created by the {@link VFXList#cellFactoryProperty()}.
+	 * is updated with the given item, or a totally new one created by the {@link VFXList#getCellFactory()}.
 	 */
 	default C itemToCell(T item) {
 		VFXCellsCache<T, C> cache = getList().getCache();
 		Optional<C> opt = cache.tryTake();
 		opt.ifPresent(c -> c.updateItem(item));
-		return opt.orElseGet(() -> getList().getCellFactory().apply(item));
+		return opt.orElseGet(() -> getList().create(item));
 	}
 
 	/**

@@ -18,6 +18,12 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
+import java.util.List;
+import java.util.Map;
+import java.util.SequencedMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
@@ -31,12 +37,14 @@ import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
+import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper.VerticalHelper;
+import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXListStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.*;
@@ -47,12 +55,6 @@ import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
 import javafx.scene.shape.Rectangle;
-
-import java.util.List;
-import java.util.Map;
-import java.util.SequencedMap;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Implementation of a virtualized container to show a list of items either vertically or horizontally.
@@ -115,7 +117,8 @@ import java.util.function.Supplier;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, C>> implements VFXContainer<T>, VFXStyleable, VFXScrollable {
+public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, C>>
+	implements VFXContainer<T>, WithCellFactory<T, C>, VFXStyleable, VFXScrollable {
 	//================================================================================
 	// Properties
 	//================================================================================
@@ -127,12 +130,7 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
 			super.set(newValue);
 		}
 	};
-	private final FunctionProperty<T, C> cellFactory = new FunctionProperty<>() {
-		@Override
-		protected void invalidated() {
-			cache.setCellFactory(get());
-		}
-	};
+	private final CellFactory<T, C> cellFactory = new CellFactory<>(this);
 	private final ReadOnlyObjectWrapper<VFXListHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
 		@Override
 		public void set(VFXListHelper<T, C> newValue) {
@@ -207,7 +205,7 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
 	 * @see #cacheCapacityProperty()
 	 */
 	protected VFXCellsCache<T, C> createCache() {
-		return new VFXCellsCache<>(null, getCacheCapacity());
+		return new VFXCellsCache<>(cellFactory, getCacheCapacity());
 	}
 
 	/**
@@ -660,19 +658,9 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
 		return items;
 	}
 
-	public Function<T, C> getCellFactory() {
-		return cellFactory.get();
-	}
-
-	/**
-	 * Specifies the function used to build the cells.
-	 */
-	public FunctionProperty<T, C> cellFactoryProperty() {
+	@Override
+	public CellFactory<T, C> getCellFactory() {
 		return cellFactory;
-	}
-
-	public void setCellFactory(Function<T, C> cellFactory) {
-		this.cellFactory.set(cellFactory);
 	}
 
 	public VFXListHelper<T, C> getHelper() {
