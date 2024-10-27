@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="CopyrightScope" pattern="(file[ArchitectFX.frontend.main]:*/||file[ArchitectFX.backend*]:*//*)&amp;&amp;!file:java/module-info.java&amp;&amp;!file[ArchitectFX.frontend.main]:java/module-info.java&amp;&amp;!file[ArchitectFX.backend.main]:resources/architectfx-schema.json&amp;&amp;!file[ArchitectFX.backend.main]:resources/tinylog.properties" />
+</component>
