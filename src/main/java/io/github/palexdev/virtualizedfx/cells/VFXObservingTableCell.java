@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
+import java.beans.EventHandler;
+import java.util.Objects;
+import java.util.function.Function;
+
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.events.WhenEvent;
 import io.github.palexdev.mfxcore.observables.When;
@@ -26,10 +30,6 @@ import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ObservableValue;
 import javafx.util.StringConverter;
-
-import java.beans.EventHandler;
-import java.util.Objects;
-import java.util.function.Function;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
@@ -103,6 +103,7 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
 	@Override
 	public void dispose() {
 		property = null;
+		super.dispose();
 	}
 
 	//================================================================================

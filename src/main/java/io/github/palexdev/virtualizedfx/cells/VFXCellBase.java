@@ -18,9 +18,13 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
+import java.util.List;
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
+import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.beans.property.IntegerProperty;
@@ -32,9 +36,6 @@ import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-
-import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * The basic and typical implementation of a cell in JavaFX is a cell with just two properties: one to keep track
@@ -78,6 +79,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
 	//================================================================================
 	// Properties
 	//================================================================================
+	private VFXContainer<T> container;
 	private final IntegerProperty index = new SimpleIntegerProperty(-1);
 	private final ObjectProperty<T> item = new SimpleObjectProperty<>();
 	private final ObjectProperty<Node> graphic = new SimpleObjectProperty<>();
@@ -107,6 +109,11 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
 	}
 
 	@Override
+	public Supplier<CellBaseBehavior<T>> defaultBehaviorProvider() {
+		return () -> new CellBaseBehavior<>(this);
+	}
+
+	@Override
 	public Node toNode() {
 		return this;
 	}
@@ -131,9 +138,22 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
 		setIndex(index);
 	}
 
+	/**
+	 * Stores the {@link VFXContainer} instance that owns this cell.
+	 * <p>
+	 * The implementation disallows subsequent calls.
+	 * In other words, once the instance is set (and not null), it will not be replaced.
+	 */
 	@Override
-	public Supplier<CellBaseBehavior<T>> defaultBehaviorProvider() {
-		return () -> new CellBaseBehavior<>(this);
+	public void onCreated(VFXContainer<T> container) {
+		if (this.container == null) {
+			this.container = container;
+		}
+	}
+
+	@Override
+	public void dispose() {
+		container = null;
 	}
 
 	//================================================================================
@@ -203,6 +223,13 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
 	//================================================================================
 	// Getters/Setters
 	//================================================================================
+
+	/**
+	 * @return the {@link VFXContainer} instance that owns this cell
+	 */
+	public VFXContainer<T> getContainer() {
+		return container;
+	}
 
 	public int getIndex() {
 		return index.get();
