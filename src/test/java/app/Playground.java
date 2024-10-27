@@ -20,7 +20,6 @@ package app;
 
 import interactive.table.TableTestUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
-import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import javafx.application.Application;
@@ -47,7 +46,6 @@ public class Playground extends Application {
 		//sp.setDragSmoothScroll(true);
 		//sp.setShowButtons(true);
 		//sp.setVBarPolicy(ScrollBarPolicy.NEVER);
-		sp.getStylesheets().add(VFXResources.loadResource("VFXScrollPane.css"));
 		VFXScrollable.setSpeed(sp, container, 0.5, 0.5, true);
 		CSSFragment.Builder.build()
 			.addSelector(".vfx-scroll-pane")

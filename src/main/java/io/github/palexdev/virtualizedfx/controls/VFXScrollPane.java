@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.controls;
 
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
@@ -30,6 +34,7 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
+import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
@@ -51,10 +56,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
-
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * My personal custom implementation of a scroll pane from scratch, follows the MVC pattern as enforced by {@link Control}.
@@ -170,6 +171,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 	private void initialize() {
 		getStyleClass().setAll(defaultStyleClasses());
 		setDefaultBehaviorProvider();
+		getStylesheets().add(VFXResources.loadResource("VFXScrollPane.css"));
 	}
 
 	/**
