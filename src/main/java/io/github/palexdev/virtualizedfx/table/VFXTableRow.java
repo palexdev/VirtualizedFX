@@ -18,6 +18,11 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.SequencedMap;
+import java.util.function.Function;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
@@ -32,11 +37,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.SequencedMap;
-import java.util.function.Function;
 
 /**
  * Base class that defines common properties and behaviors for all rows to be used with {@link VFXTable}.
@@ -85,7 +85,14 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
 	//================================================================================
 	// Properties
 	//================================================================================
-	private final ReadOnlyObjectWrapper<VFXTable<T>> table = new ReadOnlyObjectWrapper<>();
+	private final ReadOnlyObjectWrapper<VFXTable<T>> table = new ReadOnlyObjectWrapper<>() {
+		@Override
+		public void set(VFXTable<T> newValue) {
+			VFXTable<T> oldValue = get();
+			super.set(newValue);
+			onTableSet(oldValue, newValue);
+		}
+	};
 	private final ReadOnlyIntegerWrapper index = new ReadOnlyIntegerWrapper(-1);
 	private final ReadOnlyObjectWrapper<T> item = new ReadOnlyObjectWrapper<>();
 	protected IntegerRange columnsRange = Utils.INVALID_RANGE;
@@ -273,6 +280,21 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
 			i++;
 		}
 	}
+
+	/**
+	 * Rows are created using the row factory specified in {@link VFXTable}. When the table receives a generator
+	 * function for rows, it automatically appends an additional function to that generator using
+	 * {@link Function#andThen(Function)}. This appended function is responsible for setting the table instance
+	 * by calling the protected method {@link #setTable(VFXTable)}.
+	 * <p>
+	 * One limitation of this approach is that initializations dependent on the table instance cannot be performed
+	 * at instantiation, as the table instance is set <b>after</b> the row is created. Therefore, if any configuration
+	 * requires the table instance, it must be applied after assignment.
+	 * <p>
+	 * This method addresses the issue by acting as a hook for the row’s table instance. It's automatically invoked
+	 * every time the {@link #tableProperty()} changes.
+	 */
+	protected void onTableSet(VFXTable<T> oldValue, VFXTable<T> newValue) {}
 
 	//================================================================================
 	// Overridden Methods
