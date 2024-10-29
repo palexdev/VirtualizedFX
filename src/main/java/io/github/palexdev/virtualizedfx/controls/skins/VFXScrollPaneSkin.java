@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.controls.skins;
 
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.BooleanBindingBuilder;
@@ -25,12 +27,14 @@ import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.mfxeffects.animations.Animations;
+import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollPaneBehavior;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
+import io.github.palexdev.virtualizedfx.utils.ScrollBounds;
 import javafx.animation.Animation;
 import javafx.beans.InvalidationListener;
 import javafx.css.PseudoClass;
@@ -44,8 +48,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
-
-import java.util.function.Supplier;
 
 import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
@@ -101,18 +103,25 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
         viewport = new Pane() {
             @Override
             protected void layoutChildren() {
-                if (content != null) content.resizeRelocate(0, 0, getWidth(), getHeight());
+                if (content == null) return;
+                if (content instanceof VFXContainer<?>) {
+                    content.resizeRelocate(0, 0, getWidth(), getHeight());
+                } else {
+                    ScrollBounds bounds = pane.getContentBounds();
+                    double w = Math.max(getWidth(), bounds.contentWidth());
+                    double h = Math.max(getHeight(), bounds.contentHeight());
+                    content.resizeRelocate(0, 0, w, h);
+                }
             }
         };
         viewport.getStyleClass().add("viewport");
-        if (content != null) viewport.getChildren().add(content);
 
         clip = new Rectangle();
-        clip.widthProperty().bind(viewport.widthProperty());
-        clip.heightProperty().bind(viewport.heightProperty());
+        clip.widthProperty().bind(pane.widthProperty());
+        clip.heightProperty().bind(pane.heightProperty());
         clip.arcWidthProperty().bind(pane.clipBorderRadiusProperty());
         clip.arcHeightProperty().bind(pane.clipBorderRadiusProperty());
-        viewport.setClip(clip);
+        pane.setClip(clip);
 
         // Init scroll bars
         // double lambda go brrrr, hahahaha
@@ -257,7 +266,9 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
                         content = c;
                         viewport.getChildren().setAll(content);
                     }
-                }),
+                    updateScrollBindings();
+                })
+                .executeNow(),
             onChanged(pane.contentBoundsProperty())
                 .condition((o, n) -> pane.isAutoHideBars())
                 .then((o, n) -> {
@@ -349,6 +360,25 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
                     }
                 })
         );
+    }
+
+    /**
+     * Responsible for binding the viewport's translation properties if the content is not a virtualized container.
+     * <p>
+     * This is necessary to make the scroll pane work with traditional nodes. That's because virtualized containers have
+     * an in-built virtual scroll mechanism, so, in their case, it's not this viewport to scroll.
+     */
+    protected void updateScrollBindings() {
+        VFXScrollPane pane = getSkinnable();
+        viewport.translateXProperty().unbind();
+        viewport.translateYProperty().unbind();
+
+        Node content = pane.getContent();
+        if (content != null && !(content instanceof VFXContainer<?>)) {
+            viewport.translateXProperty().bind(hBar.valueProperty().multiply(-1.0));
+            viewport.translateYProperty().bind(vBar.valueProperty().multiply(-1.0));
+        }
+
     }
 
     //================================================================================

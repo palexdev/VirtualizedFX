@@ -51,7 +51,6 @@ import javafx.css.CssMetaData;
 import javafx.css.PseudoClass;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
@@ -213,10 +212,10 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
             return;
         }
         contentBounds.bind(ObjectBindingBuilder.<ScrollBounds>build()
-            .setMapper(() -> {
-                Bounds b = content.getLayoutBounds();
-                return new ScrollBounds(b.getWidth(), b.getHeight(), viewportSize.getWidth(), viewportSize.getHeight());
-            })
+            .setMapper(() -> new ScrollBounds(
+                content.prefWidth(-1), content.prefHeight(-1),
+                viewportSize.getWidth(), viewportSize.getHeight()
+            ))
             .addSources(content.layoutBoundsProperty())
             .addSources(viewportSize)
             .get()
