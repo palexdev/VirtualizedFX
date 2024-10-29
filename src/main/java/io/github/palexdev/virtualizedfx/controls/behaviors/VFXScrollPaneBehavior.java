@@ -114,7 +114,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
             initValues = Position.origin();
             return;
         }
-        dragStart = Position.of(me.getX(), me.getY());
+        dragStart = Position.of(me.getSceneX(), me.getSceneY());
         initValues = Position.of(pane.getHVal(), pane.getVVal());
     }
 
@@ -140,7 +140,8 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
 
         VFXScrollPane pane = getNode();
         if (isScrollBarVisible(Orientation.HORIZONTAL)) {
-            double xDelta = -(me.getX() - dragStart.getX());
+            double meX = me.getSceneX();
+            double xDelta = -(meX - dragStart.getX());
             if (!pane.isDragSmoothScroll()) {
                 pane.setHVal(initValues.getX() + xDelta);
             } else {
@@ -152,12 +153,13 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
                     if (target != clamped) mt.stop();
                 });
                 mt.play();
-                dragStart.setX(me.getX());
+                dragStart.setX(meX);
             }
         }
 
         if (isScrollBarVisible(Orientation.VERTICAL)) {
-            double yDelta = -(me.getY() - dragStart.getY());
+            double meY = me.getSceneY();
+            double yDelta = -(meY - dragStart.getY());
             if (!pane.isDragSmoothScroll()) {
                 pane.setVVal(initValues.getY() + yDelta);
             } else {
@@ -169,7 +171,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
                     if (target != clamped) mt.stop();
                 });
                 mt.play();
-                dragStart.setY(me.getY());
+                dragStart.setY(meY);
             }
         }
     }
