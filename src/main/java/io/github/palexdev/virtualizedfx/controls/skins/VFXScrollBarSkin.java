@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.controls.skins;
 
+import java.util.function.Consumer;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.builders.bindings.BooleanBindingBuilder;
@@ -40,8 +42,6 @@ import javafx.geometry.VPos;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
-
-import java.util.function.Consumer;
 
 import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
@@ -197,13 +197,14 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
         VFXScrollBar bar = getSkinnable();
         double bGap = bar.isShowButtons() ? bar.getButtonsGap() : 0.0;
         double max = bar.getMaxScroll();
-        double pos = NumberUtils.mapOneRangeToAnother(
-            val,
-            DoubleRange.of(0.0, max),
-            DoubleRange.of(0.0, trackLength - thumbLength)
-        );
-        if (Double.isNaN(pos)) return 0.0;
-        return NumberUtils.clamp(pos, bGap, trackLength - thumbLength - bGap);
+        try {
+            DoubleRange from = DoubleRange.of(0.0, max);
+            DoubleRange to = DoubleRange.of(0.0, trackLength - thumbLength);
+            double pos = NumberUtils.mapOneRangeToAnother(val, from, to);
+            return Double.isNaN(pos) ? 0.0 : NumberUtils.clamp(pos, bGap, trackLength - thumbLength - bGap);
+        } catch (Exception ex) {
+            return 0.0;
+        }
     }
 
     /**
