@@ -19,10 +19,12 @@
 @import "VFXScrollBar.css";
 
 .vfx-scroll-pane {
-    -fx-background-color: white;
+    -fx-background-color: transparent;
+    -vfx-vbar-padding: 4 0 4 0;
+    -vfx-hbar-padding: 0 4 0 4;
 }
 
 .vfx-scroll-pane:compact {
-    -vfx-vbar-padding: 10 7 14 0;
-    -vfx-hbar-padding: 0 14 7 10;
+    -vfx-vbar-padding: 12 8 12 0;
+    -vfx-hbar-padding: 0 12 8 12;
 }
