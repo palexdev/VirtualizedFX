@@ -347,7 +347,7 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
                     vHide.stop();
                     vShow.play();
                 }),
-            onInvalidated(hBar.hoverProperty())
+            onInvalidated(vBar.hoverProperty())
                 .condition(v -> pane.isAutoHideBars())
                 .then(v -> {
                     if (!v && vBar.isPressed()) {
