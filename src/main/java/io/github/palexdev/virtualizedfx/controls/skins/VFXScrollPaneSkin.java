@@ -38,10 +38,7 @@ import io.github.palexdev.virtualizedfx.utils.ScrollBounds;
 import javafx.animation.Animation;
 import javafx.beans.InvalidationListener;
 import javafx.css.PseudoClass;
-import javafx.geometry.HPos;
-import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
-import javafx.geometry.VPos;
+import javafx.geometry.*;
 import javafx.scene.Node;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -117,11 +114,11 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
         viewport.getStyleClass().add("viewport");
 
         clip = new Rectangle();
-        clip.widthProperty().bind(pane.widthProperty());
-        clip.heightProperty().bind(pane.heightProperty());
+        clip.widthProperty().bind(pane.widthProperty().subtract(snappedLeftInset() + snappedRightInset()));
+        clip.heightProperty().bind(pane.heightProperty().subtract(snappedTopInset() + snappedBottomInset()));
         clip.arcWidthProperty().bind(pane.clipBorderRadiusProperty());
         clip.arcHeightProperty().bind(pane.clipBorderRadiusProperty());
-        pane.setClip(clip);
+        viewport.setClip(clip);
 
         // Init scroll bars
         // double lambda go brrrr, hahahaha
@@ -372,11 +369,15 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
         VFXScrollPane pane = getSkinnable();
         viewport.translateXProperty().unbind();
         viewport.translateYProperty().unbind();
+        clip.translateXProperty().unbind();
+        clip.translateYProperty().unbind();
 
         Node content = pane.getContent();
         if (content != null && !(content instanceof VFXContainer<?>)) {
             viewport.translateXProperty().bind(hBar.valueProperty().multiply(-1.0));
             viewport.translateYProperty().bind(vBar.valueProperty().multiply(-1.0));
+            clip.translateXProperty().bind(hBar.valueProperty());
+            clip.translateYProperty().bind(vBar.valueProperty());
         }
 
     }
@@ -490,9 +491,18 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
         vBar.resizeRelocate(vBarX, vBarY, vBarW, vBarH);
         hBar.resizeRelocate(hBarX, hBarY, hBarW, hBarH);
 
-        double viewW = (layoutMode == LayoutMode.DEFAULT && vBarPolicy != ScrollBarPolicy.NEVER) ? w - vBarW : w;
-        double viewH = (layoutMode == LayoutMode.DEFAULT && hBarPolicy != ScrollBarPolicy.NEVER) ? h - hBarH : h;
-        viewport.resizeRelocate(snappedLeftInset(), snappedTopInset(), viewW, viewH);
+        double viewW;
+        double viewH;
+        if (content instanceof VFXContainer<?>) {
+            viewW = (layoutMode == LayoutMode.DEFAULT && vBarPolicy != ScrollBarPolicy.NEVER) ? w - vBarW : w;
+            viewH = (layoutMode == LayoutMode.DEFAULT && hBarPolicy != ScrollBarPolicy.NEVER) ? h - hBarH : h;
+        } else {
+            viewW = Math.max(viewport.prefWidth(-1), w) +
+                    ((layoutMode == LayoutMode.DEFAULT && vBarPolicy != ScrollBarPolicy.NEVER) ? vBarW : 0.0);
+            viewH = Math.max(viewport.prefHeight(-1), h) +
+                    ((layoutMode == LayoutMode.DEFAULT && hBarPolicy != ScrollBarPolicy.NEVER) ? hBarH : 0.0);
+        }
+        viewport.resizeRelocate(snappedLeftInset(), snappedTopInset(), snapSizeX(viewW), snapSizeY(viewH));
     }
 
     @Override
