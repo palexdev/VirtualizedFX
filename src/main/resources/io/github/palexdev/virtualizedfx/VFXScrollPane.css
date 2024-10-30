@@ -19,7 +19,6 @@
 @import "VFXScrollBar.css";
 
 .vfx-scroll-pane {
-    -fx-background-color: transparent;
     -vfx-vbar-padding: 4 0 4 0;
     -vfx-hbar-padding: 0 4 0 4;
 }
