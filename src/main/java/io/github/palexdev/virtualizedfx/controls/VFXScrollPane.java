@@ -213,7 +213,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         }
         contentBounds.bind(ObjectBindingBuilder.<ScrollBounds>build()
             .setMapper(() -> new ScrollBounds(
-                content.prefWidth(-1), content.prefHeight(-1),
+                snapSizeX(content.prefWidth(-1)), snapSizeY(content.prefHeight(-1)),
                 viewportSize.getWidth(), viewportSize.getHeight()
             ))
             .addSources(content.layoutBoundsProperty())

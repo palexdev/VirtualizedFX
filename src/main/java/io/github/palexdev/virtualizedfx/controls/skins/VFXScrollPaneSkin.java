@@ -211,8 +211,19 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
         VFXScrollPane pane = getSkinnable();
 
         // Bindings
-        ((SizeProperty) pane.viewportSizeProperty()).bind(
-            viewport.layoutBoundsProperty().map(b -> Size.of(b.getWidth(), b.getHeight()))
+        ((SizeProperty) pane.viewportSizeProperty()).bind(ObjectBindingBuilder.<Size>build()
+            .setMapper(() -> {
+                Bounds vb = viewport.getLayoutBounds();
+                if (content instanceof VFXContainer<?>) {
+                    return Size.of(vb.getWidth(), vb.getHeight());
+                }
+                double lri = snappedLeftInset() + snappedRightInset();
+                double tbi = snappedTopInset() + snappedBottomInset();
+                return Size.of(pane.getWidth() - lri, pane.getHeight() - tbi);
+            })
+            .addSources(viewport.layoutBoundsProperty())
+            .addSources(pane.layoutBoundsProperty())
+            .get()
         );
 
         // HBar
