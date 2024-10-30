@@ -18,6 +18,9 @@
 
 package io.github.palexdev.virtualizedfx.controls;
 
+import java.util.List;
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
@@ -44,9 +47,6 @@ import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
-
-import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * My personal custom implementation of a scroll bar from scratch, follows the MVC pattern as enforced by {@link Control}.
@@ -150,6 +150,11 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements VFXSt
         public void set(ScrollBounds newValue) {
             if (newValue == null) newValue = ScrollBounds.ZERO;
             super.set(newValue);
+        }
+
+        @Override
+        protected void invalidated() {
+            VFXScrollBar.this.setValue(VFXScrollBar.this.getValue());
         }
     };
     private final ObjectProperty<ScrollDirection> scrollDirection = new SimpleObjectProperty<>();
