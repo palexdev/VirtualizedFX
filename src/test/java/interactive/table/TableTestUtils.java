@@ -27,6 +27,7 @@ import java.util.stream.IntStream;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
@@ -298,28 +299,22 @@ public class TableTestUtils {
             setColumnsSize(Size.of(180, 32));
 
             CSSFragment.Builder.build()
-                .addSelector(".vfx-table")
+                .select(".vfx-table")
                 .border("#353839")
-                .closeSelector()
-                .addSelector(".vfx-table > .viewport > .columns")
+                .select(".vfx-table > .viewport > .columns")
                 .border("transparent transparent #353839 transparent")
-                .closeSelector()
-                .addSelector(".vfx-table > .viewport > .columns > .vfx-column")
-                .padding("0px 10px 0px 10px")
+                .select(".vfx-table > .viewport > .columns > .vfx-column")
+                .padding(InsetsBuilder.build().withHorizontal(10.0))
                 .border("transparent #353839 transparent transparent")
-                .closeSelector()
-                .addSelector(".vfx-table > .viewport > .columns > .vfx-column:hover > .overlay")
-                .addSelector(".vfx-table > .viewport > .columns > .vfx-column:dragged > .overlay")
+                .select(".vfx-table > .viewport > .columns > .vfx-column:hover > .overlay")
+                .and(".vfx-table > .viewport > .columns > .vfx-column:dragged > .overlay")
                 .background("rgba(53, 56, 57, 0.1)")
-                .closeSelector()
-                .addSelector(".vfx-table > .viewport > .rows > .vfx-row")
+                .select(".vfx-table > .viewport > .rows > .vfx-row")
                 .border("#353839")
-                .borderInsets("1.25px")
-                .addStyle("-fx-border-width: 0.5px")
-                .closeSelector()
-                .addSelector(".vfx-table > .viewport > .rows > .vfx-row > .table-cell")
-                .padding("0px 10px 0px 10px")
-                .closeSelector()
+                .borderInsets(InsetsBuilder.uniform(1.25))
+                .borderWidth(0.5)
+                .select(".vfx-table > .viewport > .rows > .vfx-row > .table-cell")
+                .padding(InsetsBuilder.build().withHorizontal(10.0))
                 .applyOn(this);
         }
 

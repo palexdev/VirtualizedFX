@@ -19,12 +19,15 @@
 package app;
 
 import interactive.table.TableTestUtils;
+import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
+import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -44,14 +47,18 @@ public class Playground extends Application {
         sp.setSmoothScroll(true);
         sp.setDragToScroll(true);
         //sp.setDragSmoothScroll(true);
-        //sp.setShowButtons(true);
-        //sp.setVBarPolicy(ScrollBarPolicy.NEVER);
+        sp.setShowButtons(true);
+        sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
+        //sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        //sp.setAutoHideBars(true);
         VFXScrollable.setSpeed(sp, container, 0.5, 0.5, true);
         CSSFragment.Builder.build()
-            .addSelector(".vfx-scroll-pane")
-            .padding("5px")
-            .closeSelector()
+            .select(".vfx-scroll-pane")
+            .padding(InsetsBuilder.uniform(5))
             .applyOn(sp);
+
+        Label label = new Label("Incidunt voluptatibus excepturi atque sequi est velit dolor. Omnis iusto asperiores perferendis repudiandae voluptatem voluptatem rem. Est consequatur repellat ipsum sint rerum fuga quo. Est modi doloremque et voluptate animi. Aut omnis reiciendis labore. Illum deserunt quia praesentium at qui.");
+        sp = new VFXScrollPane(label);
 
         pane.getChildren().addAll(sp);
         Scene scene = new Scene(pane, 600, 400);
