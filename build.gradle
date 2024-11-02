@@ -42,6 +42,10 @@ java {
 }
 
 test {
+    // Because the new TestFX is garbage :)
+    jvmArgs += [
+            '--add-opens', 'javafx.graphics/com.sun.javafx.application=ALL-UNNAMED'
+    ]
     useJUnitPlatform()
     filter {
         excludeTestsMatching "JMH*"
