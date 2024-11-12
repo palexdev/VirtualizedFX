@@ -1840,7 +1840,6 @@ public class TableTests {
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 10));
         assertLength(table, 50 * 32, 1920);
         assertTrue(table.getColumns().getFirst().getWidth() < wBefore);
-        System.out.println(table.getColumns().getLast().getWidth());
         assertTrue(table.getColumns().getLast().getWidth() >= 215); // Fucking scaling settings may make the tests fail for no real reason
 
         // Clear

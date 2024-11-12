@@ -29,6 +29,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import static model.User.users;
@@ -48,17 +49,24 @@ public class Playground extends Application {
         sp.setDragToScroll(true);
         //sp.setDragSmoothScroll(true);
         sp.setShowButtons(true);
-        sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
+        //sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
         //sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
         //sp.setAutoHideBars(true);
         VFXScrollable.setSpeed(sp, container, 0.5, 0.5, true);
-        CSSFragment.Builder.build()
-            .select(".vfx-scroll-pane")
-            .padding(InsetsBuilder.uniform(5))
-            .applyOn(sp);
 
         Label label = new Label("Incidunt voluptatibus excepturi atque sequi est velit dolor. Omnis iusto asperiores perferendis repudiandae voluptatem voluptatem rem. Est consequatur repellat ipsum sint rerum fuga quo. Est modi doloremque et voluptate animi. Aut omnis reiciendis labore. Illum deserunt quia praesentium at qui.");
-        sp = new VFXScrollPane(label);
+        //sp = new VFXScrollPane(label);
+        sp.setVBarPos(ScrollPaneEnums.VBarPos.LEFT);
+        sp.setHBarPos(ScrollPaneEnums.HBarPos.TOP);
+
+        CSSFragment.Builder.build()
+            .select(".vfx-scroll-pane")
+            .background(Color.WHITE)
+            .backgroundRadius(InsetsBuilder.uniform(12))
+            .padding(InsetsBuilder.uniform(8))
+            .select(".vfx-scroll-pane > .viewport")
+            .padding(InsetsBuilder.uniform(4))
+            .applyOn(sp);
 
         pane.getChildren().addAll(sp);
         Scene scene = new Scene(pane, 600, 400);
