@@ -223,10 +223,12 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             .setMapper(() -> {
                 double hInsets = viewport.snappedLeftInset() + viewport.snappedRightInset();
                 double vInsets = viewport.snappedTopInset() + viewport.snappedBottomInset();
-                return Size.of(viewport.getWidth() - hInsets, viewport.getHeight() - vInsets);
+                return Size.of(
+                    Math.max(0.0, viewport.getWidth() - hInsets),
+                    Math.max(0.0, viewport.getHeight() - vInsets)
+                );
             })
-            .addSources(viewport.layoutBoundsProperty())
-            .addSources(pane.layoutBoundsProperty())
+            .addSources(viewport.widthProperty(), viewport.heightProperty())
             .get()
         );
 
