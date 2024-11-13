@@ -18,9 +18,9 @@
 
 package io.github.palexdev.virtualizedfx.utils;
 
-import javafx.geometry.Orientation;
-
 import java.util.Objects;
+
+import javafx.geometry.Orientation;
 
 /**
  * Wrapper class to express the bounds of a scrollable area. It contains four pieces of data:
@@ -68,9 +68,10 @@ public final class ScrollBounds {
      * @param o the orientation determines which size to use, width or height
      */
     public double visibleAmount(Orientation o) {
-        return (o == Orientation.VERTICAL) ?
+        double va = (o == Orientation.VERTICAL) ?
             viewportHeight / contentHeight :
             viewportWidth / contentWidth;
+        return Double.isNaN(va) ? 0.0 : va;
     }
 
     /**
