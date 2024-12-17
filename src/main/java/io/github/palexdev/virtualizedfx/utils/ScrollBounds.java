@@ -68,10 +68,15 @@ public final class ScrollBounds {
      * @param o the orientation determines which size to use, width or height
      */
     public double visibleAmount(Orientation o) {
-        double va = (o == Orientation.VERTICAL) ?
-            viewportHeight / contentHeight :
-            viewportWidth / contentWidth;
-        return Double.isNaN(va) ? 0.0 : va;
+        double v, c;
+        if (o == Orientation.VERTICAL) {
+            v = viewportHeight;
+            c = contentHeight;
+        } else {
+            v = viewportWidth;
+            c = contentWidth;
+        }
+        return c <= 0 ? 1.0 : v / c;
     }
 
     /**
