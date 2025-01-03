@@ -196,6 +196,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     protected void onContentChanged() {
         Node content = getContent();
         if (content == null) {
+            contentBounds.unbind();
             setContentBounds(ScrollBounds.ZERO);
             return;
         }
