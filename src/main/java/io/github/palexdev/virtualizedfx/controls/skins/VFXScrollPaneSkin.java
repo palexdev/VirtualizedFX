@@ -113,8 +113,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
                     content.resizeRelocate(x, y, w, h);
                 } else {
                     ScrollBounds bounds = pane.getContentBounds();
-                    w = Math.max(w, bounds.contentWidth());
-                    h = Math.max(h, bounds.contentHeight());
+                    w = pane.isFitToWidth() ? Math.max(w, bounds.contentWidth()) : bounds.contentWidth();
+                    h = pane.isFitToHeight() ? Math.max(h, bounds.contentHeight()) : bounds.contentHeight();
                     content.resizeRelocate(x, y, w, h);
                 }
             }
@@ -302,6 +302,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             onInvalidated(pane.dragToScrollProperty())
                 .then(v -> pseudoClassStateChanged(DRAG_TO_SCROLL_PSEUDO_CLASS, v)),
             // Layout
+            withListener(pane.fitToWidthProperty(), ll),
+            withListener(pane.fitToHeightProperty(), ll),
             withListener(pane.hBarPolicyProperty(), ll),
             withListener(pane.vBarPolicyProperty(), ll),
             withListener(pane.hBarPosProperty(), ll),

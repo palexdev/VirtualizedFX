@@ -70,6 +70,8 @@ import javafx.scene.shape.Rectangle;
  * <p>
  * Listing all the features of this scroll pane we have:
  * <p> - The possibility to change the layout strategy for the scroll bars, see {@link LayoutMode} and {@link VFXScrollPaneSkin}
+ * <p> - The possibility of making the content always fit the size of the scroll pane by setting the properties
+ * {@link #fitToWidthProperty()} and {@link #fitToHeightProperty()} (works only for non-virtualized contents)
  * <p> - The possibility of auto hide the scroll bars after a certain amount of time
  * <p> - The scroll bars policy, which <b>differs</b> from the JavaFX's one
  * <p> - The possibility to change the position of the scroll bars, see {@link HBarPos} and {@link VBarPos}
@@ -286,6 +288,20 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         LayoutMode.DEFAULT
     );
 
+    private final StyleableBooleanProperty fitToWidth = new StyleableBooleanProperty(
+        StyleableProperties.FIT_TO_WIDTH,
+        this,
+        "fitToWidth",
+        false
+    );
+
+    private final StyleableBooleanProperty fitToHeight = new StyleableBooleanProperty(
+        StyleableProperties.FIT_TO_HEIGHT,
+        this,
+        "fitToHeight",
+        false
+    );
+
     private final StyleableBooleanProperty autoHideBars = new StyleableBooleanProperty(
         StyleableProperties.AUTO_HIDE_BARS,
         this,
@@ -442,6 +458,40 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 
     public void setLayoutMode(LayoutMode layoutMode) {
         this.layoutMode.set(layoutMode);
+    }
+
+    public boolean isFitToWidth() {
+        return fitToWidth.get();
+    }
+
+    /**
+     * Makes the content be at least as wide as the scroll pane.
+     * <p>
+     * This is also settable via CSS with the "-vfx-fit-to-width" property.
+     */
+    public StyleableBooleanProperty fitToWidthProperty() {
+        return fitToWidth;
+    }
+
+    public void setFitToWidth(boolean fitToWidth) {
+        this.fitToWidth.set(fitToWidth);
+    }
+
+    public boolean isFitToHeight() {
+        return fitToHeight.get();
+    }
+
+    /**
+     * Makes the content be at least as tall as the scroll pane.
+     * <p>
+     * This is also settable via CSS with the "-vfx-fit-to-height" property.
+     */
+    public StyleableBooleanProperty fitToHeightProperty() {
+        return fitToHeight;
+    }
+
+    public void setFitToHeight(boolean fitToHeight) {
+        this.fitToHeight.set(fitToHeight);
     }
 
     public boolean isAutoHideBars() {
@@ -819,6 +869,20 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
                 LayoutMode.DEFAULT
             );
 
+        private static final CssMetaData<VFXScrollPane, Boolean> FIT_TO_WIDTH =
+            FACTORY.createBooleanCssMetaData(
+                "-vfx-fit-to-width",
+                VFXScrollPane::fitToWidthProperty,
+                false
+            );
+
+        private static final CssMetaData<VFXScrollPane, Boolean> FIT_TO_HEIGHT =
+            FACTORY.createBooleanCssMetaData(
+                "-vfx-fit-to-height",
+                VFXScrollPane::fitToHeightProperty,
+                false
+            );
+
         private static final CssMetaData<VFXScrollPane, Boolean> AUTO_HIDE_BARS =
             FACTORY.createBooleanCssMetaData(
                 "-vfx-autohide-bars",
@@ -966,7 +1030,8 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 Control.getClassCssMetaData(),
-                LAYOUT_MODE, HBAR_POLICY, VBAR_POLICY, HBAR_POS, VBAR_POS,
+                LAYOUT_MODE, FIT_TO_WIDTH, FIT_TO_HEIGHT,
+                HBAR_POLICY, VBAR_POLICY, HBAR_POS, VBAR_POS,
                 HBAR_PADDING, VBAR_PADDING, HBAR_OFFSET, VBAR_OFFSET,
                 AUTO_HIDE_BARS, DRAG_TO_SCROLL,
                 SHOW_BUTTONS, BUTTONS_GAP,
