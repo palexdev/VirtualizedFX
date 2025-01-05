@@ -21,6 +21,9 @@ module VirtualizedFX {
     // Enums
     exports io.github.palexdev.virtualizedfx.enums;
 
+    // Events
+    exports io.github.palexdev.virtualizedfx.events;
+
     // Grid
     exports io.github.palexdev.virtualizedfx.grid;
 
