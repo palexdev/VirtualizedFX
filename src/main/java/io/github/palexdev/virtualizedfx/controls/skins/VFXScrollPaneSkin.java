@@ -518,11 +518,16 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
         hBar.resizeRelocate(hBarX, hBarY, hBarW, hBarH);
 
         // Viewport
-        double vwX = snappedLeftInset() + ((vPos == VBarPos.LEFT) ? vBarW : 0.0);
-        double vwY = snappedTopInset() + ((hPos == HBarPos.TOP) ? hBarH : 0.0);
-        double vwW = w - vBarW;
-        double vwH = h - hBarH;
-        viewport.resizeRelocate(vwX, vwY, vwW, vwH);
+        LayoutMode mode = vsp.getLayoutMode();
+        if (mode == LayoutMode.DEFAULT) {
+            double vwX = snappedLeftInset() + ((vPos == VBarPos.LEFT) ? vBarW : 0.0);
+            double vwY = snappedTopInset() + ((hPos == HBarPos.TOP) ? hBarH : 0.0);
+            double vwW = w - vBarW;
+            double vwH = h - hBarH;
+            viewport.resizeRelocate(vwX, vwY, vwW, vwH);
+        } else {
+            viewport.resizeRelocate(x, y, w, h);
+        }
     }
 
     @Override
