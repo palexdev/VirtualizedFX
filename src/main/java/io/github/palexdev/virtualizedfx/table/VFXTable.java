@@ -436,7 +436,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 
     @Override
     public VFXScrollPane makeScrollable() {
-        return new VFXScrollPane(this).bindTo(this);
+        return new VFXScrollPane(this);
     }
 //================================================================================
     // Delegate Methods

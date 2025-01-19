@@ -18,6 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.list.paginated;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SequencedMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.builders.bindings.IntegerBindingBuilder;
@@ -44,14 +52,6 @@ import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SequencedMap;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Simple and naive implementation of a paginated variant of {@link VFXList}.
@@ -245,7 +245,7 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
         // The policy is enough to hide the bar for which scroll is disabled by the pagination feature
         // And this should also be enough in theory to prevent JavaFX exceptions due to bidirectionally binding the
         // scroll positions (call to bindTo(this))
-        VFXScrollPane pane = new VFXScrollPane(this).bindTo(this);
+        VFXScrollPane pane = new VFXScrollPane(this);
         pane.vBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.VERTICAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
         pane.hBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.HORIZONTAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
         return pane;

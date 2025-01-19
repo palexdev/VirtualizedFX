@@ -299,7 +299,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
 
     @Override
     public VFXScrollPane makeScrollable() {
-        return new VFXScrollPane(this).bindTo(this);
+        return new VFXScrollPane(this);
     }
 
     //================================================================================

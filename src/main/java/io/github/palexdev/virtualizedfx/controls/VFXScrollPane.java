@@ -45,6 +45,7 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
+import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.utils.ScrollBounds;
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
@@ -103,6 +104,15 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     // Properties
     //================================================================================
     private final ObjectProperty<Node> content = new SimpleObjectProperty<>() {
+        @Override
+        public void set(Node newValue) {
+            if (get() instanceof VFXList<?, ?> c) {
+                c.hPosProperty().unbindBidirectional(hValProperty());
+                c.vPosProperty().unbindBidirectional(vValProperty());
+            }
+            super.set(newValue);
+        }
+
         @Override
         protected void invalidated() {
             onContentChanged();
@@ -176,16 +186,6 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     }
 
     /**
-     * Binds bidirectionally both the {@link #hValProperty()} and {@link #vValProperty()} to the properties of the given
-     * {@link VFXContainer}: {@link VFXContainer#hPosProperty()} and {@link VFXContainer#vPosProperty()}.
-     */
-    public VFXScrollPane bindTo(VFXContainer<?> container) {
-        container.hPosProperty().bindBidirectional(hValProperty());
-        container.vPosProperty().bindBidirectional(vValProperty());
-        return this;
-    }
-
-    /**
      * This is responsible for updating the {@link #contentBoundsProperty()} when the {@link #contentProperty()} changes.
      * To be precise the property is bound depending on the type of the content.
      * <p>
@@ -203,6 +203,8 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
             return;
         }
         if (content instanceof VFXContainer<?> c) {
+            c.hPosProperty().bindBidirectional(hValProperty());
+            c.vPosProperty().bindBidirectional(vValProperty());
             contentBounds.bind(ObjectBindingBuilder.<ScrollBounds>build()
                 .setMapper(() -> new ScrollBounds(
                     c.getVirtualMaxX(), c.getVirtualMaxY(),
