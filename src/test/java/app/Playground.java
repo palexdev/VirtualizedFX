@@ -27,7 +27,6 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -50,14 +49,14 @@ public class Playground extends Application {
         //sp.setDragSmoothScroll(true);
         sp.setShowButtons(true);
         //sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
-        //sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
         //sp.setAutoHideBars(true);
         VFXScrollable.setSpeed(sp, container, 0.5, 0.5, true);
 
-        Label label = new Label("Incidunt voluptatibus excepturi atque sequi est velit dolor. Omnis iusto asperiores perferendis repudiandae voluptatem voluptatem rem. Est consequatur repellat ipsum sint rerum fuga quo. Est modi doloremque et voluptate animi. Aut omnis reiciendis labore. Illum deserunt quia praesentium at qui.");
+/*        Label label = new Label("Incidunt voluptatibus excepturi atque sequi est velit dolor. Omnis iusto asperiores perferendis repudiandae voluptatem voluptatem rem. Est consequatur repellat ipsum sint rerum fuga quo. Est modi doloremque et voluptate animi. Aut omnis reiciendis labore. Illum deserunt quia praesentium at qui.");
         sp = new VFXScrollPane(label);
         sp.setVBarPos(ScrollPaneEnums.VBarPos.LEFT);
-        sp.setHBarPos(ScrollPaneEnums.HBarPos.TOP);
+        sp.setHBarPos(ScrollPaneEnums.HBarPos.TOP);*/
 
         CSSFragment.Builder.build()
             .select(".vfx-scroll-pane")

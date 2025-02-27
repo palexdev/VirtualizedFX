@@ -30,7 +30,6 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils.ScrollDirection;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
-import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
@@ -51,9 +50,6 @@ import javafx.scene.Node;
 /**
  * My personal custom implementation of a scroll bar from scratch, follows the MVC pattern as enforced by {@link Control}.
  * The default skin is {@link VFXScrollBarSkin}. The default behavior is {@link VFXScrollBarBehavior}. Also implements {@link VFXStyleable}.
- * <p>
- * VirtualizedFX offers a default stylesheet for this control 'VFXScrollBar.css', but it's not added automatically.
- * You can load it by using {@link VFXResources#loadResource(String)}.
  * <p></p>
  * In addition to an appealing style, the component offers many new features compared to the boring standard
  * JavaFX' scroll bar, such as:
@@ -82,6 +78,20 @@ import javafx.scene.Node;
  * <p>
  * While it's true that this makes the component less 'modular', and it's debatable whether this is or it is not a
  * responsibility of the scroll bar; but it's also true that it makes the implementation much easier and straightforward.
+ * <p>
+ * <b>Note:</b> this implementation actually caused a major bug for virtualized containers. When the scroll bounds change,
+ * the property would invalidate the value, to make it consistent, by calling {@link #invalidateValue()}.
+ * This caused virtualized containers to generate an invalid new state in some occasions. For example: removing items from
+ * the list caused this mechanism to trigger, but for such change, the state must be computed only by the
+ * onItemsChanged() algorithm.
+ * <p>
+ * After some deep thinking, I realized that adjusting the value for the scrollbar is not really needed for virtualized
+ * containers. When changes that may impact the scroll position occur in the container, the default behavior automatically
+ * fixes the position, ignores the onPositionChanged() that consequently triggers (this part is important), and proceeds to
+ * compute the state for the origin change.
+ * <p>
+ * So, I just added a boolean flag {@link #virtual} which stops the {@link #scrollBoundsProperty()} from triggering the
+ * {@link #invalidateValue()} when it changes. The flag is automatically set to {@code true} when using virtualized containers.
  * <p>
  * <b>Examples</b>
  * <pre>
@@ -154,10 +164,12 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements VFXSt
 
         @Override
         protected void invalidated() {
-            VFXScrollBar.this.setValue(VFXScrollBar.this.getValue());
+            if (!isVirtual())
+                invalidateValue();
         }
     };
     private final ObjectProperty<ScrollDirection> scrollDirection = new SimpleObjectProperty<>();
+    private boolean virtual = false;
 
     //================================================================================
     // Constructors
@@ -191,6 +203,7 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements VFXSt
      * @param <N> any {@link Node} which implements {@link VFXContainer}
      */
     public <N extends Node & VFXContainer<?>> VFXScrollBar bindTo(N container, boolean bindPos) {
+        setVirtual(true);
         scrollBounds.bind(ObjectBindingBuilder.<ScrollBounds>build()
             .setMapper(() -> new ScrollBounds(
                 container.getVirtualMaxX(), container.getVirtualMaxY(),
@@ -621,6 +634,22 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements VFXSt
 
     public void setScrollDirection(ScrollDirection scrollDirection) {
         this.scrollDirection.setValue(scrollDirection);
+    }
+
+    /**
+     * @return whether the scrollbar is used for a virtualized container.
+     * See the class documentation for the effects of such flag.
+     */
+    public boolean isVirtual() {
+        return virtual;
+    }
+
+    /**
+     * Sets whether the scrollbar is used for a virtualized container.
+     * See the class documentation for the effects of such flag.
+     */
+    public void setVirtual(boolean virtual) {
+        this.virtual = virtual;
     }
 }
 

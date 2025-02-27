@@ -272,6 +272,10 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             // Base
             onInvalidated(pane.contentProperty())
                 .then(c -> {
+                    boolean virtual = c instanceof VFXContainer<?>;
+                    hBar.setVirtual(virtual);
+                    vBar.setVirtual(virtual);
+
                     if (content != null) {
                         content = null;
                         viewport.getChildren().clear();
