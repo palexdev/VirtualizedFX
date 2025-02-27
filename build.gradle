@@ -24,6 +24,7 @@ dependencies {
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:$jmh"
     testImplementation platform("org.junit:junit-bom:$junit")
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation "org.testfx:testfx-core:$testfx"
     testImplementation "org.testfx:testfx-junit5:$testfx"
     testImplementation("io.github.palexdev:scenicview:$scenicView") {
@@ -42,11 +43,11 @@ java {
 }
 
 test {
+    useJUnitPlatform()
     // Because the new TestFX is garbage :)
     jvmArgs += [
             '--add-opens', 'javafx.graphics/com.sun.javafx.application=ALL-UNNAMED'
     ]
-    useJUnitPlatform()
     filter {
         excludeTestsMatching "JMH*"
     }
