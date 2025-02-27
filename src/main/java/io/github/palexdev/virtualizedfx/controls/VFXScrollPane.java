@@ -45,7 +45,6 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
-import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.utils.ScrollBounds;
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
@@ -106,7 +105,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     private final ObjectProperty<Node> content = new SimpleObjectProperty<>() {
         @Override
         public void set(Node newValue) {
-            if (get() instanceof VFXList<?, ?> c) {
+            if (get() instanceof VFXContainer<?> c) {
                 c.hPosProperty().unbindBidirectional(hValProperty());
                 c.vPosProperty().unbindBidirectional(vValProperty());
             }
