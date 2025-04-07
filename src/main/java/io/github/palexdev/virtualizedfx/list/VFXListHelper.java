@@ -18,22 +18,20 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
-import java.util.Optional;
-
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
-import io.github.palexdev.mfxcore.base.properties.PositionProperty;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
+import io.github.palexdev.virtualizedfx.base.VFXContainerHelper;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
+import java.util.Optional;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
@@ -52,7 +50,7 @@ import javafx.scene.Node;
  * This value, however, is dynamic, since the size of each node is computed only once it is laid out. This means that the absolute
  * maximum value is only found when all items have been displayed at least once.
  */
-public interface VFXListHelper<T, C extends VFXCell<T>> {
+public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelper<T, VFXList<T, C>> {
 
     /**
      * @return the index of the first visible item
@@ -90,68 +88,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
     }
 
     /**
-     * Specifies the total number of pixels on the x-axis.
-     */
-    ReadOnlyDoubleProperty virtualMaxXProperty();
-
-    /**
-     * @return the total number of pixels on the x-axis.
-     */
-    default double getVirtualMaxX() {
-        return virtualMaxXProperty().get();
-    }
-
-    /**
-     * Specifies the total number of pixels on the y-axis.
-     */
-    ReadOnlyDoubleProperty virtualMaxYProperty();
-
-    /**
-     * @return the total number of pixels on the y-axis.
-     */
-    default double getVirtualMaxY() {
-        return virtualMaxYProperty().get();
-    }
-
-    /**
-     * @return the maximum possible vertical position.
-     */
-    default double getMaxVScroll() {
-        return maxVScrollProperty().get();
-    }
-
-    /**
-     * Specifies the maximum possible vertical position.
-     */
-    ReadOnlyDoubleProperty maxVScrollProperty();
-
-    /**
-     * @return the maximum possible horizontal position.
-     */
-    default double getMaxHScroll() {
-        return maxHScrollProperty().get();
-    }
-
-    /**
-     * Specifies the maximum possible horizontal position.
-     */
-    ReadOnlyDoubleProperty maxHScrollProperty();
-
-    /**
-     * Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
-     * <p>
-     * This property specifies the translation of the viewport, the calculation depends on the implementation.
-     */
-    ReadOnlyObjectProperty<Position> viewportPositionProperty();
-
-    /**
-     * @return the position the viewport should be at in the container
-     */
-    default Position getViewportPosition() {
-        return viewportPositionProperty().get();
-    }
-
-    /**
      * Computes the width or height of the cell depending on the container's orientation.
      * <p> - VERTICAL -> width
      * <p> - HORIZONTAL -> height
@@ -183,30 +119,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
     void scrollToIndex(int index);
 
     /**
-     * @return the {@link VFXList} instance associated to this helper
-     */
-    VFXList<T, C> getList();
-
-    /**
-     * Forces the {@link VFXList#vPosProperty()} and {@link VFXList#hPosProperty()} to be invalidated.
-     * This is simply done by calling the respective setters with their current respective values. Those two properties
-     * will automatically call {@link #getMaxVScroll()} and {@link #getMaxHScroll()} to ensure the values are correct. This is
-     * automatically invoked by the {@link VFXListManager} when needed.
-     */
-    default void invalidatePos() {
-        VFXList<T, C> list = getList();
-        list.setVPos(list.getVPos());
-        list.setHPos(list.getHPos());
-    }
-
-    /**
-     * Converts the given index to an item (shortcut for {@code getList().getItems().get(index)}).
-     */
-    default T indexToItem(int index) {
-        return getList().getItems().get(index);
-    }
-
-    /**
      * Converts the given index to a cell. Uses {@link #itemToCell(Object)}.
      */
     default C indexToCell(int index) {
@@ -219,98 +131,45 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
      * is updated with the given item, or a totally new one created by the {@link VFXList#getCellFactory()}.
      */
     default C itemToCell(T item) {
-        VFXCellsCache<T, C> cache = getList().getCache();
+        VFXCellsCache<T, C> cache = getContainer().getCache();
         Optional<C> opt = cache.tryTake();
         opt.ifPresent(c -> c.updateItem(item));
-        return opt.orElseGet(() -> getList().create(item));
+        return opt.orElseGet(() -> getContainer().create(item));
     }
 
     /**
      * Implementing the {@link VFXList#spacingProperty()} has been incredibly easy. It is enough to think at the
      * spacing as an extension of the {@link VFXList#cellSizeProperty()}. In other words, for the helper to still
      * produce valid ranges, it is enough to sum the spacing to the cell size when the latter is needed.
-     * This is a shortcut for {@code getList().getCellSize() + getList().getSpacing()}.
+     * This is a shortcut for {@code getContainer().getCellSize() + getContainer().getSpacing()}.
      */
     default double getTotalCellSize() {
-        return getList().getCellSize() + getList().getSpacing();
+        return getContainer().getCellSize() + getContainer().getSpacing();
     }
 
     /**
-     * Automatically called by {@link VFXList} when a helper is not needed anymore (changed).
-     * If the helper uses listeners/bindings that may lead to memory leaks, this is the right place to remove them.
-     */
-    default void dispose() {}
-
-    /**
-     * Abstract implementation of {@link VFXListHelper}, contains common members for the two concrete implementations
-     * {@link VerticalHelper} and {@link HorizontalHelper}, such as:
+     * Extension of {@link VFXContainerHelperBase} which also implements {@link VFXListHelper}.
+     * Defines common properties and operations for the two concrete implementations {@link VerticalHelper} and
+     * {@link HorizontalHelper}, such as:
      * <p> - the range of items to display as a {@link IntegerRangeProperty}
-     * <p> - the virtual max x as a {@link ReadOnlyDoubleWrapper}
-     * <p> - the virtual max y as a {@link ReadOnlyDoubleWrapper}
-     * <p> - the viewport's position, {@link #viewportPositionProperty()} as a {@link PositionProperty}
+     * <p> - the total number of cells in the viewport
      */
-    abstract class AbstractHelper<T, C extends VFXCell<T>> implements VFXListHelper<T, C> {
-        protected final VFXList<T, C> list;
+    abstract class AbstractHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXList<T, C>> implements VFXListHelper<T, C> {
         protected final IntegerRangeProperty range = new IntegerRangeProperty();
-        protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper virtualMaxY = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper maxHScroll = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper maxVScroll = new ReadOnlyDoubleWrapper();
-        protected final PositionProperty viewportPosition = new PositionProperty();
 
         public AbstractHelper(VFXList<T, C> list) {
-            this.list = list;
-            maxHScroll.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> Math.max(0, getVirtualMaxX() - list.getWidth()))
-                .addSources(virtualMaxX, list.widthProperty())
-                .get()
-            );
-            maxVScroll.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> Math.max(0, getVirtualMaxY() - list.getHeight()))
-                .addSources(virtualMaxY, list.heightProperty())
-                .get()
-            );
+            super(list);
         }
 
         @Override
         public int totalNum() {
             int visible = visibleNum();
-            return visible == 0 ? 0 : Math.min(visible + list.getBufferSize().val() * 2, list.size());
+            return visible == 0 ? 0 : Math.min(visible + container.getBufferSize().val() * 2, container.size());
         }
 
         @Override
         public IntegerRangeProperty rangeProperty() {
             return range;
-        }
-
-        @Override
-        public ReadOnlyDoubleProperty virtualMaxXProperty() {
-            return virtualMaxX.getReadOnlyProperty();
-        }
-
-        @Override
-        public ReadOnlyDoubleProperty virtualMaxYProperty() {
-            return virtualMaxY.getReadOnlyProperty();
-        }
-
-        @Override
-        public ReadOnlyDoubleProperty maxVScrollProperty() {
-            return maxVScroll.getReadOnlyProperty();
-        }
-
-        @Override
-        public ReadOnlyDoubleProperty maxHScrollProperty() {
-            return maxHScroll.getReadOnlyProperty();
-        }
-
-        @Override
-        public ReadOnlyObjectProperty<Position> viewportPositionProperty() {
-            return viewportPosition.getReadOnlyProperty();
-        }
-
-        @Override
-        public VFXList<T, C> getList() {
-            return list;
         }
     }
 
@@ -346,48 +205,63 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 
         public VerticalHelper(VFXList<T, C> list) {
             super(list);
-            virtualMaxY.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> (list.size() * getTotalCellSize() - list.getSpacing()))
-                .addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
-                .get()
-            );
+            createBindings();
+        }
+
+        @Override
+        protected void createBindings() {
             range.bind(ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
-                    if (list.getHeight() <= 0) return Utils.INVALID_RANGE;
+                    if (container.getHeight() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalNum();
                     if (needed == 0) return Utils.INVALID_RANGE;
 
-                    int start = Math.max(0, firstVisible() - list.getBufferSize().val());
-                    int end = Math.min(list.size() - 1, start + needed - 1);
+                    int start = Math.max(0, firstVisible() - container.getBufferSize().val());
+                    int end = Math.min(container.size() - 1, start + needed - 1);
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(list.heightProperty())
-                .addSources(list.bufferSizeProperty())
-                .addSources(list.vPosProperty())
-                .addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
+                .addSources(container.heightProperty())
+                .addSources(container.bufferSizeProperty())
+                .addSources(container.vPosProperty())
+                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.spacingProperty())
                 .get()
             );
+
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
-                    if (list.isEmpty()) return Position.origin();
+                    if (container.isEmpty()) return Position.origin();
                     IntegerRange range = range();
                     if (Utils.INVALID_RANGE.equals(range)) return Position.origin();
 
                     double size = getTotalCellSize();
                     IntegerRange rangeToFirstVisible = IntegerRange.of(range.getMin(), firstVisible());
                     double pixelsToFirst = rangeToFirstVisible.diff() * size;
-                    double visibleAmountFirst = list.getVPos() % size;
+                    double visibleAmountFirst = container.getVPos() % size;
 
-                    double x = -NumberUtils.clamp(list.getHPos(), 0.0, getMaxHScroll());
+                    double x = -NumberUtils.clamp(container.getHPos(), 0.0, getMaxHScroll());
                     double y = -(pixelsToFirst + visibleAmountFirst);
                     return Position.of(x, y);
                 })
-                .addSources(list.layoutBoundsProperty())
-                .addSources(list.hPosProperty(), list.vPosProperty())
-                .addSources(list.cellSizeProperty(), list.spacingProperty())
+                .addSources(container.layoutBoundsProperty())
+                .addSources(container.hPosProperty(), container.vPosProperty())
+                .addSources(container.cellSizeProperty(), container.spacingProperty())
                 .get()
             );
+            super.createBindings();
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxXBinding() {
+            return null; // null for vertical!
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxYBinding() {
+            return DoubleBindingBuilder.build()
+                .setMapper(() -> container.size() * getTotalCellSize() - container.getSpacing())
+                .addSources(container.cellSizeProperty(), container.spacingProperty())
+                .get();
         }
 
         /**
@@ -398,9 +272,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
         @Override
         public int firstVisible() {
             return NumberUtils.clamp(
-                (int) Math.floor(list.getVPos() / getTotalCellSize()),
+                (int) Math.floor(container.getVPos() / getTotalCellSize()),
                 0,
-                list.size() - 1
+                container.size() - 1
             );
         }
 
@@ -412,9 +286,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
         @Override
         public int lastVisible() {
             return NumberUtils.clamp(
-                (int) Math.floor((list.getVPos() + list.getHeight()) / getTotalCellSize()),
+                (int) Math.floor((container.getVPos() + container.getHeight()) / getTotalCellSize()),
                 0,
-                list.size() - 1
+                container.size() - 1
             );
         }
 
@@ -427,7 +301,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
         public int visibleNum() {
             double size = getTotalCellSize();
             return size > 0 ?
-                (int) Math.ceil(list.getHeight() / size) :
+                (int) Math.ceil(container.getHeight() / size) :
                 0;
         }
 
@@ -441,9 +315,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
          */
         @Override
         public double computeSize(Node node) {
-            boolean fitToViewport = list.isFitToViewport();
+            boolean fitToViewport = container.isFitToViewport();
             if (fitToViewport) {
-                double fW = list.getWidth();
+                double fW = container.getWidth();
                 virtualMaxX.set(fW);
                 return fW;
             }
@@ -467,7 +341,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
             Node node = cell.toNode();
             double y = getTotalCellSize() * layoutIndex;
             double w = computeSize(node);
-            double h = list.getCellSize();
+            double h = container.getCellSize();
             cell.beforeLayout();
             node.resizeRelocate(0, y, w, h);
             cell.afterLayout();
@@ -475,12 +349,12 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 
         @Override
         public void scrollBy(double pixels) {
-            list.setVPos(list.getVPos() + pixels);
+            container.setVPos(container.getVPos() + pixels);
         }
 
         @Override
         public void scrollToPixel(double pixel) {
-            list.setVPos(pixel);
+            container.setVPos(pixel);
         }
 
         @Override
@@ -521,48 +395,63 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 
         public HorizontalHelper(VFXList<T, C> list) {
             super(list);
-            virtualMaxX.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> (list.size() * getTotalCellSize() - list.getSpacing()))
-                .addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
-                .get()
-            );
+            createBindings();
+        }
+
+        @Override
+        protected void createBindings() {
             range.bind(ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
-                    if (list.getWidth() <= 0) return Utils.INVALID_RANGE;
+                    if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalNum();
                     if (needed == 0) return Utils.INVALID_RANGE;
 
-                    int start = Math.max(0, firstVisible() - list.getBufferSize().val());
-                    int end = Math.min(list.size() - 1, start + needed - 1);
+                    int start = Math.max(0, firstVisible() - container.getBufferSize().val());
+                    int end = Math.min(container.size() - 1, start + needed - 1);
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(list.widthProperty())
-                .addSources(list.bufferSizeProperty())
-                .addSources(list.hPosProperty())
-                .addSources(list.sizeProperty(), list.cellSizeProperty(), list.spacingProperty())
+                .addSources(container.widthProperty())
+                .addSources(container.bufferSizeProperty())
+                .addSources(container.hPosProperty())
+                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.spacingProperty())
                 .get()
             );
+
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
-                    if (list.isEmpty()) return Position.origin();
+                    if (container.isEmpty()) return Position.origin();
                     IntegerRange range = range();
                     if (Utils.INVALID_RANGE.equals(range)) return Position.origin();
 
                     double size = getTotalCellSize();
                     IntegerRange rangeToFirstVisible = IntegerRange.of(range.getMin(), firstVisible());
                     double pixelsToFirst = rangeToFirstVisible.diff() * size;
-                    double visibleAmountFirst = list.getHPos() % size;
+                    double visibleAmountFirst = container.getHPos() % size;
 
-                    double x = -NumberUtils.clamp(list.getVPos(), 0.0, getMaxVScroll());
+                    double x = -NumberUtils.clamp(container.getVPos(), 0.0, getMaxVScroll());
                     double y = -(pixelsToFirst + visibleAmountFirst);
                     return Position.of(x, y);
                 })
-                .addSources(list.layoutBoundsProperty())
-                .addSources(list.hPosProperty(), list.vPosProperty())
-                .addSources(list.cellSizeProperty(), list.spacingProperty())
+                .addSources(container.layoutBoundsProperty())
+                .addSources(container.hPosProperty(), container.vPosProperty())
+                .addSources(container.cellSizeProperty(), container.spacingProperty())
                 .get()
             );
+            super.createBindings();
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxXBinding() {
+            return DoubleBindingBuilder.build()
+                .setMapper(() -> container.size() * getTotalCellSize() - container.getSpacing())
+                .addSources(container.cellSizeProperty(), container.spacingProperty())
+                .get();
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxYBinding() {
+            return null; // null for horizontal!
         }
 
         /**
@@ -573,9 +462,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
         @Override
         public int firstVisible() {
             return NumberUtils.clamp(
-                (int) Math.floor(list.getHPos() / getTotalCellSize()),
+                (int) Math.floor(container.getHPos() / getTotalCellSize()),
                 0,
-                list.size()
+                container.size()
             );
         }
 
@@ -587,9 +476,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
         @Override
         public int lastVisible() {
             return NumberUtils.clamp(
-                (int) Math.floor((list.getHPos() + list.getWidth()) / getTotalCellSize()),
+                (int) Math.floor((container.getHPos() + container.getWidth()) / getTotalCellSize()),
                 0,
-                list.size()
+                container.size()
             );
         }
 
@@ -602,7 +491,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
         public int visibleNum() {
             double size = getTotalCellSize();
             return size > 0 ?
-                (int) Math.ceil(list.getWidth() / size) :
+                (int) Math.ceil(container.getWidth() / size) :
                 0;
         }
 
@@ -616,9 +505,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
          */
         @Override
         public double computeSize(Node node) {
-            boolean fitToViewport = list.isFitToViewport();
+            boolean fitToViewport = container.isFitToViewport();
             if (fitToViewport) {
-                double fH = list.getHeight();
+                double fH = container.getHeight();
                 virtualMaxY.set(fH);
                 return fH;
             }
@@ -641,7 +530,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
         public void layout(int layoutIndex, VFXCell<T> cell) {
             Node node = cell.toNode();
             double x = getTotalCellSize() * layoutIndex;
-            double w = list.getCellSize();
+            double w = container.getCellSize();
             double h = computeSize(node);
             cell.beforeLayout();
             node.resizeRelocate(x, 0, w, h);
@@ -650,12 +539,12 @@ public interface VFXListHelper<T, C extends VFXCell<T>> {
 
         @Override
         public void scrollBy(double pixels) {
-            list.setHPos(list.getHPos() + pixels);
+            container.setHPos(container.getHPos() + pixels);
         }
 
         @Override
         public void scrollToPixel(double pixel) {
-            list.setHPos(pixel);
+            container.setHPos(pixel);
         }
 
         @Override

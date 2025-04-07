@@ -18,8 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
-import java.util.*;
-
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
@@ -28,6 +26,7 @@ import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import java.util.*;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
 
@@ -273,7 +272,9 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
      * Last notes:
      * <p> 1) This is one of those methods that to produce a valid new state needs to validate the list's positions,
      * so it calls {@link VFXListHelper#invalidatePos()}
-     * <p> 2) To make sure the layout is always correct, at the end we always invoke {@link VFXList#requestViewportLayout()}.
+     * <p> 2) Before invalidating the position, this must also request the re-computation of the container's virtual sizes
+     * by calling {@link VFXListHelper#invalidateVirtualSizes()}
+     * <p> 3) To make sure the layout is always correct, at the end we always invoke {@link VFXList#requestViewportLayout()}.
      * You can guess why from the above example, items 2 and 3 are still in the viewport, but at different indexes,
      * which also means at different layout positions. There is no easy way to detect this, so better safe than sorry,
      * always update the layout.
@@ -282,6 +283,13 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
         invalidatingPos = true;
         VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
+
+        /*
+         * Force the re-computation of the container's virtual sizes which depend on the number of items.
+         * Doing this here is crucial because an automatic invalidation may trigger the onPositionChanged(...) method
+         * before this, therefore leading to an incorrect state.
+         */
+        helper.invalidateVirtualSizes();
 
         /*
          * Ensure positions are correct

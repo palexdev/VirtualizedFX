@@ -18,10 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
@@ -52,6 +48,9 @@ import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper
 import io.github.palexdev.virtualizedfx.table.ViewportLayoutRequest.ViewportLayoutRequestProperty;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -251,20 +250,18 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     // Constructors
     //================================================================================
     public VFXTable() {
-        cache = createCache();
-        initialize();
+        this(FXCollections.observableArrayList());
+
     }
 
     public VFXTable(ObservableList<T> items) {
-        cache = createCache();
-        setItems(items);
-        initialize();
+        this(items, FXCollections.observableArrayList());
     }
 
     public VFXTable(ObservableList<T> items, Collection<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns) {
-        cache = createCache();
         setItems(items);
         this.columns.setAll(columns);
+        cache = createCache();
         initialize();
     }
 

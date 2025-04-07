@@ -18,12 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
-import java.util.List;
-import java.util.Map;
-import java.util.SequencedMap;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
@@ -47,6 +41,11 @@ import io.github.palexdev.virtualizedfx.list.VFXListHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXListStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import java.util.List;
+import java.util.Map;
+import java.util.SequencedMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -172,22 +171,19 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
     // Constructors
     //================================================================================
     public VFXList() {
-        cache = createCache();
-        setOrientation(Orientation.VERTICAL);
-        initialize();
+        this(FXCollections.observableArrayList(), null);
     }
 
     public VFXList(ObservableList<T> items, Function<T, C> cellFactory) {
-        this();
-        setItems(items);
-        setCellFactory(cellFactory);
+        this(items, cellFactory, Orientation.VERTICAL);
     }
 
     public VFXList(ObservableList<T> items, Function<T, C> cellFactory, Orientation orientation) {
-        this();
         setItems(items);
         setCellFactory(cellFactory);
+        cache = createCache();
         setOrientation(orientation);
+        initialize();
     }
 
     //================================================================================

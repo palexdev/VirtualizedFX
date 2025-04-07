@@ -18,12 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
-import java.util.List;
-import java.util.Map;
-import java.util.SequencedMap;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
@@ -48,6 +42,11 @@ import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXGridStateProperty;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import java.util.List;
+import java.util.Map;
+import java.util.SequencedMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -186,14 +185,14 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
     // Constructors
     //================================================================================
     public VFXGrid() {
-        cache = createCache();
-        initialize();
+        this(FXCollections.observableArrayList(), null);
     }
 
     public VFXGrid(ObservableList<T> items, Function<T, C> cellFactory) {
-        this();
         setItems(items);
         setCellFactory(cellFactory);
+        cache = createCache();
+        initialize();
     }
 
     //================================================================================

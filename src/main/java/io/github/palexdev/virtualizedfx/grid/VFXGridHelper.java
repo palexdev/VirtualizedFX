@@ -18,24 +18,23 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
-import java.util.Optional;
-
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
-import io.github.palexdev.mfxcore.base.properties.PositionProperty;
 import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
+import io.github.palexdev.virtualizedfx.base.VFXContainerHelper;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import java.util.Optional;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.Node;
 
@@ -45,7 +44,7 @@ import javafx.scene.Node;
  * it's still a nice way to adhere to the encapsulation and separation of concerns principles.
  * Has one concrete implementation: {@link DefaultHelper}.
  */
-public interface VFXGridHelper<T, C extends VFXCell<T>> {
+public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelper<T, VFXGrid<T, C>> {
 
     /**
      * @return the maximum number of columns the grid can have. This value is essentially the same as
@@ -131,68 +130,6 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
     }
 
     /**
-     * Specifies the total number of pixels on the x-axis.
-     */
-    ReadOnlyDoubleProperty virtualMaxXProperty();
-
-    /**
-     * @return the total number of pixels on the x-axis.
-     */
-    default double getVirtualMaxX() {
-        return virtualMaxXProperty().get();
-    }
-
-    /**
-     * Specifies the total number of pixels on the y-axis.
-     */
-    ReadOnlyDoubleProperty virtualMaxYProperty();
-
-    /**
-     * @return the total number of pixels on the y-axis.
-     */
-    default double getVirtualMaxY() {
-        return virtualMaxYProperty().get();
-    }
-
-    /**
-     * @return the maximum possible vertical position.
-     */
-    default double getMaxVScroll() {
-        return maxVScrollProperty().get();
-    }
-
-    /**
-     * Specifies the maximum possible vertical position.
-     */
-    ReadOnlyDoubleProperty maxVScrollProperty();
-
-    /**
-     * @return the maximum possible horizontal position.
-     */
-    default double getMaxHScroll() {
-        return maxHScrollProperty().get();
-    }
-
-    /**
-     * Specifies the maximum possible horizontal position.
-     */
-    ReadOnlyDoubleProperty maxHScrollProperty();
-
-    /**
-     * Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
-     * <p>
-     * This property specifies the translation of the viewport, the value depends on the implementation.
-     */
-    ReadOnlyObjectProperty<Position> viewportPositionProperty();
-
-    /**
-     * @return the position the viewport should be at in the container
-     */
-    default Position getViewportPosition() {
-        return viewportPositionProperty().get();
-    }
-
-    /**
      * Lays out the given cell.
      * The row and column layout indexes are necessary to identify the position of a cell among the others
      * (comes before/after, above/below).
@@ -206,11 +143,6 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
      * vertical spacing values
      */
     Size getTotalCellSize();
-
-    /**
-     * @return the {@link VFXGrid} instance associated to this helper
-     */
-    VFXGrid<T, C> getGrid();
 
     /**
      * @return the theoretical number of cells in the viewport. The value depends on the number of visible columns and rows,
@@ -230,7 +162,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
      */
     default int totalCells() {
         // TODO can't find a better algorithm, probably with some nasty stupid math formula that I hate so much
-        VFXGrid<T, C> grid = getGrid();
+        VFXGrid<T, C> grid = getContainer();
         int cnt = 0;
         int maxColumns = maxColumns();
         IntegerRange rRange = rowsRange();
@@ -255,7 +187,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
      */
     default void scrollToRow(int row) {
         double h = getTotalCellSize().getHeight();
-        getGrid().setVPos((row * h));
+        getContainer().setVPos((row * h));
     }
 
     /**
@@ -263,26 +195,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
      */
     default void scrollToColumn(int column) {
         double w = getTotalCellSize().getWidth();
-        getGrid().setHPos((column * w));
-    }
-
-    /**
-     * Forces the {@link VFXGrid#vPosProperty()} and {@link VFXGrid#hPosProperty()} to be invalidated.
-     * This is simply done by calling the respective setters with their current respective values. Those two properties
-     * will automatically call {@link #getMaxVScroll()} and {@link #getMaxHScroll()} to ensure the values are correct.
-     * Automatically invoked by the {@link VFXGridManager} when needed.
-     */
-    default void invalidatePos() {
-        VFXGrid<T, C> grid = getGrid();
-        grid.setVPos(grid.getVPos());
-        grid.setHPos(grid.getHPos());
-    }
-
-    /**
-     * Converts the given index to an item (shortcut for {@code getGrid().getItems().get(index)}).
-     */
-    default T indexToItem(int index) {
-        return getGrid().getItems().get(index);
+        getContainer().setHPos((column * w));
     }
 
     /**
@@ -298,18 +211,12 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
      * is updated with the given item, or a totally new one created by the {@link VFXGrid#getCellFactory()}.
      */
     default C itemToCell(T item) {
-        VFXGrid<T, C> grid = getGrid();
+        VFXGrid<T, C> grid = getContainer();
         VFXCellsCache<T, C> cache = grid.getCache();
         Optional<C> opt = cache.tryTake();
         opt.ifPresent(c -> c.updateItem(item));
         return opt.orElseGet(() -> grid.create(item));
     }
-
-    /**
-     * Automatically called by {@link VFXGrid} when a helper is not needed anymore (changed).
-     * If the helper uses listeners/bindings that may lead to memory leaks, this is the right place to remove them.
-     */
-    default void dispose() {}
 
     /**
      * Concrete implementation of {@link VFXGridHelper}, here the range of rows and columns to display, as well as the
@@ -355,82 +262,58 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
      * The computations have the following dependencies: the number of items, the number of columns, the cell size and
      * the horizontal/vertical spacing (respectively).
      */
-    class DefaultHelper<T, C extends VFXCell<T>> implements VFXGridHelper<T, C> {
-        protected final VFXGrid<T, C> grid;
+    class DefaultHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXGrid<T, C>> implements VFXGridHelper<T, C> {
         protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
         protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
-        protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper virtualMaxY = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper maxHScroll = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper maxVScroll = new ReadOnlyDoubleWrapper();
-        protected final PositionProperty viewportPosition = new PositionProperty();
         protected final SizeProperty totalCellSize = new SizeProperty(Size.empty());
 
         public DefaultHelper(VFXGrid<T, C> grid) {
-            this.grid = grid;
+            super(grid);
+            createBindings();
+        }
 
+        @Override
+        protected void createBindings() {
             columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
-                    if (grid.getWidth() <= 0) return Utils.INVALID_RANGE;
+                    if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalColumns();
                     if (needed == 0) return Utils.INVALID_RANGE;
 
-                    int start = Math.max(0, firstColumn() - grid.getBufferSize().val());
+                    int start = Math.max(0, firstColumn() - container.getBufferSize().val());
                     int end = Math.min(maxColumns() - 1, start + needed - 1);
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(grid.columnsNumProperty())
-                .addSources(grid.widthProperty())
-                .addSources(grid.hPosProperty())
-                .addSources(grid.bufferSizeProperty())
-                .addSources(grid.sizeProperty(), grid.cellSizeProperty(), grid.hSpacingProperty())
+                .addSources(container.columnsNumProperty())
+                .addSources(container.widthProperty())
+                .addSources(container.hPosProperty())
+                .addSources(container.bufferSizeProperty())
+                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.hSpacingProperty())
                 .get()
             );
             rowsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
-                    if (grid.getHeight() <= 0) return Utils.INVALID_RANGE;
+                    if (container.getHeight() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalRows();
                     if (needed == 0) return Utils.INVALID_RANGE;
 
-                    int start = Math.max(0, firstRow() - grid.getBufferSize().val());
+                    int start = Math.max(0, firstRow() - container.getBufferSize().val());
                     int end = Math.min(maxRows() - 1, start + needed - 1);
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(grid.columnsNumProperty())
-                .addSources(grid.heightProperty())
-                .addSources(grid.vPosProperty())
-                .addSources(grid.bufferSizeProperty())
-                .addSources(grid.sizeProperty(), grid.cellSizeProperty(), grid.vSpacingProperty())
-                .get()
-            );
-
-            virtualMaxX.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> (maxColumns() * getTotalCellSize().getWidth()) - grid.getHSpacing())
-                .addSources(grid.sizeProperty(), grid.columnsNumProperty(), totalCellSize)
-                .get()
-            );
-            virtualMaxY.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> (maxRows() * getTotalCellSize().getHeight()) - grid.getVSpacing())
-                .addSources(grid.sizeProperty(), grid.columnsNumProperty(), totalCellSize)
-                .get()
-            );
-
-            maxHScroll.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> Math.max(0, getVirtualMaxX() - grid.getWidth()))
-                .addSources(virtualMaxX, grid.widthProperty())
-                .get()
-            );
-            maxVScroll.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> Math.max(0, getVirtualMaxY() - grid.getHeight()))
-                .addSources(virtualMaxY, grid.heightProperty())
+                .addSources(container.columnsNumProperty())
+                .addSources(container.heightProperty())
+                .addSources(container.vPosProperty())
+                .addSources(container.bufferSizeProperty())
+                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.vSpacingProperty())
                 .get()
             );
 
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
-                    if (grid.isEmpty()) return Position.origin();
+                    if (container.isEmpty()) return Position.origin();
                     IntegerRange rowsRange = rowsRange();
                     IntegerRange columnsRange = columnsRange();
                     if (Utils.INVALID_RANGE.equals(rowsRange) || Utils.INVALID_RANGE.equals(columnsRange))
@@ -439,34 +322,51 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
                     Size size = getTotalCellSize();
                     IntegerRange rRangeToFirstVisible = IntegerRange.of(rowsRange.getMin(), firstRow());
                     double rPixelsToFirst = rRangeToFirstVisible.diff() * size.getHeight();
-                    double rVisibleAmount = grid.getVPos() % size.getHeight();
+                    double rVisibleAmount = container.getVPos() % size.getHeight();
                     IntegerRange cRangeToFirstVisible = IntegerRange.of(columnsRange.getMin(), firstColumn());
                     double cPixelsToFirst = cRangeToFirstVisible.diff() * size.getWidth();
-                    double cVisibleAmount = grid.getHPos() % size.getWidth();
+                    double cVisibleAmount = container.getHPos() % size.getWidth();
 
                     double x = -(cPixelsToFirst + cVisibleAmount);
                     double y = -(rPixelsToFirst + rVisibleAmount);
                     return Position.of(x, y);
 
                 })
-                .addSources(grid.layoutBoundsProperty())
-                .addSources(grid.vPosProperty(), grid.hPosProperty())
-                .addSources(grid.cellSizeProperty())
-                .addSources(grid.hSpacingProperty(), grid.vSpacingProperty())
+                .addSources(container.layoutBoundsProperty())
+                .addSources(container.vPosProperty(), container.hPosProperty())
+                .addSources(container.cellSizeProperty())
+                .addSources(container.hSpacingProperty(), container.vSpacingProperty())
                 .get()
             );
 
             totalCellSize.bind(ObjectBindingBuilder.<Size>build()
                 .setMapper(() -> {
-                    Size size = grid.getCellSize();
+                    Size size = container.getCellSize();
                     return Size.of(
-                        size.getWidth() + grid.getHSpacing(),
-                        size.getHeight() + grid.getVSpacing()
+                        size.getWidth() + container.getHSpacing(),
+                        size.getHeight() + container.getVSpacing()
                     );
                 })
-                .addSources(grid.cellSizeProperty(), grid.vSpacingProperty(), grid.hSpacingProperty())
+                .addSources(container.cellSizeProperty(), container.vSpacingProperty(), container.hSpacingProperty())
                 .get()
             );
+            super.createBindings();
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxXBinding() {
+            return DoubleBindingBuilder.build()
+                .setMapper(() -> (maxColumns() * getTotalCellSize().getWidth()) - container.getHSpacing())
+                .addSources(container.columnsNumProperty(), totalCellSize)
+                .get();
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxYBinding() {
+            return DoubleBindingBuilder.build()
+                .setMapper(() -> (maxRows() * getTotalCellSize().getHeight()) - container.getVSpacing())
+                .addSources(container.columnsNumProperty(), totalCellSize)
+                .get();
         }
 
         /**
@@ -476,7 +376,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
          */
         @Override
         public int maxColumns() {
-            return Math.min(grid.size(), grid.getColumnsNum());
+            return Math.min(container.size(), container.getColumnsNum());
         }
 
         /**
@@ -487,7 +387,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
         @Override
         public int firstColumn() {
             return NumberUtils.clamp(
-                (int) Math.floor(grid.getHPos() / getTotalCellSize().getWidth()),
+                (int) Math.floor(container.getHPos() / getTotalCellSize().getWidth()),
                 0,
                 maxColumns() - 1
             );
@@ -512,7 +412,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
         public int visibleColumns() {
             double width = getTotalCellSize().getWidth();
             return width > 0 ?
-                (int) Math.ceil(grid.getWidth() / width) :
+                (int) Math.ceil(container.getWidth() / width) :
                 0;
         }
 
@@ -525,7 +425,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
         @Override
         public int totalColumns() {
             int visible = visibleColumns();
-            return visible == 0 ? 0 : Math.min(visible + grid.getBufferSize().val() * 2, maxColumns());
+            return visible == 0 ? 0 : Math.min(visible + container.getBufferSize().val() * 2, maxColumns());
         }
 
         @Override
@@ -541,9 +441,9 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
         @Override
         public int maxRows() {
             return NumberUtils.clamp(
-                (int) Math.ceil((double) grid.size() / maxColumns()),
+                (int) Math.ceil((double) container.size() / maxColumns()),
                 0,
-                grid.size()
+                container.size()
             );
         }
 
@@ -555,7 +455,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
         @Override
         public int firstRow() {
             return NumberUtils.clamp(
-                (int) Math.floor(grid.getVPos() / getTotalCellSize().getHeight()),
+                (int) Math.floor(container.getVPos() / getTotalCellSize().getHeight()),
                 0,
                 maxRows() - 1
             );
@@ -580,7 +480,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
         public int visibleRows() {
             double height = getTotalCellSize().getHeight();
             return height > 0 ?
-                (int) Math.ceil(grid.getHeight() / height) :
+                (int) Math.ceil(container.getHeight() / height) :
                 0;
         }
 
@@ -593,7 +493,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
         @Override
         public int totalRows() {
             int visible = visibleRows();
-            return visible == 0 ? 0 : Math.min(visible + grid.getBufferSize().val() * 2, maxRows());
+            return visible == 0 ? 0 : Math.min(visible + container.getBufferSize().val() * 2, maxRows());
         }
 
         @Override
@@ -637,8 +537,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
             Node node = cell.toNode();
             double x = getTotalCellSize().getWidth() * columnLayoutIndex;
             double y = getTotalCellSize().getHeight() * rowLayoutIndex;
-            double w = grid.getCellSize().getWidth();
-            double h = grid.getCellSize().getHeight();
+            double w = container.getCellSize().getWidth();
+            double h = container.getCellSize().getHeight();
             cell.beforeLayout();
             node.resizeRelocate(x, y, w, h);
             cell.afterLayout();
@@ -647,11 +547,6 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> {
         @Override
         public Size getTotalCellSize() {
             return totalCellSize.get();
-        }
-
-        @Override
-        public VFXGrid<T, C> getGrid() {
-            return grid;
         }
     }
 }

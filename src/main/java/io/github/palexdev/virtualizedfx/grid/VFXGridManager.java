@@ -18,11 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.SequencedMap;
-import java.util.Set;
-
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
@@ -32,6 +27,10 @@ import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.SequencedMap;
+import java.util.Set;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
 import javafx.geometry.Orientation;
@@ -363,7 +362,9 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
      * Last notes:
      * <p> 1) This is one of those methods that to produce a valid new state needs to validate the grid's positions,
      * so it calls {@link VFXGridHelper#invalidatePos()}
-     * <p> 2) To make sure the layout is always correct, at the end we always invoke {@link VFXGrid#requestViewportLayout()}.
+     * <p> 2) Before invalidating the position, this must also request the re-computation of the container's virtual sizes
+     * by calling {@link VFXGridHelper#invalidateVirtualSizes()}
+     * <p> 3) To make sure the layout is always correct, at the end we always invoke {@link VFXGrid#requestViewportLayout()}.
      * After changes like this, items may be still present in the viewport, but at different indexes, which translates to
      * different layout positions. There is no easy way to detect this, so better safe than sorry, always update the layout.
      */
@@ -371,6 +372,14 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
         invalidatingPos = true;
         VFXGrid<T, C> grid = getNode();
         VFXGridHelper<T, C> helper = grid.getHelper();
+
+        /*
+         * Force the re-computation of the container's virtual sizes which depend on the number of items.
+         * Doing this here is crucial because an automatic invalidation may trigger the onPositionChanged(...) method
+         * before this, therefore leading to an incorrect state.
+         */
+        helper.invalidateVirtualSizes();
+
 
         /*
          * Ensure positions are valid!

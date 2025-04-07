@@ -18,29 +18,28 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.IntStream;
-
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
-import io.github.palexdev.mfxcore.base.properties.PositionProperty;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.observables.OnInvalidated;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
+import io.github.palexdev.virtualizedfx.base.VFXContainerHelper;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.IntStream;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
@@ -52,7 +51,7 @@ import javafx.scene.Node;
  * {@link VFXTable#columnsLayoutModeProperty()}. For this reason, there are two concrete implementations:
  * {@link FixedTableHelper} and {@link VariableTableHelper}.
  */
-public interface VFXTableHelper<T> {
+public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
     /**
      * @return the index of the first visible column
@@ -126,68 +125,6 @@ public interface VFXTableHelper<T> {
     }
 
     /**
-     * Specifies the total number of pixels on the x-axis.
-     */
-    ReadOnlyDoubleProperty virtualMaxXProperty();
-
-    /**
-     * @return the total number of pixels on the x-axis.
-     */
-    default double getVirtualMaxX() {
-        return virtualMaxXProperty().get();
-    }
-
-    /**
-     * Specifies the total number of pixels on the y-axis.
-     */
-    ReadOnlyDoubleProperty virtualMaxYProperty();
-
-    /**
-     * @return the total number of pixels on the y-axis.
-     */
-    default double getVirtualMaxY() {
-        return virtualMaxYProperty().get();
-    }
-
-    /**
-     * @return the maximum possible vertical position.
-     */
-    default double getMaxVScroll() {
-        return maxVScrollProperty().get();
-    }
-
-    /**
-     * Specifies the maximum possible vertical position.
-     */
-    ReadOnlyDoubleProperty maxVScrollProperty();
-
-    /**
-     * @return the maximum possible horizontal position.
-     */
-    default double getMaxHScroll() {
-        return maxHScrollProperty().get();
-    }
-
-    /**
-     * Specifies the maximum possible horizontal position.
-     */
-    ReadOnlyDoubleProperty maxHScrollProperty();
-
-    /**
-     * Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
-     * <p>
-     * This property specifies the translation of the viewport, the value depends on the implementation.
-     */
-    ReadOnlyObjectProperty<Position> viewportPositionProperty();
-
-    /**
-     * @return the position the viewport should be at in the container
-     */
-    default Position getViewportPosition() {
-        return viewportPositionProperty().get();
-    }
-
-    /**
      * @return the width for the given column
      */
     double getColumnWidth(VFXTableColumn<T, ?> column);
@@ -223,7 +160,7 @@ public interface VFXTableHelper<T> {
      */
     default void layoutRow(int layoutIdx, VFXTableRow<T> row) {
         double w = getVirtualMaxX();
-        double h = getTable().getRowsHeight();
+        double h = getContainer().getRowsHeight();
         double y = layoutIdx * h;
         row.beforeLayout();
         row.resizeRelocate(0, y, w, h);
@@ -252,11 +189,6 @@ public interface VFXTableHelper<T> {
     void autosizeColumns();
 
     /**
-     * @return the {@link VFXTable} instance the helper is related to
-     */
-    VFXTable<T> getTable();
-
-    /**
      * Depends on the implementation!
      */
     int visibleCells();
@@ -272,25 +204,6 @@ public interface VFXTableHelper<T> {
     }
 
     /**
-     * Forces the {@link VFXTable#vPosProperty()} and {@link VFXTable#hPosProperty()} to be invalidated.
-     * This is simply done by calling the respective setters with their current respective values. Those two properties
-     * will automatically call {@link #getMaxVScroll()} and {@link #getMaxHScroll()} to ensure the values are correct.
-     * Automatically invoked by the {@link VFXTableManager} when needed.
-     */
-    default void invalidatePos() {
-        VFXTable<T> table = getTable();
-        table.setVPos(table.getVPos());
-        table.setHPos(table.getHPos());
-    }
-
-    /**
-     * Converts the given index to an item (shortcut for {@code getTable().getItems().get(index)}).
-     */
-    default T indexToItem(int index) {
-        return getTable().getItems().get(index);
-    }
-
-    /**
      * Converts the given index to a row. Uses {@link #itemToRow(Object)}.
      */
     default VFXTableRow<T> indexToRow(int index) {
@@ -303,10 +216,10 @@ public interface VFXTableHelper<T> {
      * is updated with the given item, or a totally new one created by the {@link VFXTable#rowFactoryProperty()}.
      */
     default VFXTableRow<T> itemToRow(T item) {
-        VFXCellsCache<T, VFXTableRow<T>> cache = getTable().getCache();
+        VFXCellsCache<T, VFXTableRow<T>> cache = getContainer().getCache();
         Optional<VFXTableRow<T>> opt = cache.tryTake();
         opt.ifPresent(c -> c.updateItem(item));
-        return opt.orElseGet(() -> getTable().rowFactoryProperty().create(item));
+        return opt.orElseGet(() -> getContainer().rowFactoryProperty().create(item));
     }
 
     /**
@@ -314,7 +227,7 @@ public interface VFXTableHelper<T> {
      * {@link VFXTable#columnsSizeProperty()}
      */
     default double getViewportHeight() {
-        VFXTable<T> table = getTable();
+        VFXTable<T> table = getContainer();
         return Math.max(0, table.getHeight() - table.getColumnsSize().getHeight());
     }
 
@@ -323,7 +236,7 @@ public interface VFXTableHelper<T> {
      * Basically a shortcut for {@code table.getColumn().getLast() == column)}
      */
     default boolean isLastColumn(VFXTableColumn<T, ?> column) {
-        ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = getTable().getColumns();
+        ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = getContainer().getColumns();
         if (columns.isEmpty()) return false;
         return columns.getLast() == column;
     }
@@ -332,7 +245,7 @@ public interface VFXTableHelper<T> {
      * Scrolls in the viewport, in the given direction (orientation) by the given number of pixels.
      */
     default void scrollBy(Orientation orientation, double pixels) {
-        VFXTable<T> table = getTable();
+        VFXTable<T> table = getContainer();
         if (orientation == Orientation.HORIZONTAL) {
             table.setHPos(table.getHPos() + pixels);
         } else {
@@ -344,7 +257,7 @@ public interface VFXTableHelper<T> {
      * Scrolls in the viewport, in the given direction (orientation) to the given pixel value.
      */
     default void scrollToPixel(Orientation orientation, double pixel) {
-        VFXTable<T> table = getTable();
+        VFXTable<T> table = getContainer();
         if (orientation == Orientation.HORIZONTAL) {
             table.setHPos(pixel);
         } else {
@@ -360,51 +273,27 @@ public interface VFXTableHelper<T> {
     void scrollToIndex(Orientation orientation, int index);
 
     /**
-     * Automatically called by {@link VFXTable} when a helper is not needed anymore (changed).
-     * If the helper uses listeners/bindings that may lead to memory leaks, this is the right place to remove them.
-     */
-    default void dispose() {}
-
-    /**
      * Abstract implementation of {@link VFXTableHelper}, contains common members for the two concrete implementations
      * {@link FixedTableHelper} and {@link VariableTableHelper}, such as:
      * <p> - the range of columns to display as a {@link IntegerRangeProperty}
      * <p> - the range of rows to display as a {@link IntegerRangeProperty}
-     * <p> - the virtual max x as a {@link ReadOnlyDoubleWrapper}
-     * <p> - the virtual max y as a {@link ReadOnlyDoubleWrapper}
-     * <p> - the viewport's position, {@link #viewportPositionProperty()} as a {@link PositionProperty}
      *
      * @param <T>
      */
-    abstract class AbstractHelper<T> implements VFXTableHelper<T> {
-        protected VFXTable<T> table;
+    abstract class AbstractHelper<T> extends VFXContainerHelperBase<T, VFXTable<T>> implements VFXTableHelper<T> {
         protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
         protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
-        protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper virtualMaxY = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper maxHScroll = new ReadOnlyDoubleWrapper();
-        protected final ReadOnlyDoubleWrapper maxVScroll = new ReadOnlyDoubleWrapper();
-        protected final PositionProperty viewportPosition = new PositionProperty();
 
         public AbstractHelper(VFXTable<T> table) {
-            this.table = table;
-            initBindings();
+            super(table);
         }
 
-        /**
-         * Bindings and listeners should be initialized here, automatically called after the table instance is set.
-         */
-        protected void initBindings() {
-            maxHScroll.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> Math.max(0, getVirtualMaxX() - table.getWidth()))
-                .addSources(virtualMaxX, table.widthProperty())
-                .get()
-            );
-            maxVScroll.bind(DoubleBindingBuilder.build()
+        @Override
+        protected DoubleBinding createMaxVScrollBinding() {
+            return DoubleBindingBuilder.build()
                 .setMapper(() -> Math.max(0, getVirtualMaxY() - getViewportHeight()))
-                .addSources(virtualMaxY, table.heightProperty(), table.columnsSizeProperty())
-                .get()
-            );
+                .addSources(virtualMaxY, container.heightProperty(), container.columnsSizeProperty())
+                .get();
         }
 
         /**
@@ -430,9 +319,9 @@ public interface VFXTableHelper<T> {
         @Override
         public int firstRow() {
             return NumberUtils.clamp(
-                (int) Math.floor(table.getVPos() / table.getRowsHeight()),
+                (int) Math.floor(container.getVPos() / container.getRowsHeight()),
                 0,
-                table.size() - 1
+                container.size() - 1
             );
         }
 
@@ -453,7 +342,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public int visibleRows() {
-            double height = table.getRowsHeight();
+            double height = container.getRowsHeight();
             return height > 0 ?
                 (int) Math.ceil(getViewportHeight() / height) :
                 0;
@@ -468,7 +357,7 @@ public interface VFXTableHelper<T> {
         @Override
         public int totalRows() {
             int visible = visibleRows();
-            return visible == 0 ? 0 : Math.min(visible + table.getRowsBufferSize().val() * 2, table.size());
+            return visible == 0 ? 0 : Math.min(visible + container.getRowsBufferSize().val() * 2, container.size());
         }
 
         @Override
@@ -499,21 +388,6 @@ public interface VFXTableHelper<T> {
         @Override
         public ReadOnlyObjectProperty<Position> viewportPositionProperty() {
             return viewportPosition;
-        }
-
-        @Override
-        public VFXTable<T> getTable() {
-            return table;
-        }
-
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Sets the table reference to {@code null}.
-         */
-        @Override
-        public void dispose() {
-            table = null;
         }
     }
 
@@ -572,27 +446,27 @@ public interface VFXTableHelper<T> {
 
         public FixedTableHelper(VFXTable<T> table) {
             super(table);
+            createBindings();
         }
 
         @Override
-        protected void initBindings() {
-            super.initBindings();
+        protected void createBindings() {
             columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
-                    if (table.getWidth() <= 0) return Utils.INVALID_RANGE;
+                    if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalColumns();
                     if (needed == 0) return Utils.INVALID_RANGE;
 
-                    int start = Math.max(0, firstColumn() - table.getColumnsBufferSize().val());
-                    int end = Math.min(table.getColumns().size() - 1, start + needed - 1);
+                    int start = Math.max(0, firstColumn() - container.getColumnsBufferSize().val());
+                    int end = Math.min(container.getColumns().size() - 1, start + needed - 1);
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(table.getColumns())
-                .addSources(table.widthProperty())
-                .addSources(table.hPosProperty())
-                .addSources(table.columnsBufferSizeProperty())
-                .addSources(table.columnsSizeProperty())
+                .addSources(container.getColumns())
+                .addSources(container.widthProperty())
+                .addSources(container.hPosProperty())
+                .addSources(container.columnsBufferSizeProperty())
+                .addSources(container.columnsSizeProperty())
                 .get()
             );
             rowsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
@@ -601,28 +475,16 @@ public interface VFXTableHelper<T> {
                     int needed = totalRows();
                     if (needed == 0) return Utils.INVALID_RANGE;
 
-                    int start = Math.max(0, firstRow() - table.getRowsBufferSize().val());
-                    int end = Math.min(table.size() - 1, start + needed - 1);
+                    int start = Math.max(0, firstRow() - container.getRowsBufferSize().val());
+                    int end = Math.min(container.size() - 1, start + needed - 1);
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(table.sizeProperty())
-                .addSources(table.heightProperty(), table.columnsSizeProperty())
-                .addSources(table.vPosProperty())
-                .addSources(table.rowsBufferSizeProperty())
-                .addSources(table.rowsHeightProperty())
-                .get()
-            );
-
-            virtualMaxX.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> Math.max(table.getWidth(), table.getColumns().size() * table.getColumnsSize().getWidth()))
-                .addSources(table.widthProperty(), table.getColumns(), table.columnsSizeProperty())
-                .get()
-            );
-            virtualMaxY.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> table.getColumns().isEmpty() ? 0.0 : table.size() * table.getRowsHeight())
-                .addSources(table.getColumns(), table.columnsSizeProperty())
-                .addSources(table.sizeProperty(), table.rowsHeightProperty())
+                .addSources(container.sizeProperty())
+                .addSources(container.heightProperty(), container.columnsSizeProperty())
+                .addSources(container.vPosProperty())
+                .addSources(container.rowsBufferSizeProperty())
+                .addSources(container.rowsHeightProperty())
                 .get()
             );
 
@@ -634,26 +496,45 @@ public interface VFXTableHelper<T> {
                     IntegerRange columnsRange = columnsRange();
 
                     if (!Utils.INVALID_RANGE.equals(rowsRange)) {
-                        double cHeight = table.getRowsHeight();
+                        double cHeight = container.getRowsHeight();
                         IntegerRange rRangeToFirstVisible = IntegerRange.of(rowsRange.getMin(), firstRow());
                         double rPixelsToFirst = rRangeToFirstVisible.diff() * cHeight;
-                        double rVisibleAmount = table.getVPos() % cHeight;
+                        double rVisibleAmount = container.getVPos() % cHeight;
                         y = -(rPixelsToFirst + rVisibleAmount);
                     }
                     if (!Utils.INVALID_RANGE.equals(columnsRange)) {
-                        double cWidth = table.getColumnsSize().getWidth();
+                        double cWidth = container.getColumnsSize().getWidth();
                         IntegerRange cRangeToFirstVisible = IntegerRange.of(columnsRange.getMin(), firstColumn());
                         double cPixelsToFirst = cRangeToFirstVisible.diff() * cWidth;
-                        double cVisibleAmount = table.getHPos() % cWidth;
+                        double cVisibleAmount = container.getHPos() % cWidth;
                         x = -(cPixelsToFirst + cVisibleAmount);
                     }
                     return Position.of(x, y);
                 })
-                .addSources(table.layoutBoundsProperty())
-                .addSources(table.vPosProperty(), table.hPosProperty())
-                .addSources(table.rowsHeightProperty(), table.columnsSizeProperty())
+                .addSources(container.layoutBoundsProperty())
+                .addSources(container.vPosProperty(), container.hPosProperty())
+                .addSources(container.rowsHeightProperty(), container.columnsSizeProperty())
                 .get()
             );
+
+            super.createBindings();
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxXBinding() {
+            return DoubleBindingBuilder.build()
+                .setMapper(() -> Math.max(container.getWidth(), container.getColumns().size() * container.getColumnsSize().getWidth()))
+                .addSources(container.widthProperty(), container.columnsSizeProperty())
+                .get();
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxYBinding() {
+            return DoubleBindingBuilder.build()
+                .setMapper(() -> container.getColumns().isEmpty() ? 0.0 : container.size() * container.getRowsHeight())
+                .addSources(container.columnsSizeProperty())
+                .addSources(container.rowsHeightProperty())
+                .get();
         }
 
         /**
@@ -664,9 +545,9 @@ public interface VFXTableHelper<T> {
         @Override
         public int firstColumn() {
             return NumberUtils.clamp(
-                (int) Math.floor(table.getHPos() / table.getColumnsSize().getWidth()),
+                (int) Math.floor(container.getHPos() / container.getColumnsSize().getWidth()),
                 0,
-                table.getColumns().size() - 1
+                container.getColumns().size() - 1
             );
         }
 
@@ -677,9 +558,9 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public int visibleColumns() {
-            double width = table.getColumnsSize().getWidth();
+            double width = container.getColumnsSize().getWidth();
             return width > 0 ?
-                (int) Math.ceil(table.getWidth() / width) :
+                (int) Math.ceil(container.getWidth() / width) :
                 0;
         }
 
@@ -692,7 +573,7 @@ public interface VFXTableHelper<T> {
         @Override
         public int totalColumns() {
             int visible = visibleColumns();
-            return visible == 0 ? 0 : Math.min(visible + table.getColumnsBufferSize().val() * 2, table.getColumns().size());
+            return visible == 0 ? 0 : Math.min(visible + container.getColumnsBufferSize().val() * 2, container.getColumns().size());
         }
 
         /**
@@ -705,7 +586,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public double getColumnWidth(VFXTableColumn<T, ?> column) {
-            VFXTable<T> table = getTable();
+            VFXTable<T> table = getContainer();
             double width = table.getColumnsSize().getWidth();
             if (!isLastColumn(column)) return width;
             return Math.max(width, table.getWidth() - ((table.getColumns().size() - 1) * width));
@@ -718,7 +599,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public double getColumnPos(int layoutIdx, VFXTableColumn<T, ?> column) {
-            return table.getColumnsSize().getWidth() * layoutIdx;
+            return container.getColumnsSize().getWidth() * layoutIdx;
         }
 
         /**
@@ -732,7 +613,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public boolean layoutColumn(int layoutIdx, VFXTableColumn<T, ?> column) {
-            Size size = getTable().getColumnsSize();
+            Size size = getContainer().getColumnsSize();
             double x = getColumnPos(layoutIdx, column);
             double w = getColumnWidth(column);
             double h = size.getHeight();
@@ -755,7 +636,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public boolean layoutCell(int layoutIdx, VFXTableCell<T> cell) {
-            VFXTable<T> table = getTable();
+            VFXTable<T> table = getContainer();
             IntegerRange columnsRange = columnsRange();
             int colIndex = columnsRange.getMin() + layoutIdx;
             VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(colIndex);
@@ -804,9 +685,9 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public void autosizeColumns() {
-            VFXTableState<T> state = table.getState();
+            VFXTableState<T> state = container.getState();
             if (state == VFXTableState.INVALID) return;
-            ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
+            ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = container.getColumns();
 
             // It may happen that the columns still have a null skin
             // In such case, we must delay the autosize while also ensuring that layout infos are available
@@ -821,7 +702,7 @@ public interface VFXTableHelper<T> {
                     .condition(Objects::nonNull)
                     .then(v -> {
                         forceLayout = true;
-                        table.applyCss();
+                        container.applyCss();
                         autosizeColumns();
                     })
                     .oneShot()
@@ -829,14 +710,14 @@ public interface VFXTableHelper<T> {
                 return;
             }
 
-            double extra = table.getExtraAutosizeWidth();
-            double fixedW = table.getColumnsSize().getWidth();
+            double extra = container.getExtraAutosizeWidth();
+            double fixedW = container.getColumnsSize().getWidth();
             double maxColumnsW = columns.stream()
                 .mapToDouble(c -> c.computePrefWidth(-1))
                 .max()
                 .orElse(-1);
             if (state.isEmpty()) {
-                table.setColumnsWidth(Math.max(fixedW, maxColumnsW + extra));
+                container.setColumnsWidth(Math.max(fixedW, maxColumnsW + extra));
                 return;
             }
 
@@ -849,7 +730,7 @@ public interface VFXTableHelper<T> {
                 )
                 .max()
                 .orElse(-1.0);
-            table.setColumnsWidth(Math.max(Math.max(fixedW, maxColumnsW + extra), maxCellsW + extra));
+            container.setColumnsWidth(Math.max(Math.max(fixedW, maxColumnsW + extra), maxCellsW + extra));
             forceLayout = false;
         }
 
@@ -875,18 +756,18 @@ public interface VFXTableHelper<T> {
         @Override
         public boolean isInViewport(VFXTableColumn<T, ?> column) {
             if (column.getTable() == null || column.getScene() == null || column.getParent() == null) return false;
-            VFXTableState<T> state = table.getState();
+            VFXTableState<T> state = container.getState();
             if (state == VFXTableState.INVALID) return false;
-            int index = table.indexOf(column);
+            int index = container.indexOf(column);
             return IntegerRange.inRangeOf(index, state.getColumnsRange());
         }
 
         @Override
         public void scrollToIndex(Orientation orientation, int index) {
             if (orientation == Orientation.HORIZONTAL) {
-                table.setHPos(table.getColumnsSize().getWidth() * index);
+                container.setHPos(container.getColumnsSize().getWidth() * index);
             } else {
-                table.setVPos(table.getRowsHeight() * index);
+                container.setVPos(container.getRowsHeight() * index);
             }
         }
     }
@@ -967,6 +848,7 @@ public interface VFXTableHelper<T> {
 
         public VariableTableHelper(VFXTable<T> table) {
             super(table);
+            createBindings();
         }
 
         /**
@@ -983,13 +865,13 @@ public interface VFXTableHelper<T> {
          * {@link ColumnsLayoutCache#getPartialWidth()}.
          */
         protected double computeColumnWidth(VFXTableColumn<T, ?> column, boolean isLast) {
-            double minW = table.getColumnsSize().getWidth();
+            double minW = container.getColumnsSize().getWidth();
             double prefW = Math.max(column.prefWidth(-1), minW);
-            if (table.getColumns().size() == 1) return Math.max(prefW, table.getWidth());
+            if (container.getColumns().size() == 1) return Math.max(prefW, container.getWidth());
             if (!isLast) return column.snapSizeX(prefW);
 
             double partialW = layoutCache.getPartialWidth();
-            return column.snapSizeX(Math.max(prefW, table.getWidth() - partialW));
+            return column.snapSizeX(Math.max(prefW, container.getWidth() - partialW));
         }
 
         /**
@@ -999,7 +881,7 @@ public interface VFXTableHelper<T> {
          * This makes the computation for index 1 easy, as it is simply is the sum {@code prevPos + col1Width}.
          */
         protected double computeColumnPos(int index, double prevPos) {
-            VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
+            VFXTableColumn<T, ? extends VFXTableCell<T>> column = container.getColumns().get(index);
             return column.snapPositionX(prevPos + layoutCache.getColumnWidth(column));
         }
 
@@ -1038,10 +920,9 @@ public interface VFXTableHelper<T> {
         }
 
         @Override
-        protected void initBindings() {
-            super.initBindings();
+        protected void createBindings() {
             // Initialize layout cache
-            layoutCache = new ColumnsLayoutCache<>(table)
+            layoutCache = new ColumnsLayoutCache<>(container)
                 .setWidthFunction(this::computeColumnWidth)
                 .setPositionFunction(this::computeColumnPos)
                 .setVisibilityFunction(this::computeVisibility)
@@ -1050,11 +931,11 @@ public interface VFXTableHelper<T> {
             // Initialize bindings
             columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
-                    ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
+                    ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = container.getColumns();
                     if (columns.isEmpty()) return Utils.INVALID_RANGE;
                     return IntegerRange.of(0, columns.size() - 1);
                 })
-                .addSources(table.getColumns())
+                .addSources(container.getColumns())
                 .get()
             );
             rowsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
@@ -1063,25 +944,19 @@ public interface VFXTableHelper<T> {
                     int needed = totalRows();
                     if (needed == 0) return Utils.INVALID_RANGE;
 
-                    int start = Math.max(0, firstRow() - table.getRowsBufferSize().val());
-                    int end = Math.min(table.size() - 1, start + needed - 1);
+                    int start = Math.max(0, firstRow() - container.getRowsBufferSize().val());
+                    int end = Math.min(container.size() - 1, start + needed - 1);
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(table.heightProperty(), table.columnsSizeProperty())
-                .addSources(table.vPosProperty())
-                .addSources(table.rowsBufferSizeProperty())
-                .addSources(table.sizeProperty(), table.rowsHeightProperty())
+                .addSources(container.heightProperty(), container.columnsSizeProperty())
+                .addSources(container.vPosProperty())
+                .addSources(container.rowsBufferSizeProperty())
+                .addSources(container.sizeProperty(), container.rowsHeightProperty())
                 .get()
             );
 
             virtualMaxX.bind(layoutCache);
-            virtualMaxY.bind(DoubleBindingBuilder.build()
-                .setMapper(() -> table.getColumns().isEmpty() ? 0.0 : table.size() * table.getRowsHeight())
-                .addSources(table.getColumns(), table.columnsSizeProperty())
-                .addSources(table.sizeProperty(), table.rowsHeightProperty())
-                .get()
-            );
 
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
@@ -1091,22 +966,38 @@ public interface VFXTableHelper<T> {
                     IntegerRange columnsRange = columnsRange();
 
                     if (!Utils.INVALID_RANGE.equals(rowsRange)) {
-                        double cHeight = table.getRowsHeight();
+                        double cHeight = container.getRowsHeight();
                         IntegerRange rRangeToFirstVisible = IntegerRange.of(rowsRange.getMin(), firstRow());
                         double rPixelsToFirst = rRangeToFirstVisible.diff() * cHeight;
-                        double rVisibleAmount = table.getVPos() % cHeight;
+                        double rVisibleAmount = container.getVPos() % cHeight;
                         y = -(rPixelsToFirst + rVisibleAmount);
                     }
                     if (!Utils.INVALID_RANGE.equals(columnsRange)) {
-                        x = -table.getHPos();
+                        x = -container.getHPos();
                     }
                     return Position.of(x, y);
                 })
-                .addSources(table.layoutBoundsProperty())
-                .addSources(table.vPosProperty(), table.hPosProperty())
-                .addSources(table.rowsHeightProperty(), table.columnsSizeProperty())
+                .addSources(container.layoutBoundsProperty())
+                .addSources(container.vPosProperty(), container.hPosProperty())
+                .addSources(container.rowsHeightProperty(), container.columnsSizeProperty())
                 .get()
             );
+
+            super.createBindings();
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxXBinding() {
+            return null; // bound to the cache
+        }
+
+        @Override
+        protected DoubleBinding createVirtualMaxYBinding() {
+            return DoubleBindingBuilder.build()
+                .setMapper(() -> container.getColumns().isEmpty() ? 0.0 : container.size() * container.getRowsHeight())
+                .addSources(container.columnsSizeProperty())
+                .addSources(container.rowsHeightProperty())
+                .get();
         }
 
         /**
@@ -1122,7 +1013,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public int visibleColumns() {
-            return table.getColumns().size();
+            return container.getColumns().size();
         }
 
         /**
@@ -1130,7 +1021,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public int totalColumns() {
-            return table.getColumns().size();
+            return container.getColumns().size();
         }
 
         /**
@@ -1178,7 +1069,7 @@ public interface VFXTableHelper<T> {
                 column.setVisible(false);
                 return false;
             }
-            Size size = getTable().getColumnsSize();
+            Size size = getContainer().getColumnsSize();
             double x = getColumnPos(layoutIdx, column);
             double w = getColumnWidth(column);
             double h = size.getHeight();
@@ -1206,7 +1097,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public boolean layoutCell(int layoutIdx, VFXTableCell<T> cell) {
-            ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
+            ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = container.getColumns();
             VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(layoutIdx);
             Node node = cell.toNode();
             cell.beforeLayout();
@@ -1216,7 +1107,7 @@ public interface VFXTableHelper<T> {
                 return false;
             }
             double w = getColumnWidth(column);
-            double h = getTable().getRowsHeight();
+            double h = getContainer().getRowsHeight();
             double x = getColumnPos(layoutIdx, column);
             if (node.isVisible() && node.getLayoutX() == x && node.getLayoutBounds().getWidth() == w) return false;
             node.resizeRelocate(x, 0, w, h);
@@ -1252,7 +1143,7 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public void autosizeColumn(VFXTableColumn<T, ?> column) {
-            VFXTableState<T> state = table.getState();
+            VFXTableState<T> state = container.getState();
             if (state == VFXTableState.INVALID) return;
 
             // It may happen that the column still has a null skin
@@ -1268,7 +1159,7 @@ public interface VFXTableHelper<T> {
                             if (!forced) {
                                 forced = true;
                                 forceLayout = true;
-                                table.applyCss();
+                                container.applyCss();
                             }
                             autosizeColumn(column);
                         });
@@ -1279,8 +1170,8 @@ public interface VFXTableHelper<T> {
                 return;
             }
 
-            double extra = table.getExtraAutosizeWidth();
-            double minW = table.getColumnsSize().getWidth();
+            double extra = container.getExtraAutosizeWidth();
+            double minW = container.getColumnsSize().getWidth();
             double prefW = column.computePrefWidth(-1);
             if (state.isEmpty()) {
                 column.resize(Math.max(minW, prefW) + extra);
@@ -1300,10 +1191,10 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public void autosizeColumns() {
-            VFXTableState<T> state = table.getState();
+            VFXTableState<T> state = container.getState();
             if (state == VFXTableState.INVALID) return;
             forceAll = true;
-            table.getColumns().forEach(this::autosizeColumn);
+            container.getColumns().forEach(this::autosizeColumn);
             forceLayout = false;
         }
 
@@ -1313,12 +1204,12 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public int visibleCells() {
-            VFXTableState<T> state = table.getState();
+            VFXTableState<T> state = container.getState();
             if (state.isEmpty()) return 0;
             IntegerRange cRange = state.getColumnsRange();
             int nRows = state.getRowsRange().diff() + 1;
             int nCellsPerRow = (int) IntStream.rangeClosed(cRange.getMin(), cRange.getMax())
-                .mapToObj(table.getColumns()::get)
+                .mapToObj(container.getColumns()::get)
                 .filter(this::isInViewport)
                 .count();
             return nRows * nCellsPerRow;
@@ -1328,11 +1219,11 @@ public interface VFXTableHelper<T> {
         public void scrollToIndex(Orientation orientation, int index) {
             if (orientation == Orientation.HORIZONTAL) {
                 try {
-                    VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
-                    table.setHPos(getColumnPos(table.indexOf(column), column));
+                    VFXTableColumn<T, ? extends VFXTableCell<T>> column = container.getColumns().get(index);
+                    container.setHPos(getColumnPos(container.indexOf(column), column));
                 } catch (Exception ignored) {}
             } else {
-                table.setVPos(table.getRowsHeight() * index);
+                container.setVPos(container.getRowsHeight() * index);
             }
         }
 
@@ -1343,8 +1234,10 @@ public interface VFXTableHelper<T> {
          */
         @Override
         public void dispose() {
-            layoutCache.dispose();
-            layoutCache = null;
+            if (layoutCache != null) {
+                layoutCache.dispose();
+                layoutCache = null;
+            }
             super.dispose();
         }
     }

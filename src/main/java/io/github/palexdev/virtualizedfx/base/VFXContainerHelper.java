@@ -151,7 +151,7 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
      * its implementations.
      */
     abstract class VFXContainerHelperBase<T, C extends Region & VFXContainer<T>> implements VFXContainerHelper<T, C> {
-        protected final C container;
+        protected C container;
 
         protected final ReadOnlyDoubleWrapper virtualMaxX = new ReadOnlyDoubleWrapper();
         protected DoubleBinding vmxBinding;
@@ -165,7 +165,9 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
 
         protected VFXContainerHelperBase(C container) {
             this.container = container;
+        }
 
+        protected void createBindings() {
             vmxBinding = createVirtualMaxXBinding();
             if (vmxBinding != null) virtualMaxX.bind(vmxBinding);
 
@@ -267,6 +269,7 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
 
             maxVScroll.unbind();
             maxHScroll.unbind();
+            container = null;
         }
     }
 }

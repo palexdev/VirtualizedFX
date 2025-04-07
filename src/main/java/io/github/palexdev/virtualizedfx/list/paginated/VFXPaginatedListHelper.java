@@ -35,7 +35,7 @@ public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXList
 
         @Override
         public int visibleNum() {
-            return getList().getCellsPerPage();
+            return getContainer().getCellsPerPage();
         }
 
         /**
@@ -59,13 +59,13 @@ public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXList
          */
         @Override
         public void scrollToIndex(int index) {
-            VFXPaginatedList<T, C> list = getList();
+            VFXPaginatedList<T, C> list = getContainer();
             list.setPage(list.findPageByIndex(index));
         }
 
         @Override
-        public VFXPaginatedList<T, C> getList() {
-            return ((VFXPaginatedList<T, C>) super.getList());
+        public VFXPaginatedList<T, C> getContainer() {
+            return (VFXPaginatedList<T, C>) super.getContainer();
         }
     }
 
@@ -76,7 +76,7 @@ public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXList
 
         @Override
         public int visibleNum() {
-            return getList().getCellsPerPage();
+            return getContainer().getCellsPerPage();
         }
 
         /**
@@ -100,13 +100,13 @@ public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXList
          */
         @Override
         public void scrollToIndex(int index) {
-            VFXPaginatedList<T, C> list = getList();
+            VFXPaginatedList<T, C> list = getContainer();
             list.setPage(list.findPageByIndex(index));
         }
 
         @Override
-        public VFXPaginatedList<T, C> getList() {
-            return ((VFXPaginatedList<T, C>) super.getList());
+        public VFXPaginatedList<T, C> getContainer() {
+            return ((VFXPaginatedList<T, C>) super.getContainer());
         }
     }
 }
