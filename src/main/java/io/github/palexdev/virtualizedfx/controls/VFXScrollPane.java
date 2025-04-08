@@ -140,7 +140,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     // Methods
     //================================================================================
     private void init() {
-        getStyleClass().setAll(defaultStyleClasses());
+        setDefaultStyleClasses();
         getStylesheets().add(VFXResources.loadResource("VFXScrollPane.css"));
         setDefaultBehaviorProvider();
 

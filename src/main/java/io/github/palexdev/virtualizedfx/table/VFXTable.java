@@ -269,7 +269,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     // Methods
     //================================================================================
     private void initialize() {
-        getStyleClass().setAll(defaultStyleClasses());
+        setDefaultStyleClasses();
         setDefaultBehaviorProvider();
         setHelper(getHelperFactory().apply(getColumnsLayoutMode()));
         setRowFactory(defaultRowFactory());

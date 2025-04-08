@@ -18,15 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import java.util.List;
+import java.util.function.Supplier;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -96,7 +95,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     // Methods
     //================================================================================
     private void initialize() {
-        getStyleClass().setAll(defaultStyleClasses());
+        setDefaultStyleClasses();
         setDefaultBehaviorProvider();
     }
 

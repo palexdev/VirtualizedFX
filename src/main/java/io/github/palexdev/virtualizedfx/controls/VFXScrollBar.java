@@ -113,7 +113,7 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements VFXSt
     // Methods
     //================================================================================
     private void init() {
-        getStyleClass().setAll(defaultStyleClasses());
+        setDefaultStyleClasses();
         getStylesheets().add(VFXResources.loadResource("VFXScrollBar.css"));
         setDefaultBehaviorProvider();
 

@@ -19,6 +19,7 @@
 package io.github.palexdev.virtualizedfx.base;
 
 import java.util.List;
+import javafx.css.Styleable;
 
 /**
  * A simple interface that makes any implementor node define a list of default style classes to use in CSS.
@@ -30,4 +31,14 @@ public interface VFXStyleable {
      */
     List<String> defaultStyleClasses();
 
+    /**
+     * Convenience method to reset the style classes of a node to {@link #defaultStyleClasses()}.
+     * <p>
+     * Works only if the class implementing this interface also implements {@link Styleable}.
+     */
+    default void setDefaultStyleClasses() {
+        if (this instanceof Styleable s) {
+            s.getStyleClass().setAll(defaultStyleClasses());
+        }
+    }
 }

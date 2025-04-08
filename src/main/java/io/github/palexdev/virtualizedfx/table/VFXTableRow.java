@@ -18,10 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.SequencedMap;
-
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
@@ -31,6 +27,9 @@ import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.RowsStateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import java.util.Collections;
+import java.util.List;
+import java.util.SequencedMap;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -139,7 +138,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
     // Methods
     //================================================================================
     private void initialize() {
-        getStyleClass().setAll(defaultStyleClasses());
+        setDefaultStyleClasses();
     }
 
     /**
