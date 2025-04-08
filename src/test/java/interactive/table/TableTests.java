@@ -18,10 +18,6 @@
 
 package interactive.table;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
 import assets.TestResources;
 import com.google.gson.reflect.TypeToken;
 import io.github.palexdev.mfxcore.base.beans.Size;
@@ -46,6 +42,9 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
 import io.github.palexdev.virtualizedfx.table.VFXTableState;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.collections.FXCollections;
@@ -1913,6 +1912,7 @@ public class TableTests {
                 assertEquals(vals[i], c.getWidth(), 5);
             } catch (AssertionError er) {
                 System.err.println("Failed assertion for column: " + c.getText());
+                System.err.println(er.getMessage());
             }
         }
     }

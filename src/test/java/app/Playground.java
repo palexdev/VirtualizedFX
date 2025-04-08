@@ -20,52 +20,60 @@ package app;
 
 import interactive.table.TableTestUtils;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
-import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
-import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
-import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import static model.User.users;
 import static utils.Utils.debugView;
 
 public class Playground extends Application {
+    private static final String LOREM;
+
+    static {
+        try {
+            ClassLoader cl = Playground.class.getClassLoader();
+            InputStream is = cl.getResourceAsStream("assets/Lorem20.md");
+            byte[] bytes = is.readAllBytes();
+            LOREM = new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
     @Override
     public void start(Stage primaryStage) {
         StackPane pane = new StackPane();
         pane.setAlignment(Pos.CENTER);
+        pane.setPadding(InsetsBuilder.uniform(4.0).get());
 
-        TableTestUtils.Table container = new TableTestUtils.Table(users(100));
+        TableTestUtils.Table table = new TableTestUtils.Table(users(100));
+        /*ListTestUtils.List list = new ListTestUtils.List(items(100));
+        list.setFitToViewport(false);*/
 
-        VFXScrollPane sp = container.makeScrollable();
+
+        VFXScrollPane sp = new VFXScrollPane(table);
         sp.setSmoothScroll(true);
         sp.setDragToScroll(true);
         //sp.setDragSmoothScroll(true);
-        sp.setShowButtons(true);
+        //sp.setShowButtons(true);
         //sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
-        sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        //sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        //sp.setScrollBarsGap(0.0);
         //sp.setAutoHideBars(true);
-        VFXScrollable.setSpeed(sp, container, 0.5, 0.5, true);
+        //sp.setScrollBarsPos(Pos.TOP_RIGHT);
+        //VFXScrollable.setSpeed(sp, table, 0.5, 0.5, true); TODO needs to be adjusted!
 
-/*        Label label = new Label("Incidunt voluptatibus excepturi atque sequi est velit dolor. Omnis iusto asperiores perferendis repudiandae voluptatem voluptatem rem. Est consequatur repellat ipsum sint rerum fuga quo. Est modi doloremque et voluptate animi. Aut omnis reiciendis labore. Illum deserunt quia praesentium at qui.");
+/*        Label label = new Label(LOREM);
         sp = new VFXScrollPane(label);
         sp.setVBarPos(ScrollPaneEnums.VBarPos.LEFT);
         sp.setHBarPos(ScrollPaneEnums.HBarPos.TOP);*/
-
-        CSSFragment.Builder.build()
-            .select(".vfx-scroll-pane")
-            .background(Color.WHITE)
-            .backgroundRadius(InsetsBuilder.uniform(12))
-            .padding(InsetsBuilder.uniform(8))
-            .select(".vfx-scroll-pane > .viewport")
-            .padding(InsetsBuilder.uniform(4))
-            .applyOn(sp);
 
         pane.getChildren().addAll(sp);
         Scene scene = new Scene(pane, 600, 400);
