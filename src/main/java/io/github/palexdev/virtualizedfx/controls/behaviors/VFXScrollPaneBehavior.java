@@ -59,6 +59,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
     private Position initValues = Position.of(0, 0);
     private Position dragStart = Position.of(-1, -1);
     private Orientation mainDragAxis;
+    private double dragThreshold = 16.0;
 
     protected Duration DRAG_SMOOTH_SCROLL_DURATION = M3Motion.EXTRA_LONG1;
     protected Interpolator DRAG_SMOOTH_SCROLL_CURVE = Curve.EASE_BOTH;
@@ -117,7 +118,8 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
      * <p> 1) Exits if either the feature is off or the content is null
      * <p> 2) Does not allow diagonal scrolling for a more pleasant UX and so the dominant axis is determined by how much
      * the mouse moved vertically and horizontally since the press of the mouse.
-     * <p> 3) The scroll occurs only if the bar for the determined axis is visible. This is managed by the
+     * <p> 3) The scroll starts only after a certain threshold, by default 16px.
+     * <p> 4) The scroll occurs only if the bar for the determined axis is visible. This is managed by the
      * {@link #canVScroll} and {@link #canHScroll} flags. The default skin does not allow the scroll when a bar is hidden,
      * either because the content is smaller than the viewport on its axis or if the policies hide the bar.
      * <p></p>
@@ -135,8 +137,6 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
         VFXScrollPane pane = getNode();
         if (!pane.isDragToScroll() || pane.getContent() == null) return;
 
-        // TODO might want to introduce a certain threshold
-
         double meX = me.getSceneX();
         double xDelta = -(meX - dragStart.getX());
         double meY = me.getSceneY();
@@ -144,12 +144,18 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
         Size cb = getContentBounds();
 
         // Do not allow diagonal scrolling as it feels unnatural and may result in a clumsy UX
+        // Also, do not start scrolling until a certain threshold is surpassed
         //
         // The main axis is determined only one time on drag and reset only when the mouse is released
-        if (mainDragAxis == null) {
+        if (mainDragAxis == null && (Math.abs(xDelta) > dragThreshold || Math.abs(yDelta) > dragThreshold)) {
             mainDragAxis = Math.abs(xDelta) > Math.abs(yDelta)
                 ? Orientation.HORIZONTAL
                 : Orientation.VERTICAL;
+
+            // When the threshold is surpassed, reset the dragStart to the current position but skip the scrolling
+            // on for this frame.
+            dragStart = Position.of(meX, meY);
+            return;
         }
 
         if (canHScroll && mainDragAxis == Orientation.HORIZONTAL) {
@@ -313,5 +319,21 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
      */
     public void setCanHScroll(boolean canHScroll) {
         this.canHScroll = canHScroll;
+    }
+
+    /**
+     * @see #setDragThreshold(double)
+     */
+    public double getDragThreshold() {
+        return dragThreshold;
+    }
+
+    /**
+     * Sets the number of pixels that act as a threshold before the scroll happens on drag.
+     *
+     * @see #mouseDragged(MouseEvent)
+     */
+    public void setDragThreshold(double dragThreshold) {
+        this.dragThreshold = dragThreshold;
     }
 }
