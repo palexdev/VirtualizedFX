@@ -314,14 +314,15 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
      * To be precise, the actual operation is delegated to the helper: {@link VFXTableHelper#autosizeColumns()}.
      * <p>
      * Just like {@link #autosizeColumn(VFXTableColumn)}, the operation could be <b>delayed</b> if the last layout request
-     * was not processed {@link ViewportLayoutRequest#wasDone()} at the time calling this.
+     * was not processed {@link ViewportLayoutRequest#wasDone()} or if the control is not in a scene yet at the time calling this.
      */
     public void autosizeColumns() {
         When.onChanged(needsViewportLayout)
-            .condition((o, n) -> n.wasDone())
+            .condition((o, n) -> getScene() != null && n.wasDone())
             .then((o, n) -> getHelper().autosizeColumns())
             .oneShot(true)
-            .executeNow(() -> getViewportLayoutRequest().wasDone())
+            .executeNow(() -> getScene() != null && getViewportLayoutRequest().wasDone())
+            .invalidating(sceneProperty())
             .listen();
     }
 
