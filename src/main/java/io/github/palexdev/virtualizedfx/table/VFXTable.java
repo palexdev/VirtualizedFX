@@ -388,6 +388,32 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
         setNeedsViewportLayout(new ViewportLayoutRequest(column).setWasDone(false));
     }
 
+    /**
+     * Clips this virtualized container to avoid content from overflowing by using a {@link Rectangle} node with:
+     * <p> - the width and height bound to the table's ones
+     * <p> - the arc width and height bound to the {@link #clipBorderRadiusProperty()}
+     *
+     * <p></p>
+     * By default, the clip is disabled because virtualized containers are meant to be used in combination with a scoll pane
+     * which already clips its viewport. Fewer nodes, more performance.
+     *
+     * @param enable whether to enable or disable the clip
+     */
+    public void clip(boolean enable) {
+        if (!enable) {
+            setClip(null);
+            return;
+        }
+        if (getClip() != null) return;
+
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(widthProperty());
+        clip.heightProperty().bind(heightProperty());
+        clip.arcWidthProperty().bind(clipBorderRadiusProperty());
+        clip.arcHeightProperty().bind(clipBorderRadiusProperty());
+        setClip(clip);
+    }
+
     //================================================================================
     // Overridden Methods
     //================================================================================

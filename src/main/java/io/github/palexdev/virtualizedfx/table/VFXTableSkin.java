@@ -54,9 +54,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * <p>
  * A: scrolling in a table is a bit peculiar because: vertical scrolling should affect only the rows,
  * while horizontal scrolling should affect both rows and columns.
- * For such reason, we also need two clip nodes to avoid content overflowing the table's bounds. One clip is set on the
- * table itself and avoids columns overflow. The other is set on the rows container and avoids rows overflow on vertical
- * scroll.
+ * For such reason, a clip node is set on the rows container and avoids rows overflow on vertical scroll.
  * <p></p>
  * As all skins typically do, this is also responsible for catching any change in the component's properties.
  * The computation that leads to a new state is delegated to the controller/behavior, which is the {@link VFXTableManager}.
@@ -70,7 +68,6 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
     // Properties
     //================================================================================
     private final Pane viewport;
-    private final Rectangle clip;
 
     private final Pane cContainer;
 
@@ -112,14 +109,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
         };
         viewport.getStyleClass().add("viewport");
 
-        // Init clips
-        clip = new Rectangle();
-        clip.widthProperty().bind(table.widthProperty());
-        clip.heightProperty().bind(table.heightProperty());
-        clip.arcWidthProperty().bind(table.clipBorderRadiusProperty());
-        clip.arcHeightProperty().bind(table.clipBorderRadiusProperty());
-        table.setClip(clip);
-
+        // Init rows clip
         rClip = new Rectangle();
         rClip.widthProperty().bind(rContainer.widthProperty());
         rClip.heightProperty().bind(rContainer.heightProperty());

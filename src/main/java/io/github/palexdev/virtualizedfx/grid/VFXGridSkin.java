@@ -18,19 +18,17 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
-import java.util.SequencedMap;
-
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import java.util.SequencedMap;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Rectangle;
 
 import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
@@ -41,8 +39,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * <p>
  * The layout is quite simple: there is just one node, called the 'viewport', that is the {@code Pane} resposnible for
  * containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
- * {@link #layout()} method. The viewport node is also clipped to avoid cells from overflowing when scrolling.
- * About the clip, check also {@link VFXGrid#clipBorderRadiusProperty()}.
+ * {@link #layout()} method.
  * <p>
  * Compared to other virtualized components' skin, this implements a rather unique feature. It allows you, by setting the
  * {@link VFXGrid#alignmentProperty()}, to change the x and y coordinates of the viewport node. This is especially useful
@@ -60,7 +57,6 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
     // Properties
     //================================================================================
     protected final Pane viewport;
-    protected final Rectangle clip;
     protected double DEFAULT_SIZE = 100.0;
 
     //================================================================================
@@ -77,14 +73,6 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
             }
         };
         viewport.getStyleClass().add("viewport");
-
-        // Init clip
-        clip = new Rectangle();
-        clip.widthProperty().bind(grid.widthProperty());
-        clip.heightProperty().bind(grid.heightProperty());
-        clip.arcWidthProperty().bind(grid.clipBorderRadiusProperty());
-        clip.arcHeightProperty().bind(grid.clipBorderRadiusProperty());
-        grid.setClip(clip);
 
         // End initialization
         addListeners();

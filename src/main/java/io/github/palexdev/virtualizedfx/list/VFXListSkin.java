@@ -18,16 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
-import java.util.TreeMap;
-
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import java.util.TreeMap;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Orientation;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Rectangle;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
@@ -37,8 +35,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * <p>
  * The layout is quite simple: there is just one node, called the 'viewport', that is the {@code Pane} responsible for
  * containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
- * {@link #layout()} method. The viewport node is also clipped to avoid cells from overflowing when scrolling.
- * About the clip, check also {@link VFXList#clipBorderRadiusProperty()}.
+ * {@link #layout()} method.
  * <p></p>
  * As all skins typically do, this is also responsible for catching any change in the component's properties.
  * The computation that leads to a new state is delegated to the controller/behavior, which is the {@link VFXListManager}.
@@ -52,7 +49,6 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>
     // Properties
     //================================================================================
     protected final Pane viewport;
-    protected final Rectangle clip;
     protected double DEFAULT_SIZE = 100.0;
 
     // To maximize performance, one listener is used to update on scroll, but it's added only on
@@ -73,14 +69,6 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>
             }
         };
         viewport.getStyleClass().add("viewport");
-
-        // Init clip
-        clip = new Rectangle();
-        clip.widthProperty().bind(list.widthProperty());
-        clip.heightProperty().bind(list.heightProperty());
-        clip.arcWidthProperty().bind(list.clipBorderRadiusProperty());
-        clip.arcHeightProperty().bind(list.clipBorderRadiusProperty());
-        list.setClip(clip);
 
         // End initialization
         swapPositionListener();
