@@ -361,6 +361,13 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         public void scrollToIndex(int index) {
             scrollToPixel(getTotalCellSize() * index);
         }
+
+        @Override
+        public void dispose() {
+            range.unbind();
+            viewportPosition.unbind();
+            super.dispose();
+        }
     }
 
     /**
@@ -550,6 +557,13 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         @Override
         public void scrollToIndex(int index) {
             scrollToPixel(getTotalCellSize() * index);
+        }
+
+        @Override
+        public void dispose() {
+            range.unbind();
+            viewportPosition.unbind();
+            super.dispose();
         }
     }
 }

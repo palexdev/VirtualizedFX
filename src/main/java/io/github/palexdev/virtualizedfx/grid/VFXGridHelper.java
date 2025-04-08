@@ -548,5 +548,14 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         public Size getTotalCellSize() {
             return totalCellSize.get();
         }
+
+        @Override
+        public void dispose() {
+            columnsRange.unbind();
+            rowsRange.unbind();
+            viewportPosition.unbind();
+            totalCellSize.unbind();
+            super.dispose();
+        }
     }
 }

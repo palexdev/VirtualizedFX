@@ -1238,6 +1238,9 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                 layoutCache.dispose();
                 layoutCache = null;
             }
+            columnsRange.unbind();
+            rowsRange.unbind();
+            viewportPosition.unbind();
             super.dispose();
         }
     }

@@ -94,7 +94,6 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
     // Overridden Methods
     //================================================================================
 
-
     /**
      * Action performed when a {@link MouseEvent#MOUSE_PRESSED} event occurs.
      * <p></p>
