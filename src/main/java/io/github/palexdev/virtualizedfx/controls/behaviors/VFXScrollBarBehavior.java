@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Parisi Alessandro - alessandro.parisi406@gmail.com
+ * Copyright (C) 2025 Parisi Alessandro - alessandro.parisi406@gmail.com
  * This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX)
  *
  * VirtualizedFX is free software: you can redistribute it and/or
@@ -21,18 +21,23 @@ package io.github.palexdev.virtualizedfx.controls.behaviors;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
-import io.github.palexdev.mfxcore.utils.fx.ScrollUtils;
+import io.github.palexdev.mfxcore.utils.fx.ScrollUtils.ScrollDirection;
+import io.github.palexdev.mfxeffects.animations.Animations;
 import io.github.palexdev.mfxeffects.animations.Animations.KeyFrames;
-import io.github.palexdev.mfxeffects.animations.Animations.PauseBuilder;
 import io.github.palexdev.mfxeffects.animations.Animations.TimelineBuilder;
+import io.github.palexdev.mfxeffects.animations.ConsumerTransition;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.mfxeffects.animations.base.Curve;
 import io.github.palexdev.mfxeffects.animations.motion.M3Motion;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.function.Consumer;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.beans.property.ObjectProperty;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -44,11 +49,7 @@ import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
 import javafx.util.Duration;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.function.Consumer;
-
-import static io.github.palexdev.virtualizedfx.controls.VFXScrollBar.*;
+import static io.github.palexdev.virtualizedfx.controls.VFXScrollBar.DRAGGING_PSEUDO_CLASS;
 
 /**
  * Extension of {@link BehaviorBase} and default behavior implementation for {@link VFXScrollBar}.
@@ -76,6 +77,7 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
     private Animation scrollAnimation;
     private final Set<Animation> smoothScrollAnimations = new LinkedHashSet<>();
 
+
     //================================================================================
     // Constructors
     //================================================================================
@@ -89,10 +91,10 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
     // THUMB
 
     /**
-     * Action performed when the thumb has been pressed.
+     * Action performed when the thumb is pressed.
      * <p></p>
      * The first steps are to stop any animation (see {@link #stopAnimations()}) then {@link #requestFocus()}
-     * and update the dragStart position using {@link #getMousePos(MouseEvent)}, in case the next user action is
+     * and update the {@code dragStart} position using {@link #getMousePos(MouseEvent)}, in case the next user action is
      * dragging the thumb.
      */
     public void thumbPressed(MouseEvent me) {
@@ -100,7 +102,6 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
         requestFocus();
         dragStart = getMousePos(me);
     }
-
 
     /**
      * Action performed when the thumb is being dragged.
@@ -118,13 +119,15 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
         onDragging(true);
         double pos = getMousePos(me);
         double deltaPos = pos - dragStart;
-        double maxPos = (bar.getOrientation() == Orientation.VERTICAL) ? bar.getHeight() : bar.getWidth();
         // This is not accurate in theory as the max bound would be trackLength - thumbLength
         // Works just fine so not gonna bother
+        double maxPos = (bar.getOrientation() == Orientation.VERTICAL)
+            ? bar.getHeight()
+            : bar.getWidth();
         double deltaVal = NumberUtils.mapOneRangeToAnother(
             NumberUtils.clamp(Math.abs(deltaPos), 0.0, maxPos),
             DoubleRange.of(0.0, maxPos),
-            DoubleRange.of(0.0, bar.getMaxScroll())
+            DoubleRange.of(0.0, 1.0)
         );
         int mul = getAndSetScrollDirection(deltaPos > 0);
         bar.setValue(bar.getValue() + deltaVal * mul);
@@ -140,6 +143,13 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
         onDragging(false);
     }
 
+    /**
+     * Simply enables or disabled the ":dragging" {@link PseudoClass} on the scroll bar depending on the given parameter.
+     */
+    protected void onDragging(boolean dragging) {
+        getNode().pseudoClassStateChanged(DRAGGING_PSEUDO_CLASS, dragging);
+    }
+
     // TRACK
 
     /**
@@ -150,8 +160,8 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
      * exists as the scroll will be handled by {@link #trackReleased(MouseEvent)}.
      * <p></p>
      * Otherwise, we get the mouse position with {@link #getMousePos(MouseEvent)} and the track length with {@link #getTrackLength(MouseEvent)}.
-     * We define the pos percentage as {@code mousePos / trackLength}. The target value is given by {@code maxScroll * posPercentage}.
-     * The delta value is {@code targetVal - bar.getValue()}. Finally, the scroll direction is determined by {@link #getAndSetScrollDirection(boolean)}.
+     * We define the target value as {@code mousePos / trackL} and the  delta value as {@code targetVal - bar.getValue()}.
+     * Finally, the scroll direction is determined by {@link #getAndSetScrollDirection(boolean)}.
      * <p></p>
      * At this point, two animations are built:
      * <p>
@@ -175,9 +185,12 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
         if (bar.isSmoothScroll() && bar.isTrackSmoothScroll()) return;
 
         double pos = getMousePos(me);
-        double trackLength = getTrackLength(me);
-        double posPercentage = pos / trackLength;
-        double targetVal = bar.getMaxScroll() * posPercentage;
+        double trackL = getTrackLength(me);
+        double targetVal = NumberUtils.clamp(
+            pos / trackL,
+            bar.getMin(),
+            bar.getMax()
+        ); // Clamp to get consistent animations
         double deltaVal = targetVal - bar.getValue();
         int mul = getAndSetScrollDirection(targetVal > bar.getValue());
 
@@ -216,10 +229,10 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
      * The rest of the method executes only if both the smooth scroll and track smooth scroll features are enabled.
      * <p>
      * As usual,we get the mouse position with {@link #getMousePos(MouseEvent)} and the track length with {@link #getTrackLength(MouseEvent)}.
-     * We define the pos percentage as {@code mousePos / trackLength}. The target value is given by {@code maxScroll * posPercentage}.
-     * The delta value is {@code targetVal - bar.getValue()}. Finally, the scroll direction is determined by {@link #getAndSetScrollDirection(boolean)}.
+     * We define the target value as {@code mousePos / trackL} and the delta value as {@code targetVal - bar.getValue()}.
+     * Finally, the scroll direction is determined by {@link #getAndSetScrollDirection(boolean)}.
      * <p>
-     * Finally, the scroll bar's value is adjusted with a {@link MomentumTransition}.
+     * The scroll bar's value is adjusted with a {@link MomentumTransition}.
      */
     public void trackReleased(MouseEvent me) {
         stopAnimations();
@@ -227,10 +240,13 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
         if (!bar.isHover()) return;
 
         if (bar.isSmoothScroll() && bar.isTrackSmoothScroll()) {
-            double position = getMousePos(me);
-            double trackLength = getTrackLength(me);
-            double posPercentage = position / trackLength;
-            double targetVal = bar.getMaxScroll() * posPercentage;
+            double pos = getMousePos(me);
+            double trackL = getTrackLength(me);
+            double targetVal = NumberUtils.clamp(
+                pos / trackL,
+                bar.getMin(),
+                bar.getMax()
+            ); // Clamp to get consistent animations
             double deltaVal = targetVal - bar.getValue();
             int mul = getAndSetScrollDirection(targetVal > bar.getValue());
             boolean increment = mul == 1;
@@ -260,137 +276,101 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
     // BUTTONS
 
     /**
-     * Action performed when the decrease button is pressed.
+     * Action performed when either the increase or decrease buttons are pressed.
+     * The {@code mul} parameters indicates which one is pressed and therefore whether to increment (1) or decrement(-1)
+     * the {@link VFXScrollBar#valueProperty()} by the amount specified by the {@link VFXScrollBar#unitIncrementProperty()}.
      * <p></p>
      * The first step is to stop any animation (see {@link #stopAnimations()}) and to acquire focus with {@link #requestFocus()}.
      * <p>
      * Two animations are built:
      * <p>
      * The first animation is responsible for the "first tick". When you press the button you expect the thumb to move
-     * up/left (depending on the orientation) by the specified {@link VFXScrollBar#unitIncrementProperty()}. Then we must also
-     * consider what happens when the value has been adjusted, but the mouse is still pressed. Here's when the second animation
-     * comes into play. This animation basically detects if the mouse is still pressed (the delay is specified by {@link #HOLD_DELAY})
-     * and makes the thumb reposition with a {@link Timeline}.
-     * <p></p>
-     * Both the second animation and the inner {@link Timeline} are assigned to variables so that
-     * if any event occurs in the meanwhile which requires the animations to stop it can be done.
-     * <p></p>
-     * A call to {@link #getAndSetScrollDirection(boolean)} with {@code false} as parameter ensures that the
-     * {@link VFXScrollBar#scrollDirectionProperty()} is updated.
+     * by the specified {@link VFXScrollBar#unitIncrementProperty()}. Then we must also consider what happens when the value
+     * has been adjusted, but the mouse is still pressed. Here's when the second animation comes into play.
+     * It basically detects if the mouse is being hold (the delay is specified by {@link #HOLD_DELAY}) and makes the
+     * thumb reposition with a {@link ConsumerTransition}.
      */
-    public void decreasePressed(MouseEvent me) {
+    public void buttonPressed(MouseEvent me, int mul) {
         stopAnimations();
         requestFocus();
 
         VFXScrollBar bar = getNode();
         // First scroll tick
-        Animation firstTick = firstTick(bar.getValue() - bar.getUnitIncrement());
+        Animation firstTick = firstTick(bar.getValue() + bar.getUnitIncrement() * mul);
 
         // Detect hold
         holdAnimation = onHold(e -> {
-            double range = Math.min(bar.getMax(), bar.getMaxScroll()) - bar.getMin();
-            double speed = range / MAX_BUTTONS_SCROLL_DURATION.toMillis();
-            double deltaVal = bar.getValue() - bar.getMin();
-            double duration = deltaVal / speed;
-            scrollAnimation = TimelineBuilder.build()
-                .add(KeyFrames.of(duration, bar.valueProperty(), bar.getMin()))
-                .getAnimation();
+            /*
+             * A new way of animating the continuous increment/decrement
+             * Rather than making complicated, error-prone computations to get a consistent speed for the animation,
+             * independent of the delta value, we simply run an infinite animation that adjusts the value by 'unit increment'
+             * Two important notes:
+             * 1) The animation is run every 15ms (a bit more than 60fps) to appear as a single smooth animation
+             * 2) As a consequence incrementing/decrementing of 'unit increment' may be too fast, so it divides the 'unit increment'
+             * by a fourth
+             */
+            scrollAnimation = ConsumerTransition.of(
+                f -> bar.setValue(bar.getValue() + bar.getUnitIncrement() * 0.25 * mul),
+                15.0
+            );
+            scrollAnimation.setCycleCount(Animation.INDEFINITE);
             scrollAnimation.play();
         });
-        getAndSetScrollDirection(false);
+        getAndSetScrollDirection(mul == 1);
         firstTick.play();
         holdAnimation.play();
     }
 
     /**
-     * Action performed when the decrease button is released.
+     * Action performed when either the increase or decrease buttons are released.
      * <p>
      * Simply calls {@link #stopAnimations()}.
      */
-    public void decreaseReleased(MouseEvent me) {
-        stopAnimations();
-    }
-
-    /**
-     * Action performed when the increase button is pressed.
-     * <p></p>
-     * The first step is to stop any animation (see {@link #stopAnimations()}) and to acquire focus with {@link #requestFocus()}.
-     * <p>
-     * Two animations are built:
-     * <p>
-     * The first animation is responsible for the "first tick". When you press the button you expect the thumb to move
-     * down/right (depending on the orientation) by the specified {@link VFXScrollBar#unitIncrementProperty()}. Then we must also
-     * consider what happens when the value has been adjusted, but the mouse is still pressed. Here's when the second animation
-     * comes into play. This animation basically detects if the mouse is still pressed (the delay is specified by {@link #HOLD_DELAY})
-     * and makes the thumb reposition with a {@link Timeline}.
-     * <p></p>
-     * Both the second animation and the inner {@link Timeline} are assigned to variables so that
-     * if any event occurs in the meanwhile which requires the animations to stop it can be done.
-     * <p></p>
-     * A call to {@link #getAndSetScrollDirection(boolean)} with {@code true} as parameter ensures that the
-     * {@link VFXScrollBar#scrollDirectionProperty()} is updated.
-     */
-    public void increasePressed(MouseEvent me) {
-        stopAnimations();
-        requestFocus();
-
-        VFXScrollBar bar = getNode();
-        // First scroll tick
-        Animation firstTick = firstTick(bar.getValue() + bar.getUnitIncrement());
-
-        // Detect hold
-        holdAnimation = onHold(e -> {
-            double max = Math.min(bar.getMax(), bar.getMaxScroll());
-            double range = max - bar.getMin();
-            double speed = range / MAX_BUTTONS_SCROLL_DURATION.toMillis();
-            double deltaVal = max - bar.getValue();
-            double duration = deltaVal / speed;
-            scrollAnimation = TimelineBuilder.build()
-                .add(KeyFrames.of(duration, bar.valueProperty(), max))
-                .getAnimation();
-            scrollAnimation.play();
-        });
-        getAndSetScrollDirection(true);
-        firstTick.play();
-        holdAnimation.play();
-    }
-
-    /**
-     * Action performed when the increment button is released.
-     * <p>
-     * Simply calls {@link #stopAnimations()}.
-     */
-    public void increaseReleased(MouseEvent me) {
+    public void buttonReleased(MouseEvent me) {
         stopAnimations();
     }
 
     // MISC
 
     /**
-     * This method is responsible for switching the orientation {@link PseudoClass} on the scroll bar when the
-     * {@link VFXScrollBar#orientationProperty()} changes.
-     * <p>
-     * The given callback is executed at the end and gives the new orientation as input.
+     * Obtains the mouse position from the given {@link MouseEvent} depending on the scroll bar's orientation.
      */
-    public void onOrientationChanged(Consumer<Orientation> callback) {
+    protected double getMousePos(MouseEvent me) {
+        return (getNode().getOrientation() == Orientation.VERTICAL)
+            ? me.getY()
+            : me.getX();
+    }
+
+    protected int getAndSetScrollDirection(boolean incrementing) {
         VFXScrollBar bar = getNode();
         Orientation o = bar.getOrientation();
-        if (o == Orientation.VERTICAL) {
-            bar.pseudoClassStateChanged(HORIZONTAL_PSEUDO_CLASS, false);
-            bar.pseudoClassStateChanged(VERTICAL_PSEUDO_CLASS, true);
-        } else {
-            bar.pseudoClassStateChanged(VERTICAL_PSEUDO_CLASS, false);
-            bar.pseudoClassStateChanged(HORIZONTAL_PSEUDO_CLASS, true);
-        }
-        callback.accept(o);
+        int mul = incrementing ? 1 : -1;
+        ScrollDirection sd = (o == Orientation.VERTICAL) ?
+            (mul == 1) ? ScrollDirection.DOWN : ScrollDirection.UP :
+            (mul == 1) ? ScrollDirection.RIGHT : ScrollDirection.LEFT;
+        ((ObjectProperty<ScrollDirection>) bar.scrollDirectionProperty()).set(sd);
+        return mul;
     }
 
     /**
-     * Simply enables or disabled the ":dragging" {@link PseudoClass} on the scroll bar depending on the given parameter.
+     * Obtains the scroll delta from the given {@link ScrollEvent} depending on the scroll bar's orientation.
      */
-    protected void onDragging(boolean dragging) {
-        getNode().pseudoClassStateChanged(DRAGGING_PSEUDO_CLASS, dragging);
+    protected double getScrollDelta(ScrollEvent se) {
+        double delta = (getNode().getOrientation() == Orientation.VERTICAL) ?
+            se.getDeltaY() :
+            se.getDeltaX();
+        return (delta != 0) ? delta : (se.getDeltaY() != 0) ? se.getDeltaY() : se.getDeltaX();
     }
+
+    /**
+     * Requests focus for the scroll bar if it's not already focused and if it's focus traversable.
+     */
+    protected void requestFocus() {
+        VFXScrollBar bar = getNode();
+        if (!bar.isFocused() && bar.isFocusTraversable()) bar.requestFocus();
+    }
+
+    // ANIMATIONS
 
     /**
      * Stops any currently playing animation, including smooth scroll animations,
@@ -410,46 +390,6 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
             scrollAnimation.stop();
             scrollAnimation = null;
         }
-    }
-
-    /**
-     * Obtains the mouse position from the given {@link MouseEvent} depending on
-     * the scroll bar's orientation.
-     */
-    protected double getMousePos(MouseEvent me) {
-        return (getNode().getOrientation() == Orientation.VERTICAL) ?
-            me.getY() :
-            me.getX();
-    }
-
-    /**
-     * Obtains the scroll delta from the given {@link ScrollEvent} depending on
-     * the scroll bar's orientation.
-     */
-    protected double getScrollDelta(ScrollEvent se) {
-        double delta = (getNode().getOrientation() == Orientation.VERTICAL) ?
-            se.getDeltaY() :
-            se.getDeltaX();
-        return (delta != 0) ? delta : (se.getDeltaY() != 0) ? se.getDeltaY() : se.getDeltaX();
-    }
-
-    protected int getAndSetScrollDirection(boolean incrementing) {
-        VFXScrollBar bar = getNode();
-        Orientation o = bar.getOrientation();
-        int mul = incrementing ? 1 : -1;
-        ScrollUtils.ScrollDirection sd = (o == Orientation.VERTICAL) ?
-            (mul == 1) ? ScrollUtils.ScrollDirection.DOWN : ScrollUtils.ScrollDirection.UP :
-            (mul == 1) ? ScrollUtils.ScrollDirection.RIGHT : ScrollUtils.ScrollDirection.LEFT;
-        bar.setScrollDirection(sd);
-        return mul;
-    }
-
-    /**
-     * Requests focus for the scroll bar if it's not already focused and if it's focus traversable.
-     */
-    protected void requestFocus() {
-        VFXScrollBar bar = getNode();
-        if (!bar.isFocused() && bar.isFocusTraversable()) bar.requestFocus();
     }
 
     /**
@@ -473,7 +413,7 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
      * {@link #HOLD_DELAY} and the given handler determines what happens when the animation ends.
      */
     protected Animation onHold(EventHandler<ActionEvent> handler) {
-        return PauseBuilder.build()
+        return Animations.PauseBuilder.build()
             .setDuration(HOLD_DELAY)
             .setOnFinished(handler)
             .getAnimation();
@@ -519,10 +459,10 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
             mt.setOnFinished(e -> smoothScrollAnimations.remove(mt));
             smoothScrollAnimations.add(mt);
             mt.play();
-            if (callback != null) callback.accept(se);
-            return;
+        } else {
+            bar.setValue(bar.getValue() + bar.getUnitIncrement() * mul);
         }
-        bar.setValue(bar.getValue() + bar.getUnitIncrement() * mul);
+        if (callback != null) callback.accept(se);
     }
 
     @Override

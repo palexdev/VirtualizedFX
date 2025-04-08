@@ -16,14 +16,6 @@
  * along with VirtualizedFX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-@import "VFXScrollBar.css";
-
 .vfx-scroll-pane {
-    -vfx-vbar-padding: 4 0 4 0;
-    -vfx-hbar-padding: 0 4 0 4;
-}
-
-.vfx-scroll-pane:compact {
-    -vfx-vbar-padding: 12 4 12 0;
-    -vfx-hbar-padding: 0 12 4 12;
+  -fx-padding: 4px;
 }

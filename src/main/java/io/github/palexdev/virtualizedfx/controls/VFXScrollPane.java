@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Parisi Alessandro - alessandro.parisi406@gmail.com
+ * Copyright (C) 2025 Parisi Alessandro - alessandro.parisi406@gmail.com
  * This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX)
  *
  * VirtualizedFX is free software: you can redistribute it and/or
@@ -18,150 +18,111 @@
 
 package io.github.palexdev.virtualizedfx.controls;
 
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import io.github.palexdev.mfxcore.base.beans.Size;
-import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.controls.SkinBase;
-import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.VFXResources;
-import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollPaneBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollPaneSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
-import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
-import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
-import io.github.palexdev.virtualizedfx.utils.ScrollBounds;
-import javafx.beans.property.*;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.CssMetaData;
 import javafx.css.PseudoClass;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
-import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
+
+import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
+import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
 
 /**
  * My personal custom implementation of a scroll pane from scratch, follows the MVC pattern as enforced by {@link Control}.
  * The default skin is {@link VFXScrollPaneSkin}. The default behavior is {@link VFXScrollPaneBehavior}. Also implements {@link VFXStyleable}.
  * <p></p>
- * <b>Note:</b> to make this component as generic as possible, it requires both the content and the view area bounds.
- * However, to make it easier to use, it tries to determine the bounds automatically whenever the content changes,
- * see {@link #onContentChanged()}.
- * <p>
- * Apart from this peculiarity, this is a normal scroll pane, <b>BUT</b>, since it's made from scratch it differs in many aspects from the JavaFX's one.
- * <p></p>
- * Since this uses the new {@link VFXScrollBar}s, this also expects values to be in pixels and not percentages.
- * <p>
- * Listing all the features of this scroll pane we have:
- * <p> - The possibility to change the layout strategy for the scroll bars, see {@link LayoutMode} and {@link VFXScrollPaneSkin}
- * <p> - The possibility of making the content always fit the size of the scroll pane by setting the properties
+ * <b>Features:</b>
+ * <p> - You can change how the scroll bars are laid out as well as their appearance with the {@link #layoutModeProperty()}
+ * <p> - You can align the content within the viewport by setting the {@link #alignmentProperty()}
+ * (works only when the content is smaller than the viewport)
+ * <p> - The {@link #mainAxisProperty()} determines which is the primary scroll direction. By default, it's vertical and
+ * to scroll horizontally you have to press the {@code Shift} key
+ * <p> - You can make the content always fit the size of the scroll pane by setting the properties
  * {@link #fitToWidthProperty()} and {@link #fitToHeightProperty()} (works only for non-virtualized contents)
- * <p> - The possibility of auto hide the scroll bars after a certain amount of time
- * <p> - The scroll bars policy, which <b>differs</b> from the JavaFX's one
- * <p> - The possibility to change the position of the scroll bars, see {@link HBarPos} and {@link VBarPos}
- * <p> - The possibility to specify extra padding for the scroll bars
- * <p> - The possibility to scroll with the mouse (not called pannable anymore but dragToScroll, {@link #dragToScrollProperty()})
- * <p> - Ports all the new features of {@link VFXScrollBar} which they'll be bound to, such as:
- * {@link VFXScrollBar#showButtonsProperty()}, {@link VFXScrollBar#buttonsGapProperty()},
- * {@link VFXScrollBar#trackIncrementProperty()}, {@link VFXScrollBar#unitIncrementProperty()},
- * {@link VFXScrollBar#smoothScrollProperty()} and {@link VFXScrollBar#trackSmoothScrollProperty()}.
+ * <p> - You choose on which side to have the two scroll bars with {@link #vBarPosProperty()} and {@link #hBarPosProperty()}
+ * <p> - The {@link #scrollBarsGapProperty()} determines how much space separates the scroll bars
+ * <p> - You can make the scroll bars hide automatically after a certain amount of time, {@link #autoHideBarsProperty()}
+ * <p> - You can disable the bars and the scrolling by setting the relative policies:
+ * {@link #vBarPolicyProperty()}, {@link #hBarPolicyProperty()}
+ * <p> - Allows scrolling by dragging the mouse on the viewport by enabling the {@link #dragToScrollProperty()}, and
+ * it's also possible to enable smooth scrolling for it: {@link #dragSmoothScrollProperty()}
+ * <p> - All the properties of {@link VFXScrollBar} are ported and bound here:
+ * {@link #vTrackIncrementProperty()}, {@link #vUnitIncrementProperty()}, {@link #hTrackIncrementProperty()}, {@link #hUnitIncrementProperty()},
+ * {@link #showButtonsProperty()}, {@link #buttonsGapProperty()}, {@link #smoothScrollProperty()}, {@link #trackSmoothScrollProperty()}
+ * <p> - Finally you can set the radius for the viewport's clip with the {@link #clipBorderRadiusProperty()}
  * <p></p>
- * This also offers two new PseudoClasses:
+ * Uses two new PseudoClasses:
  * <p> - ":compact": active when the {@link #layoutModeProperty()} is set to {@link LayoutMode#COMPACT}
  * <p> - ":drag-to-scroll": active when the {@link #dragToScrollProperty()} is set to true
  * <p></p>
- * Removed features from the JavaFX's one are: fitToHeight and fitToWidth, the possibility to specify the viewport's bounds.
- * <p></p>
- * Last but not least, since this uses the new {@link VFXScrollBar}s, it also allows to change their behavior with
+ * Last but not least, since this uses the new {@link io.github.palexdev.virtualizedfx.controls.VFXScrollBar}s, it also allows to change their behavior with
  * {@link #hBarBehaviorProperty()} and {@link #vBarBehaviorProperty()}.
  */
-// TODO check fitTo features
 public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFXStyleable {
     //================================================================================
-    // PseudoClasses
+    // Static Properties
     //================================================================================
-    public static final PseudoClass COMPACT_MODE_PSEUDO_CLASS = PseudoClass.getPseudoClass("compact");
     public static final PseudoClass DRAG_TO_SCROLL_PSEUDO_CLASS = PseudoClass.getPseudoClass("drag-to-scroll");
 
     //================================================================================
     // Properties
     //================================================================================
-    private final ObjectProperty<Node> content = new SimpleObjectProperty<>() {
-        @Override
-        public void set(Node newValue) {
-            if (get() instanceof VFXContainer<?> c) {
-                c.hPosProperty().unbindBidirectional(hValProperty());
-                c.vPosProperty().unbindBidirectional(vValProperty());
-            }
-            super.set(newValue);
-        }
+    private final ObjectProperty<Node> content = new SimpleObjectProperty<>();
 
-        @Override
-        protected void invalidated() {
-            onContentChanged();
-        }
-    };
-    private final ObjectProperty<ScrollBounds> contentBounds = new SimpleObjectProperty<>(ScrollBounds.ZERO);
-    private final SizeProperty viewportSize = new SizeProperty(Size.empty());
-
-    //================================================================================
-    // ScrollBars Properties & Config
-    //================================================================================
-    private final DoubleProperty hMin = new SimpleDoubleProperty(0.0);
-    private final DoubleProperty hVal = new SimpleDoubleProperty(0.0) {
-        @Override
-        public void set(double newValue) {
-            super.set(NumberUtils.clamp(
-                newValue,
-                Math.max(0.0, getHMin()),
-                Math.min(getMaxScroll(Orientation.HORIZONTAL), getHMax())
-            ));
-        }
-    };
-    private final DoubleProperty hMax = new SimpleDoubleProperty(Double.MAX_VALUE) {
-        @Override
-        protected void invalidated() {
-            invalidateValue(Orientation.HORIZONTAL);
-        }
-    };
-
-    private final DoubleProperty vMin = new SimpleDoubleProperty(0.0);
-    private final DoubleProperty vVal = new SimpleDoubleProperty(0.0) {
-        @Override
-        public void set(double newValue) {
-            super.set(NumberUtils.clamp(
-                newValue,
-                Math.max(0.0, getVMin()),
-                Math.min(getMaxScroll(Orientation.VERTICAL), getVMax())
-            ));
-        }
-    };
-    private final DoubleProperty vMax = new SimpleDoubleProperty(Double.MAX_VALUE) {
-        @Override
-        protected void invalidated() {
-            invalidateValue(Orientation.VERTICAL);
-        }
-    };
-
-    private final ObjectProperty<Orientation> orientation = new SimpleObjectProperty<>(Orientation.VERTICAL);
-    private final FunctionProperty<VFXScrollBar, VFXScrollBarBehavior> hBarBehavior = PropUtils.function(VFXScrollBarBehavior::new);
+    // VBar
+    private final DoubleProperty vMin = PropUtils.clampedDoubleProperty(
+        () -> 0.0,
+        this::getVMax
+    );
+    private final DoubleProperty vValue = PropUtils.clampedDoubleProperty(
+        this::getVMin,
+        this::getVMax
+    );
+    private final DoubleProperty vMax = PropUtils.clampedDoubleProperty(
+        this::getVMin,
+        () -> 1.0
+    );
     private final FunctionProperty<VFXScrollBar, VFXScrollBarBehavior> vBarBehavior = PropUtils.function(VFXScrollBarBehavior::new);
+
+    // HBar
+    private final DoubleProperty hMin = PropUtils.clampedDoubleProperty(
+        () -> 0.0,
+        this::getHMax
+    );
+    private final DoubleProperty hValue = PropUtils.clampedDoubleProperty(
+        this::getHMin,
+        this::getHMax
+    );
+    private final DoubleProperty hMax = PropUtils.clampedDoubleProperty(
+        this::getHMin,
+        () -> 1.0
+    );
+    private final FunctionProperty<VFXScrollBar, VFXScrollBarBehavior> hBarBehavior = PropUtils.function(VFXScrollBarBehavior::new);
 
     //================================================================================
     // Constructors
@@ -172,106 +133,34 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 
     public VFXScrollPane(Node content) {
         setContent(content);
-        initialize();
+        init();
     }
 
     //================================================================================
     // Methods
     //================================================================================
-    private void initialize() {
+    private void init() {
         getStyleClass().setAll(defaultStyleClasses());
-        setDefaultBehaviorProvider();
         getStylesheets().add(VFXResources.loadResource("VFXScrollPane.css"));
+        setDefaultBehaviorProvider();
+
+        setVMin(0.0);
+        setVMax(1.0);
+        setHMin(0.0);
+        setHMax(1.0);
     }
-
-    /**
-     * This is responsible for updating the {@link #contentBoundsProperty()} when the {@link #contentProperty()} changes.
-     * To be precise the property is bound depending on the type of the content.
-     * <p>
-     * If the content implements {@link VFXContainer} then it uses both {@link VFXContainer#getVirtualMaxX()} and {@link VFXContainer#getVirtualMaxY()}
-     * as the content bounds and {@link #viewportSizeProperty()} as the view area size.
-     * <p></p>
-     * If the content is just a generic node, then it uses {@link Node#layoutBoundsProperty()} as the content bounds and
-     * again the {@link #viewportSizeProperty()} as the view area size.
-     */
-    protected void onContentChanged() {
-        Node content = getContent();
-        if (content == null) {
-            contentBounds.unbind();
-            setContentBounds(ScrollBounds.ZERO);
-            return;
-        }
-        if (content instanceof VFXContainer<?> c) {
-            c.hPosProperty().bindBidirectional(hValProperty());
-            c.vPosProperty().bindBidirectional(vValProperty());
-            contentBounds.bind(ObjectBindingBuilder.<ScrollBounds>build()
-                .setMapper(() -> new ScrollBounds(
-                    c.getVirtualMaxX(), c.getVirtualMaxY(),
-                    viewportSize.getWidth(), viewportSize.getHeight()
-                ))
-                .addSources(c.virtualMaxXProperty(), c.virtualMaxYProperty())
-                .addSources(viewportSize)
-                .get()
-            );
-            return;
-        }
-        contentBounds.bind(ObjectBindingBuilder.<ScrollBounds>build()
-            .setMapper(() -> new ScrollBounds(
-                snapSizeX(content.prefWidth(-1)), snapSizeY(content.prefHeight(-1)),
-                viewportSize.getWidth(), viewportSize.getHeight()
-            ))
-            .addSources(content.layoutBoundsProperty())
-            .addSources(viewportSize)
-            .get()
-        );
-    }
-
-    /**
-     * Shortcut for {@code setValue(getValue())}. This will cause the {@link #hValProperty()} or the {@link #vValProperty()}
-     * (depending on the given orientation) to be withing the bounds specified by the respective min and max properties.
-     */
-    protected void invalidateValue(Orientation o) {
-        if (o == Orientation.VERTICAL) {
-            setVVal(getVVal());
-        } else {
-            setHVal(getHVal());
-        }
-    }
-
-    //================================================================================
-    // Delegate Methods
-    //================================================================================
-
-    /**
-     * Delegate for {@link ScrollBounds#visibleAmount(Orientation)}
-     *
-     * @see ScrollBounds
-     */
-    public double getVisibleAmount(Orientation o) {
-        return getContentBounds().visibleAmount(o);
-    }
-
-    /**
-     * Delegate for {@link ScrollBounds#maxScroll(Orientation)}
-     *
-     * @see ScrollBounds
-     */
-    public double getMaxScroll(Orientation o) {
-        return getContentBounds().maxScroll(o);
-    }
-
 
     //================================================================================
     // Overridden Methods
     //================================================================================
     @Override
-    public Supplier<VFXScrollPaneBehavior> defaultBehaviorProvider() {
-        return () -> new VFXScrollPaneBehavior(this);
+    protected SkinBase<?, ?> buildSkin() {
+        return new VFXScrollPaneSkin(this);
     }
 
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXScrollPaneSkin(this);
+    public Supplier<VFXScrollPaneBehavior> defaultBehaviorProvider() {
+        return () -> new VFXScrollPaneBehavior(this);
     }
 
     @Override
@@ -287,6 +176,25 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this,
         "layoutMode",
         LayoutMode.DEFAULT
+    ) {
+        @Override
+        protected void invalidated() {
+            pseudoClassStateChanged(LayoutMode.COMPACT_PSEUDO_CLASS, get() == LayoutMode.COMPACT);
+        }
+    };
+
+    private final StyleableObjectProperty<Pos> alignment = new StyleableObjectProperty<>(
+        StyleableProperties.ALIGNMENT,
+        this,
+        "alignment",
+        Pos.TOP_LEFT
+    );
+
+    private final StyleableObjectProperty<Orientation> mainAxis = new StyleableObjectProperty<>(
+        StyleableProperties.MAIN_AXIS,
+        this,
+        "mainAxis",
+        Orientation.VERTICAL
     );
 
     private final StyleableBooleanProperty fitToWidth = new StyleableBooleanProperty(
@@ -303,18 +211,32 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         false
     );
 
+    private final StyleableObjectProperty<VBarPos> vBarPos = new StyleableObjectProperty<>(
+        StyleableProperties.VBAR_POS,
+        this,
+        "vBarPos",
+        VBarPos.RIGHT
+    );
+
+    private final StyleableObjectProperty<HBarPos> hBarPos = new StyleableObjectProperty<>(
+        StyleableProperties.HBAR_POS,
+        this,
+        "hBarPos",
+        HBarPos.BOTTOM
+    );
+
+    private final StyleableDoubleProperty scrollBarsGap = new StyleableDoubleProperty(
+        StyleableProperties.SCROLL_BARS_GAP,
+        this,
+        "scrollBarsGap",
+        4.0
+    );
+
     private final StyleableBooleanProperty autoHideBars = new StyleableBooleanProperty(
         StyleableProperties.AUTO_HIDE_BARS,
         this,
         "autoHideBars",
         false
-    );
-
-    private final StyleableObjectProperty<ScrollBarPolicy> hBarPolicy = new StyleableObjectProperty<>(
-        StyleableProperties.HBAR_POLICY,
-        this,
-        "hBarPolicy",
-        ScrollBarPolicy.DEFAULT
     );
 
     private final StyleableObjectProperty<ScrollBarPolicy> vBarPolicy = new StyleableObjectProperty<>(
@@ -324,53 +246,39 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         ScrollBarPolicy.DEFAULT
     );
 
-    private final StyleableObjectProperty<ScrollPaneEnums.HBarPos> hBarPos = new StyleableObjectProperty<>(
-        StyleableProperties.HBAR_POS,
+    private final StyleableObjectProperty<ScrollBarPolicy> hBarPolicy = new StyleableObjectProperty<>(
+        StyleableProperties.HBAR_POLICY,
         this,
-        "hBarPos",
-        ScrollPaneEnums.HBarPos.BOTTOM
+        "hBarPolicy",
+        ScrollBarPolicy.DEFAULT
     );
 
-    private final StyleableObjectProperty<ScrollPaneEnums.VBarPos> vBarPos = new StyleableObjectProperty<>(
-        StyleableProperties.VBAR_POS,
+    private final StyleableDoubleProperty vTrackIncrement = new StyleableDoubleProperty(
+        StyleableProperties.V_TRACK_INCREMENT,
         this,
-        "vBarPos",
-        ScrollPaneEnums.VBarPos.RIGHT
+        "vTrackIncrement",
+        0.1
     );
 
-    private final StyleableObjectProperty<Insets> hBarPadding = new StyleableObjectProperty<>(
-        StyleableProperties.HBAR_PADDING,
+    private final StyleableDoubleProperty vUnitIncrement = new StyleableDoubleProperty(
+        StyleableProperties.V_UNIT_INCREMENT,
         this,
-        "hBarPadding",
-        Insets.EMPTY
+        "vUnitIncrement",
+        0.01
     );
 
-    private final StyleableObjectProperty<Insets> vBarPadding = new StyleableObjectProperty<>(
-        StyleableProperties.VBAR_PADDING,
+    private final StyleableDoubleProperty hTrackIncrement = new StyleableDoubleProperty(
+        StyleableProperties.H_TRACK_INCREMENT,
         this,
-        "vBarPadding",
-        Insets.EMPTY
+        "hTrackIncrement",
+        0.1
     );
 
-    private final StyleableDoubleProperty hBarOffset = new StyleableDoubleProperty(
-        StyleableProperties.HBAR_OFFSET,
+    private final StyleableDoubleProperty hUnitIncrement = new StyleableDoubleProperty(
+        StyleableProperties.H_UNIT_INCREMENT,
         this,
-        "hBarOffset",
-        0.0
-    );
-
-    private final StyleableDoubleProperty vBarOffset = new StyleableDoubleProperty(
-        StyleableProperties.VBAR_OFFSET,
-        this,
-        "vBarOffset",
-        0.0
-    );
-
-    private final StyleableBooleanProperty dragToScroll = new StyleableBooleanProperty(
-        StyleableProperties.DRAG_TO_SCROLL,
-        this,
-        "dragToScroll",
-        false
+        "hUnitIncrement",
+        0.01
     );
 
     private final StyleableBooleanProperty showButtons = new StyleableBooleanProperty(
@@ -384,35 +292,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         StyleableProperties.BUTTONS_GAP,
         this,
         "buttonsGap",
-        1.0
-    );
-
-    private final StyleableDoubleProperty hTrackIncrement = new StyleableDoubleProperty(
-        StyleableProperties.H_TRACK_INCREMENT,
-        this,
-        "hTrackIncrement",
-        25.0
-    );
-
-    private final StyleableDoubleProperty hUnitIncrement = new StyleableDoubleProperty(
-        StyleableProperties.H_UNIT_INCREMENT,
-        this,
-        "hUnitIncrement",
-        10.0
-    );
-
-    private final StyleableDoubleProperty vTrackIncrement = new StyleableDoubleProperty(
-        StyleableProperties.V_TRACK_INCREMENT,
-        this,
-        "vTrackIncrement",
-        25.0
-    );
-
-    private final StyleableDoubleProperty vUnitIncrement = new StyleableDoubleProperty(
-        StyleableProperties.V_UNIT_INCREMENT,
-        this,
-        "vUnitIncrement",
-        10.0
+        4.0
     );
 
     private final StyleableBooleanProperty smoothScroll = new StyleableBooleanProperty(
@@ -428,6 +308,18 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         "trackSmoothScroll",
         false
     );
+
+    private final StyleableBooleanProperty dragToScroll = new StyleableBooleanProperty(
+        StyleableProperties.DRAG_TO_SCROLL,
+        this,
+        "dragToScroll",
+        false
+    ) {
+        @Override
+        protected void invalidated() {
+            pseudoClassStateChanged(DRAG_TO_SCROLL_PSEUDO_CLASS, get());
+        }
+    };
 
     private final StyleableBooleanProperty dragSmoothScroll = new StyleableBooleanProperty(
         StyleableProperties.DRAG_SMOOTH_SCROLL,
@@ -447,18 +339,53 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         return layoutMode.get();
     }
 
-    /**
-     * Specifies the layout strategy for the scroll bars, see {@link LayoutMode} or {@link VFXScrollPaneSkin}
-     * for an explanation.
-     * <p>
-     * This is also settable via CSS with the "-vfx-layout-mode" property.
-     */
     public StyleableObjectProperty<LayoutMode> layoutModeProperty() {
         return layoutMode;
     }
 
     public void setLayoutMode(LayoutMode layoutMode) {
         this.layoutMode.set(layoutMode);
+    }
+
+    public Pos getAlignment() {
+        return alignment.get();
+    }
+
+    /**
+     * Allows to align the scroll pane's content within its viewport. The alignment is ignored if the content is larger
+     * than the viewport.
+     * <p>
+     * This is also settable via CSS with the "-vfx-alignment" property.
+     */
+    public StyleableObjectProperty<Pos> alignmentProperty() {
+        return alignment;
+    }
+
+    public void setAlignment(Pos alignment) {
+        this.alignment.set(alignment);
+    }
+
+    public Orientation getMainAxis() {
+        return mainAxis.get();
+    }
+
+    /**
+     * Specifies the main scroll axis.
+     * <p>
+     * This is used by the skin to determine the behavior of the scroll when the Shift button is
+     * pressed.
+     * By default, for:
+     * <p> - VERTICAL orientation: if Shift is pressed the scroll will be horizontal
+     * <p> - HORIZONTAL orientation: if Shift is pressed the scroll will be vertical
+     * <p>
+     * This is also settable via CSS with the "-vfx-main-axis" property.
+     */
+    public StyleableObjectProperty<Orientation> mainAxisProperty() {
+        return mainAxis;
+    }
+
+    public void setMainAxis(Orientation mainAxis) {
+        this.mainAxis.set(mainAxis);
     }
 
     public boolean isFitToWidth() {
@@ -495,6 +422,85 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this.fitToHeight.set(fitToHeight);
     }
 
+    public VBarPos getVBarPos() {
+        return vBarPos.get();
+    }
+
+    /**
+     * Specifies the position of the vertical scroll bar.
+     * <p>
+     * This is also settable via CSS with the "-vfx-vbar-pos" property.
+     */
+    public StyleableObjectProperty<VBarPos> vBarPosProperty() {
+        return vBarPos;
+    }
+
+    public void setVBarPos(VBarPos vBarPos) {
+        this.vBarPos.set(vBarPos);
+    }
+
+    public HBarPos getHBarPos() {
+        return hBarPos.get();
+    }
+
+    /**
+     * Specifies the position of the horizontal scroll bar.
+     * <p>
+     * This is also settable via CSS with the "-vfx-hbar-pos" property.
+     */
+    public StyleableObjectProperty<HBarPos> hBarPosProperty() {
+        return hBarPos;
+    }
+
+    public void setHBarPos(HBarPos hBarPos) {
+        this.hBarPos.set(hBarPos);
+    }
+
+    /**
+     * Convenience method to combine {@link #setVBarPos(VBarPos)} and {@link #setHBarPos(HBarPos)}.
+     * However, note that only four positions are allowed: {@link Pos#TOP_LEFT}, {@link Pos#TOP_RIGHT},
+     * {@link Pos#BOTTOM_LEFT}, {@link Pos#BOTTOM_RIGHT} (default!).
+     */
+    public void setScrollBarsPos(Pos pos) {
+        switch (pos) {
+            case TOP_LEFT -> {
+                setVBarPos(VBarPos.LEFT);
+                setHBarPos(HBarPos.TOP);
+            }
+            case TOP_RIGHT -> {
+                setVBarPos(VBarPos.RIGHT);
+                setHBarPos(HBarPos.TOP);
+            }
+            case BOTTOM_LEFT -> {
+                setVBarPos(VBarPos.LEFT);
+                setHBarPos(HBarPos.BOTTOM);
+            }
+            default -> {
+                // Default is BOTTOM_RIGHT
+                setVBarPos(VBarPos.RIGHT);
+                setHBarPos(HBarPos.BOTTOM);
+            }
+        }
+    }
+
+    public double getScrollBarsGap() {
+        return scrollBarsGap.get();
+    }
+
+    /**
+     * Determines how much space divides the two scroll bars. Imagine this as the corner UI element that was present in
+     * the scroll panes back in the day.
+     * <p>
+     * This is also settable via CSS with the "-vfx-bars-gap" property.
+     */
+    public StyleableDoubleProperty scrollBarsGapProperty() {
+        return scrollBarsGap;
+    }
+
+    public void setScrollBarsGap(double scrollBarsGap) {
+        this.scrollBarsGap.set(scrollBarsGap);
+    }
+
     public boolean isAutoHideBars() {
         return autoHideBars.get();
     }
@@ -502,7 +508,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     /**
      * Specifies whether to auto hide the scroll bars after a certain amount of time.
      * <p>
-     * This is also settable via CSS with the "-vfx-autohide-bars" property.
+     * This is also settable via CSS with the "-vfx-auto-hide-bars" property.
      */
     public StyleableBooleanProperty autoHideBarsProperty() {
         return autoHideBars;
@@ -510,23 +516,6 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 
     public void setAutoHideBars(boolean autoHideBars) {
         this.autoHideBars.set(autoHideBars);
-    }
-
-    public ScrollBarPolicy getHBarPolicy() {
-        return hBarPolicy.get();
-    }
-
-    /**
-     * Specifies the horizontal scroll bar visibility policy.
-     * <p>
-     * This is also settable via CSS with the "-vfx-hbar-policy" property.
-     */
-    public StyleableObjectProperty<ScrollBarPolicy> hBarPolicyProperty() {
-        return hBarPolicy;
-    }
-
-    public void setHBarPolicy(ScrollBarPolicy hBarPolicy) {
-        this.hBarPolicy.set(hBarPolicy);
     }
 
     public ScrollBarPolicy getVBarPolicy() {
@@ -546,203 +535,21 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this.vBarPolicy.set(vBarPolicy);
     }
 
-    public ScrollPaneEnums.HBarPos getHBarPos() {
-        return hBarPos.get();
+    public ScrollBarPolicy getHBarPolicy() {
+        return hBarPolicy.get();
     }
 
     /**
-     * Specifies the position of the horizontal scroll bar.
+     * Specifies the horizontal scroll bar visibility policy.
      * <p>
-     * This is also settable via CSS with the "-vfx-hbar-pos" property.
+     * This is also settable via CSS with the "-vfx-hbar-policy" property.
      */
-    public StyleableObjectProperty<ScrollPaneEnums.HBarPos> hBarPosProperty() {
-        return hBarPos;
+    public StyleableObjectProperty<ScrollBarPolicy> hBarPolicyProperty() {
+        return hBarPolicy;
     }
 
-    public void setHBarPos(ScrollPaneEnums.HBarPos hBarPos) {
-        this.hBarPos.set(hBarPos);
-    }
-
-    public ScrollPaneEnums.VBarPos getVBarPos() {
-        return vBarPos.get();
-    }
-
-    /**
-     * Specifies the position of the vertical scroll bar.
-     * <p>
-     * This is also settable via CSS with the "-vfx-vbar-pos" property.
-     */
-    public StyleableObjectProperty<ScrollPaneEnums.VBarPos> vBarPosProperty() {
-        return vBarPos;
-    }
-
-    public void setVBarPos(ScrollPaneEnums.VBarPos vBarPos) {
-        this.vBarPos.set(vBarPos);
-    }
-
-    public Insets getHBarPadding() {
-        return hBarPadding.get();
-    }
-
-    /**
-     * Specifies the extra padding for the horizontal scroll bar.
-     * <p>
-     * This is also settable via CSS with the "-vfx-hbar-padding" property.
-     */
-    public StyleableObjectProperty<Insets> hBarPaddingProperty() {
-        return hBarPadding;
-    }
-
-    public void setHBarPadding(Insets hBarPadding) {
-        this.hBarPadding.set(hBarPadding);
-    }
-
-    public Insets getVBarPadding() {
-        return vBarPadding.get();
-    }
-
-    /**
-     * Specifies the extra padding for the vertical scroll bar.
-     * <p>
-     * This is also settable via CSS with the "-vfx-vbar-padding" property.
-     */
-    public StyleableObjectProperty<Insets> vBarPaddingProperty() {
-        return vBarPadding;
-    }
-
-    public void setVBarPadding(Insets vBarPadding) {
-        this.vBarPadding.set(vBarPadding);
-    }
-
-    public double getHBarOffset() {
-        return hBarOffset.get();
-    }
-
-    /**
-     * Specifies a value by which the horizontal scroll bar will be "shifted" on the x-axis.
-     * <p>
-     * Note that as a consequence, this will also reduce the width of the bar.
-     * <p>
-     * This can be useful if wrapping content which has headers or extra nodes of some sort and the
-     * bar ends up covering them.
-     * <p>
-     * This is also settable via CSS with the "-vfx-hbar-offset" property.
-     */
-    public StyleableDoubleProperty hBarOffsetProperty() {
-        return hBarOffset;
-    }
-
-    public void setHBarOffset(double hBarOffset) {
-        this.hBarOffset.set(hBarOffset);
-    }
-
-    public double getVBarOffset() {
-        return vBarOffset.get();
-    }
-
-    /**
-     * Specifies a value by which the vertical scroll bar will be "shifted" on the y-axis.
-     * <p>
-     * Note that as a consequence, this will also reduce the height of the bar.
-     * <p>
-     * This can be useful if wrapping content which has headers or extra nodes of some sort and the
-     * bar ends up covering them.
-     * <p>
-     * This is also settable via CSS with the "-vfx-vbar-offset" property.
-     */
-    public StyleableDoubleProperty vBarOffsetProperty() {
-        return vBarOffset;
-    }
-
-    public void setVBarOffset(double vBarOffset) {
-        this.vBarOffset.set(vBarOffset);
-    }
-
-    public boolean isDragToScroll() {
-        return dragToScroll.get();
-    }
-
-    /**
-     * Specifies whether the content can be scrolled with mouse dragging.
-     * <p>
-     * This is also settable via CSS with the "-vfx-drag-to-scroll" property.
-     */
-    public StyleableBooleanProperty dragToScrollProperty() {
-        return dragToScroll;
-    }
-
-    public void setDragToScroll(boolean dragToScroll) {
-        this.dragToScroll.set(dragToScroll);
-    }
-
-    public boolean isShowButtons() {
-        return showButtons.get();
-    }
-
-    /**
-     * Specifies whether to show or not the scroll bars' buttons.
-     * <p>
-     * This is also settable via CSS with the "-vfx-show-buttons" property.
-     */
-    public StyleableBooleanProperty showButtonsProperty() {
-        return showButtons;
-    }
-
-    public void setShowButtons(boolean showButtons) {
-        this.showButtons.set(showButtons);
-    }
-
-    public double getButtonsGap() {
-        return buttonsGap.get();
-    }
-
-    /**
-     * Specifies the gap between the scroll bars' thumb and their buttons.
-     * <p>
-     * This is also settable via CSS with the "-vfx-buttons-gap" property.
-     */
-    public StyleableDoubleProperty buttonsGapProperty() {
-        return buttonsGap;
-    }
-
-    public void setButtonsGap(double buttonsGap) {
-        this.buttonsGap.set(buttonsGap);
-    }
-
-    public double getHTrackIncrement() {
-        return hTrackIncrement.get();
-    }
-
-    /**
-     * Specifies the amount added/subtracted to the horizontal scroll bar's value used by the
-     * scroll bar's track.
-     * <p>
-     * This is also settable via CSS with the "-vfx-htrack-increment" property.
-     */
-    public StyleableDoubleProperty hTrackIncrementProperty() {
-        return hTrackIncrement;
-    }
-
-    public void setHTrackIncrement(double hTrackIncrement) {
-        this.hTrackIncrement.set(hTrackIncrement);
-    }
-
-    public double getHUnitIncrement() {
-        return hUnitIncrement.get();
-    }
-
-    /**
-     * Specifies the amount added/subtracted to the horizontal scroll bar's value used by the
-     * buttons and by scrolling.
-     * <p>
-     * This is also settable via CSS with the "-vfx-hunit-increment" property.
-     */
-    public StyleableDoubleProperty hUnitIncrementProperty() {
-        return hUnitIncrement;
-    }
-
-    public void setHUnitIncrement(double hUnitIncrement) {
-        this.hUnitIncrement.set(hUnitIncrement);
+    public void setHBarPolicy(ScrollBarPolicy hBarPolicy) {
+        this.hBarPolicy.set(hBarPolicy);
     }
 
     public double getVTrackIncrement() {
@@ -781,6 +588,77 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this.vUnitIncrement.set(unitIncrement);
     }
 
+    public double getHTrackIncrement() {
+        return hTrackIncrement.get();
+    }
+
+    /**
+     * Specifies the amount added/subtracted to the horizontal scroll bar's value used by the
+     * scroll bar's track.
+     * <p>
+     * This is also settable via CSS with the "-vfx-htrack-increment" property.
+     */
+    public StyleableDoubleProperty hTrackIncrementProperty() {
+        return hTrackIncrement;
+    }
+
+    public void setHTrackIncrement(double hTrackIncrement) {
+        this.hTrackIncrement.set(hTrackIncrement);
+    }
+
+    public double getHUnitIncrement() {
+        return hUnitIncrement.get();
+    }
+
+    /**
+     * Specifies the amount added/subtracted to the horizontal scroll bar's value used by the
+     * buttons and by scrolling.
+     * <p>
+     * This is also settable via CSS with the "-vfx-hunit-increment" property.
+     */
+    public StyleableDoubleProperty hUnitIncrementProperty() {
+        return hUnitIncrement;
+    }
+
+    public void setHUnitIncrement(double hUnitIncrement) {
+        this.hUnitIncrement.set(hUnitIncrement);
+    }
+
+    public boolean isShowButtons() {
+        return showButtons.get();
+    }
+
+    /**
+     * Specifies whether to show or not the scroll bars' buttons.
+     * <p>
+     * This is also settable via CSS with the "-vfx-show-buttons" property.
+     */
+    public StyleableBooleanProperty showButtonsProperty() {
+        return showButtons;
+    }
+
+    public void setShowButtons(boolean showButtons) {
+        this.showButtons.set(showButtons);
+    }
+
+    public double getButtonsGap() {
+        return buttonsGap.get();
+    }
+
+    /**
+     * Specifies the gap between the scroll bars' thumb and their buttons.
+     * <p>
+     * This is also settable via CSS with the "-vfx-buttons-gap" property.
+     */
+    public StyleableDoubleProperty buttonsGapProperty() {
+        return buttonsGap;
+    }
+
+    public void setButtonsGap(double buttonsGap) {
+        this.buttonsGap.set(buttonsGap);
+    }
+
+
     public boolean isSmoothScroll() {
         return smoothScroll.get();
     }
@@ -818,10 +696,32 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this.trackSmoothScroll.set(trackSmoothScroll);
     }
 
+    public boolean isDragToScroll() {
+        return dragToScroll.get();
+    }
+
+    /**
+     * Specifies whether the content can be scrolled with mouse dragging.
+     * <p>
+     * This is also settable via CSS with the "-vfx-drag-to-scroll" property.
+     */
+    public StyleableBooleanProperty dragToScrollProperty() {
+        return dragToScroll;
+    }
+
+    public void setDragToScroll(boolean dragToScroll) {
+        this.dragToScroll.set(dragToScroll);
+    }
+
     public boolean isDragSmoothScroll() {
         return dragSmoothScroll.get();
     }
 
+    /**
+     * Specifies whether to use animations for the {@link #dragToScrollProperty()} feature, making the scroll smooth.
+     * <p>
+     * This is also settable via CSS with the "-vfx-drag-smooth-scroll" property.
+     */
     public StyleableBooleanProperty dragSmoothScrollProperty() {
         return dragSmoothScroll;
     }
@@ -836,8 +736,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 
     /**
      * Used by the viewport's clip to set its border radius.
-     * This is useful when you want to make a rounded scroll pane, this
-     * prevents the content from going outside the view.
+     * This is useful when you want to make a rounded scroll pane and prevents the content from going outside the view.
      * <p></p>
      * <b>Side note:</b> the clip is a {@link Rectangle}, now for some
      * fucking reason the rectangle's arcWidth and arcHeight values used to make
@@ -870,6 +769,22 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
                 LayoutMode.DEFAULT
             );
 
+        private static final CssMetaData<VFXScrollPane, Pos> ALIGNMENT =
+            FACTORY.createEnumCssMetaData(
+                Pos.class,
+                "-vfx-alignment",
+                VFXScrollPane::alignmentProperty,
+                Pos.TOP_LEFT
+            );
+
+        private static final CssMetaData<VFXScrollPane, Orientation> MAIN_AXIS =
+            FACTORY.createEnumCssMetaData(
+                Orientation.class,
+                "-vfx-main-axis",
+                VFXScrollPane::mainAxisProperty,
+                Orientation.VERTICAL
+            );
+
         private static final CssMetaData<VFXScrollPane, Boolean> FIT_TO_WIDTH =
             FACTORY.createBooleanCssMetaData(
                 "-vfx-fit-to-width",
@@ -884,27 +799,12 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
                 false
             );
 
-        private static final CssMetaData<VFXScrollPane, Boolean> AUTO_HIDE_BARS =
-            FACTORY.createBooleanCssMetaData(
-                "-vfx-autohide-bars",
-                VFXScrollPane::autoHideBarsProperty,
-                false
-            );
-
-        private static final CssMetaData<VFXScrollPane, ScrollBarPolicy> HBAR_POLICY =
+        private static final CssMetaData<VFXScrollPane, VBarPos> VBAR_POS =
             FACTORY.createEnumCssMetaData(
-                ScrollBarPolicy.class,
-                "-vfx-hbar-policy",
-                VFXScrollPane::hBarPolicyProperty,
-                ScrollBarPolicy.DEFAULT
-            );
-
-        private static final CssMetaData<VFXScrollPane, ScrollBarPolicy> VBAR_POLICY =
-            FACTORY.createEnumCssMetaData(
-                ScrollBarPolicy.class,
-                "-vfx-vbar-policy",
-                VFXScrollPane::vBarPolicyProperty,
-                ScrollBarPolicy.DEFAULT
+                ScrollPaneEnums.VBarPos.class,
+                "-vfx-vbar-pos",
+                VFXScrollPane::vBarPosProperty,
+                ScrollPaneEnums.VBarPos.RIGHT
             );
 
         private static final CssMetaData<VFXScrollPane, HBarPos> HBAR_POS =
@@ -915,47 +815,62 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
                 ScrollPaneEnums.HBarPos.BOTTOM
             );
 
-        private static final CssMetaData<VFXScrollPane, VBarPos> VBAR_POS =
-            FACTORY.createEnumCssMetaData(
-                ScrollPaneEnums.VBarPos.class,
-                "-vfx-vbar-pos",
-                VFXScrollPane::vBarPosProperty,
-                ScrollPaneEnums.VBarPos.RIGHT
-            );
-
-        private static final CssMetaData<VFXScrollPane, Insets> HBAR_PADDING =
-            FACTORY.createInsetsCssMetaData(
-                "-vfx-hbar-padding",
-                VFXScrollPane::hBarPaddingProperty,
-                Insets.EMPTY
-            );
-
-        private static final CssMetaData<VFXScrollPane, Insets> VBAR_PADDING =
-            FACTORY.createInsetsCssMetaData(
-                "-vfx-vbar-padding",
-                VFXScrollPane::vBarPaddingProperty,
-                Insets.EMPTY
-            );
-
-        private static final CssMetaData<VFXScrollPane, Number> HBAR_OFFSET =
+        private static final CssMetaData<VFXScrollPane, Number> SCROLL_BARS_GAP =
             FACTORY.createSizeCssMetaData(
-                "-vfx-hbar-offset",
-                VFXScrollPane::hBarOffsetProperty,
-                0.0
+                "-vfx-bars-gap",
+                VFXScrollPane::scrollBarsGapProperty,
+                4.0
             );
 
-        private static final CssMetaData<VFXScrollPane, Number> VBAR_OFFSET =
-            FACTORY.createSizeCssMetaData(
-                "-vfx-vbar-offset",
-                VFXScrollPane::vBarOffsetProperty,
-                0.0
-            );
-
-        private static final CssMetaData<VFXScrollPane, Boolean> DRAG_TO_SCROLL =
+        private static final CssMetaData<VFXScrollPane, Boolean> AUTO_HIDE_BARS =
             FACTORY.createBooleanCssMetaData(
-                "-vfx-drag-to-scroll",
-                VFXScrollPane::dragToScrollProperty,
+                "-vfx-auto-hide-bars",
+                VFXScrollPane::autoHideBarsProperty,
                 false
+            );
+
+        private static final CssMetaData<VFXScrollPane, ScrollBarPolicy> VBAR_POLICY =
+            FACTORY.createEnumCssMetaData(
+                ScrollBarPolicy.class,
+                "-vfx-vbar-policy",
+                VFXScrollPane::vBarPolicyProperty,
+                ScrollBarPolicy.DEFAULT
+            );
+
+        private static final CssMetaData<VFXScrollPane, ScrollBarPolicy> HBAR_POLICY =
+            FACTORY.createEnumCssMetaData(
+                ScrollBarPolicy.class,
+                "-vfx-hbar-policy",
+                VFXScrollPane::hBarPolicyProperty,
+                ScrollBarPolicy.DEFAULT
+            );
+
+        private static final CssMetaData<VFXScrollPane, Number> V_TRACK_INCREMENT =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-vtrack-increment",
+                VFXScrollPane::vTrackIncrementProperty,
+                0.1
+            );
+
+        private static final CssMetaData<VFXScrollPane, Number> V_UNIT_INCREMENT =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-vunit-increment",
+                VFXScrollPane::vUnitIncrementProperty,
+                0.01
+            );
+
+        private static final CssMetaData<VFXScrollPane, Number> H_TRACK_INCREMENT =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-htrack-increment",
+                VFXScrollPane::hTrackIncrementProperty,
+                0.1
+            );
+
+        private static final CssMetaData<VFXScrollPane, Number> H_UNIT_INCREMENT =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-hunit-increment",
+                VFXScrollPane::hUnitIncrementProperty,
+                0.01
             );
 
         private static final CssMetaData<VFXScrollPane, Boolean> SHOW_BUTTONS =
@@ -969,35 +884,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
             FACTORY.createSizeCssMetaData(
                 "-vfx-buttons-gap",
                 VFXScrollPane::buttonsGapProperty,
-                1.0
-            );
-
-        private static final CssMetaData<VFXScrollPane, Number> H_TRACK_INCREMENT =
-            FACTORY.createSizeCssMetaData(
-                "-vfx-htrack-increment",
-                VFXScrollPane::hTrackIncrementProperty,
-                25.0
-            );
-
-        private static final CssMetaData<VFXScrollPane, Number> H_UNIT_INCREMENT =
-            FACTORY.createSizeCssMetaData(
-                "-vfx-hunit-increment",
-                VFXScrollPane::hUnitIncrementProperty,
-                10.0
-            );
-
-        private static final CssMetaData<VFXScrollPane, Number> V_TRACK_INCREMENT =
-            FACTORY.createSizeCssMetaData(
-                "-vfx-vtrack-increment",
-                VFXScrollPane::vTrackIncrementProperty,
-                25.0
-            );
-
-        private static final CssMetaData<VFXScrollPane, Number> V_UNIT_INCREMENT =
-            FACTORY.createSizeCssMetaData(
-                "-vfx-vunit-increment",
-                VFXScrollPane::vUnitIncrementProperty,
-                10.0
+                4.0
             );
 
         private static final CssMetaData<VFXScrollPane, Boolean> SMOOTH_SCROLL =
@@ -1011,6 +898,14 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
             FACTORY.createBooleanCssMetaData(
                 "-vfx-track-smooth-scroll",
                 VFXScrollPane::trackSmoothScrollProperty,
+                false
+            );
+
+
+        private static final CssMetaData<VFXScrollPane, Boolean> DRAG_TO_SCROLL =
+            FACTORY.createBooleanCssMetaData(
+                "-vfx-drag-to-scroll",
+                VFXScrollPane::dragToScrollProperty,
                 false
             );
 
@@ -1031,13 +926,14 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 Control.getClassCssMetaData(),
-                LAYOUT_MODE, FIT_TO_WIDTH, FIT_TO_HEIGHT,
-                HBAR_POLICY, VBAR_POLICY, HBAR_POS, VBAR_POS,
-                HBAR_PADDING, VBAR_PADDING, HBAR_OFFSET, VBAR_OFFSET,
-                AUTO_HIDE_BARS, DRAG_TO_SCROLL,
+                LAYOUT_MODE, ALIGNMENT, MAIN_AXIS,
+                FIT_TO_WIDTH, FIT_TO_HEIGHT,
+                VBAR_POS, HBAR_POS, SCROLL_BARS_GAP,
+                AUTO_HIDE_BARS, VBAR_POLICY, HBAR_POLICY,
+                V_TRACK_INCREMENT, V_UNIT_INCREMENT, H_TRACK_INCREMENT, H_UNIT_INCREMENT,
                 SHOW_BUTTONS, BUTTONS_GAP,
-                H_TRACK_INCREMENT, H_UNIT_INCREMENT, V_TRACK_INCREMENT, V_UNIT_INCREMENT,
-                SMOOTH_SCROLL, TRACK_SMOOTH_SCROLL, DRAG_SMOOTH_SCROLL,
+                SMOOTH_SCROLL, TRACK_SMOOTH_SCROLL,
+                DRAG_TO_SCROLL, DRAG_SMOOTH_SCROLL,
                 CLIP_BORDER_RADIUS
             );
         }
@@ -1051,6 +947,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
         return getClassCssMetaData();
     }
+
 
     //================================================================================
     // Getters/Setters
@@ -1070,97 +967,6 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this.content.set(content);
     }
 
-    public ScrollBounds getContentBounds() {
-        return contentBounds.get();
-    }
-
-    /**
-     * Specifies the content's bounds; this information is crucial for the scroll pane to work properly.
-     * <p>
-     * The property is bound automatically by the {@link #onContentChanged()} method, you need to override it if you need
-     * a custom binding.
-     */
-    public ObjectProperty<ScrollBounds> contentBoundsProperty() {
-        return contentBounds;
-    }
-
-    public void setContentBounds(ScrollBounds contentBounds) {
-        this.contentBounds.set(contentBounds);
-    }
-
-    public double getHMin() {
-        return hMin.get();
-    }
-
-    /**
-     * Specifies the horizontal scroll bar's minimum value.
-     */
-    public DoubleProperty hMinProperty() {
-        return hMin;
-    }
-
-    public void setHMin(double hMin) {
-        this.hMin.set(hMin);
-    }
-
-    public double getHVal() {
-        return hVal.get();
-    }
-
-    /**
-     * Specifies the horizontal scroll bar's value.
-     */
-    public DoubleProperty hValProperty() {
-        return hVal;
-    }
-
-    public void setHVal(double hVal) {
-        this.hVal.set(hVal);
-    }
-
-    /**
-     * Increments the {@link #hValProperty()} by the amount specified by the {@link #hUnitIncrementProperty()}.
-     */
-    public void huIncrement() {
-        setHVal(getHVal() + getHUnitIncrement());
-    }
-
-    /**
-     * Decrements the {@link #hValProperty()} by the amount specified by the {@link #hUnitIncrementProperty()}.
-     */
-    public void huDecrement() {
-        setHVal(getHVal() - getHUnitIncrement());
-    }
-
-    /**
-     * Increments the {@link #hValProperty()} by the amount specified by the {@link #hTrackIncrementProperty()}.
-     */
-    public void htIncrement() {
-        setHVal(getHVal() + getHTrackIncrement());
-    }
-
-    /**
-     * Decrements the {@link #hValProperty()} by the amount specified by the {@link #hTrackIncrementProperty()}.
-     */
-    public void htDecrement() {
-        setHVal(getHVal() - getHTrackIncrement());
-    }
-
-    public double getHMax() {
-        return hMax.get();
-    }
-
-    /**
-     * Specifies the horizontal scroll bar's maximum value.
-     */
-    public DoubleProperty hMaxProperty() {
-        return hMax;
-    }
-
-    public void setHMax(double hMax) {
-        this.hMax.set(hMax);
-    }
-
     public double getVMin() {
         return vMin.get();
     }
@@ -1176,47 +982,19 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this.vMin.set(vMin);
     }
 
-    public double getVVal() {
-        return vVal.get();
+    public double getVValue() {
+        return vValue.get();
     }
 
     /**
      * Specifies the vertical scroll bar's value.
      */
-    public DoubleProperty vValProperty() {
-        return vVal;
+    public DoubleProperty vValueProperty() {
+        return vValue;
     }
 
-    public void setVVal(double vVal) {
-        this.vVal.set(vVal);
-    }
-
-    /**
-     * Increments the {@link #vValProperty()} by the amount specified by the {@link #vUnitIncrementProperty()}.
-     */
-    public void vuIncrement() {
-        setVVal(getVVal() + getVUnitIncrement());
-    }
-
-    /**
-     * Decrements the {@link #vValProperty()} by the amount specified by the {@link #vUnitIncrementProperty()}.
-     */
-    public void vuDecrement() {
-        setVVal(getVVal() - getVUnitIncrement());
-    }
-
-    /**
-     * Increments the {@link #vValProperty()} by the amount specified by the {@link #vTrackIncrementProperty()}.
-     */
-    public void vtIncrement() {
-        setVVal(getVVal() + getVTrackIncrement());
-    }
-
-    /**
-     * Decrements the {@link #vValProperty()} by the amount specified by the {@link #vTrackIncrementProperty()}.
-     */
-    public void vtDecrement() {
-        setHVal(getVVal() - getVTrackIncrement());
+    public void setVValue(double vValue) {
+        this.vValue.set(vValue);
     }
 
     public double getVMax() {
@@ -1234,40 +1012,49 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this.vMax.set(vMax);
     }
 
-    public Orientation getOrientation() {
-        return orientation.get();
+    public double getHMin() {
+        return hMin.get();
     }
 
     /**
-     * Specifies the main orientation of the scroll pane.
-     * <p>
-     * This is used by the skin to determine the behavior of the scroll when the Shift button is
-     * pressed.
-     * By default, for:
-     * <p> - VERTICAL orientation: if Shift is pressed the scroll will be horizontal
-     * <p> - HORIZONTAL orientation: if Shift is pressed the scroll will be vertical
+     * Specifies the horizontal scroll bar's minimum value.
      */
-    public ObjectProperty<Orientation> orientationProperty() {
-        return orientation;
+    public DoubleProperty hMinProperty() {
+        return hMin;
     }
 
-    public void setOrientation(Orientation orientation) {
-        this.orientation.set(orientation);
+    public void setHMin(double hMin) {
+        this.hMin.set(hMin);
     }
 
-    public Function<VFXScrollBar, VFXScrollBarBehavior> getHBarBehavior() {
-        return hBarBehavior.get();
+    public double getHValue() {
+        return hValue.get();
     }
 
     /**
-     * Specifies the function used to build the horizontal scroll bar's behavior.
+     * Specifies the horizontal scroll bar's value.
      */
-    public FunctionProperty<VFXScrollBar, VFXScrollBarBehavior> hBarBehaviorProperty() {
-        return hBarBehavior;
+    public DoubleProperty hValueProperty() {
+        return hValue;
     }
 
-    public void setHBarBehavior(Function<VFXScrollBar, VFXScrollBarBehavior> hBarBehavior) {
-        this.hBarBehavior.set(hBarBehavior);
+    public void setHValue(double hValue) {
+        this.hValue.set(hValue);
+    }
+
+    public double getHMax() {
+        return hMax.get();
+    }
+
+    /**
+     * Specifies the horizontal scroll bar's maximum value.
+     */
+    public DoubleProperty hMaxProperty() {
+        return hMax;
+    }
+
+    public void setHMax(double hMax) {
+        this.hMax.set(hMax);
     }
 
     public Function<VFXScrollBar, VFXScrollBarBehavior> getVBarBehavior() {
@@ -1285,17 +1072,18 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this.vBarBehavior.set(vBarBehavior);
     }
 
-    public Size getViewportSize() {
-        return viewportSize.get();
+    public Function<VFXScrollBar, VFXScrollBarBehavior> getHBarBehavior() {
+        return hBarBehavior.get();
     }
 
     /**
-     * Specifies the scroll pane's view area size, which may or may not include the scroll bars' size.
-     * Depends on the skin implementation.
-     *
-     * @see VFXScrollPaneSkin
+     * Specifies the function used to build the horizontal scroll bar's behavior.
      */
-    public ReadOnlyObjectProperty<Size> viewportSizeProperty() {
-        return viewportSize;
+    public FunctionProperty<VFXScrollBar, VFXScrollBarBehavior> hBarBehaviorProperty() {
+        return hBarBehavior;
+    }
+
+    public void setHBarBehavior(Function<VFXScrollBar, VFXScrollBarBehavior> hBarBehavior) {
+        this.hBarBehavior.set(hBarBehavior);
     }
 }

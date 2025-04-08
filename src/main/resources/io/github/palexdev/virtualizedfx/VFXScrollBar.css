@@ -21,64 +21,83 @@
     -border: rgba(223, 223, 223, 1.0);
     -thumb: rgba(115, 115, 115, 1.0);
     -thumb-hop: rgba(99, 99, 99, 1.0);
+}
 
+.vfx-scroll-bar:vertical:compact {
+    -fx-min-width: 8px;
+    -fx-padding: 0px 1px 0px 1px;
+}
+
+.vfx-scroll-bar:horizontal:compact {
+    -fx-min-height: 8px;
+    -fx-padding: 1px 0px 1px 0px;
+}
+
+.vfx-scroll-bar:vertical:compact:buttons {
+    -fx-padding: 0px 2px 0px 2px;
+}
+
+.vfx-scroll-bar:horizontal:compact:buttons {
+    -fx-padding: 2px 0px 2px 0px;
+}
+
+.vfx-scroll-bar > .track {
     -fx-background-color: -background;
-    -fx-background-radius: 7;
+    -fx-background-insets: 1px;
+    -fx-background-radius: 8px;
     -fx-border-color: -border;
-    -fx-border-radius: 7;
-    -fx-padding: 1;
+    -fx-border-radius: 8px;
 }
 
-.vfx-scroll-bar .thumb {
+.vfx-scroll-bar > .thumb {
     -fx-background-color: -thumb;
-    -fx-background-radius: 7;
-    -fx-pref-width: 7;
-    -fx-pref-height: 7;
+    -fx-background-radius: 8px;
 }
 
-.vfx-scroll-bar .thumb:hover,
-.vfx-scroll-bar .thumb:pressed {
+.vfx-scroll-bar > .thumb:hover,
+.vfx-scroll-bar > .thumb:pressed {
     -fx-background-color: -thumb-hop;
 }
 
-.vfx-scroll-bar .mfx-icon-wrapper {
-    -fx-background-color: transparent;
-    -fx-background-radius: 30;
-    -mfx-size: 14;
+.vfx-scroll-bar > .mfx-icon-wrapper {
+    -fx-background-color: -background;
+    -fx-background-insets: -1px;
+    -fx-background-radius: 8px;
+    -fx-border-color: -border;
+    -fx-border-insets: -2px;
+    -fx-border-radius: 8px;
 }
 
-.vfx-scroll-bar .mfx-icon-wrapper .mfx-ripple-generator {
-    -mfx-auto-clip: true;
-}
-
-.vfx-scroll-bar .mfx-icon-wrapper .mfx-font-icon {
+.vfx-scroll-bar > .mfx-icon-wrapper > .mfx-font-icon {
     -mfx-size: 12;
 }
 
-.vfx-scroll-bar .mfx-icon-wrapper:hover {
-    -fx-background-color: #d3d3d3;
+.vfx-scroll-bar > .mfx-icon-wrapper:hover {
+    -fx-background-color: -border;
 }
 
-.vfx-scroll-bar .mfx-icon-wrapper:focused {
-    -fx-background-color: #737373;
+.vfx-scroll-bar > .mfx-icon-wrapper:focused,
+.vfx-scroll-bar > .mfx-icon-wrapper:pressed {
+    -fx-background-color: -thumb-hop;
 }
 
-.vfx-scroll-bar .mfx-icon-wrapper:focused .mfx-font-icon {
+.vfx-scroll-bar > .mfx-icon-wrapper:focused > .mfx-font-icon,
+.vfx-scroll-bar > .mfx-icon-wrapper:pressed > .mfx-font-icon {
     -mfx-color: white;
 }
 
-.vfx-scroll-bar:vertical .decrement-icon .mfx-font-icon {
+.vfx-scroll-bar:vertical > .decrement-button > .mfx-font-icon {
     -mfx-description: "fas-angle-up";
 }
 
-.vfx-scroll-bar:vertical .increment-icon .mfx-font-icon {
+.vfx-scroll-bar:vertical > .increment-button > .mfx-font-icon {
     -mfx-description: "fas-angle-down";
 }
 
-.vfx-scroll-bar:horizontal .decrement-icon .mfx-font-icon {
+.vfx-scroll-bar:horizontal > .decrement-button > .mfx-font-icon {
     -mfx-description: "fas-angle-left";
 }
 
-.vfx-scroll-bar:horizontal .increment-icon .mfx-font-icon {
+.vfx-scroll-bar:horizontal > .increment-button > .mfx-font-icon {
     -mfx-description: "fas-angle-right";
 }
