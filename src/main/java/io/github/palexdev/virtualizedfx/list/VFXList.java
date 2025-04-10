@@ -292,7 +292,8 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
     public VFXScrollPane makeScrollable() {
         return new VFXScrollPane(this);
     }
-//================================================================================
+
+    //================================================================================
     // Delegate Methods
     //================================================================================
 
