@@ -18,22 +18,24 @@
 
 package app;
 
-import interactive.grid.GridTestUtils;
+import interactive.table.TableTestUtils;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
+import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import static model.User.users;
 import static utils.Utils.debugView;
-import static utils.Utils.items;
 
 public class Playground extends Application {
     private static final String LOREM;
@@ -55,32 +57,33 @@ public class Playground extends Application {
         pane.setAlignment(Pos.CENTER);
         pane.setPadding(InsetsBuilder.uniform(4.0).get());
 
-        //TableTestUtils.Table table = new TableTestUtils.Table(users(100));
+        TableTestUtils.Table table = new TableTestUtils.Table(users(100));
         /*ListTestUtils.List list = new ListTestUtils.List(items(100));
         list.setFitToViewport(false);*/
 
-        GridTestUtils.Grid grid = new GridTestUtils.Grid(items(500));
-        grid.setColumnsNum(20);
+        /*GridTestUtils.Grid grid = new GridTestUtils.Grid(items(500));
+        grid.setColumnsNum(20);*/
 
-        VFXScrollPane sp = new VFXScrollPane(grid);
+        VFXScrollPane sp = new VFXScrollPane(table);
         //sp.setSmoothScroll(true);
         //sp.setDragToScroll(true);
         //sp.setDragSmoothScroll(true);
         //sp.setShowButtons(true);
         //sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
-        //sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        Platform.runLater(() -> sp.setPadding(InsetsBuilder.uniform(4.0).withTop(40.0).get()));
         //sp.setScrollBarsGap(0.0);
         //sp.setAutoHideBars(true);
         //sp.setScrollBarsPos(Pos.TOP_RIGHT);
-        sp.setVUnitIncrement(0.025);
-        sp.setHUnitIncrement(0.05);
+        //sp.setVUnitIncrement(0.025);
+        //sp.setHUnitIncrement(0.05);
 
 /*
         Label label = new Label(LOREM);
         sp = new VFXScrollPane(label);
 */
 
-        VFXScrollable.bindSpeed(sp, ScrollParams.cells(1.25), ScrollParams.cells(2.0));
+        VFXScrollable.bindSpeed(sp, ScrollParams.cells(1.25), ScrollParams.percentage(0.05));
 
         pane.getChildren().addAll(sp);
         Scene scene = new Scene(pane, 600, 400);
