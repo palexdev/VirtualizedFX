@@ -327,18 +327,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             return;
         }
 
-        Size contentSize;
-        if (content instanceof VFXContainer<?> c) {
-            contentSize = Size.of(
-                c.getVirtualMaxX(),
-                c.getVirtualMaxY()
-            );
-        } else {
-            contentSize = Size.of(
-                content.getLayoutBounds().getWidth(),
-                content.getLayoutBounds().getHeight()
-            );
-        }
+        VFXScrollPane pane = getSkinnable();
+        Size contentSize = pane.getContentBounds();
         Size viewportSize = Size.of(
             viewport.getWidth(),
             viewport.getHeight()

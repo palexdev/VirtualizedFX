@@ -26,13 +26,10 @@ import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.mfxeffects.animations.base.Curve;
 import io.github.palexdev.mfxeffects.animations.motion.M3Motion;
-import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollPaneSkin;
 import javafx.animation.Interpolator;
-import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
-import javafx.scene.Node;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -140,7 +137,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
         double xDelta = -(meX - dragStart.getX());
         double meY = me.getSceneY();
         double yDelta = -(meY - dragStart.getY());
-        Size cb = getContentBounds();
+        Size cb = pane.getContentBounds();
 
         // Do not allow diagonal scrolling as it feels unnatural and may result in a clumsy UX
         // Also, do not start scrolling until a certain threshold is surpassed
@@ -252,23 +249,6 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
             case KeyCode c when c == RIGHT && canHScroll -> pane.setHValue(pane.getHValue() + pane.getHUnitIncrement());
             default -> {}
         }
-    }
-
-    /**
-     * @return the appropriate sizes for the scroll pane's content. For virtualized containers ({@link VFXContainer})
-     * the values are given by the {@link VFXContainer#virtualMaxXProperty()} and the {@link VFXContainer#virtualMaxYProperty()}
-     */
-    protected Size getContentBounds() {
-        VFXScrollPane pane = getNode();
-        Node content = pane.getContent();
-        return switch (content) {
-            case null -> Size.empty();
-            case VFXContainer<?> c -> Size.of(c.getVirtualMaxX(), c.getVirtualMaxY());
-            default -> {
-                Bounds b = content.getLayoutBounds();
-                yield Size.of(b.getWidth(), b.getHeight());
-            }
-        };
     }
 
     //================================================================================

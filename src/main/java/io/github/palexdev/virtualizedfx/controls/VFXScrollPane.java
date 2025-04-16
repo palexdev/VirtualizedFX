@@ -18,6 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.controls;
 
+import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
@@ -27,6 +28,7 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.VFXResources;
+import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollPaneBehavior;
@@ -44,6 +46,7 @@ import javafx.css.CssMetaData;
 import javafx.css.PseudoClass;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
+import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -148,6 +151,22 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         setVMax(1.0);
         setHMin(0.0);
         setHMax(1.0);
+    }
+
+    /**
+     * @return the appropriate sizes for the scroll pane's content. For virtualized containers ({@link VFXContainer})
+     * the values are given by the {@link VFXContainer#virtualMaxXProperty()} and the {@link VFXContainer#virtualMaxYProperty()}
+     */
+    public Size getContentBounds() {
+        Node content = getContent();
+        return switch (content) {
+            case null -> Size.empty();
+            case VFXContainer<?> c -> Size.of(c.getVirtualMaxX(), c.getVirtualMaxY());
+            default -> {
+                Bounds b = content.getLayoutBounds();
+                yield Size.of(b.getWidth(), b.getHeight());
+            }
+        };
     }
 
     //================================================================================
