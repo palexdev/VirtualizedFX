@@ -1,0 +1,61 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  create-tag:
+    if: ${{ contains(github.event.head_commit.message, ':bookmark:') }}
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      VERSION: ${{ steps.extract.outputs.ver }}
+    steps:
+      - name: Extract version
+        id: extract
+        run: |
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP '(?<=version )\d+\.\d+\.\d+')
+          if [[ -z "$VERSION" ]]; then
+            echo "Version not found!" >&2
+            exit 1
+          fi
+          echo "ver=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create tag
+        uses: rickstaa/action-create-tag@v1.7.2
+        with:
+          tag: 'v${{ steps.extract.outputs.ver }}'
+
+  git-release:
+    runs-on: ubuntu-latest
+    needs: create-tag
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Generate changelog
+        id: changelog-gen
+        run: python ./scripts/generate_changelog.py
+
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: 'v${{ needs.create-tag.outputs.VERSION }}'
+          bodyFile: 'Changelog.md'
+
+  maven-release:
+    needs: git-release
+    uses: ./.github/workflows/maven-release.yml
+    secrets: inherit

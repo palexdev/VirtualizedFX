@@ -1,0 +1,31 @@
+name: 'Build main'
+
+on:
+  workflow_call: { }
+
+jobs:
+  format-code:
+    name: Format code
+    uses: ./.github/workflows/intellij-format.yml
+
+  build:
+    needs: format-code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: sudo apt install xvfb gettext
+
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '23'
+
+      - name: Give permissions to Gradle
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: xvfb-run ./gradlew build -Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw

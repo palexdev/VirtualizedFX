@@ -2,10 +2,7 @@
 
 name: IntelliJ Format
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_call: { }
 
 jobs:
   formatting:
@@ -21,5 +18,8 @@ jobs:
         with:
           include-glob: '*.java'
           style-settings-file: '.idea/codeStyles/Default.xml'
-          commit-message: ':art: Reformat code'
-          fail-on-changes: 'false'
+          push-type: 'commit'
+          push-title: ':art: Reformat code'
+          fail-on-changes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
