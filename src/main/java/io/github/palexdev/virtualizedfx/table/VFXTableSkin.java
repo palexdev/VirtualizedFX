@@ -326,7 +326,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
         VFXTable<T> table = getSkinnable();
         VFXTableHelper<T> helper = table.getHelper();
         VFXTableState<T> state = table.getState();
-        if (state != VFXTableState.INVALID && !state.isEmpty()) {
+        if (state != VFXTableState.INVALID) {
             int i = 0;
             for (VFXTableRow<T> row : state.getRowsByIndex().values()) {
                 helper.layoutRow(i, row);

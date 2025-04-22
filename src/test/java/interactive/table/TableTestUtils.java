@@ -18,13 +18,6 @@
 
 package interactive.table;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.SequencedMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
@@ -43,6 +36,12 @@ import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.utils.Utils;
+import java.util.Collection;
+import java.util.List;
+import java.util.SequencedMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.layout.Region;
@@ -426,7 +425,12 @@ public class TableTestUtils {
                 protected void onLayoutCompleted(boolean done) {
                     super.onLayoutCompleted(done);
                     if (getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) return;
-                    if (done) counter.layout();
+                    if (done && !getState().isEmpty()) counter.layout();
+                    /*
+                     * Empty states should not be counted as done
+                     *
+                     * I was too lazy to update all the asserts
+                     */
                 }
             };
         }

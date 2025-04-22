@@ -1940,6 +1940,41 @@ public class TableTests {
     }
 
     @Test
+    void testAutosizeEmpty(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(0));
+        robot.interact(() -> {
+            // Decrease minimum size
+            table.setColumnsWidth(50.0);
+
+            // Switch mode
+            table.switchColumnsLayoutMode();
+
+            // Issue autosize here
+            table.autosizeColumns();
+            pane.getChildren().add(table);
+        });
+
+        // Try resizing a column
+        robot.interact(() -> table.getColumns().get(1).resize(400.0));
+
+        double[] sizes = new double[]{
+            97.6,
+            400.0,
+            93.6,
+            109.6,
+            87.2,
+            50.0,
+            53.6
+        };
+
+        for (int i = 0; i < table.getColumns().size(); i++) {
+            VFXTableColumn<User, ? extends VFXTableCell<User>> c = table.getColumns().get(i);
+            assertEquals(sizes[i], c.getWidth(), 5.0);
+        }
+    }
+
+    @Test
     void testManualUpdate(FxRobot robot) {
         StackPane pane = setupStage();
         Table table = new Table(users(20));

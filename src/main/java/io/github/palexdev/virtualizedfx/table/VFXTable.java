@@ -320,9 +320,9 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
         When.onChanged(needsViewportLayout)
             .condition((o, n) -> getScene() != null && n.wasDone())
             .then((o, n) -> getHelper().autosizeColumns())
+            .invalidating(sceneProperty())
             .oneShot(true)
             .executeNow(() -> getScene() != null && getViewportLayoutRequest().wasDone())
-            .invalidating(sceneProperty())
             .listen();
     }
 
@@ -506,22 +506,30 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     /**
      * Delegate for {@link VFXTableState#getRowsRange()}
      */
-    public IntegerRange getRowsRange() {return getState().getRowsRange();}
+    public IntegerRange getRowsRange() {
+        return getState().getRowsRange();
+    }
 
     /**
      * Delegate for {@link VFXTableState#getColumnsRange()}
      */
-    public IntegerRange getColumnsRange() {return getState().getColumnsRange();}
+    public IntegerRange getColumnsRange() {
+        return getState().getColumnsRange();
+    }
 
     /**
      * Delegate for {@link VFXTableState#getRowsByIndexUnmodifiable()}
      */
-    public SequencedMap<Integer, VFXTableRow<T>> getRowsByIndexUnmodifiable() {return getState().getRowsByIndexUnmodifiable();}
+    public SequencedMap<Integer, VFXTableRow<T>> getRowsByIndexUnmodifiable() {
+        return getState().getRowsByIndexUnmodifiable();
+    }
 
     /**
      * Delegate for {@link VFXTableState#getRowsByItemUnmodifiable()}
      */
-    public List<Map.Entry<T, VFXTableRow<T>>> getRowsByItemUnmodifiable() {return getState().getRowsByItemUnmodifiable();}
+    public List<Map.Entry<T, VFXTableRow<T>>> getRowsByItemUnmodifiable() {
+        return getState().getRowsByItemUnmodifiable();
+    }
 
     /**
      * Delegate for {@link VFXTableHelper#virtualMaxXProperty()}
