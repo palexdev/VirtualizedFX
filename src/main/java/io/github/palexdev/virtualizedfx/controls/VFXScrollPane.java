@@ -160,7 +160,7 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     public Size getContentBounds() {
         Node content = getContent();
         return switch (content) {
-            case null -> Size.empty();
+            case null -> Size.zero();
             // TODO should we snap these sizes in the helpers?
             case VFXContainer<?> c -> Size.of(
                 snapSizeX(c.getVirtualMaxX()),

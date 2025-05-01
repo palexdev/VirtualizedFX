@@ -265,7 +265,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     class DefaultHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXGrid<T, C>> implements VFXGridHelper<T, C> {
         protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
         protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
-        protected final SizeProperty totalCellSize = new SizeProperty(Size.empty());
+        protected final SizeProperty totalCellSize = new SizeProperty(Size.zero());
 
         public DefaultHelper(VFXGrid<T, C> grid) {
             super(grid);
