@@ -532,6 +532,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> container.getColumns().isEmpty() ? 0.0 : container.size() * container.getRowsHeight())
+                .addSources(container.getColumns())
                 .addSources(container.columnsSizeProperty())
                 .addSources(container.rowsHeightProperty())
                 .get();
@@ -995,6 +996,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> container.getColumns().isEmpty() ? 0.0 : container.size() * container.getRowsHeight())
+                .addSources(container.getColumns())
                 .addSources(container.columnsSizeProperty())
                 .addSources(container.rowsHeightProperty())
                 .get();
