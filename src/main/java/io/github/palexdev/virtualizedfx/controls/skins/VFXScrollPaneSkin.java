@@ -861,40 +861,34 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             VFXScrollPane pane = getSkinnable();
             if (orientation == Orientation.VERTICAL) {
                 this.target = container.vPosProperty();
-                this.targetMapper = val -> val.doubleValue() * (container.getVirtualMaxY() - viewport.getHeight());
+                this.targetMapper = val -> val.doubleValue() * container.getMaxVScroll();
                 this.targetUpdater = (o, n) -> container.setVPos(n.doubleValue());
 
                 this.source = pane.vValueProperty();
-                this.sourceMapper = pos -> {
-                    if (container.getVirtualMaxY() <= viewport.getHeight()) return 0.0;
-                    return NumberUtils.mapOneRangeToAnother(
+                this.sourceMapper = pos ->
+                    NumberUtils.mapOneRangeToAnother(
                         pos.doubleValue(),
-                        DoubleRange.of(0.0, container.getVirtualMaxY() - viewport.getHeight()),
+                        DoubleRange.of(0.0, container.getMaxVScroll()),
                         DoubleRange.of(0.0, 1.0)
                     );
-                };
                 this.sourceUpdater = (o, n) -> pane.setVValue(n.doubleValue());
 
-                invalidating.add(b -> b.addSourcesInvalidatingSource(container.virtualMaxYProperty()));
-                invalidating.add(b -> b.addTargetInvalidatingSource(viewport.heightProperty()));
+                invalidating.add(b -> b.addSourcesInvalidatingSource(container.maxVScrollProperty()));
             } else {
                 this.target = container.hPosProperty();
-                this.targetMapper = val -> val.doubleValue() * (container.getVirtualMaxX() - viewport.getWidth());
+                this.targetMapper = val -> val.doubleValue() * container.getMaxHScroll();
                 this.targetUpdater = (o, n) -> container.setHPos(n.doubleValue());
 
                 this.source = pane.hValueProperty();
-                this.sourceMapper = pos -> {
-                    if (container.getVirtualMaxX() <= viewport.getWidth()) return 0.0;
-                    return NumberUtils.mapOneRangeToAnother(
+                this.sourceMapper = pos ->
+                    NumberUtils.mapOneRangeToAnother(
                         pos.doubleValue(),
-                        DoubleRange.of(0.0, container.getVirtualMaxX() - viewport.getWidth()),
+                        DoubleRange.of(0.0, container.getMaxHScroll()),
                         DoubleRange.of(0.0, 1.0)
                     );
-                };
                 this.sourceUpdater = (o, n) -> pane.setHValue(n.doubleValue());
 
-                invalidating.add(b -> b.addSourcesInvalidatingSource(container.virtualMaxXProperty()));
-                invalidating.add(b -> b.addTargetInvalidatingSource(viewport.widthProperty()));
+                invalidating.add(b -> b.addSourcesInvalidatingSource(container.maxHScrollProperty()));
             }
         }
 
