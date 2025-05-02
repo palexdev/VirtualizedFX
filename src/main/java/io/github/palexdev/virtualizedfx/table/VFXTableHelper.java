@@ -637,6 +637,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
          */
         @Override
         public boolean layoutCell(int layoutIdx, VFXTableCell<T> cell) {
+            if (cell == null) return false;
             VFXTable<T> table = getContainer();
             IntegerRange columnsRange = columnsRange();
             int colIndex = columnsRange.getMin() + layoutIdx;
@@ -1099,6 +1100,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
          */
         @Override
         public boolean layoutCell(int layoutIdx, VFXTableCell<T> cell) {
+            if (cell == null) return false;
             ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = container.getColumns();
             VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(layoutIdx);
             Node node = cell.toNode();
