@@ -18,13 +18,13 @@
 
 package utils;
 
+import java.util.function.BiConsumer;
+
 import javafx.animation.PauseTransition;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
-
-import java.util.function.BiConsumer;
 
 public class MouseHoldHandler<T extends Node> {
     //================================================================================

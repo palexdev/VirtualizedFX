@@ -18,6 +18,11 @@
 
 package jmh;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import jmh.JMHCommons.MockCell;
 import jmh.JMHCommons.MockState;
@@ -30,11 +35,6 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import utils.Utils;
-
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("NewClassNamingConvention")
 public class JMHTestUpdateAlgorithms {

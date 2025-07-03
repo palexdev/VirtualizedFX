@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
+import java.beans.EventHandler;
+
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.events.WhenEvent;
@@ -27,8 +29,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.HPos;
 import javafx.geometry.VPos;
-
-import java.beans.EventHandler;
 
 import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;

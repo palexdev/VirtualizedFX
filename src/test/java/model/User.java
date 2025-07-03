@@ -18,13 +18,13 @@
 
 package model;
 
+import java.util.Objects;
+import java.util.stream.IntStream;
+
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import javafx.collections.ObservableList;
 import net.datafaker.Faker;
 import net.datafaker.providers.base.Name;
-
-import java.util.Objects;
-import java.util.stream.IntStream;
 
 public class User {
     private static int COUNT = 0;

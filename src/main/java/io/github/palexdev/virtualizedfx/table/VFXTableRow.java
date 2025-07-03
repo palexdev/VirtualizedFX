@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.SequencedMap;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
@@ -27,9 +31,6 @@ import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.RowsStateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
-import java.util.Collections;
-import java.util.List;
-import java.util.SequencedMap;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -124,13 +125,13 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
      * its content can be fully shown. This is important for the table's autosize feature to work properly!
      *
      * @param forceLayout it may happen that this garbage that is JavaFX to still have an incomplete scene graph, meaning
-     *                    for example that skins are not still available for some controls/cells, which means that we could
-     *                    fail in computing any size. This may happen even if the table's layout has been already computed
-     *                    at least once. Internal checks try to identify such occasions and may pass 'true' to this method.
-     *                    What implementations could do to get a correct value is to force the cells to compute their
-     *                    layout (as well as all of their children) by invoking {@link Node#applyCss()}.
-     *                    Note, however, that this is going to be a <b>costly</b> operation at init, but it's pretty much
-     *                    the only way.
+     * for example that skins are not still available for some controls/cells, which means that we could
+     * fail in computing any size. This may happen even if the table's layout has been already computed
+     * at least once. Internal checks try to identify such occasions and may pass 'true' to this method.
+     * What implementations could do to get a correct value is to force the cells to compute their
+     * layout (as well as all of their children) by invoking {@link Node#applyCss()}.
+     * Note, however, that this is going to be a <b>costly</b> operation at init, but it's pretty much
+     * the only way.
      */
     protected abstract double getWidthOf(VFXTableColumn<T, ?> column, boolean forceLayout);
 

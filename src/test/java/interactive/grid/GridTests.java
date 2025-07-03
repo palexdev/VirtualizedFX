@@ -18,6 +18,10 @@
 
 package interactive.grid;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.IntStream;
+
 import cells.TestCell;
 import cells.TestGridCell;
 import interactive.grid.GridTestUtils.Grid;
@@ -32,9 +36,6 @@ import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.grid.VFXGrid;
 import io.github.palexdev.virtualizedfx.grid.VFXGridHelper;
 import io.github.palexdev.virtualizedfx.grid.VFXGridSkin;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.IntStream;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;

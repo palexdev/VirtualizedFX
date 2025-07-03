@@ -18,14 +18,15 @@
 
 package io.github.palexdev.virtualizedfx.enums;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.grid.VFXGrid;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;

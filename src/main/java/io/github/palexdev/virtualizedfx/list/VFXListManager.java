@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
+import java.util.*;
+
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
@@ -26,7 +28,6 @@ import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
-import java.util.*;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
 
@@ -584,8 +585,8 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
      * <p></p>
      * <p> - See {@link #disposeCurrent()}: for the current state disposal
      *
-     * @param range   the range to check
-     * @param update  whether to set the list's state to 'empty' if the range is not valid
+     * @param range the range to check
+     * @param update whether to set the list's state to 'empty' if the range is not valid
      * @param dispose whether to dispose the current/old state if the range is not valid
      * @return whether the range is valid or not
      */

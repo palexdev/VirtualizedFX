@@ -18,14 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
+import java.util.List;
+import java.util.function.Function;
+
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import javafx.util.StringConverter;
-
-import java.util.List;
-import java.util.function.Function;
 
 /**
  * Simple extension of {@link VFXCellBase} which by default uses the skin {@link VFXLabeledCellSkin} to display its data

@@ -31,10 +31,10 @@ import javafx.geometry.Orientation;
  * Provides a consistent way to apply or bind scrolling increments
  * to a scroll pane, using either fixed values or dynamically computed ones.
  *
- * @param amount          the base scroll value, interpreted based on the {@code unit}
+ * @param amount the base scroll value, interpreted based on the {@code unit}
  * @param trackMultiplier a multiplier applied to the unit increment to compute the track increment the default value
- *                        is: {@link #DEFAULT_TRACK_MULTIPLIER}
- * @param unit            the unit of measurement that determines how the {@code amount} is interpreted
+ * is: {@link #DEFAULT_TRACK_MULTIPLIER}
+ * @param unit the unit of measurement that determines how the {@code amount} is interpreted
  * @see ScrollUnits
  */
 public record ScrollParams(double amount, double trackMultiplier, ScrollUnits unit) {

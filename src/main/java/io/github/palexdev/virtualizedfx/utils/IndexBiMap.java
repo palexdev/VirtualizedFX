@@ -18,14 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.utils;
 
-import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
-
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 
 /**
  * A peculiar data structure that allows to bidirectionally map two types of indexes data {@code K} and {@code V}.

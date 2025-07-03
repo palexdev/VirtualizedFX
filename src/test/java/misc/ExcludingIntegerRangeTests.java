@@ -18,12 +18,12 @@
 
 package misc;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import org.junit.jupiter.api.Test;
-
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
 

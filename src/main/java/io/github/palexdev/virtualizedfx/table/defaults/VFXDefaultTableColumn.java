@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.table.defaults;
 
+import java.util.List;
+
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
@@ -27,8 +29,6 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.css.*;
 import javafx.geometry.HPos;
 import javafx.scene.Node;
-
-import java.util.List;
 
 /**
  * Concrete and simple implementation of {@link VFXTableColumn}. Has its own skin: {@link VFXDefaultTableColumnSkin}.

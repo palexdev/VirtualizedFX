@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.table.defaults;
 
+import java.util.Optional;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
@@ -28,8 +30,6 @@ import io.github.palexdev.virtualizedfx.table.VFXTableRow;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.RowsStateMap;
 import javafx.scene.Node;
-
-import java.util.Optional;
 
 /**
  * Concrete and simple implementation of {@link VFXTableRow}. Nothing special here, just the default implementations

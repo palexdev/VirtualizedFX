@@ -1,7 +1,8 @@
-<code_scheme name="Default" version="173">
+<code_scheme name="palexdev" version="173">
   <JavaCodeStyleSettings>
     <option name="IMPORT_LAYOUT_TABLE">
       <value>
+        <package name="" withSubpackages="true" static="false" module="true" />
         <package name="java" withSubpackages="true" static="false" />
         <emptyLine />
         <package name="javax" withSubpackages="true" static="false" />
@@ -11,13 +12,22 @@
         <package name="" withSubpackages="true" static="true" />
       </value>
     </option>
+    <option name="JD_ALIGN_PARAM_COMMENTS" value="false" />
+    <option name="JD_ALIGN_EXCEPTION_COMMENTS" value="false" />
   </JavaCodeStyleSettings>
+  <ScssCodeStyleSettings>
+    <option name="VALUE_ALIGNMENT" value="1" />
+    <option name="USE_DOUBLE_QUOTES" value="false" />
+  </ScssCodeStyleSettings>
   <codeStyleSettings language="CSS">
     <indentOptions>
       <option name="INDENT_SIZE" value="2" />
       <option name="CONTINUATION_INDENT_SIZE" value="2" />
       <option name="TAB_SIZE" value="2" />
     </indentOptions>
+  </codeStyleSettings>
+  <codeStyleSettings language="Groovy">
+    <option name="ALIGN_MULTILINE_BINARY_OPERATION" value="true" />
   </codeStyleSettings>
   <codeStyleSettings language="JAVA">
     <option name="ALIGN_MULTILINE_BINARY_OPERATION" value="true" />
@@ -29,6 +39,11 @@
       <option name="CONTINUATION_INDENT_SIZE" value="4" />
     </indentOptions>
   </codeStyleSettings>
+  <ScssCodeStyleSettings>
+    <option name="HEX_COLOR_UPPER_CASE" value="true" />
+    <option name="USE_DOUBLE_QUOTES" value="false" />
+    <option name="ENFORCE_QUOTES_ON_FORMAT" value="false" />
+  </ScssCodeStyleSettings>
   <codeStyleSettings language="SCSS">
     <indentOptions>
       <option name="CONTINUATION_INDENT_SIZE" value="2" />

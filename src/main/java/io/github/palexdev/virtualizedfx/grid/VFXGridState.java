@@ -18,6 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
+import java.util.*;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
@@ -28,8 +30,6 @@ import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-
-import java.util.*;
 
 /**
  * Immutable object to represent the state of a {@link VFXGrid} in a specific moment in time. In other words, each and

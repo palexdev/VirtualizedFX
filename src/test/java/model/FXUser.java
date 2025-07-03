@@ -18,6 +18,8 @@
 
 package model;
 
+import java.util.stream.IntStream;
+
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -25,8 +27,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import net.datafaker.providers.base.Name;
-
-import java.util.stream.IntStream;
 
 import static model.User.faker;
 

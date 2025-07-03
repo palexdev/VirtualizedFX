@@ -18,11 +18,11 @@
 
 package misc;
 
+import java.util.List;
+
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap;
 import model.User;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

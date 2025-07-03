@@ -18,6 +18,9 @@
 
 package io.github.palexdev.virtualizedfx.controls;
 
+import java.util.List;
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
@@ -31,8 +34,6 @@ import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollBarSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
-import java.util.List;
-import java.util.function.Supplier;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;

@@ -18,12 +18,12 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import java.util.*;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
-
-import java.util.*;
 
 /**
  * Immutable object to represent the state of a {@link VFXTable} is a specific moment in time. In other words

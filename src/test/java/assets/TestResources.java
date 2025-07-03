@@ -18,11 +18,11 @@
 
 package assets;
 
-import com.google.gson.Gson;
-
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+
+import com.google.gson.Gson;
 
 public class TestResources {
 

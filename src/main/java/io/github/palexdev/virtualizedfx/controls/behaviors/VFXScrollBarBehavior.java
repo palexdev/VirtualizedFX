@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.controls.behaviors;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
@@ -30,9 +34,6 @@ import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.mfxeffects.animations.base.Curve;
 import io.github.palexdev.mfxeffects.animations.motion.M3Motion;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.function.Consumer;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.PauseTransition;

@@ -18,6 +18,11 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.SequencedMap;
+import java.util.Set;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
@@ -27,10 +32,6 @@ import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.SequencedMap;
-import java.util.Set;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
 import javafx.geometry.Orientation;
@@ -543,10 +544,10 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
      * <p></p>
      * <p> - See {@link #disposeCurrent()}: for the current state disposal
      *
-     * @param rowsRange    the rows range to check
+     * @param rowsRange the rows range to check
      * @param columnsRange the columns range to check
-     * @param update       whether to set the grid's state to 'empty' if the range is not valid
-     * @param dispose      whether to dispose the current/old state if the range is not valid
+     * @param update whether to set the grid's state to 'empty' if the range is not valid
+     * @param dispose whether to dispose the current/old state if the range is not valid
      * @return whether the range is valid or not
      */
     @SuppressWarnings("unchecked")

@@ -18,11 +18,11 @@
 
 package io.github.palexdev.virtualizedfx.utils;
 
-import io.github.palexdev.mfxcore.collections.CircularQueue;
-import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-
 import java.util.Collection;
 import java.util.LinkedList;
+
+import io.github.palexdev.mfxcore.collections.CircularQueue;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 
 /**
  * A special kind of {@link LinkedList} which discards the oldest added item once it reaches the set capacity.

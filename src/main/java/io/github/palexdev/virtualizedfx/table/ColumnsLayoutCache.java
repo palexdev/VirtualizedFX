@@ -18,6 +18,11 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
@@ -28,11 +33,6 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
-
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Complex cache mechanism to simplify and vastly improve layout performance for {@link ColumnsLayoutMode#VARIABLE}.

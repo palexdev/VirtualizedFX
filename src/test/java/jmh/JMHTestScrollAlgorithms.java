@@ -18,6 +18,9 @@
 
 package jmh;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import jmh.JMHCommons.MockCell;
 import jmh.JMHCommons.MockState;
@@ -30,9 +33,6 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import utils.Utils;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static io.github.palexdev.virtualizedfx.utils.Utils.intersection;

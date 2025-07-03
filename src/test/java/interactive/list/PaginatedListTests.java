@@ -18,6 +18,10 @@
 
 package interactive.list;
 
+import java.util.Comparator;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
+
 import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
@@ -37,10 +41,6 @@ import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
 import utils.TestFXUtils;
 import utils.Utils;
-
-import java.util.Comparator;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.IntStream;
 
 import static interactive.list.ListTestUtils.PList;
 import static interactive.list.ListTestUtils.assertState;

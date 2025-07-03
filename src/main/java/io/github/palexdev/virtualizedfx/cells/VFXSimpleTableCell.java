@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
 import io.github.palexdev.virtualizedfx.cells.base.VFXMappingTableCell;
@@ -28,10 +32,6 @@ import io.github.palexdev.virtualizedfx.table.VFXTableRow;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.util.StringConverter;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Extension of {@link VFXCellBase} which also implements {@link VFXMappingTableCell}. Uses an inline extension of {@link VFXLabeledCellSkin}

@@ -18,11 +18,12 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
+import java.util.TreeMap;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-import java.util.TreeMap;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Orientation;
 import javafx.scene.layout.Pane;
@@ -209,7 +210,7 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>
      * If you override this method or the {@link #layout()}, remember to call this!
      *
      * @param done this parameter can be useful to overriders as it gives information on whether the {@link #layout()}
-     *             was executed correctly
+     * was executed correctly
      */
     protected void onLayoutCompleted(boolean done) {
         VFXList<T, C> list = getSkinnable();

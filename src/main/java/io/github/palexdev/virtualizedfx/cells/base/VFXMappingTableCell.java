@@ -18,12 +18,12 @@
 
 package io.github.palexdev.virtualizedfx.cells.base;
 
+import java.util.function.Function;
+
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.util.StringConverter;
-
-import java.util.function.Function;
 
 /**
  * Extension of {@link VFXTableCell} to propose users a specific way of using {@link VFXTable}.

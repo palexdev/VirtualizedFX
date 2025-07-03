@@ -18,6 +18,11 @@
 
 package interactive.table;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.util.Objects;
+import java.util.Set;
+
 import interactive.table.TableTestUtils.EmptyColumn;
 import interactive.table.TableTestUtils.Table;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
@@ -35,11 +40,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
-
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.util.Objects;
-import java.util.Set;
 
 import static interactive.table.TableTestUtils.setColumnWidth;
 import static model.User.users;

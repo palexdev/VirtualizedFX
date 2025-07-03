@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.IntStream;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
@@ -35,9 +39,6 @@ import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.IntStream;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;

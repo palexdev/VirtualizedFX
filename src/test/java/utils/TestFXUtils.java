@@ -18,11 +18,11 @@
 
 package utils;
 
+import java.util.concurrent.TimeoutException;
+
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import org.testfx.api.FxToolkit;
-
-import java.util.concurrent.TimeoutException;
 
 import static interactive.table.TableTestUtils.rowsCounter;
 import static org.junit.jupiter.api.Assertions.assertEquals;

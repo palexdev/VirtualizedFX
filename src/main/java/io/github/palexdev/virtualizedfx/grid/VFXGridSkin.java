@@ -18,12 +18,13 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
+import java.util.SequencedMap;
+
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-import java.util.SequencedMap;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -225,7 +226,7 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
      * If you override this method or the {@link #layout()}, remember to call this!
      *
      * @param done this parameter can be useful to overriders as it gives information on whether the {@link #layout()}
-     *             was executed correctly
+     * was executed correctly
      */
     protected void onLayoutCompleted(boolean done) {
         VFXGrid<T, C> grid = getSkinnable();
