@@ -187,7 +187,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
      * Scrolls to the given row index by setting the {@link VFXGrid#vPosProperty()} to {@code rowIndex * totalCellHeight}.
      */
     default void scrollToRow(int row) {
-        double h = getTotalCellSize().getHeight();
+        double h = getTotalCellSize().height();
         getContainer().setVPos((row * h));
     }
 
@@ -195,7 +195,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
      * Scrolls to the given column index by setting the {@link VFXGrid#hPosProperty()} to {@code columnIndex * totalCellWidth}.
      */
     default void scrollToColumn(int column) {
-        double w = getTotalCellSize().getWidth();
+        double w = getTotalCellSize().width();
         getContainer().setHPos((column * w));
     }
 
@@ -322,11 +322,11 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
                     Size size = getTotalCellSize();
                     IntegerRange rRangeToFirstVisible = IntegerRange.of(rowsRange.getMin(), firstRow());
-                    double rPixelsToFirst = rRangeToFirstVisible.diff() * size.getHeight();
-                    double rVisibleAmount = container.getVPos() % size.getHeight();
+                    double rPixelsToFirst = rRangeToFirstVisible.diff() * size.height();
+                    double rVisibleAmount = container.getVPos() % size.height();
                     IntegerRange cRangeToFirstVisible = IntegerRange.of(columnsRange.getMin(), firstColumn());
-                    double cPixelsToFirst = cRangeToFirstVisible.diff() * size.getWidth();
-                    double cVisibleAmount = container.getHPos() % size.getWidth();
+                    double cPixelsToFirst = cRangeToFirstVisible.diff() * size.width();
+                    double cVisibleAmount = container.getHPos() % size.width();
 
                     double x = -(cPixelsToFirst + cVisibleAmount);
                     double y = -(rPixelsToFirst + rVisibleAmount);
@@ -344,8 +344,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                 .setMapper(() -> {
                     Size size = container.getCellSize();
                     return Size.of(
-                        size.getWidth() + container.getHSpacing(),
-                        size.getHeight() + container.getVSpacing()
+                        size.width() + container.getHSpacing(),
+                        size.height() + container.getVSpacing()
                     );
                 })
                 .addSources(container.cellSizeProperty(), container.vSpacingProperty(), container.hSpacingProperty())
@@ -357,7 +357,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         @Override
         protected DoubleBinding createVirtualMaxXBinding() {
             return DoubleBindingBuilder.build()
-                .setMapper(() -> (maxColumns() * getTotalCellSize().getWidth()) - container.getHSpacing())
+                .setMapper(() -> (maxColumns() * getTotalCellSize().width()) - container.getHSpacing())
                 .addSources(container.columnsNumProperty(), totalCellSize)
                 .get();
         }
@@ -365,7 +365,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         @Override
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
-                .setMapper(() -> (maxRows() * getTotalCellSize().getHeight()) - container.getVSpacing())
+                .setMapper(() -> (maxRows() * getTotalCellSize().height()) - container.getVSpacing())
                 .addSources(container.columnsNumProperty(), totalCellSize)
                 .get();
         }
@@ -388,7 +388,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         @Override
         public int firstColumn() {
             return NumberUtils.clamp(
-                (int) Math.floor(container.getHPos() / getTotalCellSize().getWidth()),
+                (int) Math.floor(container.getHPos() / getTotalCellSize().width()),
                 0,
                 maxColumns() - 1
             );
@@ -411,7 +411,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
          */
         @Override
         public int visibleColumns() {
-            double width = getTotalCellSize().getWidth();
+            double width = getTotalCellSize().width();
             return width > 0 ?
                 (int) Math.ceil(container.getWidth() / width) :
                 0;
@@ -456,7 +456,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         @Override
         public int firstRow() {
             return NumberUtils.clamp(
-                (int) Math.floor(container.getVPos() / getTotalCellSize().getHeight()),
+                (int) Math.floor(container.getVPos() / getTotalCellSize().height()),
                 0,
                 maxRows() - 1
             );
@@ -479,7 +479,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
          */
         @Override
         public int visibleRows() {
-            double height = getTotalCellSize().getHeight();
+            double height = getTotalCellSize().height();
             return height > 0 ?
                 (int) Math.ceil(container.getHeight() / height) :
                 0;
@@ -536,10 +536,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         @Override
         public void layout(int rowLayoutIndex, int columnLayoutIndex, VFXCell<T> cell) {
             Node node = cell.toNode();
-            double x = getTotalCellSize().getWidth() * columnLayoutIndex;
-            double y = getTotalCellSize().getHeight() * rowLayoutIndex;
-            double w = container.getCellSize().getWidth();
-            double h = container.getCellSize().getHeight();
+            double x = getTotalCellSize().width() * columnLayoutIndex;
+            double y = getTotalCellSize().height() * rowLayoutIndex;
+            double w = container.getCellSize().width();
+            double h = container.getCellSize().height();
             cell.beforeLayout();
             node.resizeRelocate(x, y, w, h);
             cell.afterLayout();

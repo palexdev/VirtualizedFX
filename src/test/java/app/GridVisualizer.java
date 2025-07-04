@@ -18,6 +18,8 @@
 
 package app;
 
+import java.util.function.Supplier;
+
 import cells.TestGridCell;
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -154,8 +156,8 @@ public class GridVisualizer extends Application {
         }
 
         @Override
-        protected SkinBase<?, ?> buildSkin() {
-            return new VFXLabeledCellSkin<>(this) {
+        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+            return () -> new VFXLabeledCellSkin<>(this) {
                 {
                     setStyle("-fx-border-color: blue");
                 }

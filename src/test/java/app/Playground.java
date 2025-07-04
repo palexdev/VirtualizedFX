@@ -18,24 +18,23 @@
 
 package app;
 
-import interactive.table.TableTestUtils;
-import io.github.palexdev.mfxcore.builders.InsetsBuilder;
-import io.github.palexdev.virtualizedfx.base.VFXScrollable;
-import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
-import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
-import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
+import interactive.grid.GridTestUtils;
+import io.github.palexdev.mfxcore.builders.InsetsBuilder;
+import io.github.palexdev.virtualizedfx.base.VFXScrollable;
+import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
+import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-import static model.User.users;
 import static utils.Utils.debugView;
+import static utils.Utils.items;
 
 public class Playground extends Application {
     private static final String LOREM;
@@ -57,21 +56,25 @@ public class Playground extends Application {
         pane.setAlignment(Pos.CENTER);
         pane.setPadding(InsetsBuilder.uniform(4.0).get());
 
-        TableTestUtils.Table table = new TableTestUtils.Table(users(100));
-        /*ListTestUtils.List list = new ListTestUtils.List(items(100));
-        list.setFitToViewport(false);*/
+/*        TableTestUtils.Table table = new TableTestUtils.Table(users(100));
+        table.setColumnsWidth(50.0);
+        table.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
+        table.autosizeColumns();*/
 
-        /*GridTestUtils.Grid grid = new GridTestUtils.Grid(items(500));
-        grid.setColumnsNum(20);*/
+/*        ListTestUtils.List container = new ListTestUtils.List(items(100));
+        container.setFitToViewport(false);*/
 
-        VFXScrollPane sp = new VFXScrollPane(table);
+        GridTestUtils.Grid container = new GridTestUtils.Grid(items(500));
+        container.setColumnsNum(20);
+
+        VFXScrollPane sp = new VFXScrollPane(container);
         //sp.setSmoothScroll(true);
         //sp.setDragToScroll(true);
         //sp.setDragSmoothScroll(true);
         //sp.setShowButtons(true);
         //sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
-        sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
-        Platform.runLater(() -> sp.setPadding(InsetsBuilder.uniform(4.0).withTop(40.0).get()));
+        //sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
+        //Platform.runLater(() -> sp.setPadding(InsetsBuilder.uniform(4.0).withTop(40.0).get()));
         //sp.setScrollBarsGap(0.0);
         //sp.setAutoHideBars(true);
         //sp.setScrollBarsPos(Pos.TOP_RIGHT);

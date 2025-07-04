@@ -20,6 +20,7 @@ package interactive.grid;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import cells.TestCell;
@@ -1497,8 +1498,8 @@ public class GridTests {
             return cell;
         }) {
             @Override
-            protected SkinBase<?, ?> buildSkin() {
-                return new VFXGridSkin<>(this) {
+            public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+                return () -> new VFXGridSkin<>(this) {
                     @Override
                     protected void onLayoutCompleted(boolean done) {
                         super.onLayoutCompleted(done);

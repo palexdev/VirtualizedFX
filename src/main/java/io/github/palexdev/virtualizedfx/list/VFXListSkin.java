@@ -128,8 +128,8 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>
                 }),
             onInvalidated(list.helperProperty())
                 .then(h -> {
-                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::getX));
-                    viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::getY));
+                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::x));
+                    viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
                 })
                 .executeNow(),
 

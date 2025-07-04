@@ -521,7 +521,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
     protected boolean gridFactorySizeCheck() {
         VFXGrid<T, C> grid = getNode();
         if (grid.isEmpty() || !grid.getCellFactory().canCreate() ||
-            grid.getCellSize().getWidth() <= 0 || grid.getCellSize().getHeight() <= 0) {
+            grid.getCellSize().width() <= 0 || grid.getCellSize().height() <= 0) {
             disposeCurrent();
             grid.update(VFXGridState.INVALID);
             invalidatingPos = false;

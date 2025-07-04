@@ -31,13 +31,13 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectPrope
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty.SizeConverter;
 import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
-import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
@@ -198,7 +198,7 @@ import javafx.scene.shape.Rectangle;
  * @param <T> the type of items in the table
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXContainer<T>, VFXStyleable, VFXScrollable {
+public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXContainer<T>, MFXStyleable, VFXScrollable {
     //================================================================================
     // Properties
     //================================================================================
@@ -270,8 +270,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     // Methods
     //================================================================================
     private void initialize() {
-        setDefaultStyleClasses();
-        setDefaultBehaviorProvider();
+        defaultStyleClasses(this);
         setHelper(getHelperFactory().apply(getColumnsLayoutMode()));
         setRowFactory(defaultRowFactory());
     }
@@ -445,8 +444,8 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     }
 
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXTableSkin<>(this);
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXTableSkin<>(this);
     }
 
     @Override
@@ -771,7 +770,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
      * The old height will be kept.
      */
     public void setColumnsWidth(double w) {
-        setColumnsSize(Size.of(w, getColumnsSize().getHeight()));
+        setColumnsSize(Size.of(w, getColumnsSize().height()));
     }
 
     /**
@@ -779,7 +778,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
      * The old width will be kept.
      */
     public void setColumnsHeight(double h) {
-        setColumnsSize(Size.of(getColumnsSize().getWidth(), h));
+        setColumnsSize(Size.of(getColumnsSize().width(), h));
     }
 
     public ColumnsLayoutMode getColumnsLayoutMode() {

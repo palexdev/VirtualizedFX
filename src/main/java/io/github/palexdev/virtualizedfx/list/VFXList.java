@@ -31,12 +31,12 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoublePrope
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
-import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
@@ -118,7 +118,7 @@ import javafx.scene.shape.Rectangle;
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, C>>
-    implements VFXContainer<T>, WithCellFactory<T, C>, VFXStyleable, VFXScrollable {
+    implements VFXContainer<T>, WithCellFactory<T, C>, MFXStyleable, VFXScrollable {
     //================================================================================
     // Properties
     //================================================================================
@@ -191,8 +191,7 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
     // Methods
     //================================================================================
     private void initialize() {
-        getStyleClass().addAll(defaultStyleClasses());
-        setDefaultBehaviorProvider();
+        defaultStyleClasses(this);
     }
 
     /**
@@ -280,8 +279,8 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
     }
 
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXListSkin<>(this);
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXListSkin<>(this);
     }
 
     @Override

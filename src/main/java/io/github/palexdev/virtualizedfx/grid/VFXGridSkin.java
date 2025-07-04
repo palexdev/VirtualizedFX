@@ -130,8 +130,8 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
                 .then(v -> layout()),
             onInvalidated(grid.helperProperty())
                 .then(h -> {
-                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::getX));
-                    viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::getY));
+                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::x));
+                    viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
                 })
                 .executeNow(),
 
@@ -261,8 +261,8 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
             return;
         }
 
-        double vw = ((state.getColumnsRange().diff() + 1) * helper.getTotalCellSize().getWidth()) - grid.getHSpacing();
-        double vh = ((state.getRowsRange().diff() + 1) * helper.getTotalCellSize().getHeight()) - grid.getVSpacing();
+        double vw = ((state.getColumnsRange().diff() + 1) * helper.getTotalCellSize().width()) - grid.getHSpacing();
+        double vh = ((state.getRowsRange().diff() + 1) * helper.getTotalCellSize().height()) - grid.getVSpacing();
         viewport.resize(vw, vh);
         Position pos = LayoutUtils.computePosition(
             grid, viewport,
@@ -271,8 +271,8 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
             false, false
         );
         viewport.relocate(
-            Math.max(0, pos.getX()),
-            Math.max(0, pos.getY())
+            Math.max(0, pos.x()),
+            Math.max(0, pos.y())
         );
     }
 

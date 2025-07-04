@@ -114,7 +114,7 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends Behavi
                 column.pseudoClassStateChanged(DRAGGED, false);
             }
         };
-        resizer.setMinWidthFunction(r -> column.getTable().getColumnsSize().getWidth());
+        resizer.setMinWidthFunction(r -> column.getTable().getColumnsSize().width());
         resizer.setAllowedZones(Zone.CENTER_RIGHT);
         resizer.setResizeHandler((node, x, y, w, h) -> column.resize(w));
         if (column.isGestureResizable()) resizer.makeResizable();

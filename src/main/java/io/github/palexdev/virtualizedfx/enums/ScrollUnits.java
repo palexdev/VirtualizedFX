@@ -58,11 +58,11 @@ public enum ScrollUnits {
 
             VFXContainer<?> c = asVirtualized(node);
             Supplier<Double> css = switch (c) {
-                case VFXGrid<?, ?> g when orientation == Orientation.VERTICAL -> () -> g.getCellSize().getHeight();
-                case VFXGrid<?, ?> g when orientation == Orientation.HORIZONTAL -> () -> g.getCellSize().getWidth();
+                case VFXGrid<?, ?> g when orientation == Orientation.VERTICAL -> () -> g.getCellSize().height();
+                case VFXGrid<?, ?> g when orientation == Orientation.HORIZONTAL -> () -> g.getCellSize().width();
                 case VFXList<?, ?> l -> l::getCellSize;
                 case VFXTable<?> t when orientation == Orientation.VERTICAL -> t::getRowsHeight;
-                case VFXTable<?> t when orientation == Orientation.HORIZONTAL -> () -> t.getColumnsSize().getWidth();
+                case VFXTable<?> t when orientation == Orientation.HORIZONTAL -> () -> t.getColumnsSize().width();
                 default -> () -> 0.0;
             };
             return PIXELS.calc(vsp, css.get() * amount, orientation);

@@ -25,12 +25,12 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProp
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils.ScrollDirection;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.VFXResources;
-import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollBarSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
@@ -46,7 +46,7 @@ import javafx.geometry.Orientation;
 
 /**
  * My personal custom implementation of a scroll bar from scratch, follows the MVC pattern as enforced by {@link Control}.
- * The default skin is {@link VFXScrollBarSkin}. The default behavior is {@link VFXScrollBarBehavior}. Also implements {@link VFXStyleable}.
+ * The default skin is {@link VFXScrollBarSkin}. The default behavior is {@link VFXScrollBarBehavior}. Also implements {@link MFXStyleable}.
  * <p></p>
  * In addition to an appealing style, the component offers many new features compared to the boring standard
  * JavaFX' scroll bar, such as:
@@ -67,7 +67,7 @@ import javafx.geometry.Orientation;
  * can be set by using {@link #setMin(double)} and {@link #setMax(double)} but cannot go below {@code 0.0}
  * and above {@code 1.0} respectively. The {@link #valueProperty()} is automatically clamped between the min and max values.
  */
-public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements VFXStyleable {
+public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements MFXStyleable {
     //================================================================================
     // Static Properties
     //================================================================================
@@ -114,9 +114,8 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements VFXSt
     // Methods
     //================================================================================
     private void init() {
-        setDefaultStyleClasses();
+        defaultStyleClasses(this);
         getStylesheets().add(VFXResources.loadResource("VFXScrollBar.css"));
-        setDefaultBehaviorProvider();
 
         setMin(0.0);
         setMax(1.0);
@@ -126,8 +125,8 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements VFXSt
     // Overridden Methods
     //================================================================================
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXScrollBarSkin(this);
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXScrollBarSkin(this);
     }
 
     @Override

@@ -20,6 +20,7 @@ package io.github.palexdev.virtualizedfx.cells;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -64,19 +65,19 @@ public class VFXSimpleCell<T> extends VFXCellBase<T> {
     // Overridden Methods
     //================================================================================
     @Override
-    public List<String> defaultStyleClasses() {
-        return List.of("cell-base", "cell");
-    }
-
-    @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXLabeledCellSkin<>(this) {
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXLabeledCellSkin<>(this) {
             @Override
             protected void update() {
                 T item = getItem();
                 label.setText(converter.toString(item));
             }
         };
+    }
+
+    @Override
+    public List<String> defaultStyleClasses() {
+        return List.of("cell-base", "cell");
     }
 
     //================================================================================

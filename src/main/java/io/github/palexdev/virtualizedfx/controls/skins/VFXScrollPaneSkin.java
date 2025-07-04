@@ -334,8 +334,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             viewport.getWidth(),
             viewport.getHeight()
         );
-        vBar.setVisibleAmount(viewportSize.getHeight() / contentSize.getHeight());
-        hBar.setVisibleAmount(viewportSize.getWidth() / contentSize.getWidth());
+        vBar.setVisibleAmount(viewportSize.height() / contentSize.height());
+        hBar.setVisibleAmount(viewportSize.width() / contentSize.width());
     }
 
     /**

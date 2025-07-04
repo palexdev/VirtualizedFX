@@ -1695,14 +1695,14 @@ public class TableTests {
         assertEquals(48, table.getHelper().visibleCells());
 
         // Increase width of column to random value
-        int w = RandomUtils.random.nextInt((int) table.getColumnsSize().getWidth() + 1, 300);
+        int w = RandomUtils.random.nextInt((int) table.getColumnsSize().width() + 1, 300);
         robot.interact(() -> setColumnWidth(table, 6, w));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
         assertCounter(0, 0, 0, 0, 0, 0, 0); // 0 layouts because none of the columns from 6 are in the viewport
         assertLength(table, 50 * 32, (10 * 180) - 180 + w);
 
         // Increase width of column (in viewport) to random value
-        int w2 = RandomUtils.random.nextInt((int) table.getColumnsSize().getWidth() + 1, 200);
+        int w2 = RandomUtils.random.nextInt((int) table.getColumnsSize().width() + 1, 200);
         robot.interact(() -> setColumnWidth(table, 1, w2));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
         assertCounter(0, 32, 0, 0, 0, 0, 0);
@@ -1857,7 +1857,7 @@ public class TableTests {
         robot.interact(() -> {
             // Randomize widths
             table.getColumns().forEach(c -> c.resize(RandomUtils.random.nextInt(
-                (int) (table.getColumnsSize().getWidth() + 1),
+                (int) (table.getColumnsSize().width() + 1),
                 240
             )));
             table.setHPos(table.getMaxHScroll() / 2.0);

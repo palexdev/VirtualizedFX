@@ -229,7 +229,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
      */
     default double getViewportHeight() {
         VFXTable<T> table = getContainer();
-        return Math.max(0, table.getHeight() - table.getColumnsSize().getHeight());
+        return Math.max(0, table.getHeight() - table.getColumnsSize().height());
     }
 
     /**
@@ -504,7 +504,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                         y = -(rPixelsToFirst + rVisibleAmount);
                     }
                     if (!Utils.INVALID_RANGE.equals(columnsRange)) {
-                        double cWidth = container.getColumnsSize().getWidth();
+                        double cWidth = container.getColumnsSize().width();
                         IntegerRange cRangeToFirstVisible = IntegerRange.of(columnsRange.getMin(), firstColumn());
                         double cPixelsToFirst = cRangeToFirstVisible.diff() * cWidth;
                         double cVisibleAmount = container.getHPos() % cWidth;
@@ -524,7 +524,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         protected DoubleBinding createVirtualMaxXBinding() {
             return DoubleBindingBuilder.build()
-                .setMapper(() -> Math.max(container.getWidth(), container.getColumns().size() * container.getColumnsSize().getWidth()))
+                .setMapper(() -> Math.max(container.getWidth(), container.getColumns().size() * container.getColumnsSize().width()))
                 .addSources(container.widthProperty(), container.columnsSizeProperty())
                 .get();
         }
@@ -547,7 +547,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         public int firstColumn() {
             return NumberUtils.clamp(
-                (int) Math.floor(container.getHPos() / container.getColumnsSize().getWidth()),
+                (int) Math.floor(container.getHPos() / container.getColumnsSize().width()),
                 0,
                 container.getColumns().size() - 1
             );
@@ -560,7 +560,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
          */
         @Override
         public int visibleColumns() {
-            double width = container.getColumnsSize().getWidth();
+            double width = container.getColumnsSize().width();
             return width > 0 ?
                 (int) Math.ceil(container.getWidth() / width) :
                 0;
@@ -589,7 +589,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         public double getColumnWidth(VFXTableColumn<T, ?> column) {
             VFXTable<T> table = getContainer();
-            double width = table.getColumnsSize().getWidth();
+            double width = table.getColumnsSize().width();
             if (!isLastColumn(column)) return width;
             return Math.max(width, table.getWidth() - ((table.getColumns().size() - 1) * width));
         }
@@ -601,7 +601,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
          */
         @Override
         public double getColumnPos(int layoutIdx, VFXTableColumn<T, ?> column) {
-            return container.getColumnsSize().getWidth() * layoutIdx;
+            return container.getColumnsSize().width() * layoutIdx;
         }
 
         /**
@@ -618,7 +618,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             Size size = getContainer().getColumnsSize();
             double x = getColumnPos(layoutIdx, column);
             double w = getColumnWidth(column);
-            double h = size.getHeight();
+            double h = size.height();
             column.resizeRelocate(x, 0, w, h);
             return true;
         }
@@ -714,7 +714,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             }
 
             double extra = container.getExtraAutosizeWidth();
-            double fixedW = container.getColumnsSize().getWidth();
+            double fixedW = container.getColumnsSize().width();
             double maxColumnsW = columns.stream()
                 .mapToDouble(c -> c.computePrefWidth(-1))
                 .max()
@@ -768,7 +768,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         public void scrollToIndex(Orientation orientation, int index) {
             if (orientation == Orientation.HORIZONTAL) {
-                container.setHPos(container.getColumnsSize().getWidth() * index);
+                container.setHPos(container.getColumnsSize().width() * index);
             } else {
                 container.setVPos(container.getRowsHeight() * index);
             }
@@ -868,7 +868,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
          * {@link ColumnsLayoutCache#getPartialWidth()}.
          */
         protected double computeColumnWidth(VFXTableColumn<T, ?> column, boolean isLast) {
-            double minW = container.getColumnsSize().getWidth();
+            double minW = container.getColumnsSize().width();
             double prefW = Math.max(column.prefWidth(-1), minW);
             if (container.getColumns().size() == 1) return Math.max(prefW, container.getWidth());
             if (!isLast) return column.snapSizeX(prefW);
@@ -1076,7 +1076,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             Size size = getContainer().getColumnsSize();
             double x = getColumnPos(layoutIdx, column);
             double w = getColumnWidth(column);
-            double h = size.getHeight();
+            double h = size.height();
             if (column.isVisible() && column.getLayoutX() == x && column.getWidth() == w) return false;
             column.resizeRelocate(x, 0, w, h);
             column.setVisible(true);
@@ -1176,7 +1176,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             }
 
             double extra = container.getExtraAutosizeWidth();
-            double minW = container.getColumnsSize().getWidth();
+            double minW = container.getColumnsSize().width();
             double prefW = column.computePrefWidth(-1);
             if (state.isEmpty()) {
                 column.resize(Math.max(minW, prefW) + extra);

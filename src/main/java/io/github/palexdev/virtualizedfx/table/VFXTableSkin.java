@@ -90,7 +90,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
                 layoutColumns();
             }
         };
-        cContainer.visibleProperty().bind(table.columnsSizeProperty().map(s -> s.getHeight() > 0));
+        cContainer.visibleProperty().bind(table.columnsSizeProperty().map(s -> s.height() > 0));
         cContainer.getStyleClass().add("columns");
 
         rContainer = new Pane() {
@@ -209,8 +209,8 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
                 }),
             onInvalidated(table.helperProperty())
                 .then(h -> {
-                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::getX));
-                    rContainer.translateYProperty().bind(h.viewportPositionProperty().map(Position::getY));
+                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::x));
+                    rContainer.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
                 })
                 .executeNow(),
 
@@ -270,7 +270,7 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
         VFXTable<T> table = getSkinnable();
         double w = table.getVirtualMaxX();
         double h = table.getHeight();
-        double cH = table.getColumnsSize().getHeight();
+        double cH = table.getColumnsSize().height();
         double rH = h - cH;
         cContainer.resizeRelocate(0, 0, w, cH);
         rContainer.resizeRelocate(0, cH, w, rH);

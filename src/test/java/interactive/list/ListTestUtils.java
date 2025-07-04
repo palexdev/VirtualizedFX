@@ -20,6 +20,7 @@ package interactive.list;
 
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -112,8 +113,8 @@ public class ListTestUtils {
         }
 
         @Override
-        protected SkinBase<?, ?> buildSkin() {
-            return new VFXListSkin<>(this) {
+        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+            return () -> new VFXListSkin<>(this) {
                 @Override
                 protected void onLayoutCompleted(boolean done) {
                     super.onLayoutCompleted(done);
@@ -141,8 +142,8 @@ public class ListTestUtils {
         }
 
         @Override
-        protected SkinBase<?, ?> buildSkin() {
-            return new VFXPaginatedListSkin<>(this) {
+        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+            return () -> new VFXPaginatedListSkin<>(this) {
                 @Override
                 protected void onLayoutCompleted(boolean done) {
                     super.onLayoutCompleted(done);

@@ -33,13 +33,13 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectPrope
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty.SizeConverter;
 import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.PositionUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
-import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
@@ -133,7 +133,7 @@ import javafx.scene.shape.Rectangle;
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, C>>
-    implements VFXContainer<T>, WithCellFactory<T, C>, VFXStyleable, VFXScrollable {
+    implements VFXContainer<T>, WithCellFactory<T, C>, MFXStyleable, VFXScrollable {
     //================================================================================
     // Properties
     //================================================================================
@@ -200,8 +200,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
     // Methods
     //================================================================================
     private void initialize() {
-        getStyleClass().addAll(defaultStyleClasses());
-        setDefaultBehaviorProvider();
+        defaultStyleClasses(this);
         setHelper(getHelperFactory().get());
     }
 
@@ -225,7 +224,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
      * @param min the minimum number of columns
      */
     public void autoArrange(int min) {
-        double cellWidth = getCellSize().getWidth();
+        double cellWidth = getCellSize().width();
         double hSpacing = getHSpacing();
         int nColumns = (int) Math.max(Math.max(0, min), Math.floor(getWidth() / (cellWidth + hSpacing)));
         setColumnsNum(nColumns);
@@ -309,13 +308,13 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
     }
 
     @Override
-    public List<String> defaultStyleClasses() {
-        return List.of("vfx-grid");
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXGridSkin<>(this);
     }
 
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXGridSkin<>(this);
+    public List<String> defaultStyleClasses() {
+        return List.of("vfx-grid");
     }
 
     @Override

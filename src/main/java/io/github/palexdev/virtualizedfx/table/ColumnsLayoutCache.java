@@ -144,7 +144,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
                 li.resetVisibility();
                 // Invalidate only the ones that are now below the minimum
                 if (!li.isWidthValid()) continue;
-                if (li.getWidth() < table.getColumnsSize().getWidth()) li.invalidateWidth();
+                if (li.getWidth() < table.getColumnsSize().width()) li.invalidateWidth();
             }
             // Also invalidate last
             invalidateLast();

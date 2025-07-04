@@ -21,6 +21,7 @@ package io.github.palexdev.virtualizedfx.cells;
 import java.beans.EventHandler;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.events.WhenEvent;
@@ -96,8 +97,8 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
     }
 
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXObservingTableCellSkin(this);
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXObservingTableCellSkin(this);
     }
 
     @Override

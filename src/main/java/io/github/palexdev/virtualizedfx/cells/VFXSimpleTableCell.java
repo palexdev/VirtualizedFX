@@ -21,6 +21,7 @@ package io.github.palexdev.virtualizedfx.cells;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
@@ -97,8 +98,8 @@ public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappi
     // Overridden Methods
     //================================================================================
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXLabeledCellSkin<>(this) {
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXLabeledCellSkin<>(this) {
             @Override
             protected void update() {
                 T item = getItem();

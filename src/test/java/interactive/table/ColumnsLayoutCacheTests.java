@@ -442,7 +442,7 @@ public class ColumnsLayoutCacheTests {
 
         protected double computeColumnWidth(VFXTableColumn<User, ?> column, boolean isLast) {
             VFXTable<User> table = getTable();
-            double minW = table.getColumnsSize().getWidth();
+            double minW = table.getColumnsSize().width();
             double prefW = Math.max(column.prefWidth(-1), minW);
             if (table.getColumns().size() == 1) return Math.max(prefW, table.getWidth());
             if (!isLast) return prefW;

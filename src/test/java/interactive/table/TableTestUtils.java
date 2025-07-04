@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.SequencedMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
@@ -203,9 +204,9 @@ public class TableTestUtils {
         Bounds bounds = column.getBoundsInParent();
         double x = 0;
         double w = helper.getColumnWidth(column);
-        double h = table.getColumnsSize().getHeight();
+        double h = table.getColumnsSize().height();
         if (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) {
-            x = cIdx * table.getColumnsSize().getWidth();
+            x = cIdx * table.getColumnsSize().width();
         } else {
             for (VFXTableColumn<User, ? extends VFXTableCell<User>> c : table.getColumns()) {
                 if (c == column) break;
@@ -252,7 +253,7 @@ public class TableTestUtils {
         double h = table.getRowsHeight();
 
         if (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) {
-            x = table.getColumnsSize().getWidth() * layoutIdx;
+            x = table.getColumnsSize().width() * layoutIdx;
         } else {
             for (int i = 0; i < cellIdx; i++) {
                 x += helper.getColumnWidth(columns.get(i));
@@ -420,8 +421,8 @@ public class TableTestUtils {
         }
 
         @Override
-        protected SkinBase<?, ?> buildSkin() {
-            return new VFXTableSkin<>(this) {
+        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+            return () -> new VFXTableSkin<>(this) {
                 @Override
                 protected void onLayoutCompleted(boolean done) {
                     super.onLayoutCompleted(done);

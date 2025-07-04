@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.SequencedMap;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
-import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
@@ -81,7 +81,7 @@ import javafx.scene.layout.Region;
  * as a base class for extension but rather {@link VFXDefaultTableRow}. Either way, always take a look at how original
  * algorithms work before customizing!
  */
-public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXStyleable {
+public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXStyleable {
     //================================================================================
     // Properties
     //================================================================================
@@ -139,7 +139,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
     // Methods
     //================================================================================
     private void initialize() {
-        setDefaultStyleClasses();
+        defaultStyleClasses(this);
     }
 
     /**

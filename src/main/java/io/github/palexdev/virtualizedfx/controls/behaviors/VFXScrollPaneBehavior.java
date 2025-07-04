@@ -21,6 +21,7 @@ package io.github.palexdev.virtualizedfx.controls.behaviors;
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
+import io.github.palexdev.mfxcore.base.properties.PositionProperty;
 import io.github.palexdev.mfxcore.behavior.BehaviorBase;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
@@ -54,7 +55,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
     // Properties
     //================================================================================
     private Position initValues = Position.of(0, 0);
-    private Position dragStart = Position.of(-1, -1);
+    private final PositionProperty dragStart = new PositionProperty(Position.of(-1, -1));
     private Orientation mainDragAxis;
     private double dragThreshold = 16.0;
 
@@ -100,7 +101,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
     @Override
     public void mousePressed(MouseEvent me) {
         VFXScrollPane pane = getNode();
-        dragStart = Position.of(me.getSceneX(), me.getSceneY());
+        dragStart.setPosition(me.getSceneX(), me.getSceneY());
         initValues = Position.of(pane.getHValue(), pane.getVValue());
     }
 
@@ -150,12 +151,12 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
 
             // When the threshold is surpassed, reset the dragStart to the current position but skip the scrolling
             // on for this frame.
-            dragStart = Position.of(meX, meY);
+            dragStart.setPosition(meX, meY);
             return;
         }
 
         if (canHScroll && mainDragAxis == Orientation.HORIZONTAL) {
-            double maxX = Math.max(0.0, cb.getWidth() - viewportSize.getWidth());
+            double maxX = Math.max(0.0, cb.width() - viewportSize.width());
             double deltaVal = NumberUtils.mapOneRangeToAnother(
                 NumberUtils.clamp(Math.abs(xDelta), 0.0, maxX),
                 DoubleRange.of(0.0, maxX),
@@ -164,7 +165,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
             int mul = xDelta > 0 ? 1 : -1;
 
             if (!pane.isDragSmoothScroll()) {
-                pane.setHValue(initValues.getX() + deltaVal * mul);
+                pane.setHValue(initValues.x() + deltaVal * mul);
             } else {
                 MomentumTransition mt = withMomentum(deltaVal * SMOOTH_DRAG_SENSIBILITY);
                 mt.setOnUpdate(u -> {
@@ -179,7 +180,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
         }
 
         if (canVScroll && mainDragAxis == Orientation.VERTICAL) {
-            double maxY = Math.max(0.0, cb.getHeight() - viewportSize.getHeight());
+            double maxY = Math.max(0.0, cb.height() - viewportSize.height());
             double deltaVal = NumberUtils.mapOneRangeToAnother(
                 NumberUtils.clamp(Math.abs(yDelta), 0.0, maxY),
                 DoubleRange.of(0.0, maxY),
@@ -188,7 +189,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
             int mul = yDelta > 0 ? 1 : -1;
 
             if (!pane.isDragSmoothScroll()) {
-                pane.setVValue(initValues.getY() + deltaVal * mul);
+                pane.setVValue(initValues.y() + deltaVal * mul);
             } else {
                 MomentumTransition mt = withMomentum(deltaVal * SMOOTH_DRAG_SENSIBILITY);
                 mt.setOnUpdate(u -> {
@@ -210,7 +211,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
      */
     @Override
     public void mouseReleased(MouseEvent e) {
-        dragStart = Position.of(-1, -1);
+        dragStart.setPosition(-1, -1);
         initValues = Position.origin();
         mainDragAxis = null;
     }

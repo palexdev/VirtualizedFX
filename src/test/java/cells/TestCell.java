@@ -18,6 +18,8 @@
 
 package cells;
 
+import java.util.function.Supplier;
+
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.virtualizedfx.cells.VFXLabeledCellSkin;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleCell;
@@ -47,8 +49,8 @@ public class TestCell<T> extends VFXSimpleCell<T> {
     }
 
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXLabeledCellSkin<>(this) {
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXLabeledCellSkin<>(this) {
             {
                 setConverter(t -> {
                     int index = getIndex();

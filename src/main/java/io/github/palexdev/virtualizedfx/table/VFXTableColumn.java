@@ -26,9 +26,9 @@ import java.util.function.Supplier;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.controls.Labeled;
+import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
-import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
@@ -91,7 +91,7 @@ import javafx.scene.Node;
  * @param <C> the type of cells this column will produce
  */
 public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Labeled<VFXTableColumnBehavior<T, C>>
-    implements WithCellFactory<T, C>, VFXStyleable {
+    implements WithCellFactory<T, C>, MFXStyleable {
     //================================================================================
     // Properties
     //================================================================================
@@ -163,8 +163,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
     //================================================================================
     private void initialize() {
         setCellFactory(defaultCellFactory());
-        setDefaultStyleClasses();
-        setDefaultBehaviorProvider();
+        defaultStyleClasses(this);
     }
 
     /**

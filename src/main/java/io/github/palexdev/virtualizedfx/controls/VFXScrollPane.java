@@ -28,12 +28,12 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProp
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
-import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollPaneBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollPaneSkin;
@@ -58,7 +58,7 @@ import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
 
 /**
  * My personal custom implementation of a scroll pane from scratch, follows the MVC pattern as enforced by {@link Control}.
- * The default skin is {@link VFXScrollPaneSkin}. The default behavior is {@link VFXScrollPaneBehavior}. Also implements {@link VFXStyleable}.
+ * The default skin is {@link VFXScrollPaneSkin}. The default behavior is {@link VFXScrollPaneBehavior}. Also implements {@link MFXStyleable}.
  * <p></p>
  * <b>Features:</b>
  * <p> - You can change how the scroll bars are laid out as well as their appearance with the {@link #layoutModeProperty()}
@@ -87,7 +87,7 @@ import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
  * Last but not least, since this uses the new {@link io.github.palexdev.virtualizedfx.controls.VFXScrollBar}s, it also allows to change their behavior with
  * {@link #hBarBehaviorProperty()} and {@link #vBarBehaviorProperty()}.
  */
-public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFXStyleable {
+public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements MFXStyleable {
     //================================================================================
     // Static Properties
     //================================================================================
@@ -144,9 +144,8 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     // Methods
     //================================================================================
     private void init() {
-        setDefaultStyleClasses();
+        defaultStyleClasses(this);
         getStylesheets().add(VFXResources.loadResource("VFXScrollPane.css"));
-        setDefaultBehaviorProvider();
 
         setVMin(0.0);
         setVMax(1.0);
@@ -178,8 +177,8 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
     // Overridden Methods
     //================================================================================
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXScrollPaneSkin(this);
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXScrollPaneSkin(this);
     }
 
     @Override

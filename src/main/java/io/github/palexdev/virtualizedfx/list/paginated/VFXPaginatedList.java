@@ -191,8 +191,8 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     }
 
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXPaginatedListSkin<>(this);
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXPaginatedListSkin<>(this);
     }
 
     /**

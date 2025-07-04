@@ -19,6 +19,7 @@
 package io.github.palexdev.virtualizedfx.table.defaults;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -63,8 +64,8 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
     // Overridden Methods
     //================================================================================
     @Override
-    protected SkinBase<?, ?> buildSkin() {
-        return new VFXDefaultTableColumnSkin<>(this);
+    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        return () -> new VFXDefaultTableColumnSkin<>(this);
     }
 
     //================================================================================

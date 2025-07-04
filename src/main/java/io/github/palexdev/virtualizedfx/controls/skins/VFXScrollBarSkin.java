@@ -312,7 +312,7 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
                 Insets.EMPTY, HPos.CENTER, VPos.TOP,
                 false, false
             );
-            thumb.relocate(thumbPos.getX(), thumbPos.getY());
+            thumb.relocate(thumbPos.x(), thumbPos.y());
         }
 
         /**
@@ -410,7 +410,7 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
                 Insets.EMPTY, HPos.LEFT, VPos.CENTER,
                 false, false
             );
-            thumb.relocate(thumbPos.getX(), thumbPos.getY());
+            thumb.relocate(thumbPos.x(), thumbPos.y());
         }
 
         /**

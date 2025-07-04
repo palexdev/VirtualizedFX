@@ -23,9 +23,9 @@ import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
-import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -75,7 +75,7 @@ import javafx.scene.Node;
  * @see #alignmentProperty()
  * @see VFXCell
  */
-public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implements VFXCell<T>, VFXStyleable {
+public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implements VFXCell<T>, MFXStyleable {
     //================================================================================
     // Properties
     //================================================================================
@@ -96,8 +96,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     // Methods
     //================================================================================
     private void initialize() {
-        setDefaultStyleClasses();
-        setDefaultBehaviorProvider();
+        defaultStyleClasses(this);
     }
 
     //================================================================================

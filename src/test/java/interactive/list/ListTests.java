@@ -20,6 +20,7 @@ package interactive.list;
 
 import java.util.Comparator;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import cells.TestCell;
@@ -947,8 +948,8 @@ public class ListTests {
             return cell;
         }) {
             @Override
-            protected SkinBase<?, ?> buildSkin() {
-                return new VFXListSkin<>(this) {
+            public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+                return () -> new VFXListSkin<>(this) {
                     @Override
                     protected void onLayoutCompleted(boolean done) {
                         super.onLayoutCompleted(done);

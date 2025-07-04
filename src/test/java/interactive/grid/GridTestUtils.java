@@ -20,6 +20,7 @@ package interactive.grid;
 
 import java.util.SequencedMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import cells.TestGridCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -105,8 +106,8 @@ public class GridTestUtils {
     static void assertPosition(VFXGrid<Integer, VFXCell<Integer>> grid, int rIdxIt, int cIdxIt, VFXCell<Integer> cell) {
         VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
         Bounds bounds = cell.toNode().getBoundsInParent();
-        double cw = helper.getTotalCellSize().getWidth();
-        double ch = helper.getTotalCellSize().getHeight();
+        double cw = helper.getTotalCellSize().width();
+        double ch = helper.getTotalCellSize().height();
         double x = cw * cIdxIt;
         double y = ch * rIdxIt;
         try {
@@ -141,8 +142,8 @@ public class GridTestUtils {
         }
 
         @Override
-        protected SkinBase<?, ?> buildSkin() {
-            return new VFXGridSkin<>(this) {
+        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+            return () -> new VFXGridSkin<>(this) {
                 @Override
                 protected void onLayoutCompleted(boolean done) {
                     super.onLayoutCompleted(done);
