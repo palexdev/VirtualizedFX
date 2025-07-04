@@ -60,16 +60,16 @@ javafx {
 }
 
 configurations {
-    // Remove vanniktech non-sense
+    // Remove vanniktech nonsense
     gradle.taskGraph.whenReady { graph ->
-        if (graph.hasTask(plainJavadocJar)) {
-            plainJavadocJar.enabled = false
+        if (graph.hasTask(mavenPlainJavadocJar)) {
+            mavenPlainJavadocJar.enabled = false
         }
     }
 }
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.S01)
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 }
 
