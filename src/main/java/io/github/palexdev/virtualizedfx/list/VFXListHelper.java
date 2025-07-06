@@ -261,7 +261,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> container.size() * getTotalCellSize() - container.getSpacing())
-                .addSources(container.cellSizeProperty(), container.spacingProperty())
+                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.spacingProperty())
                 .get();
         }
 
@@ -453,7 +453,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         protected DoubleBinding createVirtualMaxXBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> container.size() * getTotalCellSize() - container.getSpacing())
-                .addSources(container.cellSizeProperty(), container.spacingProperty())
+                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.spacingProperty())
                 .get();
         }
 
