@@ -25,7 +25,7 @@ import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.mfxresources.builders.IconBuilder;
 import io.github.palexdev.mfxresources.builders.IconWrapperBuilder;
-import io.github.palexdev.mfxresources.fonts.MFXIconWrapper;
+import io.github.palexdev.mfxresources.icon.MFXIconWrapper;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import javafx.beans.InvalidationListener;
