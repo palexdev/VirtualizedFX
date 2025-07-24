@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import fr.brouillard.oss.cssfx.CSSFX;
 import interactive.grid.GridTestUtils;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
+import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.utils.ScrollParams;
@@ -71,7 +73,7 @@ public class Playground extends Application {
         //sp.setSmoothScroll(true);
         //sp.setDragToScroll(true);
         //sp.setDragSmoothScroll(true);
-        //sp.setShowButtons(true);
+        sp.setShowButtons(true);
         //sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
         //sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
         //Platform.runLater(() -> sp.setPadding(InsetsBuilder.uniform(4.0).withTop(40.0).get()));
@@ -95,5 +97,8 @@ public class Playground extends Application {
         primaryStage.centerOnScreen();
 
         debugView(null, pane);
+
+        sp.getStylesheets().add(VFXResources.loadResource("VFXScrollBar.css"));
+        CSSFX.start(sp);
     }
 }

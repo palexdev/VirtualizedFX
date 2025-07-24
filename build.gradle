@@ -17,7 +17,6 @@ dependencies {
     // Deps
     api "io.github.palexdev:mfxcore:$mfxcore"
     api "io.github.palexdev:mfxeffects:$mfxeffects"
-    api "io.github.palexdev:mfxresources:$mfxresources"
 
     // Test Deps
     testImplementation "org.openjdk.jmh:jmh-core:$jmh"
@@ -27,6 +26,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation "org.testfx:testfx-core:$testfx"
     testImplementation "org.testfx:testfx-junit5:$testfx"
+    testImplementation "io.github.palexdev:mfxresources:$mfxresources"
     testImplementation("io.github.palexdev:scenicview:$scenicView") {
         exclude(group: "org.openjfx")
     }

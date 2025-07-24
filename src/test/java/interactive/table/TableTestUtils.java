@@ -32,8 +32,7 @@ import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
-import io.github.palexdev.mfxresources.fonts.MFXFontIcon;
-import io.github.palexdev.mfxresources.fonts.fontawesome.FontAwesomeSolid;
+import io.github.palexdev.mfxresources.icon.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
@@ -333,31 +332,31 @@ public class TableTestUtils {
 
             TestColumn<String> firstNameColumn = new TestColumn<>("First name", priority());
             firstNameColumn.setCellFactory(u -> factory(u, User::firstName));
-            firstNameColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.USER, ICON_SIZE, ICON_COLOR));
+            firstNameColumn.setGraphic(new MFXFontIcon("fas-user", ICON_SIZE, ICON_COLOR));
 
             TestColumn<String> lastNameColumn = new TestColumn<>("Last name", priority());
             lastNameColumn.setCellFactory(u -> factory(u, User::lastName));
-            lastNameColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.USER, ICON_SIZE, ICON_COLOR));
+            lastNameColumn.setGraphic(new MFXFontIcon("fas-user", ICON_SIZE, ICON_COLOR));
 
             TestColumn<Integer> birthColumn = new TestColumn<>("Birth year", priority());
             birthColumn.setCellFactory(u -> factory(u, User::birthYear));
-            birthColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.CAKE_CANDLES, ICON_SIZE, ICON_COLOR));
+            birthColumn.setGraphic(new MFXFontIcon("fas-cake-candles", ICON_SIZE, ICON_COLOR));
 
             TestColumn<String> zodiacColumn = new TestColumn<>("Zodiac Sign", priority());
             zodiacColumn.setCellFactory(u -> factory(u, User::zodiac));
-            zodiacColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.STAR, ICON_SIZE, ICON_COLOR));
+            zodiacColumn.setGraphic(new MFXFontIcon("fas-star", ICON_SIZE, ICON_COLOR));
 
             TestColumn<String> countryColumn = new TestColumn<>("Country", priority());
             countryColumn.setCellFactory(u -> factory(u, User::country));
-            countryColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.GLOBE, ICON_SIZE, ICON_COLOR));
+            countryColumn.setGraphic(new MFXFontIcon("fas-globe", ICON_SIZE, ICON_COLOR));
 
             TestColumn<String> bloodColumn = new TestColumn<>("Blood", priority());
             bloodColumn.setCellFactory(u -> factory(u, User::blood));
-            bloodColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.DROPLET, ICON_SIZE, ICON_COLOR));
+            bloodColumn.setGraphic(new MFXFontIcon("fas-droplet", ICON_SIZE, ICON_COLOR));
 
             TestColumn<String> animalColumn = new TestColumn<>("Pet", priority());
             animalColumn.setCellFactory(u -> factory(u, User::pet));
-            animalColumn.setGraphic(new MFXFontIcon(FontAwesomeSolid.PAW, ICON_SIZE, ICON_COLOR));
+            animalColumn.setGraphic(new MFXFontIcon("fas-paw", ICON_SIZE, ICON_COLOR));
 
             return List.of(firstNameColumn, lastNameColumn, birthColumn, zodiacColumn, countryColumn, bloodColumn, animalColumn);
         }
