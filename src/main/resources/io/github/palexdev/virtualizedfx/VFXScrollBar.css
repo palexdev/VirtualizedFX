@@ -59,45 +59,29 @@
     -fx-background-color: -thumb-hop;
 }
 
-.vfx-scroll-bar > .mfx-icon-wrapper {
-    -fx-background-color: -background;
-    -fx-background-insets: -1px;
-    -fx-background-radius: 8px;
-    -fx-border-color: -border;
-    -fx-border-insets: -2px;
-    -fx-border-radius: 8px;
+.vfx-scroll-bar > .icon {
+    -fx-background-color: -thumb;
+    -fx-opacity: 0.7;
+    -fx-pref-width: 12px;
+    -fx-pref-height: 12px;
+    -fx-scale-x: 1.25;
+    -fx-scale-y: 1.25;
+    -fx-shape: "M320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM331.3 188.7L435.3 292.7C439.9 297.3 441.2 304.2 438.8 310.1C436.4 316 430.5 320 424 320L368 320L368 416C368 433.7 353.7 448 336 448L304 448C286.3 448 272 433.7 272 416L272 320L216 320C209.5 320 203.7 316.1 201.2 310.1C198.7 304.1 200.1 297.2 204.7 292.7L308.7 188.7C314.9 182.5 325.1 182.5 331.3 188.7z";
+    transition-property: -fx-opacity;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.34, 0.80, 0.34, 1.00);
 }
 
-.vfx-scroll-bar > .mfx-icon-wrapper > .mfx-font-icon {
-    -mfx-size: 12;
+.vfx-scroll-bar > .icon:hover,
+.vfx-scroll-bar > .icon:focused {
+    -fx-opacity: 0.8;
 }
 
-.vfx-scroll-bar > .mfx-icon-wrapper:hover {
-    -fx-background-color: -border;
+.vfx-scroll-bar > .icon:pressed {
+    -fx-opacity: 1.0;
 }
 
-.vfx-scroll-bar > .mfx-icon-wrapper:focused,
-.vfx-scroll-bar > .mfx-icon-wrapper:pressed {
-    -fx-background-color: -thumb-hop;
-}
-
-.vfx-scroll-bar > .mfx-icon-wrapper:focused > .mfx-font-icon,
-.vfx-scroll-bar > .mfx-icon-wrapper:pressed > .mfx-font-icon {
-    -mfx-color: white;
-}
-
-.vfx-scroll-bar:vertical > .decrement-button > .mfx-font-icon {
-    -mfx-description: "fas-angle-up";
-}
-
-.vfx-scroll-bar:vertical > .increment-button > .mfx-font-icon {
-    -mfx-description: "fas-angle-down";
-}
-
-.vfx-scroll-bar:horizontal > .decrement-button > .mfx-font-icon {
-    -mfx-description: "fas-angle-left";
-}
-
-.vfx-scroll-bar:horizontal > .increment-button > .mfx-font-icon {
-    -mfx-description: "fas-angle-right";
+.vfx-scroll-bar:compact > .icon {
+    -fx-scale-x: 1.15;
+    -fx-scale-y: 1.15;
 }

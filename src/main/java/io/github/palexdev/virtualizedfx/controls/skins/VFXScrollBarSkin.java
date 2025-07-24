@@ -23,9 +23,6 @@ import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
-import io.github.palexdev.mfxresources.builders.IconBuilder;
-import io.github.palexdev.mfxresources.builders.IconWrapperBuilder;
-import io.github.palexdev.mfxresources.icon.MFXIconWrapper;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import javafx.beans.InvalidationListener;
@@ -57,8 +54,8 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
     //================================================================================
     private final Region track;
     private final Region thumb;
-    private final MFXIconWrapper decIcon;
-    private final MFXIconWrapper incIcon;
+    private final Region decIcon;
+    private final Region incIcon;
 
     /**
      * The scroll bar's minimum width (VERTICAL) or height (HORIZONTAL)
@@ -79,14 +76,8 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
         thumb.getStyleClass().add("thumb");
 
         // Init buttons
-        decIcon = IconWrapperBuilder.build()
-            .setIcon(IconBuilder.build().get())
-            .addStyleClasses("decrement-button")
-            .get();
-        incIcon = IconWrapperBuilder.build()
-            .setIcon(IconBuilder.build().get())
-            .addStyleClasses("increment-button")
-            .get();
+        decIcon = new IconButton("decrement-icon");
+        incIcon = new IconButton("increment-icon");
 
         // Finalize init
         updateChildren();
@@ -102,8 +93,8 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
      * <p> - A listener to update the layout when these properties change:
      * {@link  VFXScrollBar#buttonsGapProperty()}, {@link VFXScrollBar#visibleAmountProperty()}
      * <p> - A listener on the {@link VFXScrollBar#showButtonsProperty()} to call {@link #updateChildren()} and update the layout
-     * <p> - A listener on the {@link VFXScrollBar#orientationProperty()} update the layout and bind the correct translation
-     * property for the thumb
+     * <p> - A listener on the {@link VFXScrollBar#orientationProperty()} update the layout, bind the correct translation
+     * property for the thumb and rotate the buttons for the icon to face the right direction
      */
     protected void addListeners() {
         VFXScrollBar bar = getSkinnable();
@@ -116,9 +107,15 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
                 .then(b -> updateChildren()),
             onInvalidated(bar.orientationProperty())
                 .then(o -> {
-                    layoutHandler = o == Orientation.VERTICAL
-                        ? new VerticalHandler()
-                        : new HorizontalHandler();
+                    if (o == Orientation.VERTICAL) {
+                        layoutHandler = new VerticalHandler();
+                        decIcon.setRotate(0.0);
+                        incIcon.setRotate(180.0);
+                    } else {
+                        layoutHandler = new HorizontalHandler();
+                        decIcon.setRotate(-90.0);
+                        incIcon.setRotate(90.0);
+                    }
                     layoutHandler.init();
                     bar.requestLayout();
                 })
@@ -200,7 +197,6 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
         return layoutHandler != null
             ? layoutHandler.minHeight()
             : super.computeMinHeight(width, topInset, rightInset, bottomInset, leftInset);
-
     }
 
     @Override
@@ -285,13 +281,18 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
 
             // Buttons
             boolean showButtons = bar.isShowButtons();
-            double bGap = bar.getButtonsGap();
-            double decBtnSize = showButtons ? decIcon.getSize() + bGap : 0.0;
-            double incBtnSize = showButtons ? incIcon.getSize() + bGap : 0.0;
             if (showButtons) {
-                layoutInArea(decIcon, x, y, w, h, 0, HPos.CENTER, VPos.TOP);
-                layoutInArea(incIcon, x, y, w, h, 0, HPos.CENTER, VPos.BOTTOM);
+                // By auto-sizing and then positioning we ignore the bar's padding for the buttons
+                // To resize them, we scale them in CSS
+                decIcon.autosize();
+                positionInArea(decIcon, x, y, w, h, 0, HPos.CENTER, VPos.TOP);
+                incIcon.autosize();
+                positionInArea(incIcon, x, y, w, h, 0, HPos.CENTER, VPos.BOTTOM);
             }
+
+            double bGap = bar.getButtonsGap();
+            double decBtnSize = showButtons ? decIcon.getHeight() + bGap : 0.0;
+            double incBtnSize = showButtons ? incIcon.getHeight() + bGap : 0.0;
 
             // Track
             double trackLength = Math.max(0.0, snapSizeY(h - (decBtnSize + incBtnSize)));
@@ -319,13 +320,14 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
          * For the vertical scroll bar, the minimum width depends on {@link VFXScrollBarSkin#MIN_SIZE} and the widths of
          * the two buttons. The value is the maximum between these three.
          * <p>
-         * If {@link VFXScrollBar#showButtonsProperty()} is set to {@code false} then the buttons' sizes are not taken into account!
+         * If {@link VFXScrollBar#showButtonsProperty()} is set to {@code false} then the buttons' sizes are ignored and
+         * falls back to {@link #MIN_SIZE}.
          */
         @Override
         public double minWidth() {
             VFXScrollBar bar = getSkinnable();
             double bSize = bar.isShowButtons()
-                ? Math.max(decIcon.getSize(), incIcon.getSize())
+                ? Math.max(LayoutUtils.snappedBoundWidth(decIcon), LayoutUtils.snappedBoundWidth(incIcon))
                 : 0.0;
             return Math.max(MIN_SIZE, bSize);
         }
@@ -334,14 +336,14 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
          * For the vertical scroll bar, the minimum height takes into account: the top and bottom insets, the buttons heights,
          * and the {@link VFXScrollBar#buttonsGapProperty()}.
          * <p>
-         * If {@link VFXScrollBar#showButtonsProperty()} is set to {@code false} then the buttons' sizes and the gap
-         * are not taken into account!
+         * If {@link VFXScrollBar#showButtonsProperty()} is set to {@code false} then the buttons' sizes are ignored and
+         * falls back to {@link #MIN_SIZE}.
          */
         @Override
         public double minHeight() {
             VFXScrollBar bar = getSkinnable();
             double bSize = bar.isShowButtons()
-                ? decIcon.getSize() + incIcon.getSize() + bar.getButtonsGap() * 2
+                ? LayoutUtils.snappedBoundHeight(decIcon) + LayoutUtils.snappedBoundHeight(decIcon) + bar.getButtonsGap() * 2
                 : 0.0;
             return snappedTopInset() + bSize + snappedBottomInset();
         }
@@ -383,13 +385,18 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
 
             // Buttons
             boolean showButtons = bar.isShowButtons();
-            double bGap = bar.getButtonsGap();
-            double decBtnSize = showButtons ? decIcon.getSize() + bGap : 0.0;
-            double incBtnSize = showButtons ? incIcon.getSize() + bGap : 0.0;
             if (showButtons) {
-                layoutInArea(decIcon, x, y, w, h, 0, HPos.LEFT, VPos.CENTER);
-                layoutInArea(incIcon, x, y, w, h, 0, HPos.RIGHT, VPos.CENTER);
+                // By auto-sizing and then positioning we ignore the bar's padding for the buttons
+                // To resize them, we scale them in CSS
+                decIcon.autosize();
+                positionInArea(decIcon, x, y, w, h, 0, HPos.LEFT, VPos.CENTER);
+                incIcon.autosize();
+                positionInArea(incIcon, x, y, w, h, 0, HPos.RIGHT, VPos.CENTER);
             }
+
+            double bGap = bar.getButtonsGap();
+            double decBtnSize = showButtons ? decIcon.getWidth() + bGap : 0.0;
+            double incBtnSize = showButtons ? incIcon.getWidth() + bGap : 0.0;
 
             // Track
             double trackLength = Math.max(0.0, snapSizeX(w - (decBtnSize + incBtnSize)));
@@ -417,14 +424,14 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
          * For the horizontal scroll bar, the minimum width takes into account: the left and right insets, the buttons widths,
          * and the {@link VFXScrollBar#buttonsGapProperty()}.
          * <p>
-         * If {@link VFXScrollBar#showButtonsProperty()} is set to {@code false} then the buttons' sizes and the gap
-         * are not taken into account!
+         * If {@link VFXScrollBar#showButtonsProperty()} is set to {@code false} then the buttons' sizes are ignored and
+         * falls back to {@link #MIN_SIZE}.
          */
         @Override
         public double minWidth() {
             VFXScrollBar bar = getSkinnable();
             double bSize = bar.isShowButtons()
-                ? decIcon.getSize() + incIcon.getSize() + bar.getButtonsGap() * 2
+                ? LayoutUtils.snappedBoundWidth(decIcon) + LayoutUtils.snappedBoundWidth(incIcon) + bar.getButtonsGap() * 2
                 : 0.0;
             return snappedLeftInset() + bSize + snappedRightInset();
         }
@@ -433,15 +440,33 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
          * For the horizontal scroll bar, the minimum height depends on {@link VFXScrollBarSkin#MIN_SIZE} and the heights of
          * the two buttons. The value is the maximum between these three.
          * <p>
-         * If {@link VFXScrollBar#showButtonsProperty()} is set to {@code false} then the buttons' sizes are not taken into account!
+         * If {@link VFXScrollBar#showButtonsProperty()} is set to {@code false} then the buttons' sizes are ignored and
+         * falls back to {@link #MIN_SIZE}.
          */
         @Override
         public double minHeight() {
             VFXScrollBar bar = getSkinnable();
             double bSize = bar.isShowButtons()
-                ? Math.max(decIcon.getSize(), incIcon.getSize())
+                ? Math.max(LayoutUtils.snappedBoundHeight(decIcon), LayoutUtils.snappedBoundHeight(incIcon))
                 : 0.0;
             return Math.max(MIN_SIZE, bSize);
+        }
+    }
+
+    protected static class IconButton extends Region {
+        public IconButton(String iconStyleClass) {
+            getStyleClass().addAll("icon", iconStyleClass);
+            setFocusTraversable(true);
+        }
+
+        @Override
+        protected double computeMaxWidth(double height) {
+            return prefWidth(-1);
+        }
+
+        @Override
+        protected double computeMaxHeight(double width) {
+            return prefHeight(-1);
         }
     }
 }
