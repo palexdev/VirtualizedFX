@@ -3,7 +3,6 @@ module VirtualizedFX {
 
     requires transitive mfx.core;
     requires transitive mfx.effects;
-    requires transitive mfx.resources;
 
     // Base
     exports io.github.palexdev.virtualizedfx;
