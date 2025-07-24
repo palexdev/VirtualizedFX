@@ -30,6 +30,7 @@ dependencies {
     testImplementation("io.github.palexdev:scenicview:$scenicView") {
         exclude(group: "org.openjfx")
     }
+    testImplementation "fr.brouillard.oss:cssfx:$cssfx"
     testImplementation "net.datafaker:datafaker:$dataFaker"
     testImplementation "com.google.code.gson:gson:$gson"
 }
