@@ -306,6 +306,8 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
 
         // Compute range and new state
         IntegerRange range = helper.range();
+        if (!rangeCheck(range, true, true)) return;
+
         ExcludingIntegerRange eRange = ExcludingIntegerRange.of(range);
         VFXListState<T, C> newState = new VFXListState<>(list, range);
 
@@ -548,6 +550,7 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
      * <p> 1) If the list is empty
      * <p> 2) If the cell factory is {@code null}
      * <p> 3) If the cell size is lesser or equal to 0
+     * <p> 4) If the list sizes are valid (> 0)
      * <p>
      * If any of those checks is true: the list's state is set to {@link VFXListState#INVALID}, the
      * current state is disposed, the 'invalidatingPos' flag is reset, finally returns false.
