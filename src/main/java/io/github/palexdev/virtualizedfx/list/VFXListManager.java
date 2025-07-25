@@ -482,12 +482,14 @@ public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXLis
      *
      * @see ExcludingIntegerRange
      */
+    @SuppressWarnings("unchecked")
     protected VFXListState<T, C> intersectionAlgorithm() {
         VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
 
         // New range
         IntegerRange range = helper.range();
+        if (!rangeCheck(range, false, false)) return VFXListState.INVALID;
         ExcludingIntegerRange eRange = ExcludingIntegerRange.of(range);
 
         // Current and new states, intersection between current and new range
