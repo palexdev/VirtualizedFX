@@ -135,6 +135,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
      * <p> - A listener on the {@link VFXScrollPane#contentProperty()} to update the viewport and call {@link #updateScrollBindings(Node, Node)}
      * <p> - A listener on the {@link VFXScrollPane#hoverProperty()} to hide/show the scroll bars according to the {@link VFXScrollPane#autoHideBarsProperty()}
      * and a bunch of other conditions, see {@link #showBars(boolean)}
+     * <p> - A listener on {@link VFXScrollPane#minBarsOpacityProperty()} and {@link VFXScrollPane#maxBarsOpacityProperty()}
+     * to call {@link #buildBarsAnimations()}
      */
     private void addListeners() {
         VFXScrollPane pane = getSkinnable();
@@ -198,6 +200,9 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             withListener(pane.hBarPosProperty(), ll),
             withListener(pane.scrollBarsGapProperty(), ll),
             // Animations
+            onInvalidated(pane.minBarsOpacityProperty())
+                .then(v -> buildBarsAnimations())
+                .invalidating(pane.maxBarsOpacityProperty()),
             onInvalidated(pane.hoverProperty())
                 .condition(h -> !(vBar.isPressed() || vBar.isPressed()))
                 .then(this::showBars)
@@ -355,19 +360,8 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             return;
         }
 
-        if (hideAnimation == null) {
-            hideAnimation = TimelineBuilder.build()
-                .setDelay(HIDE_DELAY)
-                .add(KeyFrames.of(SHOW_HIDE_DURATION, vBar.opacityProperty(), 0.0, SHOW_HIDE_CURVE))
-                .add(KeyFrames.of(SHOW_HIDE_DURATION, hBar.opacityProperty(), 0.0, SHOW_HIDE_CURVE))
-                .getAnimation();
-        }
-        if (showAnimation == null) {
-            showAnimation = TimelineBuilder.build()
-                .add(KeyFrames.of(SHOW_HIDE_DURATION, vBar.opacityProperty(), 1.0, SHOW_HIDE_CURVE))
-                .add(KeyFrames.of(SHOW_HIDE_DURATION, hBar.opacityProperty(), 1.0, SHOW_HIDE_CURVE))
-                .getAnimation();
-        }
+        if (showAnimation == null || hideAnimation == null)
+            buildBarsAnimations();
 
         showAnimation.setOnFinished(null);
         if (show) {
@@ -382,6 +376,25 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
                 hideAnimation.playFromStart();
             }
         }
+    }
+
+    /**
+     * Responsible for building the show and hide animations for the scroll bars according to the parameters specified
+     * by [VFXScrollPane#minBarsOpacityProperty()] and [VFXScrollPane#maxBarsOpacityProperty()].
+     */
+    private void buildBarsAnimations() {
+        VFXScrollPane pane = getSkinnable();
+        double min = NumberUtils.clamp(pane.getMinBarsOpacity(), 0.0, 1.0);
+        double max = NumberUtils.clamp(pane.getMaxBarsOpacity(), 0.0, 1.0);
+        hideAnimation = TimelineBuilder.build()
+            .setDelay(HIDE_DELAY)
+            .add(KeyFrames.of(SHOW_HIDE_DURATION, vBar.opacityProperty(), min, SHOW_HIDE_CURVE))
+            .add(KeyFrames.of(SHOW_HIDE_DURATION, hBar.opacityProperty(), min, SHOW_HIDE_CURVE))
+            .getAnimation();
+        showAnimation = TimelineBuilder.build()
+            .add(KeyFrames.of(SHOW_HIDE_DURATION, vBar.opacityProperty(), max, SHOW_HIDE_CURVE))
+            .add(KeyFrames.of(SHOW_HIDE_DURATION, hBar.opacityProperty(), max, SHOW_HIDE_CURVE))
+            .getAnimation();
     }
 
     //================================================================================

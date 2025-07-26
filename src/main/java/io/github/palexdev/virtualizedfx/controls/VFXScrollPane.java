@@ -70,7 +70,9 @@ import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
  * {@link #fitToWidthProperty()} and {@link #fitToHeightProperty()} (works only for non-virtualized contents)
  * <p> - You choose on which side to have the two scroll bars with {@link #vBarPosProperty()} and {@link #hBarPosProperty()}
  * <p> - The {@link #scrollBarsGapProperty()} determines how much space separates the scroll bars
- * <p> - You can make the scroll bars hide automatically after a certain amount of time, {@link #autoHideBarsProperty()}
+ * <p> - You can make the scroll bars hide automatically after a certain amount of time, {@link #autoHideBarsProperty()}.
+ * And you can also customize their opacity levels through the properties {@link #minBarsOpacityProperty()} and
+ * {@link #maxBarsOpacityProperty()}.
  * <p> - You can disable the bars and the scrolling by setting the relative policies:
  * {@link #vBarPolicyProperty()}, {@link #hBarPolicyProperty()}
  * <p> - Allows scrolling by dragging the mouse on the viewport by enabling the {@link #dragToScrollProperty()}, and
@@ -261,6 +263,20 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
         this,
         "autoHideBars",
         false
+    );
+
+    private final StyleableDoubleProperty minBarsOpacity = new StyleableDoubleProperty(
+        StyleableProperties.MIN_BARS_OPACITY,
+        this,
+        "minBarsOpacity",
+        0.0
+    );
+
+    private final StyleableDoubleProperty maxBarsOpacity = new StyleableDoubleProperty(
+        StyleableProperties.MAX_BARS_OPACITY,
+        this,
+        "maxBarsOpacity",
+        1.0
     );
 
     private final StyleableObjectProperty<ScrollBarPolicy> vBarPolicy = new StyleableObjectProperty<>(
@@ -540,6 +556,43 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
 
     public void setAutoHideBars(boolean autoHideBars) {
         this.autoHideBars.set(autoHideBars);
+    }
+
+    public double getMinBarsOpacity() {
+        return minBarsOpacity.get();
+    }
+
+    /// Specifies the minimum opacity possible for the scroll bars when the auto hide function is active.
+    ///
+    /// Hiding completely the scroll bars may result in a bad UX if the user has no way to tell if there is more content
+    /// or not in the scroll pane.
+    ///
+    /// Can be set from CSS via the property: '-vfx-min-bars-opacity'.
+    public StyleableDoubleProperty minBarsOpacityProperty() {
+        return minBarsOpacity;
+    }
+
+    public void setMinBarsOpacity(double minBarsOpacity) {
+        this.minBarsOpacity.set(minBarsOpacity);
+    }
+
+    public double getMaxBarsOpacity() {
+        return maxBarsOpacity.get();
+    }
+
+    /// Specifies the maximum opacity possible for the scroll bars when the auto hide function is active.
+    ///
+    /// This may be useful when the layout mode is set to [LayoutMode#COMPACT] and the scroll bars end up covering part
+    /// of the content. Ideally, this should be avoided by padding the content to avoid going below the bars. However, if
+    /// for whatever reason it can't be done, you can make them slightly transparent.
+    ///
+    /// Can be set from CSS via the property: '-vfx-min-bars-opacity'.
+    public StyleableDoubleProperty maxBarsOpacityProperty() {
+        return maxBarsOpacity;
+    }
+
+    public void setMaxBarsOpacity(double maxBarsOpacity) {
+        this.maxBarsOpacity.set(maxBarsOpacity);
     }
 
     public ScrollBarPolicy getVBarPolicy() {
@@ -853,6 +906,20 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
                 false
             );
 
+        private static final CssMetaData<VFXScrollPane, Number> MIN_BARS_OPACITY =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-min-bars-opacity",
+                VFXScrollPane::minBarsOpacityProperty,
+                0.0
+            );
+
+        private static final CssMetaData<VFXScrollPane, Number> MAX_BARS_OPACITY =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-max-bars-opacity",
+                VFXScrollPane::maxBarsOpacityProperty,
+                1.0
+            );
+
         private static final CssMetaData<VFXScrollPane, ScrollBarPolicy> VBAR_POLICY =
             FACTORY.createEnumCssMetaData(
                 ScrollBarPolicy.class,
@@ -953,7 +1020,8 @@ public class VFXScrollPane extends Control<VFXScrollPaneBehavior> implements VFX
                 LAYOUT_MODE, ALIGNMENT, MAIN_AXIS,
                 FIT_TO_WIDTH, FIT_TO_HEIGHT,
                 VBAR_POS, HBAR_POS, SCROLL_BARS_GAP,
-                AUTO_HIDE_BARS, VBAR_POLICY, HBAR_POLICY,
+                AUTO_HIDE_BARS, MIN_BARS_OPACITY, MAX_BARS_OPACITY,
+                VBAR_POLICY, HBAR_POLICY,
                 V_TRACK_INCREMENT, V_UNIT_INCREMENT, H_TRACK_INCREMENT, H_UNIT_INCREMENT,
                 SHOW_BUTTONS, BUTTONS_GAP,
                 SMOOTH_SCROLL, TRACK_SMOOTH_SCROLL,
