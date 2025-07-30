@@ -437,8 +437,8 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                     double pixelsToFirst = rangeToFirstVisible.diff() * size;
                     double visibleAmountFirst = container.getHPos() % size;
 
-                    double x = -NumberUtils.clamp(container.getVPos(), 0.0, getMaxVScroll());
-                    double y = -(pixelsToFirst + visibleAmountFirst);
+                    double x = -(pixelsToFirst + visibleAmountFirst);
+                    double y = -NumberUtils.clamp(container.getVPos(), 0.0, getMaxVScroll());
                     return Position.of(x, y);
                 })
                 .addSources(container.layoutBoundsProperty())
