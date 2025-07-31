@@ -24,12 +24,11 @@ import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty;
-import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty.SizeConverter;
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -57,7 +56,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
-import javafx.css.StyleableProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
 import javafx.scene.shape.Rectangle;
@@ -654,7 +652,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
         32.0
     );
 
-    private final StyleableSizeProperty columnsSize = new StyleableSizeProperty(
+    private final StyleableObjectProperty<Size> columnsSize = SizeProperty.styleableProperty(
         StyleableProperties.COLUMNS_SIZE,
         this,
         "columnsSize",
@@ -747,10 +745,8 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
      * This behavior can also be modified as it is defined by the default {@link VFXTableHelper} implementations.
      * <p>
      * Can be set in CSS via the property: '-vfx-columns-size'.
-     *
-     * @see SizeConverter
      */
-    public StyleableSizeProperty columnsSizeProperty() {
+    public StyleableObjectProperty<Size> columnsSizeProperty() {
         return columnsSize;
     }
 
@@ -918,17 +914,11 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
             );
 
         private static final CssMetaData<VFXTable<?>, Size> COLUMNS_SIZE =
-            new CssMetaData<>("-vfx-columns-size", SizeConverter.getInstance(), Size.of(100, 32)) {
-                @Override
-                public boolean isSettable(VFXTable<?> styleable) {
-                    return !styleable.columnsSizeProperty().isBound();
-                }
-
-                @Override
-                public StyleableProperty<Size> getStyleableProperty(VFXTable<?> styleable) {
-                    return styleable.columnsSizeProperty();
-                }
-            };
+            SizeProperty.cssMetaData(
+                "-vfx-columns-size",
+                VFXTable::columnsSizeProperty,
+                Size.of(100, 32)
+            );
 
         private static final CssMetaData<VFXTable<?>, ColumnsLayoutMode> COLUMNS_LAYOUT_MODE =
             FACTORY.createEnumCssMetaData(

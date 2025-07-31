@@ -26,12 +26,11 @@ import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
+import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty;
-import io.github.palexdev.mfxcore.base.properties.styleable.StyleableSizeProperty.SizeConverter;
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -53,7 +52,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
-import javafx.css.StyleableProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Pos;
 import javafx.scene.shape.Rectangle;
@@ -439,7 +437,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
     //================================================================================
     // Styleable Properties
     //================================================================================
-    private final StyleableSizeProperty cellSize = new StyleableSizeProperty(
+    private final StyleableObjectProperty<Size> cellSize = SizeProperty.styleableProperty(
         StyleableProperties.CELL_SIZE,
         this,
         "cellSize",
@@ -514,11 +512,8 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
      * Specifies the cells' width and height as a {@link Size} object.
      * <p>
      * Can be set in CSS via the property: '-vfx-cell-size'.
-     * <p>
-     * <b>Note</b> that this is a special styleable property, in order to set it in CSS see the docs here
-     * {@link SizeConverter}.
      */
-    public StyleableSizeProperty cellSizeProperty() {
+    public StyleableObjectProperty<Size> cellSizeProperty() {
         return cellSize;
     }
 
@@ -689,17 +684,11 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
         private static final CssMetaData<VFXGrid<?, ?>, Size> CELL_SIZE =
-            new CssMetaData<>("-vfx-cell-size", SizeConverter.getInstance(), Size.of(100, 100)) {
-                @Override
-                public boolean isSettable(VFXGrid<?, ?> styleable) {
-                    return !styleable.cellSizeProperty().isBound();
-                }
-
-                @Override
-                public StyleableProperty<Size> getStyleableProperty(VFXGrid<?, ?> styleable) {
-                    return styleable.cellSizeProperty();
-                }
-            };
+            SizeProperty.cssMetaData(
+                "-vfx-cell-size",
+                VFXGrid::cellSizeProperty,
+                Size.of(100, 100)
+            );
 
         private static final CssMetaData<VFXGrid<?, ?>, Number> COLUMNS_NUM =
             FACTORY.createSizeCssMetaData(
