@@ -78,7 +78,7 @@ public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappi
      * @return the {@link VFXTable} instance from the {@link VFXContext} stored by {@link #onCreated(VFXContext)}.
      */
     public VFXTable<T> getTable() {
-        return ((VFXTable<T>) getContext().getContainer());
+        return ((VFXTable<T>) context().getContainer());
     }
 
     /**

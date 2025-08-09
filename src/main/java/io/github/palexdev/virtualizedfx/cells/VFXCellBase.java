@@ -225,7 +225,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     /**
      * @see #onCreated(VFXContext)
      */
-    protected VFXContext<T> getContext() {
+    protected VFXContext<T> context() {
         return context;
     }
 
