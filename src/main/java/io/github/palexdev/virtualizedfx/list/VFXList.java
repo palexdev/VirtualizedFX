@@ -36,6 +36,7 @@ import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
@@ -122,6 +123,8 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
     //================================================================================
     // Properties
     //================================================================================
+    private final VFXContext<T> context = new VFXContext<>(this);
+
     private final VFXCellsCache<T, C> cache;
     private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList()) {
         @Override
@@ -130,7 +133,7 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
             super.set(newValue);
         }
     };
-    private final CellFactory<T, C> cellFactory = new CellFactory<>(this);
+    private final CellFactory<T, C> cellFactory = new CellFactory<>(context);
     private final ReadOnlyObjectWrapper<VFXListHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
         @Override
         public void set(VFXListHelper<T, C> newValue) {
@@ -771,5 +774,10 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
 
     protected void setNeedsViewportLayout(boolean needsViewportLayout) {
         this.needsViewportLayout.set(needsViewportLayout);
+    }
+
+    @Override
+    public VFXContext<T> context() {
+        return context;
     }
 }

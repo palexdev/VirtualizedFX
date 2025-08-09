@@ -187,4 +187,10 @@ public interface VFXContainer<T> {
     default void setBufferSize(BufferSize bufferSize) {
         bufferSizeProperty().set(bufferSize);
     }
+
+    /**
+     * @return the {@link VFXContext} object which carries the virtualized container's instance and
+     * additional external services that may be needed/used by the cells.
+     */
+    VFXContext<T> context();
 }

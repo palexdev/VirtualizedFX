@@ -36,6 +36,7 @@ import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
@@ -200,6 +201,8 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     //================================================================================
     // Properties
     //================================================================================
+    private final VFXContext<T> context = new VFXContext<>(this);
+
     private final VFXCellsCache<T, VFXTableRow<T>> cache;
     private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList()) {
         @Override
@@ -208,8 +211,9 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
             super.set(newValue);
         }
     };
-    private final CellFactory<T, VFXTableRow<T>> rowFactory = new CellFactory<>(this);
+    private final CellFactory<T, VFXTableRow<T>> rowFactory = new CellFactory<>(context);
     private final ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = FXCollections.observableArrayList();
+
     private final ReadOnlyObjectWrapper<VFXTableHelper<T>> helper = new ReadOnlyObjectWrapper<>() {
         @Override
         public void set(VFXTableHelper<T> newValue) {
@@ -242,6 +246,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
         () -> 0.0,
         this::getMaxHScroll
     );
+
     private final VFXTableStateProperty<T> state = new VFXTableStateProperty<>(VFXTableState.INVALID);
     private final ViewportLayoutRequestProperty<T> needsViewportLayout = new ViewportLayoutRequestProperty<>();
 
@@ -1105,5 +1110,10 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 
     protected void setNeedsViewportLayout(ViewportLayoutRequest needsViewportLayout) {
         this.needsViewportLayout.set(needsViewportLayout);
+    }
+
+    @Override
+    public VFXContext<T> context() {
+        return context;
     }
 }

@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.cells.base.VFXMappingTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
@@ -75,13 +76,10 @@ public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappi
     //================================================================================
 
     /**
-     * @return the {@link VFXTable} instance by using the {@link #rowProperty()}. {@code Null} if the row instance has
-     * not been set yet.
+     * @return the {@link VFXTable} instance from the {@link VFXContext} stored by {@link #onCreated(VFXContext)}.
      */
     public VFXTable<T> getTable() {
-        return Optional.ofNullable(getRow())
-            .map(VFXTableRow::getTable)
-            .orElse(null);
+        return ((VFXTable<T>) getContext().getContainer());
     }
 
     /**

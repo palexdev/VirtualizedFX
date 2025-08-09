@@ -19,6 +19,7 @@
 package io.github.palexdev.virtualizedfx.cells.base;
 
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
 import javafx.scene.Node;
 
@@ -106,17 +107,16 @@ public interface VFXCell<T> {
 
     /**
      * Called when a cell is created and associated with a {@link VFXContainer}. This method provides the cell with
-     * a reference to its container, allowing for any necessary initialization that depends on the container context.
+     * a reference to its container, along with additional services that the cell may use to extend its functionalities.
      * <p>
-     * By default, this method does nothing. Subclasses can override it to implement container-specific setup
-     * or to access container properties and methods at the time of creation.
+     * <i>It's up to the implementation to decide how to use it.</i>
      * <p></p>
      * <b>Note:</b> This method should only be called by the container that created this cell. Calling it
      * with a different or incorrect container instance may lead to inconsistent behavior or errors.
      *
-     * @param container the {@link VFXContainer} instance that owns this cell
+     * @see VFXContext
      */
-    default void onCreated(VFXContainer<T> container) {}
+    default void onCreated(VFXContext<T> context) {}
 
     /**
      * Virtualized containers that make use of a cache to store unneeded cells that may be required again in a second time

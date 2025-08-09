@@ -38,6 +38,7 @@ import io.github.palexdev.mfxcore.utils.PositionUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
@@ -135,6 +136,8 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
     //================================================================================
     // Properties
     //================================================================================
+    private final VFXContext<T> context = new VFXContext<>(this);
+
     private final VFXCellsCache<T, C> cache;
     private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList()) {
         @Override
@@ -143,7 +146,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
             super.set(newValue);
         }
     };
-    private final CellFactory<T, C> cellFactory = new CellFactory<>(this);
+    private final CellFactory<T, C> cellFactory = new CellFactory<>(context);
     private final ReadOnlyObjectWrapper<VFXGridHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
         @Override
         public void set(VFXGridHelper<T, C> newValue) {
@@ -863,5 +866,10 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
 
     protected void setNeedsViewportLayout(boolean needsViewportLayout) {
         this.needsViewportLayout.set(needsViewportLayout);
+    }
+
+    @Override
+    public VFXContext<T> context() {
+        return context;
     }
 }

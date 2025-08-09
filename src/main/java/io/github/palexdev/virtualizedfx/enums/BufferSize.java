@@ -19,7 +19,7 @@
 package io.github.palexdev.virtualizedfx.enums;
 
 /**
- * Enumeration to set the buffer size of Virtualized containers. To avoid the used abusing the 'dynamic' buffer system, by
+ * Enumeration to set the buffer size of virtualized containers. To avoid the user abusing the 'dynamic' buffer system, by
  * setting unreasonably high numbers or 0, an enumeration is used instead.
  * <p>
  * The size of the buffer is given by the constant's ordinal + 1, {@link #val()}.

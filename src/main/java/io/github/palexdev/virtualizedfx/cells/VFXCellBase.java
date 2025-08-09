@@ -25,7 +25,7 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectPrope
 import io.github.palexdev.mfxcore.controls.Control;
 import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
-import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -79,7 +79,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     //================================================================================
     // Properties
     //================================================================================
-    private VFXContainer<T> container;
+    private VFXContext<T> context;
     private final IntegerProperty index = new SimpleIntegerProperty(-1);
     private final ObjectProperty<T> item = new SimpleObjectProperty<>();
     private final ObjectProperty<Node> graphic = new SimpleObjectProperty<>();
@@ -138,21 +138,19 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     }
 
     /**
-     * Stores the {@link VFXContainer} instance that owns this cell.
-     * <p>
-     * The implementation disallows subsequent calls.
-     * In other words, once the instance is set (and not null), it will not be replaced.
+     * {@inheritDoc}
+     * <p></p>
+     * The implementation stores the context and prevents overwrites once the instance is set (not null anymore).
      */
     @Override
-    public void onCreated(VFXContainer<T> container) {
-        if (this.container == null) {
-            this.container = container;
-        }
+    public void onCreated(VFXContext<T> context) {
+        if (this.context == null)
+            this.context = context;
     }
 
     @Override
     public void dispose() {
-        container = null;
+        context = null;
     }
 
     //================================================================================
@@ -224,10 +222,10 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     //================================================================================
 
     /**
-     * @return the {@link VFXContainer} instance that owns this cell
+     * @see #onCreated(VFXContext)
      */
-    public VFXContainer<T> getContainer() {
-        return container;
+    protected VFXContext<T> getContext() {
+        return context;
     }
 
     public int getIndex() {

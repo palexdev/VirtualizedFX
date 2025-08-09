@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.Property;
@@ -14,16 +15,13 @@ import javafx.beans.value.ObservableValue;
 /**
  * A wrapper for cell creation functions used by virtualized containers.
  * <p>
- * Encapsulates a cell generation function ({@link #create(Object)}) along with a reference to the associated {@link VFXContainer},
- * allowing each created cell to access the container instance upon creation. In other words, this wrapper is an easy
- * way to provide all cells the container they belong to without radical API changes.
- * <p>
- * Basically provides a hook that invokes {@link VFXCell#onCreated(VFXContainer)} on each newly generated cell,
- * passing the container instance to the cell. This is particularly useful when cells need contextual information from
- * the container, such as configuration, state, selection handling.
+ * Encapsulates a cell generation function ({@link #create(Object)}) along with a reference to the {@link VFXContext} of
+ * the container that uses the factory.<p>
+ * This allows each created cell to access the container's context upon creation. In other words, this wrapper is an easy
+ * way to provide all cells the container's instance as well as additional services without radical API changes.
  * <p> </p>
  * <b>Note 1:</b> nothing prevents you from creating cells using the function directly, however, keep in mind that to
- * automatically make use of the new {@link VFXCell#onCreated(VFXContainer)} hook, you must use {@link #create(Object)}
+ * automatically make use of the new {@link VFXCell#onCreated(VFXContext)} hook, you must use {@link #create(Object)}
  * instead.
  * <p> </p>
  * <b>Note 2:</b> for convenience this extends {@link Property} and delegates the implemented methods to the wrapped
@@ -33,7 +31,7 @@ public class CellFactory<T, C extends VFXCell<T>> implements Property<Function<T
     //================================================================================
     // Properties
     //================================================================================
-    private final VFXContainer<T> owner;
+    private final VFXContext<T> context;
     private final FunctionProperty<T, C> factory = new FunctionProperty<>() {
         @Override
         protected void invalidated() {
@@ -44,8 +42,8 @@ public class CellFactory<T, C extends VFXCell<T>> implements Property<Function<T
     //================================================================================
     // Constructors
     //================================================================================
-    public CellFactory(VFXContainer<T> owner) {
-        this.owner = owner;
+    public CellFactory(VFXContext<T> context) {
+        this.context = context;
     }
 
     //================================================================================
@@ -55,14 +53,14 @@ public class CellFactory<T, C extends VFXCell<T>> implements Property<Function<T
     /**
      * Creates a new cell for the given item, using the current cell factory function.
      * <p>
-     * If the factory function is set, it generates a cell, calls {@link VFXCell#onCreated(VFXContainer)}
+     * If the factory function is set, it generates a cell, calls {@link VFXCell#onCreated(VFXContext)}
      * on it, and then returns it. Returns {@code null} if no factory function is defined.
      */
     public C create(T item) {
         return Optional.ofNullable(getValue())
             .map(f -> f.apply(item))
             .map(c -> {
-                c.onCreated(getOwner());
+                c.onCreated(getContext());
                 return c;
             })
             .orElse(null);
@@ -148,10 +146,17 @@ public class CellFactory<T, C extends VFXCell<T>> implements Property<Function<T
     //================================================================================
 
     /**
+     * @return the virtualized container's {@link VFXContext} instance.
+     */
+    public VFXContext<T> getContext() {
+        return context;
+    }
+
+    /**
      * @return the container that owns this cell factory and inherently the cells created by it.
      */
     public VFXContainer<T> getOwner() {
-        return owner;
+        return getContext().getContainer();
     }
 
     /**
