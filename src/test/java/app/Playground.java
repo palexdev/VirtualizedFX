@@ -35,8 +35,8 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-import static utils.Utils.debugView;
-import static utils.Utils.items;
+import static src.utils.Utils.debugView;
+import static src.utils.Utils.items;
 
 public class Playground extends Application {
     private static final String LOREM;

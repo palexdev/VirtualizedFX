@@ -43,19 +43,20 @@ import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.utils.Utils;
+import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
-import model.User;
 import org.opentest4j.AssertionFailedError;
-import utils.TestFXUtils;
-import utils.TestFXUtils.Counter;
+import src.model.User;
+import src.utils.TestFXUtils;
+import src.utils.TestFXUtils.Counter;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static utils.TestFXUtils.FP_ASSERTIONS_DELTA;
-import static utils.TestFXUtils.counter;
+import static src.utils.TestFXUtils.FP_ASSERTIONS_DELTA;
+import static src.utils.TestFXUtils.counter;
 
 public class TableTestUtils {
     //================================================================================
@@ -435,6 +436,11 @@ public class TableTestUtils {
                 }
             };
         }
+
+        @Override
+        public VFXCellsCache<User, VFXTableRow<User>> getCache() {
+            return super.getCache();
+        }
     }
 
     public static class TestColumn<E> extends VFXDefaultTableColumn<User, UserCell<E>> implements Comparable<TestColumn<E>> {
@@ -448,6 +454,11 @@ public class TableTestUtils {
         @Override
         public int compareTo(TestColumn<E> o) {
             return Integer.compare(priority, o.priority);
+        }
+
+        @Override
+        public VFXCellsCache<User, UserCell<E>> cache() {
+            return super.cache();
         }
     }
 

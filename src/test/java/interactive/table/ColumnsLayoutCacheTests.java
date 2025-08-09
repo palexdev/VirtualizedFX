@@ -34,18 +34,18 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.collections.ObservableList;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import model.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
+import src.model.User;
 
 import static interactive.table.TableTestUtils.setColumnWidth;
-import static model.User.users;
 import static org.junit.jupiter.api.Assertions.*;
-import static utils.TestFXUtils.setupStage;
-import static utils.Utils.setWindowSize;
+import static src.model.User.users;
+import static src.utils.TestFXUtils.setupStage;
+import static src.utils.Utils.setWindowSize;
 
 @ExtendWith(ApplicationExtension.class)
 public class ColumnsLayoutCacheTests {

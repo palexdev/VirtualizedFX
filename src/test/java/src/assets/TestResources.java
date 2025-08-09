@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Parisi Alessandro - alessandro.parisi406@gmail.com
+ * Copyright (C) 2025 Parisi Alessandro - alessandro.parisi406@gmail.com
  * This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX)
  *
  * VirtualizedFX is free software: you can redistribute it and/or
@@ -16,7 +16,7 @@
  * along with VirtualizedFX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package assets;
+package src.assets;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,7 +36,7 @@ public class TestResources {
     //================================================================================
     public static <T> T gsonLoad(String res, Type type) {
         Gson gson = new Gson();
-        InputStream resStream = TestResources.class.getResourceAsStream(res);
+        InputStream resStream = TestResources.class.getClassLoader().getResourceAsStream("assets/" + res);
         return gson.fromJson(new InputStreamReader(resStream), type);
     }
 

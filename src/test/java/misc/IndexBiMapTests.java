@@ -21,8 +21,8 @@ package misc;
 import java.util.List;
 
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap;
-import model.User;
 import org.junit.jupiter.api.Test;
+import src.model.User;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

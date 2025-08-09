@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import assets.TestResources;
 import com.google.gson.reflect.TypeToken;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -40,10 +39,7 @@ import io.github.palexdev.mfxresources.icon.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cells.VFXObservingTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
-import io.github.palexdev.virtualizedfx.table.VFXTable;
-import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
-import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
-import io.github.palexdev.virtualizedfx.table.VFXTableState;
+import io.github.palexdev.virtualizedfx.table.*;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
@@ -52,26 +48,26 @@ import javafx.collections.ObservableList;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import model.FXUser;
-import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
-import utils.Utils;
+import src.assets.TestResources;
+import src.model.FXUser;
+import src.model.User;
 
 import static interactive.table.TableTestUtils.*;
 import static interactive.table.TableTestUtils.Table.emptyColumns;
 import static io.github.palexdev.virtualizedfx.table.VFXTableColumn.swapColumns;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
-import static model.FXUser.fxusers;
-import static model.User.faker;
-import static model.User.users;
 import static org.junit.jupiter.api.Assertions.*;
-import static utils.TestFXUtils.*;
-import static utils.Utils.*;
+import static src.model.FXUser.fxusers;
+import static src.model.User.faker;
+import static src.model.User.users;
+import static src.utils.TestFXUtils.*;
+import static src.utils.Utils.*;
 
 @ExtendWith(ApplicationExtension.class)
 public class TableTests {
@@ -272,6 +268,17 @@ public class TableTests {
         Table table = new Table(users(50));
         table.populateCacheAll();
         resetCounters();
+
+        for (VFXTableRow<User> cell : table.getCache().cells()) {
+            assertNotNull(cell.getTable());
+        }
+
+        for (VFXTableColumn<User, ? extends VFXTableCell<User>> column : table.getColumns()) {
+            for (Object cell : ((TestColumn) column).cache().cells()) {
+                assertNotNull(((UserCell) cell).getTable());
+            }
+        }
+
         robot.interact(() -> pane.getChildren().add(table));
 
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
@@ -1179,7 +1186,7 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Remove all at 0
-        robot.interact(() -> Utils.removeAll(table.getColumns(), 0, 1, 2));
+        robot.interact(() -> removeAll(table.getColumns(), 0, 1, 2));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
         assertCounter(48, 1, 112, 48, 0, 48, 18);
 
@@ -1213,22 +1220,22 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Remove before no intersect
-        robot.interact(() -> Utils.removeAll(table.getColumns(), 0, 1));
+        robot.interact(() -> removeAll(table.getColumns(), 0, 1));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(6, 12));
         assertCounter(32, 1, 112, 32, 0, 32, 12);
 
         // Remove before intersect
-        robot.interact(() -> Utils.removeAll(table.getColumns(), 5, 6));
+        robot.interact(() -> removeAll(table.getColumns(), 5, 6));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(6, 12));
         assertCounter(32, 1, 112, 32, 0, 32, 12);
 
         // Remove after intersect
-        robot.interact(() -> Utils.removeAll(table.getColumns(), 12, 13));
+        robot.interact(() -> removeAll(table.getColumns(), 12, 13));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(6, 12));
         assertCounter(16, 1, 112, 16, 0, 16, 6);
 
         // Remove after no intersect
-        robot.interact(() -> Utils.removeAll(table.getColumns(), 13, 14));
+        robot.interact(() -> removeAll(table.getColumns(), 13, 14));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(6, 12));
         assertCounter(0, 1, 112, 0, 0, 0, 0);
 
@@ -1255,7 +1262,7 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Remove all at end
-        robot.interact(() -> Utils.removeAll(table.getColumns(), 19, 20, 21));
+        robot.interact(() -> removeAll(table.getColumns(), 19, 20, 21));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(12, 18));
         assertCounter(48, 1, 112, 48, 0, 48, 18);
 
@@ -1267,12 +1274,12 @@ public class TableTests {
         assertCounter(32, 2, 224, 32, 0, 32, 12);
 
         // Remove before no intersect
-        robot.interact(() -> Utils.removeAll(table.getColumns(), 0, 1));
+        robot.interact(() -> removeAll(table.getColumns(), 0, 1));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(8, 14));
         assertCounter(0, 1, 112, 0, 0, 0, 0);
 
         // Remove before intersect
-        robot.interact(() -> Utils.removeAll(table.getColumns(), 6, 7, 8));
+        robot.interact(() -> removeAll(table.getColumns(), 6, 7, 8));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(5, 11));
         assertCounter(16, 1, 112, 16, 0, 16, 6);
 
@@ -1526,7 +1533,7 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Remove all at 0
-        robot.interact(() -> Utils.removeAll(table, 0, 1, 2, 3));
+        robot.interact(() -> removeAll(table, 0, 1, 2, 3));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 28, 0, 0, 0);
         assertRowsCounter(0, 16, 4, 0, 0, 0);
@@ -1540,7 +1547,7 @@ public class TableTests {
         assertRowsCounter(0, 64, 4, 0, 0, 0);
 
         // Remove until cannot fill viewport
-        robot.interact(() -> Utils.removeAll(table, IntegerRange.of(0, 31)));
+        robot.interact(() -> removeAll(table, IntegerRange.of(0, 31)));
         assertEquals(10, table.size());
         assertState(table, IntegerRange.of(0, 9), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 70, 0, 42, 0);
@@ -1562,31 +1569,31 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Remove before no intersect
-        robot.interact(() -> Utils.removeAll(table, 0, 1));
+        robot.interact(() -> removeAll(table, 0, 1));
         assertState(table, IntegerRange.of(16, 31), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 14, 0, 0, 0);
         assertRowsCounter(0, 16, 2, 0, 0, 0);
 
         // Remove before intersect
-        robot.interact(() -> Utils.removeAll(table, 14, 15, 16, 17));
+        robot.interact(() -> removeAll(table, 14, 15, 16, 17));
         assertState(table, IntegerRange.of(16, 31), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 28, 0, 0, 0);
         assertRowsCounter(0, 16, 4, 0, 0, 0);
 
         // Remove after intersect
-        robot.interact(() -> Utils.removeAll(table, 31, 32, 33));
+        robot.interact(() -> removeAll(table, 31, 32, 33));
         assertState(table, IntegerRange.of(16, 31), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 7, 0, 0, 0);
         assertRowsCounter(0, 16, 1, 0, 0, 0);
 
         // Remove after no intersect
-        robot.interact(() -> Utils.removeAll(table, 32, 33));
+        robot.interact(() -> removeAll(table, 32, 33));
         assertState(table, IntegerRange.of(16, 31), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 0, 0, 0, 0);
         assertRowsCounter(0, 16, 0, 0, 0, 0);
 
         // Remove enough to change vPos and range
-        robot.interact(() -> Utils.removeAll(table, IntegerRange.of(0, 18)));
+        robot.interact(() -> removeAll(table, IntegerRange.of(0, 18)));
         assertEquals(20, table.size());
         assertEquals(272, table.getVPos());
         assertState(table, IntegerRange.of(4, 19), IntegerRange.of(0, 6));
@@ -1594,7 +1601,7 @@ public class TableTests {
         assertRowsCounter(0, 16, 7, 0, 0, 0);
 
         // Do it again but this time from bottom
-        robot.interact(() -> Utils.removeAll(table, 18, 19));
+        robot.interact(() -> removeAll(table, 18, 19));
         assertEquals(18, table.size());
         assertEquals(208, table.getVPos());
         assertState(table, IntegerRange.of(2, 17), IntegerRange.of(0, 6));
@@ -1617,7 +1624,7 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Remove all at end
-        robot.interact(() -> Utils.removeAll(table, 46, 47, 48, 49));
+        robot.interact(() -> removeAll(table, 46, 47, 48, 49));
         assertEquals(1104.0, table.getVPos());
         assertState(table, IntegerRange.of(30, 45), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 28, 0, 0, 0);
@@ -1633,21 +1640,21 @@ public class TableTests {
         assertRowsCounter(0, 64, 4, 0, 0, 0);
 
         // Remove before no intersect
-        robot.interact(() -> Utils.removeAll(table, 0, 1));
+        robot.interact(() -> removeAll(table, 0, 1));
         assertEquals(912.0, table.getVPos());
         assertState(table, IntegerRange.of(24, 39), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 0, 0, 0, 0);
         assertRowsCounter(0, 16, 0, 0, 0, 0);
 
         // Remove before intersect
-        robot.interact(() -> Utils.removeAll(table, 22, 23, 24, 25));
+        robot.interact(() -> removeAll(table, 22, 23, 24, 25));
         assertEquals(784.0, table.getVPos());
         assertState(table, IntegerRange.of(20, 35), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 14, 0, 0, 0);
         assertRowsCounter(0, 16, 2, 0, 0, 0);
 
         // Remove enough to cache cells
-        robot.interact(() -> Utils.removeAll(table, IntegerRange.of(0, 21)));
+        robot.interact(() -> removeAll(table, IntegerRange.of(0, 21)));
         assertEquals(80.0, table.getVPos());
         assertState(table, IntegerRange.of(0, 13), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 0, 0, 14, 0);
@@ -1665,7 +1672,7 @@ public class TableTests {
         assertCounter(112, 1, 112, 112, 0, 0, 0);
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
-        robot.interact(() -> Utils.removeAll(table, 0, 3, 4, 8, 10, 11));
+        robot.interact(() -> removeAll(table, 0, 3, 4, 8, 10, 11));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 42, 0, 0, 0);
         assertRowsCounter(0, 16, 6, 0, 0, 0);

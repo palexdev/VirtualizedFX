@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-import cells.TestCell;
-import cells.TestGridCell;
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
@@ -41,22 +39,24 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
+import src.cells.TestCell;
+import src.cells.TestGridCell;
+import src.model.User;
 
 import static interactive.grid.GridTestUtils.assertLength;
 import static interactive.grid.GridTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
-import static model.User.faker;
-import static model.User.users;
 import static org.junit.jupiter.api.Assertions.*;
-import static utils.TestFXUtils.*;
-import static utils.Utils.*;
+import static src.model.User.faker;
+import static src.model.User.users;
+import static src.utils.TestFXUtils.*;
+import static src.utils.Utils.*;
 
 @ExtendWith(ApplicationExtension.class)
 public class GridTests {

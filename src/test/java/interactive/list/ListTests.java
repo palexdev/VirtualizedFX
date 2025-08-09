@@ -23,7 +23,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -39,25 +38,26 @@ import javafx.geometry.Orientation;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
-import utils.Utils;
+import src.cells.TestCell;
+import src.model.User;
+import src.utils.Utils;
 
 import static interactive.list.ListTestUtils.List;
 import static interactive.list.ListTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
-import static model.User.faker;
-import static model.User.users;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static utils.TestFXUtils.*;
-import static utils.Utils.items;
-import static utils.Utils.setWindowSize;
+import static src.model.User.faker;
+import static src.model.User.users;
+import static src.utils.TestFXUtils.*;
+import static src.utils.Utils.items;
+import static src.utils.Utils.setWindowSize;
 
 @ExtendWith(ApplicationExtension.class)
 public class ListTests {
