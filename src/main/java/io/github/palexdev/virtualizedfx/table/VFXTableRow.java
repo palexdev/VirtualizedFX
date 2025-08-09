@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.SequencedMap;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.base.VFXStyleable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
@@ -85,7 +85,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
     //================================================================================
     // Properties
     //================================================================================
-    private VFXTable<T> table;
+    private VFXContext<T> context;
     private final ReadOnlyIntegerWrapper index = new ReadOnlyIntegerWrapper(-1);
     private final ReadOnlyObjectWrapper<T> item = new ReadOnlyObjectWrapper<>();
     protected IntegerRange columnsRange = Utils.INVALID_RANGE;
@@ -292,10 +292,9 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
     }
 
     @Override
-    public void onCreated(VFXContainer<T> container) {
-        if (table == null && container instanceof VFXTable<T> t) {
-            table = t;
-        }
+    public void onCreated(VFXContext<T> context) {
+        if (this.context == null)
+            this.context = context;
     }
 
     @Override
@@ -317,7 +316,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
     @Override
     public void dispose() {
         clear();
-        table = null;
+        context = null;
     }
 
     //================================================================================
@@ -325,7 +324,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, VFXSt
     //================================================================================
 
     public VFXTable<T> getTable() {
-        return table;
+        return ((VFXTable<T>) context.getContainer());
     }
 
     public int getIndex() {

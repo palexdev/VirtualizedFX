@@ -18,9 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.utils;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Optional;
+import java.util.*;
 
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
@@ -182,5 +180,9 @@ public class VFXCellsCache<T, C extends VFXCell<T>> {
 
     public CellFactory<T, C> getCellFactory() {
         return cellFactory;
+    }
+
+    public List<C> cells() {
+        return Collections.unmodifiableList(queue);
     }
 }
