@@ -21,7 +21,6 @@ package interactive.list;
 import java.util.Map;
 import java.util.function.Function;
 
-import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
@@ -37,10 +36,11 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import org.opentest4j.AssertionFailedError;
+import src.cells.TestCell;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static utils.TestFXUtils.counter;
+import static src.utils.TestFXUtils.counter;
 
 public class ListTestUtils {
     //================================================================================

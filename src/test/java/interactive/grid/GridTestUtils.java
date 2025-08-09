@@ -21,7 +21,6 @@ package interactive.grid;
 import java.util.SequencedMap;
 import java.util.function.Function;
 
-import cells.TestGridCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
@@ -36,9 +35,10 @@ import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import org.opentest4j.AssertionFailedError;
+import src.cells.TestGridCell;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static utils.TestFXUtils.counter;
+import static src.utils.TestFXUtils.counter;
 
 public class GridTestUtils {
 

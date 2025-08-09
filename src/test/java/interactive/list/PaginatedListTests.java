@@ -22,7 +22,6 @@ import java.util.Comparator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import cells.TestCell;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
@@ -39,17 +38,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
-import utils.TestFXUtils;
-import utils.Utils;
+import src.cells.TestCell;
+import src.utils.TestFXUtils;
+import src.utils.Utils;
 
 import static interactive.list.ListTestUtils.PList;
 import static interactive.list.ListTestUtils.assertState;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static utils.TestFXUtils.*;
-import static utils.Utils.items;
-import static utils.Utils.setWindowSize;
+import static src.utils.TestFXUtils.*;
+import static src.utils.Utils.items;
+import static src.utils.Utils.setWindowSize;
 
 @ExtendWith(ApplicationExtension.class)
 public class PaginatedListTests {

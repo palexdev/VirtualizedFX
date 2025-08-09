@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Parisi Alessandro - alessandro.parisi406@gmail.com
+ * Copyright (C) 2025 Parisi Alessandro - alessandro.parisi406@gmail.com
  * This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX)
  *
  * VirtualizedFX is free software: you can redistribute it and/or
@@ -16,14 +16,14 @@
  * along with VirtualizedFX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package cells;
+package src.cells;
 
 import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.virtualizedfx.cells.VFXLabeledCellSkin;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleCell;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
-import static utils.TestFXUtils.counter;
+import static src.utils.TestFXUtils.counter;
 
 public class TestCell<T> extends VFXSimpleCell<T> {
     public TestCell(T item) {

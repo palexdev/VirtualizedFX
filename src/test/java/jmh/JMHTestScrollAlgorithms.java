@@ -32,7 +32,7 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
-import utils.Utils;
+import src.utils.Utils;
 
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static io.github.palexdev.virtualizedfx.utils.Utils.intersection;
