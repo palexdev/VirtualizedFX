@@ -481,6 +481,9 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
      */
     public VFXTable<T> populateCacheAll() {
         populateCache();
+        // If we want to create the cells before the table's skin is built, we must initialize the columns by passing
+        // the table's instance down to them. Otherwise, the cell factory is going to fail
+        if (getSkin() == null) getBehavior().onColumnsChanged(null);
         columns.forEach(VFXTableColumn::populateCache);
         return this;
     }

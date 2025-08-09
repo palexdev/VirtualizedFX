@@ -28,7 +28,7 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProp
 import io.github.palexdev.mfxcore.controls.Labeled;
 import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
-import io.github.palexdev.virtualizedfx.base.VFXContainer;
+import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.base.WithCellFactory;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
@@ -100,8 +100,8 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
     private final ReadOnlyIntegerWrapper index = new ReadOnlyIntegerWrapper(-1);
     private final CellFactory<T, C> cellFactory = new CellFactory<>(null) {
         @Override
-        public VFXContainer<T> getOwner() {
-            return table.get();
+        public VFXContext<T> getContext() {
+            return getTable().context();
         }
 
         @Override
