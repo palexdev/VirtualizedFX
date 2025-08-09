@@ -100,7 +100,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
     private final ReadOnlyIntegerWrapper index = new ReadOnlyIntegerWrapper(-1);
     private final CellFactory<T, C> cellFactory = new CellFactory<>(null) {
         @Override
-        public VFXContext<T> getContext() {
+        public VFXContext<T> context() {
             return getTable().context();
         }
 

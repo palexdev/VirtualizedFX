@@ -60,7 +60,7 @@ public class CellFactory<T, C extends VFXCell<T>> implements Property<Function<T
         return Optional.ofNullable(getValue())
             .map(f -> f.apply(item))
             .map(c -> {
-                c.onCreated(getContext());
+                c.onCreated(context());
                 return c;
             })
             .orElse(null);
@@ -148,7 +148,7 @@ public class CellFactory<T, C extends VFXCell<T>> implements Property<Function<T
     /**
      * @return the virtualized container's {@link VFXContext} instance.
      */
-    public VFXContext<T> getContext() {
+    public VFXContext<T> context() {
         return context;
     }
 
@@ -156,7 +156,7 @@ public class CellFactory<T, C extends VFXCell<T>> implements Property<Function<T
      * @return the container that owns this cell factory and inherently the cells created by it.
      */
     public VFXContainer<T> getOwner() {
-        return getContext().getContainer();
+        return context().getContainer();
     }
 
     /**
