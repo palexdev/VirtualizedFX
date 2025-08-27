@@ -1,14 +1,14 @@
 package io.github.palexdev.virtualizedfx.controls.skins;
 
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
-import io.github.palexdev.mfxcore.base.bindings.*;
+import io.github.palexdev.mfxcore.base.bindings.MappedBidirectionalBinding;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
@@ -31,6 +31,7 @@ import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.*;
@@ -859,92 +860,62 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
     }
 
     protected class VirtualScrollBinding {
-        private Boolean active = false;
-
-        private ObservableValue<Number> target;
-        private Function<Number, Number> targetMapper; // val percent -> pixels pos
-        private BiConsumer<Number, Number> targetUpdater;
-
-        private ObservableValue<Number> source;
-        private Function<Number, Number> sourceMapper; // pixels pos -> val percent
-        private BiConsumer<Number, Number> sourceUpdater;
-
-        private final List<Consumer<AbstractBinding<?>>> invalidating = new ArrayList<>();
+        private MappedBidirectionalBinding<Number, Number> binding;
 
         public VirtualScrollBinding(Orientation orientation, VFXContainer<?> container) {
             VFXScrollPane pane = getSkinnable();
-            if (orientation == Orientation.VERTICAL) {
-                this.target = container.vPosProperty();
-                this.targetMapper = val -> val.doubleValue() * container.getMaxVScroll();
-                this.targetUpdater = (o, n) -> container.setVPos(n.doubleValue());
 
-                this.source = pane.vValueProperty();
-                this.sourceMapper = pos ->
+            ObservableValue<Number> first;
+            Function<Number, Number> firstMapper;
+
+            ObservableValue<Number> second;
+            Function<Number, Number> secondMapper;
+
+            Observable dependency;
+
+            if (orientation == Orientation.VERTICAL) {
+                first = container.vPosProperty();
+                firstMapper = pos ->
                     NumberUtils.mapOneRangeToAnother(
                         pos.doubleValue(),
                         DoubleRange.of(0.0, container.getMaxVScroll()),
                         DoubleRange.of(0.0, 1.0)
                     );
-                this.sourceUpdater = (o, n) -> pane.setVValue(n.doubleValue());
 
-                invalidating.add(b -> b.addSourcesInvalidatingSource(container.maxVScrollProperty()));
+                second = pane.vValueProperty();
+                secondMapper = val -> val.doubleValue() * container.getMaxVScroll();
+
+                dependency = container.maxVScrollProperty();
             } else {
-                this.target = container.hPosProperty();
-                this.targetMapper = val -> val.doubleValue() * container.getMaxHScroll();
-                this.targetUpdater = (o, n) -> container.setHPos(n.doubleValue());
-
-                this.source = pane.hValueProperty();
-                this.sourceMapper = pos ->
+                first = container.hPosProperty();
+                firstMapper = pos ->
                     NumberUtils.mapOneRangeToAnother(
                         pos.doubleValue(),
                         DoubleRange.of(0.0, container.getMaxHScroll()),
                         DoubleRange.of(0.0, 1.0)
                     );
-                this.sourceUpdater = (o, n) -> pane.setHValue(n.doubleValue());
 
-                invalidating.add(b -> b.addSourcesInvalidatingSource(container.maxHScrollProperty()));
+                second = pane.hValueProperty();
+                secondMapper = val -> val.doubleValue() * container.getMaxHScroll();
+
+                dependency = container.maxHScrollProperty();
             }
+
+            binding = new MappedBidirectionalBinding<>(first, second)
+                .setFirstToSecondMapper(firstMapper)
+                .setSecondToFirstMapper(secondMapper)
+                .addDependenciesFor(MappedBidirectionalBinding.Target.FIRST, dependency);
         }
 
         public VirtualScrollBinding bind() {
-            if (active == null) return null; // Disposed!
-            if (!active) {
-                MFXBindings bindings = MFXBindings.instance();
-                BidirectionalBinding<Number> binding = bindings.bindBidirectional(target).addSources(
-                    new MappingSource.Builder<Number, Number>()
-                        .observable(source)
-                        .targetUpdater(new MappedUpdater<>(
-                            Mapper.of(targetMapper),
-                            targetUpdater::accept
-                        ))
-                        .sourceUpdater(new MappedUpdater<>(
-                            Mapper.of(sourceMapper),
-                            sourceUpdater::accept
-                        ))
-                        .get()
-                );
-
-                invalidating.forEach(c -> c.accept(binding));
-
-                binding.get();
-            }
-            active = true;
+            if (binding.isActive()) return null;
+            binding.bind();
             return this;
         }
 
         public void dispose() {
-            active = null;
-            MFXBindings.instance().unbindBidirectional(target);
-
-            target = null;
-            targetMapper = null;
-            targetUpdater = null;
-
-            source = null;
-            sourceMapper = null;
-            sourceUpdater = null;
-
-            invalidating.clear();
+            binding.dispose();
+            binding = null;
         }
     }
 }
