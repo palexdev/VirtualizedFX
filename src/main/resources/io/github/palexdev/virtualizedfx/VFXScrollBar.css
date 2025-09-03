@@ -23,14 +23,22 @@
     -thumb-hop: rgba(99, 99, 99, 1.0);
 }
 
+.vfx-scroll-bar:vertical {
+  -fx-pref-width: 11px;
+  -fx-padding: 0px 1px 0px 1px;
+}
+
+.vfx-scroll-bar:horizontal {
+  -fx-pref-height: 11px;
+  -fx-padding: 1px 0px 1px 0px;
+}
+
 .vfx-scroll-bar:vertical:compact {
-    -fx-min-width: 8px;
-    -fx-padding: 0px 1px 0px 1px;
+  -fx-pref-width: 9px;
 }
 
 .vfx-scroll-bar:horizontal:compact {
-    -fx-min-height: 8px;
-    -fx-padding: 1px 0px 1px 0px;
+  -fx-pref-height: 8px
 }
 
 .vfx-scroll-bar:vertical:compact:buttons {
@@ -57,6 +65,14 @@
 .vfx-scroll-bar > .thumb:hover,
 .vfx-scroll-bar > .thumb:pressed {
     -fx-background-color: -thumb-hop;
+}
+
+.vfx-scroll-bar:vertical > .thumb {
+  -fx-pref-height: 20px;
+}
+
+.vfx-scroll-bar:horizontal > .thumb {
+  -fx-pref-width: 20px;
 }
 
 .vfx-scroll-bar > .icon {
