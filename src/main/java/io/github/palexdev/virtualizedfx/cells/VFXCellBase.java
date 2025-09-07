@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.controls.Control;
-import io.github.palexdev.mfxcore.controls.MFXStyleable;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXControl;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
@@ -44,7 +44,7 @@ import javafx.scene.Node;
  * This abstract class is a good starting point to implement concrete, usable cells.
  * <p>
  * Unusually, this enforces the structuring of cells as specified by the {@code MVC} pattern. In fact, this extends
- * {@link Control}, expects behaviors of type {@link CellBaseBehavior} and doesn't come with a default skin.
+ * {@link MFXControl}, expects behaviors of type {@link CellBaseBehavior} and doesn't come with a default skin.
  * <p>
  * The idea is to make the skin implementation responsible for how data is represented (a String, a Node, processing, etc.).
  * A downside of such approach is that for some reason, users are a bit reluctant in making or customizing skins, however,
@@ -75,7 +75,7 @@ import javafx.scene.Node;
  * @see #alignmentProperty()
  * @see VFXCell
  */
-public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implements VFXCell<T>, MFXStyleable {
+public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
     //================================================================================
     // Properties
     //================================================================================
@@ -96,7 +96,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     // Methods
     //================================================================================
     private void initialize() {
-        defaultStyleClasses(this);
+        setDefaultStyleClasses();
     }
 
     //================================================================================
@@ -108,7 +108,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     }
 
     @Override
-    public Supplier<CellBaseBehavior<T>> defaultBehaviorProvider() {
+    public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
         return () -> new CellBaseBehavior<>(this);
     }
 
@@ -189,7 +189,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
     // CssMetaData
     //================================================================================
     private static class StyleableProperties {
-        private static final StyleablePropertyFactory<VFXCellBase<?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+        private static final StyleablePropertyFactory<VFXCellBase<?>> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
         private static final CssMetaData<VFXCellBase<?>, Pos> ALIGNMENT =
@@ -202,7 +202,7 @@ public abstract class VFXCellBase<T> extends Control<CellBaseBehavior<T>> implem
 
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
-                Control.getClassCssMetaData(),
+                MFXControl.getClassCssMetaData(),
                 ALIGNMENT
             );
         }

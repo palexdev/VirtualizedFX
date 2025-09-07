@@ -19,7 +19,7 @@
 package io.github.palexdev.virtualizedfx.table.defaults;
 
 import io.github.palexdev.mfxcore.controls.BoundLabel;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.mfxcore.utils.fx.TextMeasurementCache;
@@ -35,7 +35,7 @@ import static io.github.palexdev.mfxcore.observables.When.onChanged;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
- * Default skin implementation for {@link VFXDefaultTableColumn}, extends {@link SkinBase} and uses behaviors of type
+ * Default skin implementation for {@link VFXDefaultTableColumn}, extends {@link MFXSkinBase} and uses behaviors of type
  * {@link VFXTableColumnBehavior}.
  * <p>
  * The layout is simple, there are at max three nodes.
@@ -51,7 +51,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * For {@link HPos#LEFT} and {@link HPos#RIGHT}, the 'icon' is going to be placed to the left and right respectively of the
  * label. For {@link HPos#CENTER} only the 'icon' will be visible at the center of the area, the label will be hidden.
  */
-public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends SkinBase<VFXTableColumn<T, C>, VFXTableColumnBehavior<T, C>> {
+public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXSkinBase<VFXTableColumn<T, C>> {
     //================================================================================
     // Properties
     //================================================================================
@@ -125,10 +125,6 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends Ski
     //================================================================================
     // Overridden Methods
     //================================================================================
-    @Override
-    protected void initBehavior(VFXTableColumnBehavior<T, C> behavior) {
-        behavior.init();
-    }
 
     @Override
     protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
@@ -175,5 +171,11 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends Ski
         double oH = (table != null) ? table.getHeight() : 0.0;
         double oY = (column.isOverlayOnHeader()) ? 0.0 : h;
         overlay.resizeRelocate(0.0, oY, oW, oH);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected VFXTableColumnBehavior<T, C> getBehavior() {
+        return (VFXTableColumnBehavior<T, C>) super.getBehavior();
     }
 }

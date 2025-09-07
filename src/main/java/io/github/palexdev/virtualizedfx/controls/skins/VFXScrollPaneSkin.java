@@ -4,15 +4,13 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.base.bindings.MappedBidirectionalBinding;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
-import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
@@ -44,7 +42,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
-import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
+import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onChanged;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
@@ -64,7 +62,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * <p>
  * Many other properties and combinations determine the layout but those two are the main ones.
  */
-public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBehavior> {
+public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     //================================================================================
     // Properties
     //================================================================================
@@ -148,11 +146,7 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 
         vBar.layoutModeProperty().bind(pane.layoutModeProperty());
         vBar.visibleProperty().bind(bvp.map(arr -> arr[0]));
-        vBar.behaviorProviderProperty().bind(ObjectBindingBuilder.<Supplier<VFXScrollBarBehavior>>build()
-            .setMapper(() -> () -> pane.getVBarBehavior().apply(vBar))
-            .addSources(pane.vBarBehaviorProperty())
-            .get()
-        );
+        vBar.behaviorFactoryProperty().bind(pane.vBarBehaviorProperty().map(f -> () -> f.apply(vBar)));
         vBar.minProperty().bind(pane.vMinProperty());
         vBar.valueProperty().bindBidirectional(pane.vValueProperty());
         vBar.maxProperty().bind(pane.vMaxProperty());
@@ -165,11 +159,7 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
 
         hBar.layoutModeProperty().bind(pane.layoutModeProperty());
         hBar.visibleProperty().bind(bvp.map(arr -> arr[1]));
-        hBar.behaviorProviderProperty().bind(ObjectBindingBuilder.<Supplier<VFXScrollBarBehavior>>build()
-            .setMapper(() -> () -> pane.getHBarBehavior().apply(hBar))
-            .addSources(pane.hBarBehaviorProperty())
-            .get()
-        );
+        hBar.behaviorFactoryProperty().bind(pane.hBarBehaviorProperty().map(f -> () -> f.apply(hBar)));
         hBar.minProperty().bind(pane.hMinProperty());
         hBar.valueProperty().bindBidirectional(pane.hValueProperty());
         hBar.maxProperty().bind(pane.hMaxProperty());
@@ -412,31 +402,32 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
      * <p> - intercepts events of type {@link KeyEvent#KEY_PRESSED} to call {@link VFXScrollBarBehavior#keyPressed(KeyEvent)}
      */
     @Override
-    protected void initBehavior(VFXScrollPaneBehavior behavior) {
+    protected void registerBehavior() {
+        super.registerBehavior();
         VFXScrollPane pane = getSkinnable();
-        behavior.init();
+        VFXScrollPaneBehavior behavior = getBehavior();
         events(
             intercept(viewport, MouseEvent.MOUSE_PRESSED)
                 .asFilter()
-                .process(behavior::mousePressed),
+                .handle(behavior::mousePressed),
             intercept(viewport, MouseEvent.MOUSE_DRAGGED)
                 .asFilter()
-                .process(behavior::mouseDragged),
+                .handle(behavior::mouseDragged),
             intercept(viewport, MouseEvent.MOUSE_RELEASED)
                 .asFilter()
-                .process(behavior::mouseReleased),
+                .handle(behavior::mouseReleased),
             intercept(viewport, ScrollEvent.SCROLL)
-                .process(e -> behavior.scroll(e, c -> {
+                .handle(e -> behavior.scroll(e, () -> {
                     // Re-route scroll events to the appropriate scroll bar's behavior
                     Orientation o = pane.getMainAxis();
                     VFXScrollBar target = switch (o) {
-                        case VERTICAL -> c.isShiftDown() ? hBar : vBar;
-                        case HORIZONTAL -> c.isShiftDown() ? vBar : hBar;
+                        case VERTICAL -> e.isShiftDown() ? hBar : vBar;
+                        case HORIZONTAL -> e.isShiftDown() ? vBar : hBar;
                     };
-                    if (target.isVisible()) target.getBehavior().scroll(c);
+                    if (target.isVisible()) target.getBehavior().scroll(e);
                 })),
             intercept(pane, KeyEvent.KEY_PRESSED)
-                .process(behavior::keyPressed)
+                .handle(behavior::keyPressed)
         );
     }
 
@@ -472,6 +463,11 @@ public class VFXScrollPaneSkin extends SkinBase<VFXScrollPane, VFXScrollPaneBeha
             hBinding = null;
         }
         super.dispose();
+    }
+
+    @Override
+    protected VFXScrollPaneBehavior getBehavior() {
+        return (VFXScrollPaneBehavior) super.getBehavior();
     }
 
     //================================================================================

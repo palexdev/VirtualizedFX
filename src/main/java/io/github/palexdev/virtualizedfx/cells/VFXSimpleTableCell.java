@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
 import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.cells.base.VFXMappingTableCell;
@@ -33,6 +33,7 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableRow;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.scene.Node;
 import javafx.util.StringConverter;
 
 /**
@@ -96,7 +97,7 @@ public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappi
     // Overridden Methods
     //================================================================================
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXLabeledCellSkin<>(this) {
             @Override
             protected void update() {

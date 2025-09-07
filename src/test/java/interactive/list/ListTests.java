@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
@@ -35,6 +35,7 @@ import io.github.palexdev.virtualizedfx.list.VFXListSkin;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -948,7 +949,7 @@ public class ListTests {
             return cell;
         }) {
             @Override
-            public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+            public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
                 return () -> new VFXListSkin<>(this) {
                     @Override
                     protected void onLayoutCompleted(boolean done) {

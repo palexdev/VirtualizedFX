@@ -20,7 +20,7 @@ package io.github.palexdev.virtualizedfx.table;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.enums.GeometryChangeType;
@@ -37,7 +37,7 @@ import static io.github.palexdev.mfxcore.observables.When.onChanged;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
- * Default skin implementation for {@link VFXTable}, extends {@link SkinBase} and expects behaviors of type
+ * Default skin implementation for {@link VFXTable}, extends {@link MFXSkinBase} and expects behaviors of type
  * {@link VFXTableManager}.
  * <p>
  * The table is organized in columns, rows and cells. This architecture leads to more complex layout compared to other
@@ -63,7 +63,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
  * by overriding the {@link #DEFAULT_SIZE} variable.
  */
-public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
+public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     //================================================================================
     // Properties
     //================================================================================
@@ -434,10 +434,6 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
     //================================================================================
     // Overridden Methods
     //================================================================================
-    @Override
-    protected void initBehavior(VFXTableManager<T> behavior) {
-        behavior.init();
-    }
 
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
@@ -457,5 +453,11 @@ public class VFXTableSkin<T> extends SkinBase<VFXTable<T>, VFXTableManager<T>> {
             columnsListener = null;
         }
         super.dispose();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected VFXTableManager<T> getBehavior() {
+        return (VFXTableManager<T>) super.getBehavior();
     }
 }

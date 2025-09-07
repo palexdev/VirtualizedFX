@@ -31,9 +31,9 @@ import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.controls.Control;
-import io.github.palexdev.mfxcore.controls.MFXStyleable;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXControl;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.PositionUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
@@ -55,13 +55,14 @@ import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 
 /**
  * Implementation of a virtualized container to show a list of items in a "2D" perspective.
  * The default style class is: '.vfx-grid'.
  * <p>
- * Extends {@link Control}, implements {@link VFXContainer}, has its own skin implementation {@link VFXGridSkin}
+ * Extends {@link MFXControl}, implements {@link VFXContainer}, has its own skin implementation {@link VFXGridSkin}
  * and behavior {@link VFXGridManager}. Uses cells of type {@link VFXCell}.
  * <p>
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
@@ -131,8 +132,8 @@ import javafx.scene.shape.Rectangle;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, C>>
-    implements VFXContainer<T>, WithCellFactory<T, C>, MFXStyleable, VFXScrollable {
+public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
+    implements VFXContainer<T>, WithCellFactory<T, C>, VFXScrollable {
     //================================================================================
     // Properties
     //================================================================================
@@ -201,7 +202,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
     // Methods
     //================================================================================
     private void initialize() {
-        defaultStyleClasses(this);
+        setDefaultStyleClasses();
         setHelper(getHelperFactory().get());
     }
 
@@ -309,18 +310,18 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
     }
 
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+    public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
+        return () -> new VFXGridManager<>(this);
+    }
+
+    @Override
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXGridSkin<>(this);
     }
 
     @Override
     public List<String> defaultStyleClasses() {
         return List.of("vfx-grid");
-    }
-
-    @Override
-    public Supplier<VFXGridManager<T, C>> defaultBehaviorProvider() {
-        return () -> new VFXGridManager<>(this);
     }
 
     @Override
@@ -683,7 +684,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
     // CssMetaData
     //================================================================================
     private static class StyleableProperties {
-        private static final StyleablePropertyFactory<VFXGrid<?, ?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+        private static final StyleablePropertyFactory<VFXGrid<?, ?>> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
         private static final CssMetaData<VFXGrid<?, ?>, Size> CELL_SIZE =
@@ -747,7 +748,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends Control<VFXGridManager<T, 
 
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
-                Control.getClassCssMetaData(),
+                MFXControl.getClassCssMetaData(),
                 CELL_SIZE, COLUMNS_NUM, ALIGNMENT, H_SPACING, V_SPACING,
                 BUFFER_SIZE, CACHE_CAPACITY, CLIP_BORDER_RADIUS
             );

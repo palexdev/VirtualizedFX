@@ -21,8 +21,8 @@ package io.github.palexdev.virtualizedfx.cells;
 import java.beans.EventHandler;
 
 import io.github.palexdev.mfxcore.controls.Label;
-import io.github.palexdev.mfxcore.controls.SkinBase;
-import io.github.palexdev.mfxcore.events.WhenEvent;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
+import io.github.palexdev.mfxcore.input.WhenEvent;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import javafx.beans.InvalidationListener;
@@ -30,7 +30,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.geometry.HPos;
 import javafx.geometry.VPos;
 
-import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
+import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
@@ -53,7 +53,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * <p>
  * Last but not least, the label's text is updated by the {@link #update()} method.
  */
-public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBehavior<T>> {
+public class VFXLabeledCellSkin<T> extends MFXSkinBase<VFXCellBase<T>> {
     //================================================================================
     // Properties
     //================================================================================
@@ -116,12 +116,12 @@ public class VFXLabeledCellSkin<T> extends SkinBase<VFXCellBase<T>, CellBaseBeha
     // Overridden Methods
     //================================================================================
     @Override
-    protected void initBehavior(CellBaseBehavior<T> behavior) {
+    protected void registerBehavior() {
+        super.registerBehavior();
         VFXCellBase<T> cell = getSkinnable();
-        behavior.init();
         events(
             intercept(cell, VFXContainerEvent.UPDATE)
-                .process(e -> {
+                .handle(e -> {
                     update();
                     e.consume();
                 })

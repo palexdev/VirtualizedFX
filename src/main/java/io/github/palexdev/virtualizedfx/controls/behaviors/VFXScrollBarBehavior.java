@@ -20,10 +20,9 @@ package io.github.palexdev.virtualizedfx.controls.behaviors;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
-import io.github.palexdev.mfxcore.behavior.BehaviorBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils.ScrollDirection;
 import io.github.palexdev.mfxeffects.animations.Animations;
@@ -53,12 +52,12 @@ import javafx.util.Duration;
 import static io.github.palexdev.virtualizedfx.controls.VFXScrollBar.DRAGGING_PSEUDO_CLASS;
 
 /**
- * Extension of {@link BehaviorBase} and default behavior implementation for {@link VFXScrollBar}.
+ * Extension of {@link MFXBehavior} and default behavior implementation for {@link VFXScrollBar}.
  * <p></p>
  * This offers all the methods to manage scrolling and smooth scrolling, track press/release,
  * buttons press/release, thumb press/drag/release. And a bunch of other misc methods.
  */
-public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
+public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
     //================================================================================
     // Properties
     //================================================================================
@@ -444,7 +443,7 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
      * by the setter.
      */
     @Override
-    public void scroll(ScrollEvent se, Consumer<ScrollEvent> callback) {
+    public void scroll(ScrollEvent se, Runnable callback) {
         VFXScrollBar bar = getNode();
         double delta = getScrollDelta(se);
         if (delta == 0) return;
@@ -463,7 +462,7 @@ public class VFXScrollBarBehavior extends BehaviorBase<VFXScrollBar> {
         } else {
             bar.setValue(bar.getValue() + bar.getUnitIncrement() * mul);
         }
-        if (callback != null) callback.accept(se);
+        callback.run();
     }
 
     @Override

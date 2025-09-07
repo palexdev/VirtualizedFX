@@ -22,7 +22,7 @@ import java.util.*;
 
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.behavior.BehaviorBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
@@ -55,7 +55,7 @@ import javafx.beans.property.ListProperty;
  * to {@code true} before the invalidation, so that the other method will exit immediately. It's reset back to false
  * after the computation or if any of the checks before the actual computation fails.
  */
-public class VFXListManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXList<T, C>> {
+public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList<T, C>> {
     //================================================================================
     // Properties
     //================================================================================

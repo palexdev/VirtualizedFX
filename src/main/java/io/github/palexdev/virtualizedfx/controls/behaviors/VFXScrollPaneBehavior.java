@@ -22,7 +22,7 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.base.properties.PositionProperty;
-import io.github.palexdev.mfxcore.behavior.BehaviorBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.mfxeffects.animations.base.Curve;
@@ -39,7 +39,7 @@ import javafx.util.Duration;
 import static javafx.scene.input.KeyCode.*;
 
 /**
- * Extension of {@link BehaviorBase} and default behavior implementation for {@link VFXScrollPane}.
+ * Extension of {@link MFXBehavior} and default behavior implementation for {@link VFXScrollPane}.
  * <p></p>
  * Most of the work related to scrolling is already handled by the scroll bars present in the {@link VFXScrollPaneSkin}.
  * This just implements the methods necessary to make the {@link VFXScrollPane#dragToScrollProperty()} feature work.
@@ -50,7 +50,7 @@ import static javafx.scene.input.KeyCode.*;
  * <p> - {@link #SMOOTH_DRAG_SENSIBILITY} (this is basically a multiplier to scroll more/less and make the smooth scroll
  * more significant)
  */
-public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
+public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     //================================================================================
     // Properties
     //================================================================================
@@ -99,10 +99,11 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
      * to compute how much to scroll if the drag to scroll feature is active.
      */
     @Override
-    public void mousePressed(MouseEvent me) {
+    public void mousePressed(MouseEvent me, Runnable callback) {
         VFXScrollPane pane = getNode();
         dragStart.setPosition(me.getSceneX(), me.getSceneY());
         initValues = Position.of(pane.getHValue(), pane.getVValue());
+        callback.run();
     }
 
     /**
@@ -130,7 +131,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
      * @see #mousePressed(MouseEvent)
      */
     @Override
-    public void mouseDragged(MouseEvent me) {
+    public void mouseDragged(MouseEvent me, Runnable callback) {
         VFXScrollPane pane = getNode();
         if (!pane.isDragToScroll() || pane.getContent() == null) return;
 
@@ -202,6 +203,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
                 dragStart.setY(meY);
             }
         }
+        callback.run();
     }
 
     /**
@@ -210,17 +212,18 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
      * Resets the properties needed by {@link #mouseDragged(MouseEvent)}.
      */
     @Override
-    public void mouseReleased(MouseEvent e) {
+    public void mouseReleased(MouseEvent e, Runnable callback) {
         dragStart.setPosition(-1, -1);
         initValues = Position.origin();
         mainDragAxis = null;
+        callback.run();
     }
 
     /**
      * Action performed when {@link KeyEvent#KEY_PRESSED} events occurs.
      */
     @Override
-    public void keyPressed(KeyEvent ke) {
+    public void keyPressed(KeyEvent ke, Runnable callback) {
         VFXScrollPane pane = getNode();
         Orientation o = pane.getMainAxis();
         switch (ke.getCode()) {
@@ -250,6 +253,7 @@ public class VFXScrollPaneBehavior extends BehaviorBase<VFXScrollPane> {
             case KeyCode c when c == RIGHT && canHScroll -> pane.setHValue(pane.getHValue() + pane.getHUnitIncrement());
             default -> {}
         }
+        callback.run();
     }
 
     //================================================================================

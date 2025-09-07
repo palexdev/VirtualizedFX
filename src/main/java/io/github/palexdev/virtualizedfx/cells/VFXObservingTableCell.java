@@ -23,13 +23,14 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.github.palexdev.mfxcore.controls.SkinBase;
-import io.github.palexdev.mfxcore.events.WhenEvent;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
+import io.github.palexdev.mfxcore.input.WhenEvent;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
 import javafx.util.StringConverter;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
@@ -97,7 +98,7 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
     }
 
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXObservingTableCellSkin(this);
     }
 

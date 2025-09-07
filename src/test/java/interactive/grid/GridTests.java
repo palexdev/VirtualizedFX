@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
@@ -37,6 +37,7 @@ import io.github.palexdev.virtualizedfx.grid.VFXGridHelper;
 import io.github.palexdev.virtualizedfx.grid.VFXGridSkin;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeEach;
@@ -1498,7 +1499,7 @@ public class GridTests {
             return cell;
         }) {
             @Override
-            public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+            public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
                 return () -> new VFXGridSkin<>(this) {
                     @Override
                     protected void onLayoutCompleted(boolean done) {

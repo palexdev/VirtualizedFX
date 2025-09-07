@@ -23,7 +23,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
@@ -36,6 +36,7 @@ import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import org.opentest4j.AssertionFailedError;
 import src.cells.TestCell;
 
@@ -113,7 +114,7 @@ public class ListTestUtils {
         }
 
         @Override
-        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
             return () -> new VFXListSkin<>(this) {
                 @Override
                 protected void onLayoutCompleted(boolean done) {
@@ -142,7 +143,7 @@ public class ListTestUtils {
         }
 
         @Override
-        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
             return () -> new VFXPaginatedListSkin<>(this) {
                 @Override
                 protected void onLayoutCompleted(boolean done) {

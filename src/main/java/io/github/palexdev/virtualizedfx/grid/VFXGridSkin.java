@@ -21,7 +21,7 @@ package io.github.palexdev.virtualizedfx.grid;
 import java.util.SequencedMap;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
@@ -35,7 +35,7 @@ import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
- * Default skin implementation for {@link VFXGrid}, extends {@link SkinBase} and expects behaviors of type
+ * Default skin implementation for {@link VFXGrid}, extends {@link MFXSkinBase} and expects behaviors of type
  * {@link VFXGridManager}.
  * <p>
  * The layout is quite simple: there is just one node, called the 'viewport', that is the {@code Pane} resposnible for
@@ -53,7 +53,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
  * by overriding the {@link #DEFAULT_SIZE} variable.
  */
-public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>, VFXGridManager<T, C>> {
+public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T, C>> {
     //================================================================================
     // Properties
     //================================================================================
@@ -236,10 +236,6 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
     //================================================================================
     // Overridden Methods
     //================================================================================
-    @Override
-    protected void initBehavior(VFXGridManager<T, C> behavior) {
-        behavior.init();
-    }
 
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
@@ -282,5 +278,11 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends SkinBase<VFXGrid<T, C>
         VFXGrid<T, C> grid = getSkinnable();
         grid.update(VFXGridState.INVALID);
         super.dispose();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected VFXGridManager<T, C> getBehavior() {
+        return (VFXGridManager<T, C>) super.getBehavior();
     }
 }

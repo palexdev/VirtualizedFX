@@ -24,9 +24,10 @@ import java.util.function.Supplier;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.controls.Control;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXControl;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.controls.MFXStyleable;
-import io.github.palexdev.mfxcore.controls.SkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils.ScrollDirection;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
@@ -43,9 +44,10 @@ import javafx.css.PseudoClass;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
 
 /**
- * My personal custom implementation of a scroll bar from scratch, follows the MVC pattern as enforced by {@link Control}.
+ * My personal custom implementation of a scroll bar from scratch, follows the MVC pattern as enforced by {@link MFXControl}.
  * The default skin is {@link VFXScrollBarSkin}. The default behavior is {@link VFXScrollBarBehavior}. Also implements {@link MFXStyleable}.
  * <p></p>
  * In addition to an appealing style, the component offers many new features compared to the boring standard
@@ -67,7 +69,7 @@ import javafx.geometry.Orientation;
  * can be set by using {@link #setMin(double)} and {@link #setMax(double)} but cannot go below {@code 0.0}
  * and above {@code 1.0} respectively. The {@link #valueProperty()} is automatically clamped between the min and max values.
  */
-public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements MFXStyleable {
+public class VFXScrollBar extends MFXControl {
     //================================================================================
     // Static Properties
     //================================================================================
@@ -114,7 +116,7 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements MFXSt
     // Methods
     //================================================================================
     private void init() {
-        defaultStyleClasses(this);
+        setDefaultStyleClasses();
         getStylesheets().add(VFXResources.loadResource("VFXScrollBar.css"));
 
         setMin(0.0);
@@ -125,12 +127,12 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements MFXSt
     // Overridden Methods
     //================================================================================
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXScrollBarSkin(this);
     }
 
     @Override
-    public Supplier<VFXScrollBarBehavior> defaultBehaviorProvider() {
+    public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
         return () -> new VFXScrollBarBehavior(this);
     }
 
@@ -356,7 +358,7 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements MFXSt
     // CssMetaData
     //================================================================================
     private static class StyleableProperties {
-        private static final StyleablePropertyFactory<VFXScrollBar> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+        private static final StyleablePropertyFactory<VFXScrollBar> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
         private static final CssMetaData<VFXScrollBar, LayoutMode> LAYOUT_MODE =
@@ -419,7 +421,7 @@ public class VFXScrollBar extends Control<VFXScrollBarBehavior> implements MFXSt
 
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
-                Control.getClassCssMetaData(),
+                MFXControl.getClassCssMetaData(),
                 LAYOUT_MODE, ORIENTATION,
                 SHOW_BUTTONS, BUTTONS_GAP,
                 TRACK_INCREMENT, UNIT_INCREMENT,

@@ -29,9 +29,9 @@ import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.controls.Control;
-import io.github.palexdev.mfxcore.controls.MFXStyleable;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXControl;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
@@ -59,13 +59,14 @@ import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 
 /**
  * Implementation of a virtualized container to show a list of items as tabular data.
  * The default style class is: '.vfx-table'.
  * <p>
- * Extends {@link Control}, implements {@link VFXContainer}, has its own skin implementation {@link VFXTableSkin}
+ * Extends {@link MFXControl}, implements {@link VFXContainer}, has its own skin implementation {@link VFXTableSkin}
  * and behavior {@link VFXTableManager}. Uses cells of type {@link VFXTableCell}.
  * <p>
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
@@ -197,7 +198,7 @@ import javafx.scene.shape.Rectangle;
  * @param <T> the type of items in the table
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXContainer<T>, MFXStyleable, VFXScrollable {
+public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrollable {
     //================================================================================
     // Properties
     //================================================================================
@@ -273,7 +274,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     // Methods
     //================================================================================
     private void initialize() {
-        defaultStyleClasses(this);
+        setDefaultStyleClasses();
         setHelper(getHelperFactory().apply(getColumnsLayoutMode()));
         setRowFactory(defaultRowFactory());
     }
@@ -447,13 +448,13 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     }
 
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
-        return () -> new VFXTableSkin<>(this);
+    public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
+        return () -> new VFXTableManager<>(this);
     }
 
     @Override
-    public Supplier<VFXTableManager<T>> defaultBehaviorProvider() {
-        return () -> new VFXTableManager<>(this);
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
+        return () -> new VFXTableSkin<>(this);
     }
 
     @Override
@@ -465,7 +466,13 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     public VFXScrollPane makeScrollable() {
         return new VFXScrollPane(this);
     }
-//================================================================================
+
+    @Override
+    public VFXTableManager<T> getBehavior() {
+        return (VFXTableManager<T>) super.getBehavior();
+    }
+
+    //================================================================================
     // Delegate Methods
     //================================================================================
 
@@ -911,7 +918,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
     // CssMetaData
     //================================================================================
     private static class StyleableProperties {
-        private static final StyleablePropertyFactory<VFXTable<?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+        private static final StyleablePropertyFactory<VFXTable<?>> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
         private static final CssMetaData<VFXTable<?>, Number> ROWS_HEIGHT =
@@ -975,7 +982,7 @@ public class VFXTable<T> extends Control<VFXTableManager<T>> implements VFXConta
 
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
-                Control.getClassCssMetaData(),
+                MFXControl.getClassCssMetaData(),
                 ROWS_HEIGHT, COLUMNS_SIZE, COLUMNS_LAYOUT_MODE, EXTRA_AUTOSIZE_WIDTH,
                 COLUMNS_BUFFER_SIZE, ROWS_BUFFER_SIZE, CLIP_BORDER_RADIUS,
                 ROWS_CACHE_CAPACITY

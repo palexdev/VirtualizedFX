@@ -22,10 +22,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.github.palexdev.mfxcore.controls.Control;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXControl;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.converters.FunctionalStringConverter;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
+import javafx.scene.Node;
 import javafx.util.StringConverter;
 
 /**
@@ -35,7 +36,7 @@ import javafx.util.StringConverter;
  * <b>Q:</b> Why not extend Labeled rather than Control? (Also considering that the default skin uses a Label)
  * <p>
  * <b>A:</b> Long story short, for flexibility. While it's true that in the vast majority of user cases, cells will just
- * display their data as a String, it's not always the case. Extending {@link Control} does not allow users
+ * display their data as a String, it's not always the case. Extending {@link MFXControl} does not allow users
  * to set the label's properties (font, text color, etc.) directly (you can still do it by CSS or by using
  * {@link CSSFragment} in code!!), but it indeed makes the architecture more flexible. See also {@link VFXCellBase}
  * <p></p>
@@ -65,7 +66,7 @@ public class VFXSimpleCell<T> extends VFXCellBase<T> {
     // Overridden Methods
     //================================================================================
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXLabeledCellSkin<>(this) {
             @Override
             protected void update() {

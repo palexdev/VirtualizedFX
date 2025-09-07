@@ -20,7 +20,7 @@ package io.github.palexdev.virtualizedfx.controls.skins;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
@@ -35,7 +35,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 
-import static io.github.palexdev.mfxcore.events.WhenEvent.intercept;
+import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static io.github.palexdev.virtualizedfx.controls.VFXScrollBar.HORIZONTAL_PSEUDO_CLASS;
@@ -48,7 +48,7 @@ import static io.github.palexdev.virtualizedfx.controls.VFXScrollBar.VERTICAL_PS
  *
  * @see LayoutHandler
  */
-public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavior> {
+public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
     //================================================================================
     // Properties
     //================================================================================
@@ -155,29 +155,30 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
      * <p> - intercepts events of type {@link MouseEvent#MOUSE_EXITED} on the increase icon to call {@link VFXScrollBarBehavior#buttonReleased(MouseEvent)}
      */
     @Override
-    protected void initBehavior(VFXScrollBarBehavior behavior) {
+    protected void registerBehavior() {
+        super.registerBehavior();
         VFXScrollBar bar = getSkinnable();
-        behavior.init();
+        VFXScrollBarBehavior behavior = getBehavior();
         events(
             // Scroll Bar
-            intercept(bar, ScrollEvent.SCROLL).process(behavior::scroll),
+            intercept(bar, ScrollEvent.SCROLL).handle(behavior::scroll),
 
             // Thumb
-            intercept(thumb, MouseEvent.MOUSE_PRESSED).process(behavior::thumbPressed),
-            intercept(thumb, MouseEvent.MOUSE_DRAGGED).process(behavior::thumbDragged),
-            intercept(thumb, MouseEvent.MOUSE_RELEASED).process(behavior::thumbReleased),
+            intercept(thumb, MouseEvent.MOUSE_PRESSED).handle(behavior::thumbPressed),
+            intercept(thumb, MouseEvent.MOUSE_DRAGGED).handle(behavior::thumbDragged),
+            intercept(thumb, MouseEvent.MOUSE_RELEASED).handle(behavior::thumbReleased),
 
             // Track
-            intercept(track, MouseEvent.MOUSE_PRESSED).process(behavior::trackPressed),
-            intercept(track, MouseEvent.MOUSE_RELEASED).process(behavior::trackReleased),
+            intercept(track, MouseEvent.MOUSE_PRESSED).handle(behavior::trackPressed),
+            intercept(track, MouseEvent.MOUSE_RELEASED).handle(behavior::trackReleased),
 
             // Buttons
-            intercept(decIcon, MouseEvent.MOUSE_PRESSED).process(me -> behavior.buttonPressed(me, -1)),
-            intercept(decIcon, MouseEvent.MOUSE_RELEASED).process(behavior::buttonReleased),
-            intercept(decIcon, MouseEvent.MOUSE_EXITED).process(behavior::buttonReleased),
-            intercept(incIcon, MouseEvent.MOUSE_PRESSED).process(me -> behavior.buttonPressed(me, 1)),
-            intercept(incIcon, MouseEvent.MOUSE_RELEASED).process(behavior::buttonReleased),
-            intercept(incIcon, MouseEvent.MOUSE_EXITED).process(behavior::buttonReleased)
+            intercept(decIcon, MouseEvent.MOUSE_PRESSED).handle(me -> behavior.buttonPressed(me, -1)),
+            intercept(decIcon, MouseEvent.MOUSE_RELEASED).handle(behavior::buttonReleased),
+            intercept(decIcon, MouseEvent.MOUSE_EXITED).handle(behavior::buttonReleased),
+            intercept(incIcon, MouseEvent.MOUSE_PRESSED).handle(me -> behavior.buttonPressed(me, 1)),
+            intercept(incIcon, MouseEvent.MOUSE_RELEASED).handle(behavior::buttonReleased),
+            intercept(incIcon, MouseEvent.MOUSE_EXITED).handle(behavior::buttonReleased)
         );
     }
 
@@ -215,6 +216,11 @@ public class VFXScrollBarSkin extends SkinBase<VFXScrollBar, VFXScrollBarBehavio
     protected void layoutChildren(double x, double y, double w, double h) {
         if (layoutHandler != null)
             layoutHandler.layout(x, y, w, h);
+    }
+
+    @Override
+    protected VFXScrollBarBehavior getBehavior() {
+        return (VFXScrollBarBehavior) super.getBehavior();
     }
 
     //================================================================================

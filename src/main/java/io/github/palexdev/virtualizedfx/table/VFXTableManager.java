@@ -24,7 +24,7 @@ import java.util.Set;
 
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.behavior.BehaviorBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.enums.GeometryChangeType;
@@ -64,7 +64,7 @@ import javafx.geometry.Orientation;
  * to {@code true} before the invalidation, so that the other method will exit immediately. It's reset back to false
  * after the computation or if any of the checks before the actual computation fails.
  */
-public class VFXTableManager<T> extends BehaviorBase<VFXTable<T>> {
+public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     //================================================================================
     // Properties
     //================================================================================

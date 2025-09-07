@@ -30,9 +30,9 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProp
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.controls.Control;
-import io.github.palexdev.mfxcore.controls.MFXStyleable;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXControl;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
@@ -55,13 +55,14 @@ import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 
 /**
  * Implementation of a virtualized container to show a list of items either vertically or horizontally.
  * The default style class is: '.vfx-list'.
  * <p>
- * Extends {@link Control}, implements {@link VFXContainer}, has its own skin implementation {@link VFXListSkin}
+ * Extends {@link MFXControl}, implements {@link VFXContainer}, has its own skin implementation {@link VFXListSkin}
  * and behavior {@link VFXListManager}. Uses cells of type {@link VFXCell}.
  * <p>
  * This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
@@ -118,8 +119,8 @@ import javafx.scene.shape.Rectangle;
  * @param <C> the type of cells used by the container to visualize the items
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, C>>
-    implements VFXContainer<T>, WithCellFactory<T, C>, MFXStyleable, VFXScrollable {
+public class VFXList<T, C extends VFXCell<T>> extends MFXControl
+    implements VFXContainer<T>, WithCellFactory<T, C>, VFXScrollable {
     //================================================================================
     // Properties
     //================================================================================
@@ -194,7 +195,7 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
     // Methods
     //================================================================================
     private void initialize() {
-        defaultStyleClasses(this);
+        setDefaultStyleClasses();
     }
 
     /**
@@ -277,18 +278,18 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
     }
 
     @Override
-    public List<String> defaultStyleClasses() {
-        return List.of("vfx-list");
+    public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
+        return () -> new VFXListManager<>(this);
     }
 
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXListSkin<>(this);
     }
 
     @Override
-    public Supplier<VFXListManager<T, C>> defaultBehaviorProvider() {
-        return () -> new VFXListManager<>(this);
+    public List<String> defaultStyleClasses() {
+        return List.of("vfx-list");
     }
 
     @Override
@@ -590,7 +591,7 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
     // CssMetaData
     //================================================================================
     private static class StyleableProperties {
-        private static final StyleablePropertyFactory<VFXList<?, ?>> FACTORY = new StyleablePropertyFactory<>(Control.getClassCssMetaData());
+        private static final StyleablePropertyFactory<VFXList<?, ?>> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
         private static final CssMetaData<VFXList<?, ?>, Number> CELL_SIZE =
@@ -646,7 +647,7 @@ public class VFXList<T, C extends VFXCell<T>> extends Control<VFXListManager<T, 
 
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
-                Control.getClassCssMetaData(),
+                MFXControl.getClassCssMetaData(),
                 CELL_SIZE, SPACING, BUFFER_SIZE, ORIENTATION, FIT_TO_VIEWPORT, CLIP_BORDER_RADIUS, CACHE_CAPACITY
             );
         }

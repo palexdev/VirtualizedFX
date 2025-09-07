@@ -28,8 +28,9 @@ import java.util.stream.Collectors;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.mfxcore.builders.bindings.IntegerBindingBuilder;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXPaginated;
@@ -38,7 +39,6 @@ import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
-import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
 import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedListHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedListHelper.VerticalHelper;
@@ -52,6 +52,7 @@ import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
 
 /**
  * Simple and naive implementation of a paginated variant of {@link VFXList}.
@@ -168,11 +169,6 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     // Overridden Methods
     //================================================================================
 
-    @Override
-    public List<String> defaultStyleClasses() {
-        return List.of("vfx-list", "paginated");
-    }
-
     /**
      * {@inheritDoc}
      * <p></p>
@@ -186,13 +182,18 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     }
 
     @Override
-    public Supplier<VFXListManager<T, C>> defaultBehaviorProvider() {
+    public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
         return () -> new VFXPaginatedListManager<>(this);
     }
 
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXPaginatedListSkin<>(this);
+    }
+
+    @Override
+    public List<String> defaultStyleClasses() {
+        return List.of("vfx-list", "paginated");
     }
 
     /**

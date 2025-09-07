@@ -21,7 +21,7 @@ package io.github.palexdev.virtualizedfx.list;
 import java.util.TreeMap;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.beans.InvalidationListener;
@@ -31,7 +31,7 @@ import javafx.scene.layout.Pane;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /**
- * Default skin implementation for {@link VFXList}, extends {@link SkinBase} and expects behaviors of type
+ * Default skin implementation for {@link VFXList}, extends {@link MFXSkinBase} and expects behaviors of type
  * {@link VFXListManager}.
  * <p>
  * The layout is quite simple: there is just one node, called the 'viewport', that is the {@code Pane} responsible for
@@ -45,7 +45,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
  * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
  * by overriding the {@link #DEFAULT_SIZE} variable.
  */
-public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>, VFXListManager<T, C>> {
+public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T, C>> {
     //================================================================================
     // Properties
     //================================================================================
@@ -243,10 +243,6 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>
     //================================================================================
     // Overridden Methods
     //================================================================================
-    @Override
-    protected void initBehavior(VFXListManager<T, C> behavior) {
-        behavior.init();
-    }
 
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
@@ -267,5 +263,11 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends SkinBase<VFXList<T, C>
         pl = null;
         list.update(VFXListState.INVALID);
         super.dispose();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected VFXListManager<T, C> getBehavior() {
+        return (VFXListManager<T, C>) super.getBehavior();
     }
 }

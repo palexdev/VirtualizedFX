@@ -18,14 +18,14 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
-import io.github.palexdev.mfxcore.behavior.BehaviorBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 
 /**
- * Base, empty behavior for cells of type {@link VFXCellBase}, extends {@link BehaviorBase}.
+ * Base, empty behavior for cells of type {@link VFXCellBase}, extends {@link MFXBehavior}.
  *
  * @param <T> the type of item displayed by the cell
  */
-public class CellBaseBehavior<T> extends BehaviorBase<VFXCellBase<T>> {
+public class CellBaseBehavior<T> extends MFXBehavior<VFXCellBase<T>> {
 
     //================================================================================
     // Constructors

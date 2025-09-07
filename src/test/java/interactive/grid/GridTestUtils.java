@@ -23,7 +23,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.virtualizedfx.cells.VFXCellBase;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
@@ -35,6 +35,7 @@ import io.github.palexdev.virtualizedfx.grid.VFXGridState;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import org.opentest4j.AssertionFailedError;
 import src.cells.TestGridCell;
 
@@ -142,7 +143,7 @@ public class GridTestUtils {
         }
 
         @Override
-        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
             return () -> new VFXGridSkin<>(this) {
                 @Override
                 protected void onLayoutCompleted(boolean done) {

@@ -18,7 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.table.defaults;
 
-import io.github.palexdev.mfxcore.behavior.BehaviorBase;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.mfxcore.enums.Zone;
 import io.github.palexdev.mfxcore.utils.resize.RegionDragResizer;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
@@ -38,7 +38,7 @@ import static io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableCol
  * <p> 2) the table's instance must not be {@code null}
  * <p> 3) the table's layout mode must be set to {@link ColumnsLayoutMode#VARIABLE}.
  */
-public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends BehaviorBase<VFXTableColumn<T, C>> {
+public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBehavior<VFXTableColumn<T, C>> {
     //================================================================================
     // Properties
     //================================================================================

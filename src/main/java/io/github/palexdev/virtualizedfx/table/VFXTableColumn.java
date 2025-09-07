@@ -25,8 +25,8 @@ import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
-import io.github.palexdev.mfxcore.controls.Labeled;
-import io.github.palexdev.mfxcore.controls.MFXStyleable;
+import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXLabeled;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.base.WithCellFactory;
@@ -49,7 +49,7 @@ import javafx.scene.Node;
 
 /**
  * Base class that defines common properties and behaviors for all columns to be used with {@link VFXTable}.
- * Extends {@link Labeled} for simplicity, and uses behaviors of type {@link VFXTableColumnBehavior}.
+ * Extends {@link MFXLabeled} for simplicity, and uses behaviors of type {@link VFXTableColumnBehavior}.
  * The default style class is set to '.vfx-column'.
  * <p>
  * This class has three basic properties:
@@ -90,8 +90,7 @@ import javafx.scene.Node;
  * @param <T> the type of data in the table
  * @param <C> the type of cells this column will produce
  */
-public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Labeled<VFXTableColumnBehavior<T, C>>
-    implements WithCellFactory<T, C>, MFXStyleable {
+public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLabeled implements WithCellFactory<T, C> {
     //================================================================================
     // Properties
     //================================================================================
@@ -163,7 +162,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
     //================================================================================
     private void initialize() {
         setCellFactory(defaultCellFactory());
-        defaultStyleClasses(this);
+        setDefaultStyleClasses();
     }
 
     /**
@@ -233,7 +232,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
     }
 
     @Override
-    public Supplier<VFXTableColumnBehavior<T, C>> defaultBehaviorProvider() {
+    public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
         return () -> new VFXTableColumnBehavior<>(this);
     }
 
@@ -304,7 +303,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
     // CssMetaData
     //================================================================================
     private static class StyleableProperties {
-        private static final StyleablePropertyFactory<VFXTableColumn<?, ?>> FACTORY = new StyleablePropertyFactory<>(Labeled.getClassCssMetaData());
+        private static final StyleablePropertyFactory<VFXTableColumn<?, ?>> FACTORY = new StyleablePropertyFactory<>(MFXLabeled.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
         private static final CssMetaData<VFXTableColumn<?, ?>, Number> CELLS_CACHE_CAPACITY =
@@ -323,7 +322,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends Label
 
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
-                Labeled.getClassCssMetaData(),
+                MFXLabeled.getClassCssMetaData(),
                 CELLS_CACHE_CAPACITY, GESTURE_RESIZABLE
             );
         }

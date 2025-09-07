@@ -139,7 +139,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
     // Methods
     //================================================================================
     private void initialize() {
-        defaultStyleClasses(this);
+        setDefaultStyleClasses();
     }
 
     /**

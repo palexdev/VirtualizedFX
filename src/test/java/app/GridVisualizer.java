@@ -22,8 +22,7 @@ import java.util.function.Supplier;
 
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.controls.SkinBase;
-import io.github.palexdev.mfxcore.events.WhenEvent;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
@@ -33,6 +32,7 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.ScrollEvent;
@@ -46,6 +46,7 @@ import src.cells.TestGridCell;
 import src.utils.MouseHoldHandler;
 import src.utils.NodeMover;
 
+import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static src.utils.Utils.isTouchSupported;
 import static src.utils.Utils.items;
 
@@ -61,8 +62,8 @@ public class GridVisualizer extends Application {
         StackPane root = new StackPane(pane);
 
         if (isTouchSupported()) {
-            WhenEvent.intercept(pane, ZoomEvent.ZOOM)
-                .process(e -> {
+            intercept(pane, ZoomEvent.ZOOM)
+                .handle(e -> {
                     pane.setScaleX(e.getTotalZoomFactor());
                     pane.setScaleY(e.getTotalZoomFactor());
                 })
@@ -70,8 +71,8 @@ public class GridVisualizer extends Application {
                 .register();
         } else {
             System.err.println("Touch not supported!");
-            WhenEvent.intercept(pane, ScrollEvent.SCROLL)
-                .process(e -> {
+            intercept(pane, ScrollEvent.SCROLL)
+                .handle(e -> {
                     ScrollUtils.ScrollDirection sd = ScrollUtils.determineScrollDirection(e);
                     double factor = switch (sd) {
                         case UP -> 0.25;
@@ -156,7 +157,7 @@ public class GridVisualizer extends Application {
         }
 
         @Override
-        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
             return () -> new VFXLabeledCellSkin<>(this) {
                 {
                     setStyle("-fx-border-color: blue");

@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.mfxresources.icon.MFXFontIcon;
@@ -46,6 +46,7 @@ import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
@@ -421,7 +422,7 @@ public class TableTestUtils {
         }
 
         @Override
-        public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+        public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
             return () -> new VFXTableSkin<>(this) {
                 @Override
                 protected void onLayoutCompleted(boolean done) {

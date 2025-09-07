@@ -20,9 +20,10 @@ package src.cells;
 
 import java.util.function.Supplier;
 
-import io.github.palexdev.mfxcore.controls.SkinBase;
+import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.virtualizedfx.cells.VFXLabeledCellSkin;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleCell;
+import javafx.scene.Node;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static src.utils.TestFXUtils.counter;
@@ -49,7 +50,7 @@ public class TestCell<T> extends VFXSimpleCell<T> {
     }
 
     @Override
-    public Supplier<SkinBase<?, ?>> defaultSkinProvider() {
+    public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXLabeledCellSkin<>(this) {
             {
                 setConverter(t -> {
