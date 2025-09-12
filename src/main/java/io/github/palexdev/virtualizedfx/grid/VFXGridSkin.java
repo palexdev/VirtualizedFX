@@ -208,7 +208,7 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
             for (Integer rIdx : state.getRowsRange()) {
                 for (Integer cIdx : state.getColumnsRange()) {
                     int linear = GridUtils.subToInd(nColumns, rIdx, cIdx);
-                    if (linear >= grid.size()) break outer_loop;
+                    if (linear < 0 || linear >= grid.size()) break outer_loop;
                     helper.layout(i, j, cells.get(linear));
                     j++;
                 }
