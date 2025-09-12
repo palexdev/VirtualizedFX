@@ -449,7 +449,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends BehaviorBase<VFXGri
         for (Integer rIdx : rowsRange) {
             for (Integer cIdx : columnsRange) {
                 int linear = GridUtils.subToInd(nColumns, rIdx, cIdx);
-                if (linear >= grid.size()) break outer_loop;
+                if (linear < 0 || linear >= grid.size()) break outer_loop;
                 C c = current.removeCell(linear);
                 if (c == null) {
                     remaining.add(linear);
