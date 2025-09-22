@@ -24,11 +24,6 @@ import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import io.github.palexdev.virtualizedfx.utils.ScrollParams;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -36,8 +31,12 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-import static model.User.users;
-import static utils.Utils.debugView;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import static src.model.User.users;
+import static src.utils.Utils.debugView;
 
 public class Playground extends Application {
     private static final String LOREM;

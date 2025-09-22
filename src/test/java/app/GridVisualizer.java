@@ -18,7 +18,6 @@
 
 package app;
 
-import cells.TestGridCell;
 import interactive.grid.GridTestUtils.Grid;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.SkinBase;
@@ -41,11 +40,12 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import utils.MouseHoldHandler;
-import utils.NodeMover;
+import src.cells.TestGridCell;
+import src.utils.MouseHoldHandler;
+import src.utils.NodeMover;
 
-import static utils.Utils.isTouchSupported;
-import static utils.Utils.items;
+import static src.utils.Utils.isTouchSupported;
+import static src.utils.Utils.items;
 
 public class GridVisualizer extends Application {
     private final ObservableList<Integer> items = items(500);

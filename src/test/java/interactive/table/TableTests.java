@@ -18,10 +18,6 @@
 
 package interactive.table;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
 import com.google.gson.reflect.TypeToken;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -39,7 +35,11 @@ import io.github.palexdev.mfxresources.fonts.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cells.VFXObservingTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
-import io.github.palexdev.virtualizedfx.table.*;
+import io.github.palexdev.virtualizedfx.table.VFXTable;
+import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
+import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
+import io.github.palexdev.virtualizedfx.table.VFXTableRow;
+import io.github.palexdev.virtualizedfx.table.VFXTableState;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
@@ -58,16 +58,41 @@ import src.assets.TestResources;
 import src.model.FXUser;
 import src.model.User;
 
-import static interactive.table.TableTestUtils.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import static interactive.table.TableTestUtils.EmptyColumn;
+import static interactive.table.TableTestUtils.Table;
 import static interactive.table.TableTestUtils.Table.emptyColumns;
+import static interactive.table.TableTestUtils.TestColumn;
+import static interactive.table.TableTestUtils.TestRow;
+import static interactive.table.TableTestUtils.UserCell;
+import static interactive.table.TableTestUtils.assertLength;
+import static interactive.table.TableTestUtils.assertRowsCounter;
+import static interactive.table.TableTestUtils.assertScrollable;
+import static interactive.table.TableTestUtils.assertState;
+import static interactive.table.TableTestUtils.rowsCounter;
+import static interactive.table.TableTestUtils.setColumnWidth;
 import static io.github.palexdev.virtualizedfx.table.VFXTableColumn.swapColumns;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static src.model.FXUser.fxusers;
 import static src.model.User.faker;
 import static src.model.User.users;
-import static src.utils.TestFXUtils.*;
-import static src.utils.Utils.*;
+import static src.utils.TestFXUtils.assertCounter;
+import static src.utils.TestFXUtils.counter;
+import static src.utils.TestFXUtils.resetCounters;
+import static src.utils.TestFXUtils.setupStage;
+import static src.utils.Utils.removeAll;
+import static src.utils.Utils.setWindowPos;
+import static src.utils.Utils.setWindowSize;
+import static src.utils.Utils.sleep;
 
 @ExtendWith(ApplicationExtension.class)
 public class TableTests {

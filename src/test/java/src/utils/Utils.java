@@ -18,10 +18,6 @@
 
 package src.utils;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.IntStream;
-
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
@@ -32,6 +28,10 @@ import javafx.scene.Scene;
 import javafx.stage.Window;
 import org.scenicview.ScenicView;
 import org.testfx.api.FxRobot;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.IntStream;
 
 public class Utils {
 
