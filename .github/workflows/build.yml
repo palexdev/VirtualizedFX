@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '23'
+          java-version: '25'
 
       - name: Give permissions to Gradle
         run: chmod +x gradlew
