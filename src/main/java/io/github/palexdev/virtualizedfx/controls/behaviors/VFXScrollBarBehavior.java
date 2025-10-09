@@ -32,6 +32,7 @@ import io.github.palexdev.mfxeffects.animations.ConsumerTransition;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.mfxeffects.animations.base.Curve;
 import io.github.palexdev.mfxeffects.animations.motion.M3Motion;
+import io.github.palexdev.mfxeffects.animations.motion.Motion;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
@@ -455,7 +456,8 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
         if (bar.isSmoothScroll()) {
             double deltaVal = bar.getValue() - (bar.getValue() + bar.getUnitIncrement() * -mul);
             Animation mt = withMomentum(deltaVal, SMOOTH_SCROLL_DURATION)
-                .setOnUpdate(u -> bar.setValue(bar.getValue() + u));
+                .setOnUpdate(u -> bar.setValue(bar.getValue() + u))
+                .setInterpolatorFluent(Motion.EASE);
             mt.setOnFinished(e -> smoothScrollAnimations.remove(mt));
             smoothScrollAnimations.add(mt);
             mt.play();
