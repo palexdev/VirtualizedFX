@@ -131,7 +131,7 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     /**
      * Used in {@link ColumnsLayoutMode#VARIABLE} mode to call {@link VFXTable#requestViewportLayout(VFXTableColumn)}.
      * Essentially, this should trigger a partial layout computation.
-     *
+     * <p></p>
      * Position is invalidated too!
      *
      * @see VFXTableSkin#partialLayout()
