@@ -900,7 +900,10 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
             binding = new MappedBidirectionalBinding<>(first, second)
                 .setFirstToSecondMapper(firstMapper)
                 .setSecondToFirstMapper(secondMapper)
-                .addDependenciesFor(MappedBidirectionalBinding.Target.FIRST, dependency);
+                .addDependenciesFor(MappedBidirectionalBinding.Target.SECOND, dependency);
+            /*
+             * Setting the dependency with Target.SECOND makes the viewport stay in position when the bounds change
+             */
         }
 
         public VirtualScrollBinding bind() {
