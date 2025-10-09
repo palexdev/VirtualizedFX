@@ -20,7 +20,7 @@ package io.github.palexdev.virtualizedfx.table.defaults;
 
 import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.mfxcore.enums.Zone;
-import io.github.palexdev.mfxcore.utils.resize.RegionDragResizer;
+import io.github.palexdev.mfxcore.utils.fx.resize.RegionDragResizer;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
