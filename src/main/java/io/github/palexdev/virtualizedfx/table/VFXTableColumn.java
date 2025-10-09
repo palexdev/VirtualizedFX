@@ -20,6 +20,7 @@ package io.github.palexdev.virtualizedfx.table;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -364,6 +365,12 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
 
     public VFXTable<T> getTable() {
         return table.get();
+    }
+
+    public VFXContext<T> context() {
+        return Optional.ofNullable(getTable())
+            .map(VFXTable::context)
+            .orElse(null);
     }
 
     /**

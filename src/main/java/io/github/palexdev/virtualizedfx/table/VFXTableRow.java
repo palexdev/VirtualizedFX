@@ -20,6 +20,7 @@ package io.github.palexdev.virtualizedfx.table;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.SequencedMap;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -323,8 +324,14 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
     // Getters/Setters
     //================================================================================
 
+    public VFXContext<T> context() {
+        return context;
+    }
+
     public VFXTable<T> getTable() {
-        return ((VFXTable<T>) context.getContainer());
+        return Optional.ofNullable(context())
+            .map(c -> (VFXTable<T>) c.getContainer())
+            .orElse(null);
     }
 
     public int getIndex() {
