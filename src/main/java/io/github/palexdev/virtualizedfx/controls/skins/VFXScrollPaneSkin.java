@@ -44,8 +44,7 @@ import javafx.util.Duration;
 
 import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
-import static io.github.palexdev.mfxcore.observables.When.onChanged;
-import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
+import static io.github.palexdev.mfxcore.observables.When.*;
 
 /**
  * Default skin implementation for {@link VFXScrollPane}.
@@ -812,12 +811,11 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
         {
             VFXScrollPane pane = getSkinnable();
-            listener = onInvalidated(vBar.visibleAmountProperty())
-                .then(v -> update())
-                .invalidating(hBar.visibleAmountProperty())
-                .invalidating(pane.vBarPolicyProperty())
-                .invalidating(pane.hBarPolicyProperty())
-                .listen();
+            listener = observe(
+                this::update,
+                vBar.visibleAmountProperty(), pane.vBarPolicyProperty(),
+                hBar.visibleAmountProperty(), pane.hBarPolicyProperty()
+            ).listen();
         }
 
         @Override
@@ -842,9 +840,16 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
         protected void update() {
             VFXScrollPane pane = getSkinnable();
-            boolean vBarVisible = vBar.getVisibleAmount() < 1.0 && pane.getVBarPolicy() != ScrollBarPolicy.NEVER;
-            boolean hBarVisible = hBar.getVisibleAmount() < 1.0 && pane.getHBarPolicy() != ScrollBarPolicy.NEVER;
+            boolean vBarVisible = computeVisibility(vBar, pane.getVBarPolicy());
+            boolean hBarVisible = computeVisibility(hBar, pane.getHBarPolicy());
             setValue(new boolean[]{vBarVisible, hBarVisible});
+        }
+
+        protected boolean computeVisibility(VFXScrollBar bar, ScrollBarPolicy policy) {
+            if (policy == ScrollBarPolicy.NEVER) return false;
+            double va = bar.getVisibleAmount();
+            // If va is 0 or 1.0 there's no content or it's fully visible, therefore hide the bar
+            return va > 0.0 && va < 1.0;
         }
 
         public void dispose() {
