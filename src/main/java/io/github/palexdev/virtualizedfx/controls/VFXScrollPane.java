@@ -49,6 +49,7 @@ import javafx.css.PseudoClass;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -159,6 +160,8 @@ public class VFXScrollPane extends MFXControl {
     /**
      * @return the appropriate sizes for the scroll pane's content. For virtualized containers ({@link VFXContainer})
      * the values are given by the {@link VFXContainer#virtualMaxXProperty()} and the {@link VFXContainer#virtualMaxYProperty()}
+     * <p></p>
+     * For standard nodes returns their bounds including the padding specified by the {@link #contentPaddingProperty()}.
      */
     public Size getContentBounds() {
         Node content = getContent();
@@ -171,7 +174,11 @@ public class VFXScrollPane extends MFXControl {
             );
             default -> {
                 Bounds b = content.getLayoutBounds();
-                yield Size.of(b.getWidth(), b.getHeight());
+                Insets padding = getContentPadding();
+                yield Size.of(
+                    b.getWidth() + padding.getLeft() + padding.getRight(),
+                    b.getHeight() + padding.getTop() + padding.getBottom()
+                );
             }
         };
     }
@@ -235,6 +242,13 @@ public class VFXScrollPane extends MFXControl {
         this,
         "fitToHeight",
         false
+    );
+
+    private final StyleableObjectProperty<Insets> contentPadding = new StyleableObjectProperty<>(
+        StyleableProperties.CONTENT_PADDING,
+        this,
+        "contentPadding",
+        Insets.EMPTY
     );
 
     private final StyleableObjectProperty<VBarPos> vBarPos = new StyleableObjectProperty<>(
@@ -460,6 +474,32 @@ public class VFXScrollPane extends MFXControl {
 
     public void setFitToHeight(boolean fitToHeight) {
         this.fitToHeight.set(fitToHeight);
+    }
+
+    public Insets getContentPadding() {
+        return contentPadding.get();
+    }
+
+    /**
+     * Specifies the padding around the content.
+     * <p>
+     * This is also settable via CSS with the "-vfx-content-padding" property.
+     * <p></p>
+     * This is a very delicate feature because in a scroll pane layout computations (sizes, positions and whatnot) must
+     * be precise/exact, otherwise the content may not be fully scrollable or properly aligned.
+     * <p>
+     * This is implemented in the simplest way possible. The padding is included in the content bounds returned by
+     * {@link #getContentBounds()} for standard nodes. For virtualized containers the padding is taken into account
+     * only during layout.
+     * <p>
+     * That said, I consider this an <b>experimental</b> feature, expect bugs, use with cautions.
+     */
+    public StyleableObjectProperty<Insets> contentPaddingProperty() {
+        return contentPadding;
+    }
+
+    public void setContentPadding(Insets contentPadding) {
+        this.contentPadding.set(contentPadding);
     }
 
     public VBarPos getVBarPos() {
@@ -876,6 +916,13 @@ public class VFXScrollPane extends MFXControl {
                 false
             );
 
+        private static final CssMetaData<VFXScrollPane, Insets> CONTENT_PADDING =
+            FACTORY.createInsetsCssMetaData(
+                "-vfx-content-padding",
+                VFXScrollPane::contentPaddingProperty,
+                Insets.EMPTY
+            );
+
         private static final CssMetaData<VFXScrollPane, VBarPos> VBAR_POS =
             FACTORY.createEnumCssMetaData(
                 ScrollPaneEnums.VBarPos.class,
@@ -1018,7 +1065,7 @@ public class VFXScrollPane extends MFXControl {
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 MFXControl.getClassCssMetaData(),
                 LAYOUT_MODE, ALIGNMENT, MAIN_AXIS,
-                FIT_TO_WIDTH, FIT_TO_HEIGHT,
+                FIT_TO_WIDTH, FIT_TO_HEIGHT, CONTENT_PADDING,
                 VBAR_POS, HBAR_POS, SCROLL_BARS_GAP,
                 AUTO_HIDE_BARS, MIN_BARS_OPACITY, MAX_BARS_OPACITY,
                 VBAR_POLICY, HBAR_POLICY,

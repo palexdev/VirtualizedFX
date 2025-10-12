@@ -23,8 +23,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import fr.brouillard.oss.cssfx.CSSFX;
-import interactive.grid.GridTestUtils;
 import io.github.palexdev.mfxcore.builders.InsetsBuilder;
+import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
@@ -32,11 +32,13 @@ import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import static src.utils.Utils.debugView;
-import static src.utils.Utils.items;
 
 public class Playground extends Application {
     private static final String LOREM;
@@ -58,22 +60,29 @@ public class Playground extends Application {
         pane.setAlignment(Pos.CENTER);
         pane.setPadding(InsetsBuilder.uniform(4.0).get());
 
-/*        TableTestUtils.Table table = new TableTestUtils.Table(users(100));
-        table.setColumnsWidth(50.0);
-        table.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
-        table.autosizeColumns();*/
+        //TableTestUtils.Table table = new TableTestUtils.Table(users(10000));
+        //table.setColumnsWidth(50.0);
+        //table.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
+        //table.autosizeColumns();
 
-/*        ListTestUtils.List container = new ListTestUtils.List(items(100));
-        container.setFitToViewport(false);*/
+/*        ListTestUtils.List list = new ListTestUtils.List(items(100));
+        list.setFitToViewport(false);*/
 
-        GridTestUtils.Grid container = new GridTestUtils.Grid(items(500));
-        container.setColumnsNum(20);
+        //GridTestUtils.Grid grid = new GridTestUtils.Grid(items(500));
+        //grid.setColumnsNum(5);
 
-        VFXScrollPane sp = new VFXScrollPane(container);
-        //sp.setSmoothScroll(true);
-        //sp.setDragToScroll(true);
+        Label label = new Label(LOREM);
+        label.setBorder(Border.stroke(ColorUtils.getRandomColor()));
+
+        Rectangle rt = new Rectangle(2000, 2000, ColorUtils.getRandomColor());
+
+        VFXScrollPane sp = new VFXScrollPane(label);
+        sp.setSmoothScroll(true);
+        sp.setFitToWidth(true);
+        sp.setFitToHeight(true);
+        sp.setDragToScroll(true);
         //sp.setDragSmoothScroll(true);
-        sp.setShowButtons(true);
+        //sp.setShowButtons(true);
         //sp.setVBarPolicy(ScrollPaneEnums.ScrollBarPolicy.NEVER);
         //sp.setLayoutMode(ScrollPaneEnums.LayoutMode.COMPACT);
         //Platform.runLater(() -> sp.setPadding(InsetsBuilder.uniform(4.0).withTop(40.0).get()));
@@ -82,13 +91,7 @@ public class Playground extends Application {
         //sp.setScrollBarsPos(Pos.TOP_RIGHT);
         //sp.setVUnitIncrement(0.025);
         //sp.setHUnitIncrement(0.05);
-
-/*
-        Label label = new Label(LOREM);
-        sp = new VFXScrollPane(label);
-*/
-
-        VFXScrollable.bindSpeed(sp, ScrollParams.cells(1.25), ScrollParams.percentage(0.05));
+        VFXScrollable.bindSpeed(sp, ScrollParams.percentage(0.2), ScrollParams.percentage(0.2));
 
         pane.getChildren().addAll(sp);
         Scene scene = new Scene(pane, 600, 400);
@@ -98,7 +101,7 @@ public class Playground extends Application {
 
         debugView(null, pane);
 
-        sp.getStylesheets().add(VFXResources.loadResource("VFXScrollBar.css"));
+        sp.getStylesheets().add(VFXResources.loadResource("VFXScrollPane.css"));
         CSSFX.start(sp);
     }
 }

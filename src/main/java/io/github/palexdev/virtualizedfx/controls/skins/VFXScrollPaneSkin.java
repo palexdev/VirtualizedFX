@@ -28,7 +28,6 @@ import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
@@ -43,7 +42,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
-import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.*;
 
 /**
@@ -138,7 +136,6 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
      */
     private void addListeners() {
         VFXScrollPane pane = getSkinnable();
-        InvalidationListener ll = l -> pane.requestLayout();
 
         // Bindings
         bvp = new BarsVisibilityProperty();
@@ -184,11 +181,12 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                 .executeNow(() -> pane.getContent() != null),
 
             // Layout
-            withListener(pane.fitToWidthProperty(), ll),
-            withListener(pane.fitToHeightProperty(), ll),
-            withListener(pane.vBarPosProperty(), ll),
-            withListener(pane.hBarPosProperty(), ll),
-            withListener(pane.scrollBarsGapProperty(), ll),
+            observe(
+                pane::requestLayout,
+                pane.fitToWidthProperty(), pane.fitToHeightProperty(), pane.contentPaddingProperty(),
+                pane.vBarPosProperty(), pane.hBarPosProperty(),
+                pane.scrollBarsGapProperty()
+            ),
             // Animations
             onInvalidated(pane.minBarsOpacityProperty())
                 .then(v -> buildBarsAnimations())
@@ -228,13 +226,16 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
         double w = viewport.getWidth();
         double h = viewport.getHeight();
+        Insets padding = pane.getContentPadding();
         if (content instanceof VFXContainer<?>) {
             // Virtualized containers always take up all the space and thus ignore the alignment too
-            content.resizeRelocate(0, 0, w, h);
+            layoutInArea(content, 0, 0, w, h, 0, padding, HPos.LEFT, VPos.TOP);
         } else {
             Pos alignment = pane.getAlignment();
             VPos vAlign = alignment.getVpos();
             HPos hAlign = alignment.getHpos();
+
+            // Find content bounds and set it to be at least the same as the viewport size if fitTo configs are enabled
             double cw = LayoutUtils.snappedBoundWidth(content);
             double ch = LayoutUtils.snappedBoundHeight(content);
             cw = pane.isFitToWidth()
@@ -244,12 +245,12 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                 ? Math.max(h, ch)
                 : ch;
 
-            // If the content is larger than the viewport then the alignment is ignored
-            if (ch > h) vAlign = VPos.TOP;
+            // If the content is larger than the viewport, then the alignment is ignored
             if (cw > w) hAlign = HPos.LEFT;
+            if (ch > h) vAlign = VPos.TOP;
 
             content.resize(cw, ch);
-            positionInArea(content, 0, 0, w, h, 0, hAlign, vAlign);
+            positionInArea(content, 0, 0, w, h, 0, padding, hAlign, vAlign);
         }
 
         updateVisualAmount(content);
@@ -276,24 +277,27 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         if (newContent == null) return;
 
         if (!(newContent instanceof VFXContainer<?> c)) {
+            VFXScrollPane pane = getSkinnable();
             newContent.translateXProperty().bind(DoubleBindingBuilder.build()
                 .setMapper(() -> {
-                    double cw = newContent.getLayoutBounds().getWidth();
+                    double cw = pane.getContentBounds().width();
                     double vw = viewport.getWidth();
                     double maxScroll = Math.max(0, cw - vw);
                     return -maxScroll * hBar.getValue();
                 })
+                .addSources(pane.contentPaddingProperty())
                 .addSources(newContent.layoutBoundsProperty(), viewport.widthProperty())
                 .addSources(hBar.valueProperty())
                 .get()
             );
             newContent.translateYProperty().bind(DoubleBindingBuilder.build()
                 .setMapper(() -> {
-                    double ch = newContent.getLayoutBounds().getHeight();
+                    double ch = pane.getContentBounds().height();
                     double vh = viewport.getHeight();
                     double maxScroll = Math.max(0, ch - vh);
                     return -maxScroll * vBar.getValue();
                 })
+                .addSources(pane.contentPaddingProperty())
                 .addSources(newContent.layoutBoundsProperty(), viewport.heightProperty())
                 .addSources(vBar.valueProperty())
                 .get()
