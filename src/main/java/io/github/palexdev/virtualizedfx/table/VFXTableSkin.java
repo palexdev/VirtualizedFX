@@ -118,7 +118,7 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
 
         // End initialization
         addListeners();
-        getChildren().add(viewport);
+        getChildren().setAll(viewport);
     }
 
     //================================================================================

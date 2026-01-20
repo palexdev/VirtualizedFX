@@ -77,7 +77,7 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
 
         // End initialization
         addListeners();
-        getChildren().add(viewport);
+        getChildren().setAll(viewport);
     }
 
     //================================================================================

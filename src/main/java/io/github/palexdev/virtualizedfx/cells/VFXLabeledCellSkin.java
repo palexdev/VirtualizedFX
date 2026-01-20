@@ -72,7 +72,7 @@ public class VFXLabeledCellSkin<T> extends MFXSkinBase<VFXCellBase<T>> {
 
         // Finalize init
         addListeners();
-        getChildren().add(label);
+        getChildren().setAll(label);
     }
 
     //================================================================================

@@ -74,7 +74,7 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
         // End initialization
         swapPositionListener();
         addListeners();
-        getChildren().add(viewport);
+        getChildren().setAll(viewport);
     }
 
     //================================================================================
