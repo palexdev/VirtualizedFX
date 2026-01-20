@@ -92,6 +92,8 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         };
         cContainer.visibleProperty().bind(table.columnsSizeProperty().map(s -> s.height() > 0));
         cContainer.getStyleClass().add("columns");
+        // enabling overlays causes this node to also capture any event that should be on the cells
+        cContainer.setPickOnBounds(false);
 
         rContainer = new Pane() {
             @Override

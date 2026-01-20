@@ -171,7 +171,7 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
 
         private static final CssMetaData<VFXDefaultTableColumn<?, ?>, Boolean> ENABLE_OVERLAY =
             FACTORY.createBooleanCssMetaData(
-                "-vfx-enable-overaly",
+                "-vfx-enable-overlay",
                 VFXDefaultTableColumn::enableOverlayProperty,
                 true
             );

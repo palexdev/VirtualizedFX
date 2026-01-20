@@ -76,10 +76,16 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
         overlay = new Region();
         overlay.getStyleClass().add("overlay");
         overlay.setManaged(false);
+        overlay.setMouseTransparent(true);
+        overlay.setFocusTraversable(false);
 
         // Finalize initialization
         addListeners();
-        getChildren().addAll(label, overlay);
+        getChildren().setAll(label);
+        if (column.isEnableOverlay()) {
+            getChildren().add(overlay);
+            column.setPickOnBounds(false);
+        }
     }
 
     //================================================================================
@@ -103,7 +109,19 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
             onInvalidated(column.iconAlignmentProperty())
                 .then(a -> column.requestLayout()),
             onInvalidated(column.gestureResizableProperty())
-                .then(r -> getBehavior().onResizableChanged())
+                .then(r -> getBehavior().onResizableChanged()),
+            onInvalidated(column.enableOverlayProperty())
+                .then(v -> {
+                    if (v) {
+                        getChildren().add(overlay);
+                        column.setPickOnBounds(false); // otherwise the overlay captures events on cells
+                    } else {
+                        getChildren().remove(overlay);
+                        column.setPickOnBounds(true);
+                    }
+                }),
+            onInvalidated(column.overlayOnHeaderProperty())
+                .then(_ -> column.requestLayout())
         );
     }
 
