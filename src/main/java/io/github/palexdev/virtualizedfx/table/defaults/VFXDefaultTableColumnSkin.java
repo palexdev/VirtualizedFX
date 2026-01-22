@@ -80,11 +80,8 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
         overlay.setFocusTraversable(false);
 
         // Finalize initialization
-        addListeners();
         getChildren().setAll(label);
-        if (column.isEnableOverlay()) {
-            getChildren().add(overlay);
-        }
+        addListeners();
     }
 
     //================================================================================
@@ -116,7 +113,8 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
                     } else {
                         getChildren().remove(overlay);
                     }
-                }),
+                })
+                .executeNow(),
             onInvalidated(column.overlayOnHeaderProperty())
                 .then(_ -> column.requestLayout())
         );
