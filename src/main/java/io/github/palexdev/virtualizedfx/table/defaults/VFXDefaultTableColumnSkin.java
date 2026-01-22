@@ -84,7 +84,6 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
         getChildren().setAll(label);
         if (column.isEnableOverlay()) {
             getChildren().add(overlay);
-            column.setPickOnBounds(false);
         }
     }
 
@@ -114,10 +113,8 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
                 .then(v -> {
                     if (v) {
                         getChildren().add(overlay);
-                        column.setPickOnBounds(false); // otherwise the overlay captures events on cells
                     } else {
                         getChildren().remove(overlay);
-                        column.setPickOnBounds(true);
                     }
                 }),
             onInvalidated(column.overlayOnHeaderProperty())
