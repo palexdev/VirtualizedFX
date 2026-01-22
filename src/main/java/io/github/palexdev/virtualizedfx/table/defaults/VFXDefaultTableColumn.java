@@ -63,6 +63,7 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
     //================================================================================
     // Overridden Methods
     //================================================================================
+
     @Override
     public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXDefaultTableColumnSkin<>(this);

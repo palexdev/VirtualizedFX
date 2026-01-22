@@ -182,10 +182,12 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
 
         // Overlay layout
         VFXTable<T> table = column.getTable();
-        double oW = snappedRightInset() + w + snappedLeftInset();
-        double oH = (table != null) ? table.getHeight() : 0.0;
-        double oY = (column.isOverlayOnHeader()) ? 0.0 : h;
-        overlay.resizeRelocate(0.0, oY, oW, oH);
+        if (table != null) {
+            double minY = column.isOverlayOnHeader() ? 0 : column.getHeight();
+            double oW = column.getWidth();
+            double oH = table.getLayoutBounds().getHeight() - table.snappedBottomInset() - table.snappedTopInset() - minY;
+            overlay.resizeRelocate(0.0, minY, oW, oH);
+        }
     }
 
     @SuppressWarnings("unchecked")
