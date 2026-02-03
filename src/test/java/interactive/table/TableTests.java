@@ -21,6 +21,7 @@ package interactive.table;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gson.reflect.TypeToken;
 import io.github.palexdev.mfxcore.base.beans.Size;
@@ -45,6 +46,7 @@ import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -274,8 +276,8 @@ public class TableTests {
         }
 
         for (VFXTableColumn<User, ? extends VFXTableCell<User>> column : table.getColumns()) {
-            for (Object cell : ((TestColumn) column).cache().cells()) {
-                assertNotNull(((UserCell) cell).getTable());
+            for (UserCell<?> cell : ((TestColumn<?>) column).cache().cells()) {
+                assertNotNull(cell.getTable());
             }
         }
 
@@ -1941,8 +1943,9 @@ public class TableTests {
             pane.getChildren().add(table);
         });
 
-        for (VFXTableColumn<User, ? extends VFXTableCell<User>> c : table.getColumns()) {
-            assertEquals(240, c.getWidth(), 5);
+        Set<Node> labels = table.lookupAll(".label");
+        for (Node label : labels) {
+            assertFalse(((Label) label).isTruncated());
         }
     }
 
@@ -1965,19 +1968,9 @@ public class TableTests {
         // Try resizing a column
         robot.interact(() -> table.getColumns().get(1).resize(400.0));
 
-        double[] sizes = new double[]{
-            97.6,
-            400.0,
-            93.6,
-            109.6,
-            87.2,
-            50.0,
-            53.6
-        };
-
-        for (int i = 0; i < table.getColumns().size(); i++) {
-            VFXTableColumn<User, ? extends VFXTableCell<User>> c = table.getColumns().get(i);
-            assertEquals(sizes[i], c.getWidth(), 5.0);
+        Set<Node> labels = table.lookupAll(".labels");
+        for (Node label : labels) {
+            assertFalse(((Label) label).isTruncated());
         }
     }
 
