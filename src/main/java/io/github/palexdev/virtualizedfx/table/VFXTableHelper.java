@@ -525,7 +525,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         protected DoubleBinding createVirtualMaxXBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> Math.max(container.getWidth(), container.getColumns().size() * container.getColumnsSize().width()))
-                .addSources(container.widthProperty(), container.columnsSizeProperty())
+                .addSources(container.widthProperty())
+                .addSources(container.getColumns(), container.columnsSizeProperty())
                 .get();
         }
 
@@ -533,9 +534,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> container.getColumns().isEmpty() ? 0.0 : container.size() * container.getRowsHeight())
-                .addSources(container.getColumns())
-                .addSources(container.columnsSizeProperty())
-                .addSources(container.rowsHeightProperty())
+                .addSources(container.getColumns(), container.columnsSizeProperty())
+                .addSources(container.sizeProperty(), container.rowsHeightProperty())
                 .get();
         }
 
@@ -998,9 +998,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> container.getColumns().isEmpty() ? 0.0 : container.size() * container.getRowsHeight())
-                .addSources(container.getColumns())
-                .addSources(container.columnsSizeProperty())
-                .addSources(container.rowsHeightProperty())
+                .addSources(container.getColumns(), container.columnsSizeProperty())
+                .addSources(container.sizeProperty(), container.rowsHeightProperty())
                 .get();
         }
 
