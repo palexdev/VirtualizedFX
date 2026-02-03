@@ -82,6 +82,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     // Bindings for virtualized content!
     private VirtualScrollBinding vBinding;
     private VirtualScrollBinding hBinding;
+    private When<?> virtualBoundsListener;
 
     //================================================================================
     // Constructors
@@ -276,8 +277,8 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         }
         if (newContent == null) return;
 
+        VFXScrollPane pane = getSkinnable();
         if (!(newContent instanceof VFXContainer<?> c)) {
-            VFXScrollPane pane = getSkinnable();
             newContent.translateXProperty().bind(DoubleBindingBuilder.build()
                 .setMapper(() -> {
                     double cw = pane.getContentBounds().width();
@@ -305,8 +306,10 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         } else {
             if (vBinding != null) vBinding.dispose();
             if (hBinding != null) hBinding.dispose();
+            if (virtualBoundsListener != null) virtualBoundsListener.dispose();
             vBinding = new VirtualScrollBinding(Orientation.VERTICAL, c).bind();
             hBinding = new VirtualScrollBinding(Orientation.HORIZONTAL, c).bind();
+            virtualBoundsListener = observe(pane::requestLayout, c.maxHScrollProperty(), c.maxVScrollProperty()).listen();
         }
     }
 
@@ -464,6 +467,10 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         if (hBinding != null) {
             hBinding.dispose();
             hBinding = null;
+        }
+        if (virtualBoundsListener != null) {
+            virtualBoundsListener.dispose();
+            virtualBoundsListener = null;
         }
         super.dispose();
     }
