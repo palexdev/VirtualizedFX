@@ -41,6 +41,7 @@ import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollPaneSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
+import io.github.palexdev.virtualizedfx.table.VFXTable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -168,6 +169,10 @@ public class VFXScrollPane extends MFXControl {
         return switch (content) {
             case null -> Size.zero();
             // TODO should we snap these sizes in the helpers?
+            case VFXTable<?> t -> Size.of(
+                snapSizeX(t.getVirtualMaxX()),
+                snapSizeY(t.getVirtualMaxY() + t.getColumnsSize().height())
+            );
             case VFXContainer<?> c -> Size.of(
                 snapSizeX(c.getVirtualMaxX()),
                 snapSizeY(c.getVirtualMaxY())
