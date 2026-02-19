@@ -40,19 +40,26 @@ public class VFXContext<T> {
     //================================================================================
     // Methods
     //================================================================================
-    public void addLocked(Class<?> klass, Object service) {
-        add(klass, service);
-        locked.add(klass);
-    }
-
-    public void add(Class<?> klass, Object service) {
-        if (locked.contains(klass)) {
+    public void set(Class<?> klass, Object service) {
+        if (isLocked(klass)) {
             throw new IllegalStateException("Service " + klass.getName() + " is already registered and locked!");
         }
         services.put(klass, service);
     }
 
-    public boolean hasService(Class<?> klass) {
+    public void setLocked(Class<?> klass, Object service) {
+        set(klass, service);
+        locked.add(klass);
+    }
+
+    public void reset(Class<?> klass) {
+        if (isLocked(klass)) {
+            throw new IllegalStateException("Service " + klass.getName() + " is locked and cannot be unregistered!");
+        }
+        services.remove(klass);
+    }
+
+    public boolean doesHave(Class<?> klass) {
         return services.containsKey(klass);
     }
 
@@ -64,12 +71,12 @@ public class VFXContext<T> {
         return container;
     }
 
-    public <S> S getService(Class<S> klass) {
+    public <S> S get(Class<S> klass) {
         return services.get(klass);
     }
 
-    public <S> S requireService(Class<S> klass) {
-        return Optional.ofNullable(getService(klass))
+    public <S> S require(Class<S> klass) {
+        return Optional.ofNullable(get(klass))
             .orElseThrow(() -> new IllegalStateException("Required service " + klass.getName() + " is not registered!"));
     }
 

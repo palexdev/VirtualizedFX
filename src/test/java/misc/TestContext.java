@@ -29,27 +29,29 @@ public class TestContext {
     void testContext() {
         VFXContext<Object> context = new VFXContext<>(null);
         // Prepare
-        context.add(ServiceA.class, new ServiceA());
-        context.add(ServiceB.class, new ServiceB());
-        context.addLocked(ServiceC.class, null);
+        context.set(ServiceA.class, new ServiceA());
+        context.set(ServiceB.class, new ServiceB());
+        context.setLocked(ServiceC.class, null);
 
         assertEquals(3, context.services().size());
         assertTrue(context.isLocked(ServiceC.class));
 
-        ServiceC sc = context.getService(ServiceC.class);
+        ServiceC sc = context.get(ServiceC.class);
         assertNull(sc);
         assertEquals(2, context.services().size());
         assertFalse(context.isLocked(ServiceC.class));
 
-        ServiceA currA = context.getService(ServiceA.class);
-        context.addLocked(ServiceA.class, new ServiceA());
+        ServiceA currA = context.get(ServiceA.class);
+        context.setLocked(ServiceA.class, new ServiceA());
         assertEquals(2, context.services().size());
-        assertNotNull(context.getService(ServiceA.class));
-        assertNotSame(currA, context.getService(ServiceA.class));
+        assertNotNull(context.get(ServiceA.class));
+        assertNotSame(currA, context.get(ServiceA.class));
 
-        assertThrows(IllegalStateException.class, () -> context.add(ServiceA.class, new ServiceA()));
+        assertThrows(IllegalStateException.class, () -> context.set(ServiceA.class, new ServiceA()));
 
-        assertThrows(IllegalStateException.class, () -> context.requireService(ServiceC.class));
+        assertThrows(IllegalStateException.class, () -> context.require(ServiceC.class));
+
+        assertThrows(IllegalStateException.class, () -> context.reset(ServiceA.class));
     }
 
     static class ServiceA {}
