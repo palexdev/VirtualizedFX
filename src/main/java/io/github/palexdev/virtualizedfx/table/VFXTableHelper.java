@@ -30,7 +30,6 @@ import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
-import io.github.palexdev.mfxcore.observables.OnInvalidated;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainerHelper;
@@ -846,6 +845,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     @SuppressWarnings("JavadocReference") // I don't know why since the method is public
     class VariableTableHelper<T> extends AbstractHelper<T> {
         private ColumnsLayoutCache<T> layoutCache;
+
+        private boolean forced = false;
         private boolean forceLayout = false;
         private boolean forceAll = false;
 
@@ -1154,23 +1155,18 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             // In such cases, we must delay the autosize while also ensuring that layout infos are available
             // by forcing the computation of CSS.
             if (column.getSkin() == null) {
-                new OnInvalidated<>(column.skinProperty()) {
-                    static boolean forced = false;
-
-                    {
-                        condition(Objects::nonNull);
-                        then(v -> {
-                            if (!forced) {
-                                forced = true;
-                                forceLayout = true;
-                                container.applyCss();
-                            }
-                            autosizeColumn(column);
-                        });
-                        oneShot();
-                        listen();
-                    }
-                };
+                When.onInvalidated(column.skinProperty())
+                    .condition(Objects::nonNull)
+                    .then(_ -> {
+                        if (!forced) {
+                            forced = true;
+                            forceLayout = true;
+                            container.applyCss();
+                        }
+                        autosizeColumn(column);
+                    })
+                    .oneShot()
+                    .listen();
                 return;
             }
 
