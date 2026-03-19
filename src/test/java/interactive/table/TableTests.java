@@ -1961,12 +1961,36 @@ public class TableTests {
             table.switchColumnsLayoutMode();
 
             // Issue autosize here
-            table.autosizeColumns();
+            table.autosizeColumn(0);
             pane.getChildren().add(table);
         });
 
         // Try resizing a column
         robot.interact(() -> table.getColumns().get(1).resize(400.0));
+
+        // Sleep for a bit and try auto-sizing again
+        sleep(2000);
+        robot.interact(() -> table.autosizeColumn(0));
+    }
+
+    @Test
+    void testAutosizeAllEmpty(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(0));
+        robot.interact(() -> {
+            // Decrease minimum size
+            table.setColumnsWidth(50.0);
+
+            // Switch mode
+            table.switchColumnsLayoutMode();
+
+            // Issue autosize here
+            table.autosizeColumns();
+            pane.getChildren().add(table);
+        });
+
+        // Try resizing a column
+        robot.interact(() -> table.getColumns().get(1).resize(100.0));
 
         Set<Node> labels = table.lookupAll(".labels");
         for (Node label : labels) {
