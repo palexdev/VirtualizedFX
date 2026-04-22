@@ -60,6 +60,11 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
         super(text, graphic);
     }
 
+    {
+        // Start with a wider gap by default
+        StyleUtils.initProperty(graphicTextGapProperty(), 8.0);
+    }
+
     //================================================================================
     // Overridden Methods
     //================================================================================
