@@ -69,6 +69,8 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
         label = new BoundLabel(column);
         label.graphicProperty().unbind();
         label.setGraphic(null);
+        label.graphicTextGapProperty().unbind();
+        label.setGraphicTextGap(0.0);
         label.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         tmc = new TextMeasurementCache(column);
 
@@ -121,7 +123,7 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
     }
 
     /**
-     * Simply removed the old icon from the children list and adds the new one (after {@code null} checks ofc).
+     * Replaces the column's icon with the new given one.
      */
     protected void handleIcon(Node oldIcon, Node newIcon) {
         if (oldIcon != null) getChildren().remove(oldIcon);
@@ -154,7 +156,7 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
         VFXDefaultTableColumn<T, C> column = getColumn();
         Node icon = column.getGraphic();
         HPos ia = column.getIconAlignment();
-        double gap = column.getGraphicTextGap();
+        double gap = icon != null ? column.getGraphicTextGap() : 0.0;
 
         double iw = 0;
         if (icon != null) {
@@ -166,14 +168,15 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
             iw = icon.getLayoutBounds().getWidth();
         }
 
+        double remW = w - iw - gap;
         switch (ia) {
             case LEFT -> {
-                layoutInArea(label, x + gap + iw + snappedLeftInset(), y, w - iw - gap, h, 0, HPos.LEFT, VPos.CENTER);
+                layoutInArea(label, x + gap + iw, y, remW, h, 0, HPos.LEFT, VPos.CENTER);
                 label.setVisible(true);
             }
             case CENTER -> label.setVisible(false);
             case RIGHT -> {
-                layoutInArea(label, x, y, w, h, 0, HPos.LEFT, VPos.CENTER);
+                layoutInArea(label, x, y, remW, h, 0, HPos.LEFT, VPos.CENTER);
                 label.setVisible(true);
             }
         }
