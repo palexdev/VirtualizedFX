@@ -8,7 +8,6 @@ import java.util.function.Function;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.base.bindings.MappedBidirectionalBinding;
-import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.observables.When;
@@ -537,7 +536,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
          */
         default Insets getBarsPadding(VFXScrollPane pane) {
             return (pane.getLayoutMode() == LayoutMode.COMPACT)
-                ? InsetsBuilder.of(pane.snappedTopInset(), pane.snappedRightInset(), pane.snappedBottomInset(), pane.snappedLeftInset())
+                ? new Insets(pane.snappedTopInset(), pane.snappedRightInset(), pane.snappedBottomInset(), pane.snappedLeftInset())
                 : Insets.EMPTY;
         }
 

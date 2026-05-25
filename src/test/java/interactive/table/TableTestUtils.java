@@ -28,7 +28,6 @@ import java.util.stream.IntStream;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
@@ -55,6 +54,8 @@ import src.model.User;
 import src.utils.TestFXUtils;
 import src.utils.TestFXUtils.Counter;
 
+import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.insets;
+import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.uniform;
 import static org.junit.jupiter.api.Assertions.*;
 import static src.utils.TestFXUtils.FP_ASSERTIONS_DELTA;
 import static src.utils.TestFXUtils.counter;
@@ -306,17 +307,17 @@ public class TableTestUtils {
                 .select(".vfx-table > .viewport > .columns")
                 .border("transparent transparent #353839 transparent")
                 .select(".vfx-table > .viewport > .columns > .vfx-column")
-                .padding(InsetsBuilder.build().withHorizontal(10.0))
+                .padding(insets().horizontal(10.0))
                 .border("transparent #353839 transparent transparent")
                 .select(".vfx-table > .viewport > .columns > .vfx-column:hover > .overlay")
                 .and(".vfx-table > .viewport > .columns > .vfx-column:dragged > .overlay")
                 .background("rgba(53, 56, 57, 0.1)")
                 .select(".vfx-table > .viewport > .rows > .vfx-row")
                 .border("#353839")
-                .borderInsets(InsetsBuilder.uniform(1.25))
+                .borderInsets(uniform(1.25))
                 .borderWidth(0.5)
                 .select(".vfx-table > .viewport > .rows > .vfx-row > .table-cell")
-                .padding(InsetsBuilder.build().withHorizontal(10.0))
+                .padding(insets().horizontal(10.0))
                 .applyOn(this);
         }
 

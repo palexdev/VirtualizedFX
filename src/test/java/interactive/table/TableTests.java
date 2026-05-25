@@ -26,7 +26,6 @@ import java.util.Set;
 import com.google.gson.reflect.TypeToken;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.builders.InsetsBuilder;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
@@ -62,6 +61,8 @@ import src.model.User;
 
 import static interactive.table.TableTestUtils.*;
 import static interactive.table.TableTestUtils.Table.emptyColumns;
+import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.insets;
+import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.uniform;
 import static io.github.palexdev.virtualizedfx.table.VFXTableColumn.swapColumns;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -2045,17 +2046,17 @@ public class TableTests {
             .select(".vfx-table > .viewport > .columns")
             .border("transparent transparent #353839 transparent")
             .select(".vfx-table > .viewport > .columns > .vfx-column")
-            .padding(InsetsBuilder.build().withHorizontal(10.0))
+            .padding(insets().horizontal(10.0))
             .border("transparent #353839 transparent transparent")
             .select(".vfx-table > .viewport > .columns > .vfx-column:hover > .overlay")
             .and(".vfx-table > .viewport > .columns > .vfx-column:dragged > .overlay")
             .background("rgba(53, 56, 57, 0.1)")
             .select(".vfx-table > .viewport > .rows > .vfx-row")
             .border("#353839")
-            .borderInsets(InsetsBuilder.uniform(1.25))
+            .borderInsets(uniform(1.25))
             .borderWidth(0.5)
             .select(".vfx-table > .viewport > .rows > .vfx-row > .table-cell")
-            .padding(InsetsBuilder.build().withHorizontal(10.0))
+            .padding(insets().horizontal(10.0))
             .applyOn(table);
 
         int ICON_SIZE = 18;

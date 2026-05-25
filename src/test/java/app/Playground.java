@@ -23,21 +23,29 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import fr.brouillard.oss.cssfx.CSSFX;
-import io.github.palexdev.mfxcore.builders.InsetsBuilder;
+import interactive.table.TableTestUtils;
+import io.github.palexdev.mfxcore.utils.EnumUtils;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
+import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
+import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import javafx.application.Application;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
+import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.uniform;
+import static src.model.User.users;
 import static src.utils.Utils.debugView;
 
 public class Playground extends Application {
@@ -55,15 +63,27 @@ public class Playground extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage stage) {
+        startPlayground(stage);
+    }
+
+    private void startPlayground(Stage stage) {
         StackPane pane = new StackPane();
         pane.setAlignment(Pos.CENTER);
-        pane.setPadding(InsetsBuilder.uniform(4.0).get());
+        pane.setPadding(uniform(4.0).get());
 
-        //TableTestUtils.Table table = new TableTestUtils.Table(users(10000));
-        //table.setColumnsWidth(50.0);
-        //table.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
-        //table.autosizeColumns();
+        TableTestUtils.Table table = new TableTestUtils.Table(users(15));
+        table.setColumnsWidth(50.0);
+        table.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
+        table.autosizeColumns();
+
+        table.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+            if (e.getButton() != MouseButton.SECONDARY) return;
+            table.getColumns().forEach(c -> {
+                HPos next = EnumUtils.next(HPos.class, ((VFXDefaultTableColumn) c).getIconAlignment());
+                ((VFXDefaultTableColumn) c).setIconAlignment(next);
+            });
+        });
 
 /*        ListTestUtils.List list = new ListTestUtils.List(items(100));
         list.setFitToViewport(false);*/
@@ -76,7 +96,7 @@ public class Playground extends Application {
 
         Rectangle rt = new Rectangle(2000, 2000, ColorUtils.getRandomColor());
 
-        VFXScrollPane sp = new VFXScrollPane(label);
+        VFXScrollPane sp = new VFXScrollPane(table);
         sp.setSmoothScroll(true);
         sp.setFitToWidth(true);
         sp.setFitToHeight(true);
@@ -95,9 +115,9 @@ public class Playground extends Application {
 
         pane.getChildren().addAll(sp);
         Scene scene = new Scene(pane, 600, 400);
-        primaryStage.setScene(scene);
-        primaryStage.show();
-        primaryStage.centerOnScreen();
+        stage.setScene(scene);
+        stage.show();
+        stage.centerOnScreen();
 
         debugView(null, pane);
 
