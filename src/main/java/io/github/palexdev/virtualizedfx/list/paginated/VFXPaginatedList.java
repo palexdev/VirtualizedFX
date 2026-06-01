@@ -31,6 +31,7 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProp
 import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.mfxcore.builders.bindings.IntegerBindingBuilder;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
+import io.github.palexdev.mfxcore.utils.EnumUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXPaginated;
@@ -43,6 +44,7 @@ import io.github.palexdev.virtualizedfx.list.VFXListState;
 import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedListHelper.HorizontalHelper;
 import io.github.palexdev.virtualizedfx.list.paginated.VFXPaginatedListHelper.VerticalHelper;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
+import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -246,10 +248,11 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
         // The policy is enough to hide the bar for which scroll is disabled by the pagination feature
         // And this should also be enough in theory to prevent JavaFX exceptions due to bidirectionally binding the
         // scroll positions (call to bindTo(this))
-        VFXScrollPane pane = new VFXScrollPane(this);
-        pane.vBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.VERTICAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
-        pane.hBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.HORIZONTAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
-        return pane;
+        VFXScrollPane vsp = new VFXScrollPane(this);
+        vsp.vBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.VERTICAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
+        vsp.hBarPolicyProperty().bind(orientationProperty().map(o -> o == Orientation.HORIZONTAL ? ScrollBarPolicy.NEVER : ScrollBarPolicy.DEFAULT));
+        ScrollParams.pixels(50.0).bind(vsp, EnumUtils.next(Orientation.class, getOrientation())); // bind in the opposite direction
+        return vsp;
     }
 
     //================================================================================

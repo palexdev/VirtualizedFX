@@ -58,6 +58,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 
+import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
+
 /**
  * Implementation of a virtualized container to show a list of items in a "2D" perspective.
  * The default style class is: '.vfx-grid'.
@@ -326,7 +328,9 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
 
     @Override
     public VFXScrollPane makeScrollable() {
-        return new VFXScrollPane(this);
+        VFXScrollPane vsp = new VFXScrollPane(this);
+        VFXScrollable.bindSpeed(vsp, cells(1), cells(1));
+        return vsp;
     }
 
     //================================================================================

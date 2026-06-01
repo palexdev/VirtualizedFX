@@ -62,6 +62,9 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 
+import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
+import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
+
 /**
  * Implementation of a virtualized container to show a list of items as tabular data.
  * The default style class is: '.vfx-table'.
@@ -464,7 +467,9 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     @Override
     public VFXScrollPane makeScrollable() {
-        return new VFXScrollPane(this);
+        VFXScrollPane vsp = new VFXScrollPane(this);
+        VFXScrollable.bindSpeed(vsp, cells(1), pixels(50.0));
+        return vsp;
     }
 
     @Override

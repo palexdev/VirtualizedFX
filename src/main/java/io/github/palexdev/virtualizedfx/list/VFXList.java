@@ -58,6 +58,9 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 
+import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
+import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
+
 /**
  * Implementation of a virtualized container to show a list of items either vertically or horizontally.
  * The default style class is: '.vfx-list'.
@@ -294,7 +297,13 @@ public class VFXList<T, C extends VFXCell<T>> extends MFXControl
 
     @Override
     public VFXScrollPane makeScrollable() {
-        return new VFXScrollPane(this);
+        VFXScrollPane vsp = new VFXScrollPane(this);
+        if (getOrientation() == Orientation.VERTICAL) {
+            VFXScrollable.bindSpeed(vsp, cells(1), pixels(50.0));
+        } else {
+            VFXScrollable.bindSpeed(vsp, pixels(50.0), cells(1));
+        }
+        return vsp;
     }
 
     //================================================================================
