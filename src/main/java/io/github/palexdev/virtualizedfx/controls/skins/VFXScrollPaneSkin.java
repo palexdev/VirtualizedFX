@@ -209,8 +209,8 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
      * For standard content the layout depends on the following conditions:
      * <p> - {@link VFXScrollPane#alignmentProperty()} which determines where the content is in the viewport.
      * {@link Pos} carries both the vertical and horizontal positions into single enum constants. Note that if the content
-     * is taller/wider than the viewport, then the corresponding position is ignored!
-     * <p> - If the {@link VFXScrollPane#fitToWidthProperty()} and {@link VFXScrollPane#fitToWidthProperty()} are active
+     * is taller/wider than the viewport this gets ignored and the content positioned in the top-left corner.
+     * <p> - If the {@link VFXScrollPane#fitToWidthProperty()} and {@link VFXScrollPane#fitToHeightProperty()} are active
      * than the content will always take all the width/height available, regardless of its preferred sizes
      * <p></p>
      * Last but not least, this method calls {@link #updateVisualAmount(Node)} and {@link VFXScrollPaneBehavior#setViewportSize(Size)}
@@ -238,12 +238,8 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
             // Find content bounds and set it to be at least the same as the viewport size if fitTo configs are enabled
             double cw = LayoutUtils.snappedBoundWidth(content);
             double ch = LayoutUtils.snappedBoundHeight(content);
-            cw = pane.isFitToWidth()
-                ? Math.max(w, cw)
-                : cw;
-            ch = pane.isFitToHeight()
-                ? Math.max(h, ch)
-                : ch;
+            cw = pane.isFitToWidth() ? w : cw;
+            ch = pane.isFitToHeight() ? h : ch;
 
             // If the content is larger than the viewport, then the alignment is ignored
             if (cw > w) hAlign = HPos.LEFT;
