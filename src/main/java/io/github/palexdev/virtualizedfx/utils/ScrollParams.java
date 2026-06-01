@@ -89,9 +89,13 @@ public record ScrollParams(double amount, double trackMultiplier, ScrollUnits un
      */
     public void apply(VFXScrollPane vsp, Orientation orientation) {
         if (orientation == Orientation.VERTICAL) {
+            vsp.vUnitIncrementProperty().unbind();
+            vsp.vTrackIncrementProperty().unbind();
             vsp.setVUnitIncrement(unit.calc(vsp, amount, orientation).get());
             vsp.setVTrackIncrement(trackMultiplier * vsp.getVUnitIncrement());
         } else {
+            vsp.hUnitIncrementProperty().unbind();
+            vsp.hTrackIncrementProperty().unbind();
             vsp.setHUnitIncrement(unit.calc(vsp, amount, orientation).get());
             vsp.setHTrackIncrement(trackMultiplier * vsp.getHUnitIncrement());
         }
