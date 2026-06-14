@@ -187,7 +187,7 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
     /// The first cell's index is 16, but its layout index is 0
     /// The second cell's index is 17, but its layout index is 1
     /// ...and so on
-    /// ```
+    ///```
     ///
     /// @see #onLayoutCompleted(boolean)
     protected void layout() {

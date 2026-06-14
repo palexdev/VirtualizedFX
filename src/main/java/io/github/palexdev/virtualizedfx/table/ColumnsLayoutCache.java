@@ -224,29 +224,29 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     ///
     /// Detailing the internals:
     /// ```
-    /// // Let's suppose we want to compute the position of the column at index 2 (so third one)
-    /// // First we convert the index to the corresponding column
+    ///// Let's suppose we want to compute the position of the column at index 2 (so third one)
+    ///// First we convert the index to the corresponding column
     /// VFXTableColumn c = ...;
-    /// // Then we query the map and get the known position for that column
+    ///// Then we query the map and get the known position for that column
     /// double pos = map.getPos(c);
-    /// // Index 0 is a special case and we handle it as follows
-    /// if (index == 0) {
+    ///// Index 0 is a special case and we handle it as follows
+    /// if (index == 0){
     ///     map.setPos(c, 0); // Column 0 is always at x = 0
     ///     return 0;
-    /// }
-    /// // If 'pos' is lesser than 0, then it either means it was never been computed before or it was invalidated
-    /// // We need to ask the position function to compute the value as follows...
-    /// if (pos < 0) {
+    ///}
+    ///// If 'pos' is lesser than 0, then it either means it was never been computed before or it was invalidated
+    ///// We need to ask the position function to compute the value as follows...
+    /// if (pos < 0){
     ///     pos = posFn.apply(index -1, getColumnPos(index -1)); // Here's where the method calls itself
     ///     map.setPos(index, pos); // Store the found pos in the cache so we don't fall in this 'if' again until invalidated
-    /// }
+    ///}
     /// return pos;
-    /// // Why the recursion?
-    /// // In general, to compute a column's position, we can simply get the position of the previous column + its width.
-    /// // So, for the third one, we need the second one's position, and so on...
-    /// // The recursion doesn't happen if the previous value is known, so the method acts almost like a simple getter
-    /// // The recursion stops at column 0, because it's position is always 0.
-    /// ```
+    ///// Why the recursion?
+    ///// In general, to compute a column's position, we can simply get the position of the previous column + its width.
+    ///// So, for the third one, we need the second one's position, and so on...
+    ///// The recursion doesn't happen if the previous value is known, so the method acts almost like a simple getter
+    ///// The recursion stops at column 0, because it's position is always 0.
+    ///```
     public double getColumnPos(int index) {
         VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
         LayoutInfo li = cache.get(column);

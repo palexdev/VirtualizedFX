@@ -30,17 +30,17 @@ import javafx.util.StringConverter;
 /// that display from an object [T] that comes from the model, a piece of data [E] which is part of [T].
 /// Consider this example:
 /// ```
-/// // My model class...
-/// record User(int id, String name) {}
-/// // My columns (assuming UserCell is a custom cell)
+///// My model class...
+/// record User(int id, String name){}
+///// My columns (assuming UserCell is a custom cell)
 /// VFXTableColumn<User, UserCell> idColumn = new VFXDefaultTableColumn<>("ID");
 /// VFXTableColumn<User, UserCell> nameColumn = new VFXDefaultTableColumn<>("Name");
-/// // Let's set their cell factories
+///// Let's set their cell factories
 /// idColumn.setCellFactory(user -> new UserCell(user, User::id));
 /// nameColumn.setCellFactory(user -> new UserCell(user, User::name));
-/// // See the second parameter in the constructors? I call that function the 'extractor' which basically tells the cell
-/// // which piece of data it should display from the a User object
-/// ```
+///// See the second parameter in the constructors? I call that function the 'extractor' which basically tells the cell
+///// which piece of data it should display from the a User object
+///```
 ///
 /// For this API to work, we need two additional requirements:
 ///

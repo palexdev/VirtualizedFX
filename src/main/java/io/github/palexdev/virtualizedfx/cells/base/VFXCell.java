@@ -45,24 +45,24 @@ public interface VFXCell<T> {
     ///
     /// Implementations can check these examples:
     /// ```
-    /// // Example 1
+    ///// Example 1
     /// public class SimpleCell<T> extends Label implements VFXCell<T> {
     ///     ...
     ///     ...
-    ///          Node toNode() {
+    ///          Node toNode(){
     ///         return this;
-    ///     }
-    /// }
-    /// // Example 2
+    ///}
+    ///}
+    ///// Example 2
     /// public class SimpleCell<T> implements VFXCell<T> {
     ///     private final Label label = ...;
     ///     ...
     ///     ...
-    ///          Node toNode() {
+    ///          Node toNode(){
     ///         return label;
-    ///     }
-    /// }
-    /// ```
+    ///}
+    ///}
+    ///```
     Node toNode();
 
     /// Automatically called by the framework when the cell needs to update its index.

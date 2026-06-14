@@ -246,13 +246,13 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// In list before: 0 1 2 3 4 5
     /// Add at index 2 these items: 99, 98
     /// In list after: 0 1 99 98 2 3 4 5
-    /// Now let's suppose the range of displayed items is the same: [0, 5] (6 items)
-    /// (I'm going now to write items with the index too, like this Index:Item)
+    /// Now let's suppose the range of displayed items is the same: [0, 5](6 items)
+    ///(I'm going now to write items with the index too, like this Index:Item)
     /// Items before: [0:0, 1:1, 2:2, 3:3, 4:4, 5:5]
     /// Items after: [0:0, 1:1, 2:99, 3:98, 4:2, 5:3]
     /// See? Items 2 and 3 are still there but in a different position (index) Since we assume item updates are more
     /// expensive than index updates, we must ensure to take those two cells and update them just by index
-    /// ```
+    ///```
     ///
     /// For this reason, cells from the old state are not removed by index, but by **item**,
     /// [VFXListState#removeCell(Object)]. First, we retrieve the item from the list that is now at index i

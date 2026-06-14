@@ -91,14 +91,14 @@ import javafx.scene.Node;
 /// happen is in the case of incomplete rows/columns.
 /// ```
 /// outer_loop:
-/// for (rIdx : rowsRange) {
-///     for (cIdx : columnsRange) {
+/// for (rIdx : rowsRange){
+///     for (cIdx : columnsRange){
 ///         ...
 ///         ...
 ///         if (...) break outer_loop;
-///     }
-/// }
-/// ```
+///}
+///}
+///```
 ///
 /// @see #INVALID
 /// @see StateMap

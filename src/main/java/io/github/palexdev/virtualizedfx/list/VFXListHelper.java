@@ -251,7 +251,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         /// {@inheritDoc}
         ///
-        /// Given by `(vPos + listHeight) / totalCellSize`, clamped between 0 and itemsNum - 1.
+        /// Given by `(vPos + listHeight)/ totalCellSize`, clamped between 0 and itemsNum - 1.
         @Override
         public int lastVisible() {
             return NumberUtils.clamp(
@@ -438,7 +438,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         /// {@inheritDoc}
         ///
-        /// Given by `(hPos + listWidth) / totalCellSize`, clamped between 0 and itemsNum - 1.
+        /// Given by `(hPos + listWidth)/ totalCellSize`, clamped between 0 and itemsNum - 1.
         @Override
         public int lastVisible() {
             return NumberUtils.clamp(

@@ -48,33 +48,33 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 ///     "String 2",
 ///     "String 7",
 ///     "String 0",
-/// )
-/// ```
+///)
+///```
 ///
 /// With a data structure like this you could achieve something like this:
 /// ```
 /// IndexBiMap<Integer, String> biMap = new IndexBiMap<>();
-/// for (int i = 0: i < strings.size(); i++) {
+/// for (int i = 0: i < strings.size(); i++){
 ///     biMap.put(i, i, strings.get(i));
-/// }
-/// // The above example shows how this collection can be used as a classical BiMap too (in case K are integers!)
-/// ```
+///}
+///// The above example shows how this collection can be used as a classical BiMap too (in case K are integers!)
+///```
 ///
 /// However, the true nature of this data structure is to achieve something like this:
 /// ```
 /// List<V> values = ..; // These values are generated from a String in the strings list
 /// IndexBiMap<String, V> biMap = new IndexBiMap<>();
-/// for (int i = 0; i < strings.size(); i++) {
+/// for (int i = 0; i < strings.size(); i++){
 ///     String s = strings.get(i);
 ///     V val = values.get(i);
 ///     biMap.put(i, s, val);
-/// }
-/// // Get a V val from index...
+///}
+///// Get a V val from index...
 /// V val = biMap.get(0); // returns "String 0"
-/// // Get a V val from a K object (will be simplified for easier comprehension, read more below)
+///// Get a V val from a K object (will be simplified for easier comprehension, read more below)
 /// Integer index = biMap.get("String 3"); // returns 3
 /// V val = biMap.get(index); // returns "String 3"
-/// ```
+///```
 ///
 /// If you carefully analyze the above examples, you may be able to spot an issue with this data structure: **duplicates**.
 ///
@@ -115,21 +115,21 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 /// Java is a particular case. Strings that are equal in value are also equal in reference, same object, because Java caches
 /// string literals for performance and memory reasons. Instead, let's consider this example:
 /// ```
-/// // Let's say this is our model class
-/// public record User(int id, String name, String email) {}
+///// Let's say this is our model class
+/// public record User(int id, String name, String email){}
 /// List<User> users = ...;
-/// // In this list, we may have two Users with a different reference (different object) but with the same values (equal)
-/// // Each user is used in an object of type V
+///// In this list, we may have two Users with a different reference (different object) but with the same values (equal)
+///// Each user is used in an object of type V
 /// List<V> values = ...;
-/// // Let's suppose now, we make some changes to the users list (additions, removals, updates,...)
-/// // And now we need to update the V values as well
-/// // We want to ignore those for which the User is the same, and update those for which the User at pos i in the list is now different
-/// // Here's where IDENTITY is way more important than EQUALITY
-/// // Let's suppose that during the update, because we consider equality instead of identity, we accidentally swap the
-/// // User objects of two V values. What do you think it may happen?
-/// // It may happen that if we update the values of a certain User object (ignore that it is a record), we may not see the
-/// // change in the associated V object, because we swapped it. So, instead, we would see the change in an entirely different V object
-/// ```
+///// Let's suppose now, we make some changes to the users list (additions, removals, updates,...)
+///// And now we need to update the V values as well
+///// We want to ignore those for which the User is the same, and update those for which the User at pos i in the list is now different
+///// Here's where IDENTITY is way more important than EQUALITY
+///// Let's suppose that during the update, because we consider equality instead of identity, we accidentally swap the
+///// User objects of two V values. What do you think it may happen?
+///// It may happen that if we update the values of a certain User object (ignore that it is a record), we may not see the
+///// change in the associated V object, because we swapped it. So, instead, we would see the change in an entirely different V object
+///```
 ///
 /// **Retrievals**
 /// This data structure provides to way of retrieving `V` values, either by index [#get(Integer)] or by key

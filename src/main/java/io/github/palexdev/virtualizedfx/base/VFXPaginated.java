@@ -82,7 +82,7 @@ public interface VFXPaginated<T> extends VFXContainer<T> {
     /// Computes the maximum page index reachable by the container. This depends on the number of items and the number
     /// of cells/items per page.
     ///
-    /// The exact formula is as follows: `Math.max(0, ((int) Math.ceil(items / (double) cpp)) - 1)`
+    /// The exact formula is as follows: `Math.max(0,((int) Math.ceil(items /(double) cpp)) - 1)`
     default int computeMaxPage() {
         int items = size();
         int cpp = getCellsPerPage();

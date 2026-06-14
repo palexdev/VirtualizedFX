@@ -197,7 +197,7 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
     /// The first cell's coordinates are [2, 2], but its layout coordinates are [0, 0]
     /// The second cell's coordinates are [2, 3], but its layout coordinates are [0, 1]
     /// ...and so on
-    /// ```
+    ///```
     ///
     /// @see #onLayoutCompleted(boolean)
     protected void layout() {

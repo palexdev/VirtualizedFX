@@ -227,7 +227,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
 
     /// This method will compute the maximum number of columns that can fit in the grid. The computation depends on the
     /// following values: the container's width, the cell width, and the horizontal spacing. The expression is the following:
-    /// `Math.max(Math.max(0, min), Math.floor(getWidth() / (cellWidth + hSpacing)))`.
+    /// `Math.max(Math.max(0, min), Math.floor(getWidth()/(cellWidth + hSpacing)))`.
     ///
     /// One good example of this would be a grid that automatically adapts to the size of its parent or window.
     /// In combination with the [#alignmentProperty()] this can reveal to be very powerful.
