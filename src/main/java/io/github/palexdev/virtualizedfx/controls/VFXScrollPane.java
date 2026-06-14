@@ -23,6 +23,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
+import io.github.palexdev.mfxcore.base.properties.SizeProperty;
 import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
@@ -41,21 +42,21 @@ import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollPaneSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
-import io.github.palexdev.virtualizedfx.table.VFXTable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.CssMetaData;
 import javafx.css.PseudoClass;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 
+import static io.github.palexdev.mfxcore.base.beans.Size.zero;
 import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
 import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
 
@@ -102,6 +103,7 @@ public class VFXScrollPane extends MFXControl {
     // Properties
     //================================================================================
     private final ObjectProperty<Node> content = new SimpleObjectProperty<>();
+    private final SizeProperty contentBounds = new SizeProperty(zero());
 
     // VBar
     private final DoubleProperty vMin = PropUtils.clampedDoubleProperty(
@@ -159,33 +161,22 @@ public class VFXScrollPane extends MFXControl {
     }
 
     /**
-     * @return the appropriate sizes for the scroll pane's content. For virtualized containers ({@link VFXContainer})
-     * the values are given by the {@link VFXContainer#virtualMaxXProperty()} and the {@link VFXContainer#virtualMaxYProperty()}
-     * <p></p>
-     * For standard nodes returns their bounds including the padding specified by the {@link #contentPaddingProperty()}.
+     * @return the appropriate sizes for the scroll pane's content. This property is managed and set by the skin.
+     * For virtualized containers ({@link VFXContainer}) the values are given by the
+     * {@link VFXContainer#virtualMaxXProperty()} and the {@link VFXContainer#virtualMaxYProperty()}.
+     * For standard nodes the values are computed considering the content's preferred size, content bias,
+     * and the {@link #fitToWidthProperty()} / {@link #fitToHeightProperty()} settings.
      */
     public Size getContentBounds() {
-        Node content = getContent();
-        return switch (content) {
-            case null -> Size.zero();
-            // TODO should we snap these sizes in the helpers?
-            case VFXTable<?> t -> Size.of(
-                snapSizeX(t.getVirtualMaxX()),
-                snapSizeY(t.getVirtualMaxY() + t.getColumnsSize().height())
-            );
-            case VFXContainer<?> c -> Size.of(
-                snapSizeX(c.getVirtualMaxX()),
-                snapSizeY(c.getVirtualMaxY())
-            );
-            default -> {
-                Bounds b = content.getLayoutBounds();
-                Insets padding = getContentPadding();
-                yield Size.of(
-                    b.getWidth() + padding.getLeft() + padding.getRight(),
-                    b.getHeight() + padding.getTop() + padding.getBottom()
-                );
-            }
-        };
+        return contentBounds.get();
+    }
+
+    /**
+     * A read-only property holding the computed content bounds. The skin is the source of truth and updates
+     * this property every time the content's size may have changed.
+     */
+    public ReadOnlyObjectProperty<Size> contentBoundsProperty() {
+        return contentBounds;
     }
 
     //================================================================================

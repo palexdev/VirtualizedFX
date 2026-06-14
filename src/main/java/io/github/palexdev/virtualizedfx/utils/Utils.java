@@ -18,6 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.utils;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 
 public class Utils {
@@ -41,11 +45,9 @@ public class Utils {
     // Static Methods
     //================================================================================
 
-    /**
-     * Finds the {@link IntegerRange} which is the intersection between the two given ranges.
-     * <p>
-     * The {@code min} is given by {@code Math.max(r1Min, r2Min}, while the {@code max} is given by {@code Math.min(r1Max, r2Max}.
-     */
+    /// Finds the [IntegerRange] which is the intersection between the two given ranges.
+    ///
+    /// The `min` is given by `Math.max(r1Min, r2Min)`, while the `max` is given by `Math.min(r1Max, r2Max)`.
     public static IntegerRange intersection(IntegerRange r1, IntegerRange r2) {
         int min = Math.max(r1.getMin(), r2.getMin());
         int max = Math.min(r1.getMax(), r2.getMax());
@@ -54,5 +56,17 @@ public class Utils {
         } catch (Exception ex) {
             return INVALID_RANGE;
         }
+    }
+
+    /// @return an unmodifiable hashmap with the provided key-value pairs
+    /// @throws IllegalArgumentException if the given arguments are odd
+    /// @throws ClassCastException if one of the values cannot be cast either to `K` or `V`
+    public static <K, V> Map<K, V> mapOf(Object... kv) {
+        if (kv.length % 2 != 0) throw new IllegalArgumentException("Invalid key-value pair count!");
+        Map<K, V> map = new HashMap<>();
+        for (int i = 0; i < kv.length; i += 2) {
+            map.put((K) kv[i], (V) kv[i + 1]);
+        }
+        return Collections.unmodifiableMap(map);
     }
 }
