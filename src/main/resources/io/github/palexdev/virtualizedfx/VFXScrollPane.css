@@ -17,5 +17,32 @@
  */
 
 .vfx-scroll-pane {
+  -fx-padding: 4px 20px 20px 4px;
+  -vfx-bars-insets: 6px;
+}
+
+.vfx-scroll-pane > .vfx-scroll-bar:vertical {
+  -fx-translate-x: -4px;
+  -fx-translate-y: 4px;
+}
+
+.vfx-scroll-pane > .vfx-scroll-bar:horizontal {
+  -fx-translate-x: 4px;
+  -fx-translate-y: -4px;
+}
+
+.vfx-scroll-pane:compact {
   -fx-padding: 4px;
+  -vfx-auto-hide-bars: true;
+  -vfx-bars-insets: 12px;
+}
+
+.vfx-scroll-pane:compact > .vfx-scroll-bar:vertical {
+  -fx-translate-x: -8px;
+  -fx-translate-y: 8px;
+}
+
+.vfx-scroll-pane:compact > .vfx-scroll-bar:horizontal {
+  -fx-translate-x: 8px;
+  -fx-translate-y: -8px;
 }

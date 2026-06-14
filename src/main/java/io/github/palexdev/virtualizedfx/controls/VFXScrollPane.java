@@ -33,6 +33,7 @@ import io.github.palexdev.mfxcore.controls.MFXControl;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
+import io.github.palexdev.mfxcore.utils.fx.PseudoClasses;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
@@ -40,8 +41,8 @@ import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollPaneBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollPaneSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
-import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
+import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarsAlignment;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -200,15 +201,15 @@ public class VFXScrollPane extends MFXControl {
     //================================================================================
     // Styleable Properties
     //================================================================================
-    private final StyleableObjectProperty<LayoutMode> layoutMode = new StyleableObjectProperty<>(
-        StyleableProperties.LAYOUT_MODE,
+    private final StyleableBooleanProperty compact = new StyleableBooleanProperty(
+        StyleableProperties.COMPACT,
         this,
-        "layoutMode",
-        LayoutMode.DEFAULT
+        "compact",
+        true
     ) {
         @Override
         protected void invalidated() {
-            pseudoClassStateChanged(LayoutMode.COMPACT_PSEUDO_CLASS, get() == LayoutMode.COMPACT);
+            PseudoClasses.setOn(VFXScrollPane.this, "compact", get());
         }
     };
 
@@ -240,11 +241,18 @@ public class VFXScrollPane extends MFXControl {
         false
     );
 
-    private final StyleableObjectProperty<Insets> contentPadding = new StyleableObjectProperty<>(
-        StyleableProperties.CONTENT_PADDING,
+    private final StyleableObjectProperty<Insets> barsInsets = new StyleableObjectProperty<>(
+        StyleableProperties.BARS_INSETS,
         this,
-        "contentPadding",
+        "barsInsets",
         Insets.EMPTY
+    );
+
+    private final StyleableObjectProperty<ScrollBarsAlignment> barsAlignment = new StyleableObjectProperty<>(
+        StyleableProperties.BARS_ALIGNMENT,
+        this,
+        "barsAlignment",
+        ScrollBarsAlignment.DEFAULT
     );
 
     private final StyleableObjectProperty<VBarPos> vBarPos = new StyleableObjectProperty<>(
@@ -259,13 +267,6 @@ public class VFXScrollPane extends MFXControl {
         this,
         "hBarPos",
         HBarPos.BOTTOM
-    );
-
-    private final StyleableDoubleProperty scrollBarsGap = new StyleableDoubleProperty(
-        StyleableProperties.SCROLL_BARS_GAP,
-        this,
-        "scrollBarsGap",
-        4.0
     );
 
     private final StyleableBooleanProperty autoHideBars = new StyleableBooleanProperty(
@@ -385,16 +386,16 @@ public class VFXScrollPane extends MFXControl {
         0.0
     );
 
-    public LayoutMode getLayoutMode() {
-        return layoutMode.get();
+    public boolean isCompact() {
+        return compact.get();
     }
 
-    public StyleableObjectProperty<LayoutMode> layoutModeProperty() {
-        return layoutMode;
+    public StyleableBooleanProperty compactProperty() {
+        return compact;
     }
 
-    public void setLayoutMode(LayoutMode layoutMode) {
-        this.layoutMode.set(layoutMode);
+    public void setCompact(boolean compact) {
+        this.compact.set(compact);
     }
 
     public Pos getAlignment() {
@@ -402,7 +403,7 @@ public class VFXScrollPane extends MFXControl {
     }
 
     /**
-     * Allows to align the scroll pane's content within its viewport. The alignment is ignored if the content is larger
+     * Allows aligning the scroll pane's content within its viewport. The alignment is ignored if the content is larger
      * than the viewport.
      * <p>
      * This is also settable via CSS with the "-vfx-alignment" property.
@@ -472,30 +473,28 @@ public class VFXScrollPane extends MFXControl {
         this.fitToHeight.set(fitToHeight);
     }
 
-    public Insets getContentPadding() {
-        return contentPadding.get();
+    public Insets getBarsInsets() {
+        return barsInsets.get();
     }
 
-    /**
-     * Specifies the padding around the content.
-     * <p>
-     * This is also settable via CSS with the "-vfx-content-padding" property.
-     * <p></p>
-     * This is a very delicate feature because in a scroll pane layout computations (sizes, positions and whatnot) must
-     * be precise/exact, otherwise the content may not be fully scrollable or properly aligned.
-     * <p>
-     * This is implemented in the simplest way possible. The padding is included in the content bounds returned by
-     * {@link #getContentBounds()} for standard nodes. For virtualized containers the padding is taken into account
-     * only during layout.
-     * <p>
-     * That said, I consider this an <b>experimental</b> feature, expect bugs, use with cautions.
-     */
-    public StyleableObjectProperty<Insets> contentPaddingProperty() {
-        return contentPadding;
+    public StyleableObjectProperty<Insets> barsInsetsProperty() {
+        return barsInsets;
     }
 
-    public void setContentPadding(Insets contentPadding) {
-        this.contentPadding.set(contentPadding);
+    public void setBarsInsets(Insets barsInsets) {
+        this.barsInsets.set(barsInsets);
+    }
+
+    public ScrollBarsAlignment getBarsAlignment() {
+        return barsAlignment.get();
+    }
+
+    public StyleableObjectProperty<ScrollBarsAlignment> barsAlignmentProperty() {
+        return barsAlignment;
+    }
+
+    public void setBarsAlignment(ScrollBarsAlignment barsAlignment) {
+        this.barsAlignment.set(barsAlignment);
     }
 
     public VBarPos getVBarPos() {
@@ -557,24 +556,6 @@ public class VFXScrollPane extends MFXControl {
                 setHBarPos(HBarPos.BOTTOM);
             }
         }
-    }
-
-    public double getScrollBarsGap() {
-        return scrollBarsGap.get();
-    }
-
-    /**
-     * Determines how much space divides the two scroll bars. Imagine this as the corner UI element that was present in
-     * the scroll panes back in the day.
-     * <p>
-     * This is also settable via CSS with the "-vfx-bars-gap" property.
-     */
-    public StyleableDoubleProperty scrollBarsGapProperty() {
-        return scrollBarsGap;
-    }
-
-    public void setScrollBarsGap(double scrollBarsGap) {
-        this.scrollBarsGap.set(scrollBarsGap);
     }
 
     public boolean isAutoHideBars() {
@@ -874,12 +855,11 @@ public class VFXScrollPane extends MFXControl {
         private static final StyleablePropertyFactory<VFXScrollPane> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
-        private static final CssMetaData<VFXScrollPane, LayoutMode> LAYOUT_MODE =
-            FACTORY.createEnumCssMetaData(
-                LayoutMode.class,
-                "-vfx-layout-mode",
-                VFXScrollPane::layoutModeProperty,
-                LayoutMode.DEFAULT
+        private static final CssMetaData<VFXScrollPane, Boolean> COMPACT =
+            FACTORY.createBooleanCssMetaData(
+                "-vfx-compact",
+                VFXScrollPane::compactProperty,
+                false
             );
 
         private static final CssMetaData<VFXScrollPane, Pos> ALIGNMENT =
@@ -912,11 +892,19 @@ public class VFXScrollPane extends MFXControl {
                 false
             );
 
-        private static final CssMetaData<VFXScrollPane, Insets> CONTENT_PADDING =
+        private static final CssMetaData<VFXScrollPane, Insets> BARS_INSETS =
             FACTORY.createInsetsCssMetaData(
-                "-vfx-content-padding",
-                VFXScrollPane::contentPaddingProperty,
+                "-vfx-bars-insets",
+                VFXScrollPane::barsInsetsProperty,
                 Insets.EMPTY
+            );
+
+        private static final CssMetaData<VFXScrollPane, ScrollBarsAlignment> BARS_ALIGNMENT =
+            FACTORY.createEnumCssMetaData(
+                ScrollBarsAlignment.class,
+                "-vfx-bars-alignment",
+                VFXScrollPane::barsAlignmentProperty,
+                ScrollBarsAlignment.DEFAULT
             );
 
         private static final CssMetaData<VFXScrollPane, VBarPos> VBAR_POS =
@@ -933,13 +921,6 @@ public class VFXScrollPane extends MFXControl {
                 "-vfx-hbar-pos",
                 VFXScrollPane::hBarPosProperty,
                 ScrollPaneEnums.HBarPos.BOTTOM
-            );
-
-        private static final CssMetaData<VFXScrollPane, Number> SCROLL_BARS_GAP =
-            FACTORY.createSizeCssMetaData(
-                "-vfx-bars-gap",
-                VFXScrollPane::scrollBarsGapProperty,
-                4.0
             );
 
         private static final CssMetaData<VFXScrollPane, Boolean> AUTO_HIDE_BARS =
@@ -1060,9 +1041,9 @@ public class VFXScrollPane extends MFXControl {
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 MFXControl.getClassCssMetaData(),
-                LAYOUT_MODE, ALIGNMENT, MAIN_AXIS,
-                FIT_TO_WIDTH, FIT_TO_HEIGHT, CONTENT_PADDING,
-                VBAR_POS, HBAR_POS, SCROLL_BARS_GAP,
+                COMPACT, ALIGNMENT, MAIN_AXIS,
+                FIT_TO_WIDTH, FIT_TO_HEIGHT,
+                BARS_INSETS, BARS_ALIGNMENT, VBAR_POS, HBAR_POS,
                 AUTO_HIDE_BARS, MIN_BARS_OPACITY, MAX_BARS_OPACITY,
                 VBAR_POLICY, HBAR_POLICY,
                 V_TRACK_INCREMENT, V_UNIT_INCREMENT, H_TRACK_INCREMENT, H_UNIT_INCREMENT,

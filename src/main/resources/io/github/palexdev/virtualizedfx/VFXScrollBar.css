@@ -17,54 +17,38 @@
  */
 
 .vfx-scroll-bar {
-    -background: rgba(230, 230, 230, 1.0);
-    -border: rgba(223, 223, 223, 1.0);
-    -thumb: rgba(115, 115, 115, 1.0);
-    -thumb-hop: rgba(99, 99, 99, 1.0);
+  -background: rgba(217, 217, 217, 1.0);
+  -thumb: rgba(115, 115, 115, 1.0);
+  -thumb-hop: rgba(99, 99, 99, 1.0);
 }
 
 .vfx-scroll-bar:vertical {
-  -fx-pref-width: 11px;
+  -fx-pref-width: 9px;
   -fx-padding: 0px 1px 0px 1px;
 }
 
 .vfx-scroll-bar:horizontal {
-  -fx-pref-height: 11px;
+  -fx-pref-height: 9px;
   -fx-padding: 1px 0px 1px 0px;
 }
 
-.vfx-scroll-bar:vertical:compact {
-  -fx-pref-width: 9px;
-}
-
-.vfx-scroll-bar:horizontal:compact {
-  -fx-pref-height: 8px
-}
-
-.vfx-scroll-bar:vertical:compact:buttons {
-    -fx-padding: 0px 2px 0px 2px;
-}
-
-.vfx-scroll-bar:horizontal:compact:buttons {
-    -fx-padding: 2px 0px 2px 0px;
-}
-
 .vfx-scroll-bar > .track {
-    -fx-background-color: -background;
-    -fx-background-insets: 1px;
-    -fx-background-radius: 8px;
-    -fx-border-color: -border;
-    -fx-border-radius: 8px;
+  -fx-background-color: -background;
+  -fx-background-radius: 8px;
 }
 
 .vfx-scroll-bar > .thumb {
-    -fx-background-color: -thumb;
-    -fx-background-radius: 8px;
+  -fx-background-color: -thumb;
+  -fx-background-radius: 8px;
+  transition-property: -fx-background-color;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.34, 0.80, 0.34, 1.00);
+
 }
 
 .vfx-scroll-bar > .thumb:hover,
 .vfx-scroll-bar > .thumb:pressed {
-    -fx-background-color: -thumb-hop;
+  -fx-background-color: -thumb-hop;
 }
 
 .vfx-scroll-bar:vertical > .thumb {
@@ -77,27 +61,18 @@
 
 .vfx-scroll-bar > .icon {
   -fx-background-color: -thumb;
-  -fx-opacity: 0.7;
-  -fx-pref-width: 12px;
-  -fx-pref-height: 12px;
-  -fx-scale-x: 1.4;
-  -fx-scale-y: 1.4;
+  -fx-pref-width: 10px;
+  -fx-pref-height: 10px;
+  -fx-scale-x: 1.6;
+  -fx-scale-y: 1.6;
   -fx-shape: "M320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM441 335C450.4 344.4 450.4 359.6 441 368.9C431.6 378.2 416.4 378.3 407.1 368.9L320.1 281.9L233.1 368.9C223.7 378.3 208.5 378.3 199.2 368.9C189.9 359.5 189.8 344.3 199.2 335L303 231C312.4 221.6 327.6 221.6 336.9 231L441 335z";
-  transition-property: -fx-opacity;
+  transition-property: -fx-background-color;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.34, 0.80, 0.34, 1.00);
 }
 
 .vfx-scroll-bar > .icon:hover,
-.vfx-scroll-bar > .icon:focused {
-    -fx-opacity: 0.8;
-}
-
+.vfx-scroll-bar > .icon:focused,
 .vfx-scroll-bar > .icon:pressed {
-    -fx-opacity: 1.0;
-}
-
-.vfx-scroll-bar:compact > .icon {
-  -fx-scale-x: 1.3;
-  -fx-scale-y: 1.3;
+  -fx-background-color: -thumb-hop;
 }

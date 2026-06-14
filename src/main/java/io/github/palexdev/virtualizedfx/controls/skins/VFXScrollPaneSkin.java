@@ -23,12 +23,13 @@ import io.github.palexdev.virtualizedfx.controls.VFXScrollBar;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollPaneBehavior;
-import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
+import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.HBarPos;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
+import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarsAlignment;
+import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
-import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -148,7 +149,6 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         ((ObjectProperty<Size>) pane.contentBoundsProperty()).bind(contentBounds);
         bvp = new BarsVisibilityProperty();
 
-        vBar.layoutModeProperty().bind(pane.layoutModeProperty());
         vBar.visibleProperty().bind(bvp.map(arr -> arr[0]));
         vBar.behaviorFactoryProperty().bind(pane.vBarBehaviorProperty().map(f -> () -> f.apply(vBar)));
         vBar.minProperty().bind(pane.vMinProperty());
@@ -161,7 +161,6 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         vBar.smoothScrollProperty().bind(pane.smoothScrollProperty());
         vBar.trackSmoothScrollProperty().bind(pane.trackSmoothScrollProperty());
 
-        hBar.layoutModeProperty().bind(pane.layoutModeProperty());
         hBar.visibleProperty().bind(bvp.map(arr -> arr[1]));
         hBar.behaviorFactoryProperty().bind(pane.hBarBehaviorProperty().map(f -> () -> f.apply(hBar)));
         hBar.minProperty().bind(pane.hMinProperty());
@@ -191,9 +190,8 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
             // Layout
             observe(
                 pane::requestLayout,
-                pane.fitToWidthProperty(), pane.fitToHeightProperty(), pane.contentPaddingProperty(),
-                pane.vBarPosProperty(), pane.hBarPosProperty(),
-                pane.scrollBarsGapProperty()
+                pane.fitToWidthProperty(), pane.fitToHeightProperty(),
+                pane.barsInsetsProperty(), pane.barsAlignmentProperty(), pane.vBarPosProperty(), pane.hBarPosProperty()
             ),
             // Animations
             onInvalidated(pane.minBarsOpacityProperty())
@@ -235,26 +233,22 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
         double w = viewport.getWidth();
         double h = viewport.getHeight();
-        Insets padding = pane.getContentPadding();
         Size cs = computeContentBounds();
 
         if (content instanceof VFXContainer<?>) {
             // Virtualized containers always take up all the space and thus ignore the alignment too
-            layoutInArea(content, 0, 0, w, h, 0, padding, HPos.LEFT, VPos.TOP);
+            layoutInArea(content, 0, 0, w, h, 0, Insets.EMPTY, HPos.LEFT, VPos.TOP);
         } else {
             Pos alignment = pane.getAlignment();
             VPos vAlign = alignment.getVpos();
             HPos hAlign = alignment.getHpos();
 
-            double cw = cs.width() - padding.getLeft() - padding.getRight();
-            double ch = cs.height() - padding.getTop() - padding.getBottom();
-
             // If the content is larger than the viewport, then the alignment is ignored
-            if (cw > w) hAlign = HPos.LEFT;
-            if (ch > h) vAlign = VPos.TOP;
+            if (cs.width() > w) hAlign = HPos.LEFT;
+            if (cs.height() > h) vAlign = VPos.TOP;
 
-            content.resize(cw, ch);
-            positionInArea(content, 0, 0, w, h, 0, padding, hAlign, vAlign);
+            content.resize(cs.width(), cs.height());
+            positionInArea(content, 0, 0, w, h, 0, Insets.EMPTY, hAlign, vAlign);
         }
 
         setContentBounds(cs);
@@ -274,7 +268,6 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
      * For non-resizable nodes the size is derived from {@link Node#getLayoutBounds()}.
      */
     protected Size computeContentBounds() {
-        System.out.println("Computing!");
         VFXScrollPane pane = getSkinnable();
         Node content = pane.getContent();
         if (content == null) return zero();
@@ -288,25 +281,21 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                 snapSizeY(c.getVirtualMaxY())
             );
             default -> {
-                Insets padding = pane.getContentPadding();
-                double pw = padding.getLeft() + padding.getRight();
-                double ph = padding.getTop() + padding.getBottom();
                 if (content instanceof Region r && r.isResizable()) {
                     Orientation bias = r.getContentBias();
-                    Size contentSize = ContentBiasHandler.computeSize(bias, pane, viewport);
-                    yield Size.of(contentSize.width() + pw, contentSize.height() + ph);
+                    yield ContentBiasHandler.computeSize(bias, pane, viewport);
                 }
                 Bounds b = content.getLayoutBounds();
                 yield Size.of(
-                    snapSizeX(b.getWidth() + pw),
-                    snapSizeY(b.getHeight() + ph)
+                    snapSizeX(b.getWidth()),
+                    snapSizeY(b.getHeight())
                 );
             }
         };
     }
 
     /**
-     * To avoid over-complicating things by translating the viewport, because then we'd have to translate its clip too,
+     * To avoid overcomplicating things by translating the viewport, because then we'd have to translate its clip too,
      * this implementation translates the content directly.
      * <p>
      * This core method is responsible for re-creating the bindings that make the content scroll when it changes.
@@ -331,7 +320,6 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                     double maxScroll = Math.max(0, cw - vw);
                     return -maxScroll * hBar.getValue();
                 })
-                .addSources(pane.contentPaddingProperty())
                 .addSources(newContent.layoutBoundsProperty(), viewport.widthProperty())
                 .addSources(hBar.valueProperty())
                 .get()
@@ -343,7 +331,6 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                     double maxScroll = Math.max(0, ch - vh);
                     return -maxScroll * vBar.getValue();
                 })
-                .addSources(pane.contentPaddingProperty())
                 .addSources(newContent.layoutBoundsProperty(), viewport.heightProperty())
                 .addSources(vBar.valueProperty())
                 .get()
@@ -506,8 +493,32 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
         VFXScrollPane pane = getSkinnable();
-        LayoutHandler layoutHandler = LayoutHandler.getHandler(pane);
-        layoutHandler.layout(pane, viewport, vBar, hBar);
+
+        // viewport
+        layoutInArea(viewport, x, y, w, h, 0, HPos.LEFT, VPos.TOP);
+
+        // bars
+        Insets barsInsets = pane.getBarsInsets();
+        VBarPos vBarPos = pane.getVBarPos();
+        HBarPos hBarPos = pane.getHBarPos();
+        ScrollBarsAlignment barsAlignment = pane.getBarsAlignment();
+
+        Size vSize = Size.of(
+            LayoutUtils.snappedBoundWidth(vBar),
+            pane.getHeight() - barsInsets.getTop() - barsInsets.getBottom()
+        );
+        Size hSize = Size.of(
+            pane.getWidth() - barsInsets.getLeft() - barsInsets.getRight(),
+            LayoutUtils.snappedBoundHeight(hBar)
+        );
+
+        vBar.resize(vSize.width(), vSize.height() - hSize.height());
+        VPos vBarAlign = barsAlignment == ScrollBarsAlignment.DEFAULT ? VPos.TOP : VPos.CENTER;
+        positionInArea(vBar, 0, 0, pane.getWidth(), pane.getHeight(), 0, vBarPos.toHPos(), vBarAlign);
+
+        hBar.resize(hSize.width() - vSize.width(), hSize.height());
+        HPos hBarAlign = barsAlignment == ScrollBarsAlignment.DEFAULT ? HPos.LEFT : HPos.CENTER;
+        positionInArea(hBar, 0, 0, pane.getWidth(), pane.getHeight(), 0, hBarAlign, hBarPos.toVPos());
     }
 
     @Override
@@ -539,317 +550,6 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     //================================================================================
     // Inner Classes
     //================================================================================
-
-    /**
-     * Simplifies the layout strategy by dividing it into four base cases which depend on the combination between the
-     * {@link VFXScrollPane#vBarPosProperty()} and the {@link VFXScrollPane#hBarPosProperty()}; and so this has four
-     * concrete implementations for the following positions: {@code TOP_LEFT}, {@code TOP_RIGHT}, {@code BOTTOM_RIGHT},
-     * {@code BOTTOM_LEFT}.
-     * <p>
-     * It also defines common computations that depend on other properties and simpler conditions.
-     * <p></p>
-     * In general the scroll pane's layout is quite complex. For the sake of simplicity, and in some cases as design
-     * choices some properties may be ignored under specific conditions. See the methods docs.
-     */
-    protected interface LayoutHandler {
-        Map<PosPair, LayoutHandler> HANDLERS = Map.of(
-            PosPair.of(VPos.TOP, HPos.LEFT), new TopLeftHandler(),
-            PosPair.of(VPos.TOP, HPos.RIGHT), new TopRightHandler(),
-            PosPair.of(VPos.BOTTOM, HPos.LEFT), new BottomLeftHandler(),
-            PosPair.of(VPos.BOTTOM, HPos.RIGHT), new BottomRightHandler()
-        );
-
-        /**
-         * @return the appropriate {@code LayoutHandler} implementation for the given scroll pane considering its
-         * {@link VFXScrollPane#vBarPosProperty()} and {@link VFXScrollPane#hBarPosProperty()}
-         */
-        static LayoutHandler getHandler(VFXScrollPane pane) {
-            HPos vBarPos = pane.getVBarPos().toHPos();
-            VPos hBarPos = pane.getHBarPos().toVPos();
-            return HANDLERS.get(PosPair.of(hBarPos, vBarPos));
-        }
-
-        void layout(VFXScrollPane pane, Pane viewport, VFXScrollBar vBar, VFXScrollBar hBar);
-
-        /**
-         * @return the values specified by the {@link VFXScrollPane#scrollBarsGapProperty()} or {@code 0.0} if either
-         * the {@code vBar} or {@code hBar} are hidden.
-         * @see BarsVisibilityProperty
-         */
-        default double getBarsGap(VFXScrollPane pane, VFXScrollBar vBar, VFXScrollBar hBar) {
-            return (!vBar.isVisible() || !hBar.isVisible())
-                ? 0.0
-                : pane.getScrollBarsGap();
-        }
-
-        /**
-         * If the {@link VFXScrollPane#layoutModeProperty()} is set to {@link LayoutMode#COMPACT} basically returns
-         * {@link VFXScrollPane#insetsProperty()}, otherwise returns {@link Insets#EMPTY}.
-         * <p></p>
-         * In other words: in compact mode the padding is used to space the scroll bars from the edges; in standard
-         * mode the bars cannot go on top of the viewport but instead the padding is used as the distance between the two.
-         * <p>
-         * Which values of the {@link Insets} object are used depend on the handler's implementation!!
-         */
-        default Insets getBarsPadding(VFXScrollPane pane) {
-            return (pane.getLayoutMode() == LayoutMode.COMPACT)
-                ? new Insets(pane.snappedTopInset(), pane.snappedRightInset(), pane.snappedBottomInset(), pane.snappedLeftInset())
-                : Insets.EMPTY;
-        }
-
-        /**
-         * Determines the viewport's size and position.
-         * <p>
-         * When the {@link VFXScrollPane#layoutModeProperty()} is set to {@link LayoutMode#COMPACT} the viewport
-         * always takes all the available space and is positioned at [0, 0].
-         * <p></p>
-         * In standard mode things are much more complicated. In simple terms, the offset parameters determine the distance
-         * from the origin ([0, 0]) and the end (which would be the scroll pane's [maxX, maxY]).
-         * <p>
-         * The reason for that is quite simple. This basically ensures that the viewport never covers the scroll bars and
-         * that there is the right distance between the three.
-         * <p>
-         * The offsets highly depend on the scroll bars positions as specified by the
-         * {@link VFXScrollPane#vBarPosProperty()} and {@link VFXScrollPane#hBarPosProperty()}.
-         * <p></p>
-         * Last but not least, note that the x and y offsets are ignored if either the vertical or horizontal scroll bar
-         * are hidden!!
-         * <p>
-         * For example, if the vertical bar is not visible, then we don't want to take it into
-         * account when laying out the viewport. We want the latter to take all the horizontal space.
-         * When the bar is on the right side, then we simply stretch the viewport's width to the end of the scroll pane.
-         * When the bar is on the left side, things are a bit more complex, because we want the width to be the same as
-         * the scroll pane, but we also need to position the viewport at {@code x = 0}
-         */
-        default LayoutInfo computeViewportLayout(
-            VFXScrollPane pane, VFXScrollBar vBar, VFXScrollBar hBar,
-            double startXOffset, double endXOffset, double startYOffset, double endYOffset
-        ) {
-
-            /*
-             * In `COMPACT` mode the viewport takes all the available space.
-             *
-             * In the `DEFAULT` mode the viewport layout depends on the visibility of the bars.
-             *
-             * The padding is ignored on the opposite sides of the scroll bars.
-             * In other words currently the padding just determines the gap between the bars and the viewport when they
-             * are visible.
-             */
-
-            if (pane.getLayoutMode() == LayoutMode.COMPACT) {
-                return LayoutInfo.of(0, 0, pane.getWidth(), pane.getHeight());
-            }
-
-            if (pane.getVBarPolicy() == ScrollBarPolicy.NEVER || !vBar.isVisible()) {
-                startXOffset = 0.0;
-                endXOffset = 0.0;
-            }
-            if (pane.getHBarPolicy() == ScrollBarPolicy.NEVER || !hBar.isVisible()) {
-                startYOffset = 0.0;
-                endYOffset = 0.0;
-            }
-            return LayoutInfo.of(
-                startXOffset,
-                startYOffset,
-                pane.getWidth() + endXOffset,
-                pane.getHeight() + endYOffset
-            );
-        }
-    }
-
-    protected static class TopLeftHandler implements LayoutHandler {
-        @Override
-        public void layout(VFXScrollPane pane, Pane viewport, VFXScrollBar vBar, VFXScrollBar hBar) {
-            double w = pane.getWidth();
-            double h = pane.getHeight();
-            double barsGap = getBarsGap(pane, vBar, hBar);
-            Insets bPadding = getBarsPadding(pane);
-
-            double vBarW = LayoutUtils.snappedBoundWidth(vBar);
-            double hBarH = LayoutUtils.snappedBoundHeight(hBar);
-
-            vBar.resize(
-                vBarW,
-                Math.max(0, h - hBarH - barsGap - bPadding.getTop() - bPadding.getBottom())
-            );
-            Region.positionInArea(
-                vBar,
-                bPadding.getLeft(), hBarH + barsGap + bPadding.getTop(), w, h, 0,
-                Insets.EMPTY, HPos.LEFT, VPos.TOP,
-                pane.isSnapToPixel()
-            );
-
-            hBar.resize(
-                Math.max(0, w - vBarW - barsGap - bPadding.getLeft() - bPadding.getRight()),
-                hBarH
-            );
-            Region.positionInArea(
-                hBar,
-                vBarW + barsGap + bPadding.getLeft(), bPadding.getTop(), w, h, 0,
-                Insets.EMPTY, HPos.LEFT, VPos.TOP,
-                pane.isSnapToPixel()
-            );
-
-            LayoutInfo li = computeViewportLayout(
-                pane, vBar, hBar,
-                vBar.getWidth() + pane.snappedLeftInset(), -(vBar.getWidth() + pane.snappedLeftInset()),
-                hBar.getHeight() + pane.snappedTopInset(), -(hBar.getHeight() + pane.snappedTopInset())
-            );
-            li.layout(viewport);
-        }
-    }
-
-    protected static class TopRightHandler implements LayoutHandler {
-        @Override
-        public void layout(VFXScrollPane pane, Pane viewport, VFXScrollBar vBar, VFXScrollBar hBar) {
-            double w = pane.getWidth();
-            double h = pane.getHeight();
-            double barsGap = getBarsGap(pane, vBar, hBar);
-            Insets bPadding = getBarsPadding(pane);
-
-            double vBarW = LayoutUtils.snappedBoundWidth(vBar);
-            double hBarH = LayoutUtils.snappedBoundHeight(hBar);
-
-            vBar.resize(
-                vBarW,
-                Math.max(0, h - hBarH - barsGap - bPadding.getTop() - bPadding.getBottom())
-            );
-            Region.positionInArea(
-                vBar,
-                -bPadding.getRight(), hBarH + barsGap + bPadding.getTop(), w, h, 0,
-                Insets.EMPTY, HPos.RIGHT, VPos.TOP,
-                pane.isSnapToPixel()
-            );
-
-            hBar.resize(
-                Math.max(0, w - vBarW - barsGap - bPadding.getLeft() - bPadding.getRight()),
-                hBarH
-            );
-            Region.positionInArea(
-                hBar,
-                bPadding.getLeft(), bPadding.getTop(), w, h, 0,
-                Insets.EMPTY, HPos.LEFT, VPos.TOP,
-                pane.isSnapToPixel()
-            );
-
-            LayoutInfo li = computeViewportLayout(
-                pane, vBar, hBar,
-                0.0, -(vBar.getWidth() + pane.snappedRightInset()),
-                hBar.getHeight() + pane.snappedTopInset(), -(hBar.getHeight() + pane.snappedTopInset())
-            );
-            li.layout(viewport);
-        }
-    }
-
-    protected static class BottomRightHandler implements LayoutHandler {
-        @Override
-        public void layout(VFXScrollPane pane, Pane viewport, VFXScrollBar vBar, VFXScrollBar hBar) {
-            double w = pane.getWidth();
-            double h = pane.getHeight();
-            double barsGap = getBarsGap(pane, vBar, hBar);
-            Insets bPadding = getBarsPadding(pane);
-
-            double vBarW = LayoutUtils.snappedBoundWidth(vBar);
-            double hBarH = LayoutUtils.snappedBoundHeight(hBar);
-
-            vBar.resize(
-                vBarW,
-                Math.max(0, h - hBarH - barsGap - bPadding.getTop() - bPadding.getBottom())
-            );
-            Region.positionInArea(
-                vBar,
-                -bPadding.getRight(), bPadding.getTop(), w, h, 0,
-                Insets.EMPTY, HPos.RIGHT, VPos.TOP,
-                pane.isSnapToPixel()
-            );
-
-            hBar.resize(
-                Math.max(0, w - vBarW - barsGap - bPadding.getLeft() - bPadding.getRight()),
-                hBarH
-            );
-            Region.positionInArea(
-                hBar,
-                bPadding.getLeft(), -bPadding.getBottom(), w, h, 0,
-                Insets.EMPTY, HPos.LEFT, VPos.BOTTOM,
-                pane.isSnapToPixel()
-            );
-
-            LayoutInfo li = computeViewportLayout(
-                pane, vBar, hBar,
-                0, -(vBar.getWidth() + pane.snappedRightInset()),
-                0, -(hBar.getHeight() + pane.snappedBottomInset())
-            );
-            li.layout(viewport);
-        }
-    }
-
-    protected static class BottomLeftHandler implements LayoutHandler {
-        @Override
-        public void layout(VFXScrollPane pane, Pane viewport, VFXScrollBar vBar, VFXScrollBar hBar) {
-            double w = pane.getWidth();
-            double h = pane.getHeight();
-            double barsGap = getBarsGap(pane, vBar, hBar);
-            Insets bPadding = getBarsPadding(pane);
-
-            double vBarW = LayoutUtils.snappedBoundWidth(vBar);
-            double hBarH = LayoutUtils.snappedBoundHeight(hBar);
-
-            vBar.resize(
-                vBarW,
-                Math.max(0, h - hBarH - barsGap - bPadding.getTop() - bPadding.getBottom())
-            );
-            Region.positionInArea(
-                vBar,
-                bPadding.getLeft(), bPadding.getTop(), w, h, 0,
-                Insets.EMPTY, HPos.LEFT, VPos.TOP,
-                pane.isSnapToPixel()
-            );
-
-            hBar.resize(
-                Math.max(0, w - vBarW - barsGap - bPadding.getLeft() - bPadding.getRight()),
-                hBarH
-            );
-            Region.positionInArea(
-                hBar,
-                vBarW + barsGap + bPadding.getLeft(), -bPadding.getBottom(), w, h, 0,
-                Insets.EMPTY, HPos.LEFT, VPos.BOTTOM,
-                pane.isSnapToPixel()
-            );
-
-            LayoutInfo li = computeViewportLayout(
-                pane, vBar, hBar,
-                vBar.getWidth() + pane.snappedLeftInset(), -(vBar.getWidth() + pane.snappedLeftInset()),
-                0, -(hBar.getHeight() + pane.snappedBottomInset())
-            );
-            li.layout(viewport);
-        }
-    }
-
-    /**
-     * Utility record which carries a vertical and a horizontal alignment as {@link VPos} and {@link HPos} respectively.
-     * <p>
-     * (The {@link Pos} enumerator unfortunately does not offer an easy way to get one of its constants from a vPos and a hPos)
-     */
-    protected record PosPair(VPos vPos, HPos hPos) {
-        public static PosPair of(VPos vPos, HPos hPos) {
-            return new PosPair(vPos, hPos);
-        }
-    }
-
-    /**
-     * Utility record which carries the positions and sizes for a certain node.
-     * <p>
-     * It's also possible to quickly lay out that node by calling {@link #layout(Node)}.
-     */
-    protected record LayoutInfo(double x, double y, double w, double h) {
-        public static LayoutInfo of(double x, double y, double w, double h) {
-            return new LayoutInfo(x, y, w, h);
-        }
-
-        public void layout(Node node) {
-            node.resizeRelocate(x, y, w, h);
-        }
-    }
 
     /**
      * Convenient custom property implementation that determines the visibility of the two scroll bars as an array of two
@@ -894,15 +594,11 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
         @Override
         protected void invalidated() {
-            VFXScrollPane pane = getSkinnable();
+            // layout is not needed because the bars always "float" on top of the content
             Optional.ofNullable(getBehavior()).ifPresent(b -> {
                 b.setCanVScroll(get()[0]);
                 b.setCanHScroll(get()[1]);
             });
-
-            // BUG for some fucking reason JavaFX ignores this layout request if not wrapped in a runLater call
-            //  Even though the request is already on the UI thread
-            Platform.runLater(pane::requestLayout);
         }
 
         protected void update() {

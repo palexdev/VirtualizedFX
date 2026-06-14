@@ -18,7 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.enums;
 
-import javafx.css.PseudoClass;
 import javafx.geometry.HPos;
 import javafx.geometry.VPos;
 
@@ -27,25 +26,11 @@ import javafx.geometry.VPos;
  */
 public class ScrollPaneEnums {
 
-    private ScrollPaneEnums() {
-    }
+    private ScrollPaneEnums() {}
 
-    /**
-     * Enumeration to define the layout strategy for a scroll pane.
-     */
-    public enum LayoutMode {
-        /**
-         * Extra space is reserved for both the vertical and horizontal scroll bars.
-         */
+    public enum ScrollBarsAlignment {
         DEFAULT,
-
-        /**
-         * No extra space is reserved for the scroll bars, both are laid out
-         * on top of the content.
-         */
-        COMPACT;
-
-        public static final PseudoClass COMPACT_PSEUDO_CLASS = PseudoClass.getPseudoClass("compact");
+        CENTERED
     }
 
     /**

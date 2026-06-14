@@ -34,7 +34,6 @@ import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.VFXResources;
 import io.github.palexdev.virtualizedfx.controls.behaviors.VFXScrollBarBehavior;
 import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollBarSkin;
-import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.LayoutMode;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -76,7 +75,6 @@ public class VFXScrollBar extends MFXControl {
     public static final PseudoClass DRAGGING_PSEUDO_CLASS = PseudoClass.getPseudoClass("dragging");
     public static final PseudoClass VERTICAL_PSEUDO_CLASS = PseudoClass.getPseudoClass("vertical");
     public static final PseudoClass HORIZONTAL_PSEUDO_CLASS = PseudoClass.getPseudoClass("horizontal");
-    public static final PseudoClass BUTTONS_PSEUDO_CLASS = PseudoClass.getPseudoClass("buttons");
 
     //================================================================================
     // Properties
@@ -144,17 +142,6 @@ public class VFXScrollBar extends MFXControl {
     //================================================================================
     // Styleable Properties
     //================================================================================
-    private final StyleableObjectProperty<LayoutMode> layoutMode = new StyleableObjectProperty<>(
-        StyleableProperties.LAYOUT_MODE,
-        this,
-        "layoutMode",
-        LayoutMode.DEFAULT
-    ) {
-        @Override
-        protected void invalidated() {
-            pseudoClassStateChanged(LayoutMode.COMPACT_PSEUDO_CLASS, get() == LayoutMode.COMPACT);
-        }
-    };
 
     private final StyleableObjectProperty<Orientation> orientation = new StyleableObjectProperty<>(
         StyleableProperties.ORIENTATION,
@@ -168,12 +155,7 @@ public class VFXScrollBar extends MFXControl {
         this,
         "showButtons",
         false
-    ) {
-        @Override
-        protected void invalidated() {
-            pseudoClassStateChanged(BUTTONS_PSEUDO_CLASS, get());
-        }
-    };
+    );
 
     private final StyleableDoubleProperty buttonsGap = new StyleableDoubleProperty(
         StyleableProperties.BUTTONS_GAP,
@@ -209,26 +191,6 @@ public class VFXScrollBar extends MFXControl {
         "trackSmoothScroll",
         false
     );
-
-    public LayoutMode getLayoutMode() {
-        return layoutMode.get();
-    }
-
-    /**
-     * Specifies the scroll bar's appearance. Setting this to {@link LayoutMode#COMPACT} will activate the extra PseudoClass
-     * ':compact' on the control.
-     * <p>
-     * Note however that this depends entirely on the stylesheet used.
-     * <p>
-     * This is also settable via CSS with the "-vfx-layout-mode" property.
-     */
-    public StyleableObjectProperty<LayoutMode> layoutModeProperty() {
-        return layoutMode;
-    }
-
-    public void setLayoutMode(LayoutMode layoutMode) {
-        this.layoutMode.set(layoutMode);
-    }
 
     public Orientation getOrientation() {
         return orientation.get();
@@ -361,14 +323,6 @@ public class VFXScrollBar extends MFXControl {
         private static final StyleablePropertyFactory<VFXScrollBar> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
-        private static final CssMetaData<VFXScrollBar, LayoutMode> LAYOUT_MODE =
-            FACTORY.createEnumCssMetaData(
-                LayoutMode.class,
-                "-vfx-layout-mode",
-                VFXScrollBar::layoutModeProperty,
-                LayoutMode.DEFAULT
-            );
-
         private static final CssMetaData<VFXScrollBar, Orientation> ORIENTATION =
             FACTORY.createEnumCssMetaData(
                 Orientation.class,
@@ -422,7 +376,7 @@ public class VFXScrollBar extends MFXControl {
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 MFXControl.getClassCssMetaData(),
-                LAYOUT_MODE, ORIENTATION,
+                ORIENTATION,
                 SHOW_BUTTONS, BUTTONS_GAP,
                 TRACK_INCREMENT, UNIT_INCREMENT,
                 SMOOTH_SCROLL, TRACK_SMOOTH_SCROLL
