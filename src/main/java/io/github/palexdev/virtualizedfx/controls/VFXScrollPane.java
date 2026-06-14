@@ -66,7 +66,8 @@ import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
  * The default skin is {@link VFXScrollPaneSkin}. The default behavior is {@link VFXScrollPaneBehavior}. Also implements {@link MFXStyleable}.
  * <p></p>
  * <b>Features:</b>
- * <p> - You can change how the scroll bars are laid out as well as their appearance with the {@link #layoutModeProperty()}
+ * <p> - You can switch between compact and standard scroll bars with the {@link #compactProperty()}, altough the default
+ * stylesheets mainly fiddle with positioning rather than sizes
  * <p> - You can align the content within the viewport by setting the {@link #alignmentProperty()}
  * (works only when the content is smaller than the viewport)
  * <p> - The {@link #mainAxisProperty()} determines which is the primary scroll direction. By default, it's vertical and
@@ -74,7 +75,8 @@ import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
  * <p> - You can make the content always fit the size of the scroll pane by setting the properties
  * {@link #fitToWidthProperty()} and {@link #fitToHeightProperty()} (works only for non-virtualized contents)
  * <p> - You choose on which side to have the two scroll bars with {@link #vBarPosProperty()} and {@link #hBarPosProperty()}
- * <p> - The {@link #scrollBarsGapProperty()} determines how much space separates the scroll bars
+ * <p> - The {@link #barsInsetsProperty()} controls the scroll bars' main size, and the {@link #barsAlignmentProperty()}
+ * controls their alignment within the scroll pane
  * <p> - You can make the scroll bars hide automatically after a certain amount of time, {@link #autoHideBarsProperty()}.
  * And you can also customize their opacity levels through the properties {@link #minBarsOpacityProperty()} and
  * {@link #maxBarsOpacityProperty()}.
@@ -88,7 +90,7 @@ import static io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.VBarPos;
  * <p> - Finally you can set the radius for the viewport's clip with the {@link #clipBorderRadiusProperty()}
  * <p></p>
  * Uses two new PseudoClasses:
- * <p> - ":compact": active when the {@link #layoutModeProperty()} is set to {@link LayoutMode#COMPACT}
+ * <p> - ":compact": active when the {@link #compactProperty()} is set to true
  * <p> - ":drag-to-scroll": active when the {@link #dragToScrollProperty()} is set to true
  * <p></p>
  * Last but not least, since this uses the new {@link io.github.palexdev.virtualizedfx.controls.VFXScrollBar}s, it also allows to change their behavior with
@@ -390,6 +392,9 @@ public class VFXScrollPane extends MFXControl {
         return compact.get();
     }
 
+    /// Specifies whether to use the compact appearance for the scroll bars.
+    ///
+    /// Can be set from CSS via the property: '-vfx-compact'.
     public StyleableBooleanProperty compactProperty() {
         return compact;
     }
@@ -477,6 +482,11 @@ public class VFXScrollPane extends MFXControl {
         return barsInsets.get();
     }
 
+    /// Specifies the insets for the scroll bars, which control their main size (height for the vertical bar,
+    /// width for the horizontal bar). The bars are positioned within the scroll pane according to the
+    /// {@link #barsAlignmentProperty()}.
+    ///
+    /// Can be set from CSS via the property: '-vfx-bars-insets'.
     public StyleableObjectProperty<Insets> barsInsetsProperty() {
         return barsInsets;
     }
@@ -489,6 +499,9 @@ public class VFXScrollPane extends MFXControl {
         return barsAlignment.get();
     }
 
+    /// Specifies the alignment of the scroll bars within the scroll pane.
+    ///
+    /// Can be set from CSS via the property: '-vfx-bars-alignment'.
     public StyleableObjectProperty<ScrollBarsAlignment> barsAlignmentProperty() {
         return barsAlignment;
     }
@@ -599,11 +612,11 @@ public class VFXScrollPane extends MFXControl {
 
     /// Specifies the maximum opacity possible for the scroll bars when the auto hide function is active.
     ///
-    /// This may be useful when the layout mode is set to [LayoutMode#COMPACT] and the scroll bars end up covering part
-    /// of the content. Ideally, this should be avoided by padding the content to avoid going below the bars. However, if
-    /// for whatever reason it can't be done, you can make them slightly transparent.
+    /// This may be useful when compact mode is active and the scroll bars end up covering part of the content.
+    /// Ideally, this should be avoided by padding the content to avoid going below the bars. However, if for whatever
+    /// reason it can't be done, you can make them slightly transparent.
     ///
-    /// Can be set from CSS via the property: '-vfx-min-bars-opacity'.
+    /// Can be set from CSS via the property: '-vfx-max-bars-opacity'.
     public StyleableDoubleProperty maxBarsOpacityProperty() {
         return maxBarsOpacity;
     }

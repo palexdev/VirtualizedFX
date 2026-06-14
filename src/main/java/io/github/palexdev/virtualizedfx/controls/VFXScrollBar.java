@@ -51,15 +51,12 @@ import javafx.scene.Node;
  * <p></p>
  * In addition to an appealing style, the component offers many new features compared to the boring standard
  * JavaFX' scroll bar, such as:
- * <p> - standard or slim appearance (depends on the stylesheet!), {@link #layoutModeProperty()}
  * <p> - the possibility of showing/hiding the increase and decrease buttons, {@link #showButtonsProperty()}
  * <p> - the possibility of controlling the gap between the buttons and the thumb, {@link #buttonsGapProperty()}
  * <p> - inbuilt smooth scroll both for the thumb and the track, {@link #smoothScrollProperty()}, {@link #trackSmoothScrollProperty()}
  * <p> - the possibility of querying the scroll direction, {@link #scrollDirectionProperty()}
  * <p></p>
  * Three {@link PseudoClass} worth mentioning:
- * <p> - ":compact": active when the {@link #layoutModeProperty()} is set to {@link LayoutMode#COMPACT}
- * <p> - ":buttons": active when the increment and decrement buttons are visible, {@link #showButtonsProperty()}
  * <p> - ":dragging": active when the thumb is being dragged
  * <p> - ":horizontal": active when the scroll bar's orientation is HORIZONTAL
  * <p> - ":vertical": active when the scroll bar's orientation is VERTICAL

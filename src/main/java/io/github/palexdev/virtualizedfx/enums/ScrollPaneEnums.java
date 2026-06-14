@@ -28,8 +28,12 @@ public class ScrollPaneEnums {
 
     private ScrollPaneEnums() {}
 
+    /// Enumeration to specify the alignment of the scroll bars within a scroll pane.
     public enum ScrollBarsAlignment {
+        /// Bars are aligned to the edges of the scroll pane (top for the vertical bar, left for the horizontal bar).
         DEFAULT,
+
+        /// Bars are centered along their main axis within the scroll pane.
         CENTERED
     }
 

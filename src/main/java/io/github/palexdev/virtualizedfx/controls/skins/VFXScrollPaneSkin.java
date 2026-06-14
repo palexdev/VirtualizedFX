@@ -52,17 +52,10 @@ import static io.github.palexdev.virtualizedfx.utils.Utils.mapOf;
 /**
  * Default skin implementation for {@link VFXScrollPane}.
  * <p></p>
- * There are three components: the content container also referred to as the "viewport", and the two scroll bars.
- * <p></p>
- * Considering all the properties/features, all the possible combinations between them, and in general the flexibility my
- * scroll pane offers, the layout strategy is quite complex, too much to be described into details in the documentation.
- * That said, I'll try to document the most important aspects of it, but note that the source code also contains many comments.
+ * There are three components: the content container (viewport) and the two scroll bars.
  * <p>
- * Because of this complexity I decided to split the layout strategy by defining a common interface and four concrete
- * implementations that correspond to the four possible combinations between these two properties:
- * {@link VFXScrollPane#vBarPosProperty()} and {@link VFXScrollPane#hBarPosProperty()}.
- * <p>
- * Many other properties and combinations determine the layout but those two are the main ones.
+ * The viewport fills the entire scroll pane area, and the bars "float" on top of it. This means that the size and
+ * positioning should be handled by the CSS.
  */
 public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     //================================================================================
@@ -135,7 +128,8 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
      * Adds the following listeners:
      * <p> - A listener to update the layout to the following properties:
      * {@link VFXScrollPane#fitToWidthProperty()}, {@link VFXScrollPane#fitToHeightProperty()},
-     * {@link VFXScrollPane#vBarPosProperty()}, {@link VFXScrollPane#hBarPosProperty()}, {@link VFXScrollPane#scrollBarsGapProperty()}
+     * {@link VFXScrollPane#vBarPosProperty()}, {@link VFXScrollPane#hBarPosProperty()},
+     * {@link VFXScrollPane#barsInsetsProperty()}, {@link VFXScrollPane#barsAlignmentProperty()}
      * <p> - A listener on the {@link VFXScrollPane#contentProperty()} to update the viewport and call {@link #updateScrollBindings(Node, Node)}
      * <p> - A listener on the {@link VFXScrollPane#hoverProperty()} to hide/show the scroll bars according to the {@link VFXScrollPane#autoHideBarsProperty()}
      * and a bunch of other conditions, see {@link #showBars(boolean)}
