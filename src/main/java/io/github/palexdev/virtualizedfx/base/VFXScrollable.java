@@ -23,45 +23,37 @@ import io.github.palexdev.virtualizedfx.enums.ScrollUnits;
 import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import javafx.geometry.Orientation;
 
-/**
- * Interface to quickly wrap a content in a {@link VFXScrollPane} and make it scrollable. How the wrapping is done
- * depends on the implementing class.
- * <p></p>
- * It also offers two utilities to set or bind the speed of a {@link VFXScrollPane}:
- * {@link #setSpeed(VFXScrollPane, ScrollParams, ScrollParams)}, {@link #bindSpeed(VFXScrollPane, ScrollParams, ScrollParams)}
- */
+/// Interface to quickly wrap a content in a [VFXScrollPane] and make it scrollable. How the wrapping is done
+/// depends on the implementing class.
+///
+/// It also offers two utilities to set or bind the speed of a [VFXScrollPane]:
+/// [#setSpeed(VFXScrollPane, ScrollParams, ScrollParams)], [#bindSpeed(VFXScrollPane, ScrollParams, ScrollParams)]
 public interface VFXScrollable {
 
-    /**
-     * Wraps this in a {@link VFXScrollPane} to enable scrolling.
-     */
+    /// Wraps this in a [VFXScrollPane] to enable scrolling.
     VFXScrollPane makeScrollable();
 
-    /**
-     * Applies fixed scroll increments to the given {@link VFXScrollPane}, using the provided {@link ScrollParams}
-     * for vertical and horizontal scrolling.
-     * <p></p>
-     * If you want to apply a certain speed dynamically, use {@link #bindSpeed(VFXScrollPane, ScrollParams, ScrollParams)}
-     * instead.
-     *
-     * @see ScrollParams
-     * @see ScrollUnits
-     */
+    /// Applies fixed scroll increments to the given [VFXScrollPane], using the provided [ScrollParams]
+    /// for vertical and horizontal scrolling.
+    ///
+    /// If you want to apply a certain speed dynamically, use [#bindSpeed(VFXScrollPane, ScrollParams, ScrollParams)]
+    /// instead.
+    ///
+    /// @see ScrollParams
+    /// @see ScrollUnits
     static void setSpeed(VFXScrollPane vsp, ScrollParams vSpeed, ScrollParams hSpeed) {
         vSpeed.apply(vsp, Orientation.VERTICAL);
         hSpeed.apply(vsp, Orientation.HORIZONTAL);
     }
 
-    /**
-     * Binds scroll increments to the given {@link VFXScrollPane}, using the provided {@link ScrollParams}
-     * for vertical and horizontal scrolling.
-     * <p>
-     * This method establishes bindings that automatically update scroll increments
-     * when relevant properties (e.g., bounds, layout size) change.
-     *
-     * @see ScrollParams
-     * @see ScrollUnits
-     */
+    /// Binds scroll increments to the given [VFXScrollPane], using the provided [ScrollParams]
+    /// for vertical and horizontal scrolling.
+    ///
+    /// This method establishes bindings that automatically update scroll increments
+    /// when relevant properties (e.g., bounds, layout size) change.
+    ///
+    /// @see ScrollParams
+    /// @see ScrollUnits
     static void bindSpeed(VFXScrollPane vsp, ScrollParams vSpeed, ScrollParams hSpeed) {
         vSpeed.bind(vsp, Orientation.VERTICAL);
         hSpeed.bind(vsp, Orientation.HORIZONTAL);

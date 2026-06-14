@@ -31,16 +31,15 @@ import javafx.css.*;
 import javafx.geometry.HPos;
 import javafx.scene.Node;
 
-/**
- * Concrete and simple implementation of {@link VFXTableColumn}. Has its own skin: {@link VFXDefaultTableColumnSkin}.
- * <p>
- * These are the features this default implementation offers:
- * <p> - the {@link #iconAlignmentProperty()} allows you to specify the column's icon position
- * <p> - the {@link #enableOverlayProperty()} makes the column display an extra node which can be used to indicate
- * selection or hovering. By default, the node is not visible; you'll have to define its style in CSS.
- * This behavior is defined in the default skin.
- * <p> - the {@link #overlayOnHeaderProperty()} makes the aforementioned node cover the column's header too
- */
+/// Concrete and simple implementation of [VFXTableColumn]. Has its own skin: [VFXDefaultTableColumnSkin].
+///
+/// These are the features this default implementation offers:
+///
+/// - the [#iconAlignmentProperty()] allows you to specify the column's icon position
+/// - the [#enableOverlayProperty()] makes the column display an extra node which can be used to indicate
+/// selection or hovering. By default, the node is not visible; you'll have to define its style in CSS.
+/// This behavior is defined in the default skin.
+/// - the [#overlayOnHeaderProperty()] makes the aforementioned node cover the column's header too
 public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTableColumn<T, C> {
     //================================================================================
     // Properties
@@ -102,14 +101,12 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
         return iconAlignment.get();
     }
 
-    /**
-     * Specifies the side on which the icon will be placed.
-     * <p></p>
-     * By setting the alignment to {@link HPos#CENTER} the default skin, {@link VFXDefaultTableColumnSkin}, will hide the
-     * text and show only the icon at the center.
-     * <p></p>
-     * This is settable via CSS with the "-vfx-icon-alignment" property.
-     */
+    /// Specifies the side on which the icon will be placed.
+    ///
+    /// By setting the alignment to [HPos#CENTER] the default skin, [VFXDefaultTableColumnSkin], will hide the
+    /// text and show only the icon at the center.
+    ///
+    /// This is settable via CSS with the "-vfx-icon-alignment" property.
     public StyleableObjectProperty<HPos> iconAlignmentProperty() {
         return iconAlignment;
     }
@@ -122,18 +119,16 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
         return enableOverlay.get();
     }
 
-    /**
-     * Specifies whether the default skin should enable the overlay.
-     * <p></p>
-     * {@link VFXTable} is organized by rows. This means that by default, there is no way in the UI to display
-     * when a column is selected or hovered by the mouse. The default skin allows to do this by adding an extra node that
-     * extends from the column all the way down to the table's bottom. This allows doing cool tricks with CSS.
-     * <p></p>
-     * One thing to keep in mind, though, is that if you define a background color for the overlay, make sure that it is
-     * opaque otherwise it will end up covering the cells.
-     * <p></p>
-     * This is also settable via CSS with the "-vfx-enable-overlay" property.
-     */
+    /// Specifies whether the default skin should enable the overlay.
+    ///
+    /// [VFXTable] is organized by rows. This means that by default, there is no way in the UI to display
+    /// when a column is selected or hovered by the mouse. The default skin allows to do this by adding an extra node that
+    /// extends from the column all the way down to the table's bottom. This allows doing cool tricks with CSS.
+    ///
+    /// One thing to keep in mind, though, is that if you define a background color for the overlay, make sure that it is
+    /// opaque otherwise it will end up covering the cells.
+    ///
+    /// This is also settable via CSS with the "-vfx-enable-overlay" property.
     public StyleableBooleanProperty enableOverlayProperty() {
         return enableOverlay;
     }
@@ -146,12 +141,10 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
         return overlayOnHeader.get();
     }
 
-    /**
-     * Specifies whether the overlay should also cover the header of the column,
-     * the part where the text and the icon reside.
-     * <p></p>
-     * This is also settable via CSS with the "-vfx-overlay-on-header" property.
-     */
+    /// Specifies whether the overlay should also cover the header of the column,
+    /// the part where the text and the icon reside.
+    ///
+    /// This is also settable via CSS with the "-vfx-overlay-on-header" property.
     public StyleableBooleanProperty overlayOnHeaderProperty() {
         return overlayOnHeader;
     }

@@ -21,9 +21,7 @@ package io.github.palexdev.virtualizedfx.properties;
 import io.github.palexdev.virtualizedfx.table.VFXTableState;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
-/**
- * Convenience property that extends {@link ReadOnlyObjectWrapper} for {@link VFXTableState}.
- */
+/// Convenience property that extends [ReadOnlyObjectWrapper] for [VFXTableState].
 public class VFXTableStateProperty<T> extends ReadOnlyObjectWrapper<VFXTableState<T>> {
 
     //================================================================================

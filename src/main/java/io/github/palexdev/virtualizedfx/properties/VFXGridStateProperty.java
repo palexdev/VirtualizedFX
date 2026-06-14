@@ -22,9 +22,7 @@ import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.grid.VFXGridState;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
-/**
- * Convenience property that extends {@link ReadOnlyObjectWrapper} for {@link VFXGridState}.
- */
+/// Convenience property that extends [ReadOnlyObjectWrapper] for [VFXGridState].
 public class VFXGridStateProperty<T, C extends VFXCell<T>> extends ReadOnlyObjectWrapper<VFXGridState<T, C>> {
 
     //================================================================================

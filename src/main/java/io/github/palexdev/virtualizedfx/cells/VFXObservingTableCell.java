@@ -35,19 +35,17 @@ import javafx.util.StringConverter;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
-/**
- * Extension of {@link VFXSimpleTableCell} which is intended to be used with models that make use of JavaFX properties.
- * Uses {@link VFXObservingTableCellSkin} as the default skin implementation.
- * <p>
- * The extractor function is expected to extract a property of type {@link ObservableValue}.
- * <p>
- * The {@link StringConverter} is intended to convert the value of the observable, {@link ObservableValue#getValue()},
- * to a {@code String}. By default, this returns an empty string if the observable is {@code null},
- * otherwise uses {@link Objects#toString(Object)} on its value.
- * <p></p>
- * Also note that this cell keeps a reference to the extracted {@link ObservableValue} thus avoiding continuous calls
- * to the extractor. The reference is disposed by {@link #dispose()}
- */
+/// Extension of [VFXSimpleTableCell] which is intended to be used with models that make use of JavaFX properties.
+/// Uses [VFXObservingTableCellSkin] as the default skin implementation.
+///
+/// The extractor function is expected to extract a property of type [ObservableValue].
+///
+/// The [StringConverter] is intended to convert the value of the observable, [ObservableValue#getValue()],
+/// to a `String`. By default, this returns an empty string if the observable is `null`,
+/// otherwise uses [Objects#toString(Object)] on its value.
+///
+/// Also note that this cell keeps a reference to the extracted [ObservableValue] thus avoiding continuous calls
+/// to the extractor. The reference is disposed by [#dispose()]
 public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, ObservableValue<E>> {
     //================================================================================
     // Properties
@@ -71,12 +69,10 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
     // Methods
     //================================================================================
 
-    /**
-     * Returns the {@link ObservableValue} extracted by the extractor function.
-     * <p>
-     * If the local reference is still {@code null} it first attempts at extracting it, and then updates it
-     * (so that later calls will just return the already extracted observable).
-     */
+    /// Returns the [ObservableValue] extracted by the extractor function.
+    ///
+    /// If the local reference is still `null` it first attempts at extracting it, and then updates it
+    /// (so that later calls will just return the already extracted observable).
     protected ObservableValue<E> getProperty() {
         if (property == null) property = getExtractor().apply(getItem());
         return property;
@@ -86,11 +82,9 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
     // Overridden Methods
     //================================================================================
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Before updating the item this disposes the {@link ObservableValue} previously extracted by {@link #getProperty()}.
-     */
+    /// {@inheritDoc}
+    ///
+    /// Before updating the item this disposes the [ObservableValue] previously extracted by [#getProperty()].
     @Override
     public void updateItem(T item) {
         property = null;
@@ -112,16 +106,14 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
     // Internal Classes
     //================================================================================
 
-    /**
-     * Default skin implementation used by {@link VFXObservingTableCell} and extension of {@link VFXLabeledCellSkin}.
-     * <p>
-     * I could have overridden the base class in-line, but I decided to make it a separate class to make it easier
-     * to customize.
-     * <p></p>
-     * The {@link #update()} method is overridden and functions quite differently, make sure to carefully read the documentation.
-     * The {@link #addListeners()} method has also been modified to call {@link #onItemChanged()} rather than {@link #update()}
-     * directly when the {@link VFXCellBase#itemProperty()} changes.
-     */
+    /// Default skin implementation used by [VFXObservingTableCell] and extension of [VFXLabeledCellSkin].
+    ///
+    /// I could have overridden the base class in-line, but I decided to make it a separate class to make it easier
+    /// to customize.
+    ///
+    /// The [#update()] method is overridden and functions quite differently, make sure to carefully read the documentation.
+    /// The [#addListeners()] method has also been modified to call [#onItemChanged()] rather than [#update()]
+    /// directly when the [VFXCellBase#itemProperty()] changes.
     public class VFXObservingTableCellSkin extends VFXLabeledCellSkin<T> {
         //================================================================================
         // Properties
@@ -139,17 +131,15 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
         // Methods
         //================================================================================
 
-        /**
-         * The auto-updating feature of this cell implementation is no magic. A simple {@link InvalidationListener}
-         * is attached to the extracted property to call {@link #update()} when it changes.
-         * <p>
-         * This method does exactly this. When the {@link VFXCellBase#itemProperty()} changes it also means that the property
-         * extracted by {@link #getProperty()} is now invalid, and so is the previous listener.
-         * <p>
-         * Simply re-builds the listener when this happens, and by invoking {@link #getProperty()} we also validate the
-         * local reference to the property (to be precise the reference is stored in the cell not here in the skin).
-         * Note that this will also call {@link #update()}.
-         */
+        /// The auto-updating feature of this cell implementation is no magic. A simple [InvalidationListener]
+        /// is attached to the extracted property to call [#update()] when it changes.
+        ///
+        /// This method does exactly this. When the [VFXCellBase#itemProperty()] changes it also means that the property
+        /// extracted by [#getProperty()] is now invalid, and so is the previous listener.
+        ///
+        /// Simply re-builds the listener when this happens, and by invoking [#getProperty()] we also validate the
+        /// local reference to the property (to be precise the reference is stored in the cell not here in the skin).
+        /// Note that this will also call [#update()].
         protected void onItemChanged() {
             if (listener != null) listener.dispose();
             listener = onInvalidated(getProperty())
@@ -162,16 +152,14 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
         // Overridden Methods
         //================================================================================
 
-        /**
-         * Adds an {@link InvalidationListener} on the {@link VFXCellBase#itemProperty()} to call {@link #onItemChanged()} when it changes,
-         * and an {@link EventHandler} to support "manual" updates through events of type {@link VFXContainerEvent#UPDATE}
-         * (although this should not be needed here).
-         * <p>
-         * (Uses {@link When} and {@link WhenEvent} constructs).
-         *
-         * @see #listeners(When[])
-         * @see #events(WhenEvent[])
-         */
+        /// Adds an [InvalidationListener] on the [VFXCellBase#itemProperty()] to call [#onItemChanged()] when it changes,
+        /// and an [EventHandler] to support "manual" updates through events of type [VFXContainerEvent#UPDATE]
+        /// (although this should not be needed here).
+        ///
+        /// (Uses [When] and [WhenEvent] constructs).
+        ///
+        /// @see #listeners(When[])
+        /// @see #events(WhenEvent[])
         @Override
         protected void addListeners() {
             listeners(
@@ -181,11 +169,9 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
             );
         }
 
-        /**
-         * Updates the label's text by using the converter on the property extracted by {@link #getProperty()}.
-         *
-         * @see #getConverter()
-         */
+        /// Updates the label's text by using the converter on the property extracted by [#getProperty()].
+        ///
+        /// @see #getConverter()
         @Override
         protected void update() {
             String toString = getConverter().toString(getProperty());

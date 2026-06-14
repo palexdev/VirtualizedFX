@@ -24,11 +24,9 @@ import java.util.LinkedList;
 import io.github.palexdev.mfxcore.collections.CircularQueue;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 
-/**
- * A special kind of {@link LinkedList} which discards the oldest added item once it reaches the set capacity.
- * <p>
- * Basically the same as {@link CircularQueue}, but automatically invokes {@link C#dispose()} on cell that are discarded.
- */
+/// A special kind of [LinkedList] which discards the oldest added item once it reaches the set capacity.
+///
+/// Basically the same as [CircularQueue], but automatically invokes [VFXCell#dispose()] on cells that are discarded.
 public class CellsQueue<T, C extends VFXCell<T>> extends LinkedList<C> {
     //================================================================================
     // Properties
@@ -47,11 +45,9 @@ public class CellsQueue<T, C extends VFXCell<T>> extends LinkedList<C> {
     // Methods
     //================================================================================
 
-    /**
-     * Adds the given cell to the queue. If at capacity, the oldest cell is disposed and discarded.
-     *
-     * @return whether the cell was added
-     */
+    /// Adds the given cell to the queue. If at capacity, the oldest cell is disposed and discarded.
+    ///
+    /// @return whether the cell was added
     public boolean queue(C c) {
         if (capacity == 0) {
             // If cells cannot be cached because this is disabled (capacity = 0), they should be disposed
@@ -65,17 +61,13 @@ public class CellsQueue<T, C extends VFXCell<T>> extends LinkedList<C> {
         return super.add(c);
     }
 
-    /**
-     * @return the queue's capacity, the maximum number of cells that can be added
-     */
+    /// @return the queue's capacity, the maximum number of cells that can be added
     public int getCapacity() {
         return capacity;
     }
 
-    /**
-     * Sets the queue's capacity. If the parameter is 0, every cell is disposed and removed. If the new capacity is
-     * lesser than the current one, then the oldest cell is removed until the capacity is reached.
-     */
+    /// Sets the queue's capacity. If the parameter is 0, every cell is disposed and removed. If the new capacity is
+    /// lesser than the current one, then the oldest cell is removed until the capacity is reached.
     public void setCapacity(int capacity) {
         if (capacity == 0) {
             forEach(C::dispose);

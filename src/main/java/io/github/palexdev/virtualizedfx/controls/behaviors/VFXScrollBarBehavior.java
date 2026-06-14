@@ -52,12 +52,10 @@ import javafx.util.Duration;
 
 import static io.github.palexdev.virtualizedfx.controls.VFXScrollBar.DRAGGING_PSEUDO_CLASS;
 
-/**
- * Extension of {@link MFXBehavior} and default behavior implementation for {@link VFXScrollBar}.
- * <p></p>
- * This offers all the methods to manage scrolling and smooth scrolling, track press/release,
- * buttons press/release, thumb press/drag/release. And a bunch of other misc methods.
- */
+/// Extension of [MFXBehavior] and default behavior implementation for [VFXScrollBar].
+///
+/// This offers all the methods to manage scrolling and smooth scrolling, track press/release,
+/// buttons press/release, thumb press/drag/release. And a bunch of other misc methods.
 public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
     //================================================================================
     // Properties
@@ -91,30 +89,26 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
     //================================================================================
     // THUMB
 
-    /**
-     * Action performed when the thumb is pressed.
-     * <p></p>
-     * The first steps are to stop any animation (see {@link #stopAnimations()}) then {@link #requestFocus()}
-     * and update the {@code dragStart} position using {@link #getMousePos(MouseEvent)}, in case the next user action is
-     * dragging the thumb.
-     */
+    /// Action performed when the thumb is pressed.
+    ///
+    /// The first steps are to stop any animation (see [#stopAnimations()]) then [#requestFocus()]
+    /// and update the `dragStart` position using [#getMousePos(MouseEvent)], in case the next user action is
+    /// dragging the thumb.
     public void thumbPressed(MouseEvent me) {
         stopAnimations();
         requestFocus();
         dragStart = getMousePos(me);
     }
 
-    /**
-     * Action performed when the thumb is being dragged.
-     * <p></p>
-     * First we call {@link #onDragging(boolean)}. Then we acquire the mouse position with {@link #getMousePos(MouseEvent)}
-     * to compute the traveled distance since the press event as {@code currentPos - dragStart}.
-     * <p>
-     * We convert the traveled distance to the corresponding delta value by using {@link NumberUtils#mapOneRangeToAnother(double, DoubleRange, DoubleRange)}.
-     * A call to {@link #getAndSetScrollDirection(boolean)} updates the {@link VFXScrollBar#scrollDirectionProperty()}
-     * and returns a multiplier (1 or -1) used to adjust the scroll bar's value by the found delta value:
-     * {@code bar.setValue(bar.getValue() + deltaVal * mul)}.
-     */
+    /// Action performed when the thumb is being dragged.
+    ///
+    /// First we call [#onDragging(boolean)]. Then we acquire the mouse position with [#getMousePos(MouseEvent)]
+    /// to compute the traveled distance since the press event as `currentPos - dragStart`.
+    ///
+    /// We convert the traveled distance to the corresponding delta value by using [NumberUtils#mapOneRangeToAnother(double, DoubleRange, DoubleRange)].
+    /// A call to [#getAndSetScrollDirection(boolean)] updates the [VFXScrollBar#scrollDirectionProperty()]
+    /// and returns a multiplier (1 or -1) used to adjust the scroll bar's value by the found delta value:
+    /// `bar.setValue(bar.getValue() + deltaVal * mul)`.
     public void thumbDragged(MouseEvent me) {
         VFXScrollBar bar = getNode();
         onDragging(true);
@@ -134,48 +128,42 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
         bar.setValue(bar.getValue() + deltaVal * mul);
     }
 
-    /**
-     * Action performed when the thumb is released.
-     * <p></p>
-     * The dragStart position is reset to 0.0, and the dragging property set to false.
-     */
+    /// Action performed when the thumb is released.
+    ///
+    /// The dragStart position is reset to 0.0, and the dragging property set to false.
     public void thumbReleased(MouseEvent me) {
         dragStart = 0.0;
         onDragging(false);
     }
 
-    /**
-     * Simply enables or disabled the ":dragging" {@link PseudoClass} on the scroll bar depending on the given parameter.
-     */
+    /// Simply enables or disabled the ":dragging" [PseudoClass] on the scroll bar depending on the given parameter.
     protected void onDragging(boolean dragging) {
         getNode().pseudoClassStateChanged(DRAGGING_PSEUDO_CLASS, dragging);
     }
 
     // TRACK
 
-    /**
-     * Action performed when the track is pressed.
-     * <p></p>
-     * The first steps are to stop any animation (see {@link #stopAnimations()}) then {@link #requestFocus()}.
-     * Then we check whether smooth scroll and track smooth scroll features have been enabled, in such case the method
-     * exists as the scroll will be handled by {@link #trackReleased(MouseEvent)}.
-     * <p></p>
-     * Otherwise, we get the mouse position with {@link #getMousePos(MouseEvent)} and the track length with {@link #getTrackLength(MouseEvent)}.
-     * We define the target value as {@code mousePos / trackL} and the  delta value as {@code targetVal - bar.getValue()}.
-     * Finally, the scroll direction is determined by {@link #getAndSetScrollDirection(boolean)}.
-     * <p></p>
-     * At this point, two animations are built:
-     * <p>
-     * The first animation is responsible for the "first tick". When you press the track you expect the thumb to move
-     * towards the mouse position by the specified {@link VFXScrollBar#trackIncrementProperty()}. Then we must also
-     * consider what happens when the value has been adjusted, but the mouse is still pressed. Here's when the second animation
-     * comes into play. This animation basically detects if the mouse is still pressed (the delay is specified by {@link #HOLD_DELAY})
-     * and makes the thumb reposition towards the mouse position with a {@link MomentumTransition}. Before doing so, of course,
-     * it checks if the thumb is already at the mouse position or beyond, in such cases it simply does nothing.
-     * <p></p>
-     * Both the second animation and the inner {@link MomentumTransition} are assigned to variables so that
-     * if any event occurs in the meanwhile which requires the animations to stop it can be done.
-     */
+    /// Action performed when the track is pressed.
+    ///
+    /// The first steps are to stop any animation (see [#stopAnimations()]) then [#requestFocus()].
+    /// Then we check whether smooth scroll and track smooth scroll features have been enabled, in such case the method
+    /// exists as the scroll will be handled by [#trackReleased(MouseEvent)].
+    ///
+    /// Otherwise, we get the mouse position with [#getMousePos(MouseEvent)] and the track length with [#getTrackLength(MouseEvent)].
+    /// We define the target value as `mousePos / trackL` and the  delta value as `targetVal - bar.getValue()`.
+    /// Finally, the scroll direction is determined by [#getAndSetScrollDirection(boolean)].
+    ///
+    /// At this point, two animations are built:
+    ///
+    /// The first animation is responsible for the "first tick". When you press the track you expect the thumb to move
+    /// towards the mouse position by the specified [VFXScrollBar#trackIncrementProperty()]. Then we must also
+    /// consider what happens when the value has been adjusted, but the mouse is still pressed. Here's when the second animation
+    /// comes into play. This animation basically detects if the mouse is still pressed (the delay is specified by [#HOLD_DELAY])
+    /// and makes the thumb reposition towards the mouse position with a [MomentumTransition]. Before doing so, of course,
+    /// it checks if the thumb is already at the mouse position or beyond, in such cases it simply does nothing.
+    ///
+    /// Both the second animation and the inner [MomentumTransition] are assigned to variables so that
+    /// if any event occurs in the meanwhile which requires the animations to stop it can be done.
     public void trackPressed(MouseEvent me) {
         stopAnimations();
         requestFocus();
@@ -222,19 +210,17 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
         holdAnimation.play();
     }
 
-    /**
-     * Action performed when the track is released
-     * <p></p>
-     * The first step is to stop any animation (see {@link #stopAnimations()}).
-     * <p>
-     * The rest of the method executes only if both the smooth scroll and track smooth scroll features are enabled.
-     * <p>
-     * As usual,we get the mouse position with {@link #getMousePos(MouseEvent)} and the track length with {@link #getTrackLength(MouseEvent)}.
-     * We define the target value as {@code mousePos / trackL} and the delta value as {@code targetVal - bar.getValue()}.
-     * Finally, the scroll direction is determined by {@link #getAndSetScrollDirection(boolean)}.
-     * <p>
-     * The scroll bar's value is adjusted with a {@link MomentumTransition}.
-     */
+    /// Action performed when the track is released
+    ///
+    /// The first step is to stop any animation (see [#stopAnimations()]).
+    ///
+    /// The rest of the method executes only if both the smooth scroll and track smooth scroll features are enabled.
+    ///
+    /// As usual,we get the mouse position with [#getMousePos(MouseEvent)] and the track length with [#getTrackLength(MouseEvent)].
+    /// We define the target value as `mousePos / trackL` and the delta value as `targetVal - bar.getValue()`.
+    /// Finally, the scroll direction is determined by [#getAndSetScrollDirection(boolean)].
+    ///
+    /// The scroll bar's value is adjusted with a [MomentumTransition].
     public void trackReleased(MouseEvent me) {
         stopAnimations();
         VFXScrollBar bar = getNode();
@@ -262,11 +248,9 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
         }
     }
 
-    /**
-     * Retrieves the scroll bar's track length from the given {@link MouseEvent}. This can be done on events intercepted
-     * by the track because we get the node thanks to {@link PickResult#getIntersectedNode()}.
-     * The returned value depends on the orientation.
-     */
+    /// Retrieves the scroll bar's track length from the given [MouseEvent]. This can be done on events intercepted
+    /// by the track because we get the node thanks to [PickResult#getIntersectedNode()].
+    /// The returned value depends on the orientation.
     protected double getTrackLength(MouseEvent me) {
         Orientation o = getNode().getOrientation();
         Node track = me.getPickResult().getIntersectedNode();
@@ -276,21 +260,19 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
 
     // BUTTONS
 
-    /**
-     * Action performed when either the increase or decrease buttons are pressed.
-     * The {@code mul} parameters indicates which one is pressed and therefore whether to increment (1) or decrement(-1)
-     * the {@link VFXScrollBar#valueProperty()} by the amount specified by the {@link VFXScrollBar#unitIncrementProperty()}.
-     * <p></p>
-     * The first step is to stop any animation (see {@link #stopAnimations()}) and to acquire focus with {@link #requestFocus()}.
-     * <p>
-     * Two animations are built:
-     * <p>
-     * The first animation is responsible for the "first tick". When you press the button you expect the thumb to move
-     * by the specified {@link VFXScrollBar#unitIncrementProperty()}. Then we must also consider what happens when the value
-     * has been adjusted, but the mouse is still pressed. Here's when the second animation comes into play.
-     * It basically detects if the mouse is being hold (the delay is specified by {@link #HOLD_DELAY}) and makes the
-     * thumb reposition with a {@link ConsumerTransition}.
-     */
+    /// Action performed when either the increase or decrease buttons are pressed.
+    /// The `mul` parameters indicates which one is pressed and therefore whether to increment (1) or decrement(-1)
+    /// the [VFXScrollBar#valueProperty()] by the amount specified by the [VFXScrollBar#unitIncrementProperty()].
+    ///
+    /// The first step is to stop any animation (see [#stopAnimations()]) and to acquire focus with [#requestFocus()].
+    ///
+    /// Two animations are built:
+    ///
+    /// The first animation is responsible for the "first tick". When you press the button you expect the thumb to move
+    /// by the specified [VFXScrollBar#unitIncrementProperty()]. Then we must also consider what happens when the value
+    /// has been adjusted, but the mouse is still pressed. Here's when the second animation comes into play.
+    /// It basically detects if the mouse is being hold (the delay is specified by [#HOLD_DELAY]) and makes the
+    /// thumb reposition with a [ConsumerTransition].
     public void buttonPressed(MouseEvent me, int mul) {
         stopAnimations();
         requestFocus();
@@ -322,20 +304,16 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
         holdAnimation.play();
     }
 
-    /**
-     * Action performed when either the increase or decrease buttons are released.
-     * <p>
-     * Simply calls {@link #stopAnimations()}.
-     */
+    /// Action performed when either the increase or decrease buttons are released.
+    ///
+    /// Simply calls [#stopAnimations()].
     public void buttonReleased(MouseEvent me) {
         stopAnimations();
     }
 
     // MISC
 
-    /**
-     * Obtains the mouse position from the given {@link MouseEvent} depending on the scroll bar's orientation.
-     */
+    /// Obtains the mouse position from the given [MouseEvent] depending on the scroll bar's orientation.
     protected double getMousePos(MouseEvent me) {
         return (getNode().getOrientation() == Orientation.VERTICAL)
             ? me.getY()
@@ -353,9 +331,7 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
         return mul;
     }
 
-    /**
-     * Obtains the scroll delta from the given {@link ScrollEvent} depending on the scroll bar's orientation.
-     */
+    /// Obtains the scroll delta from the given [ScrollEvent] depending on the scroll bar's orientation.
     protected double getScrollDelta(ScrollEvent se) {
         double delta = (getNode().getOrientation() == Orientation.VERTICAL) ?
             se.getDeltaY() :
@@ -363,9 +339,7 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
         return (delta != 0) ? delta : (se.getDeltaY() != 0) ? se.getDeltaY() : se.getDeltaX();
     }
 
-    /**
-     * Requests focus for the scroll bar if it's not already focused and if it's focus traversable.
-     */
+    /// Requests focus for the scroll bar if it's not already focused and if it's focus traversable.
     protected void requestFocus() {
         VFXScrollBar bar = getNode();
         if (!bar.isFocused() && bar.isFocusTraversable()) bar.requestFocus();
@@ -373,11 +347,9 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
 
     // ANIMATIONS
 
-    /**
-     * Stops any currently playing animation, including smooth scroll animations,
-     * hold animation (those responsible for detecting mouse press and hold), and any other
-     * scroll animation (typically the ones created inside hold animations)
-     */
+    /// Stops any currently playing animation, including smooth scroll animations,
+    /// hold animation (those responsible for detecting mouse press and hold), and any other
+    /// scroll animation (typically the ones created inside hold animations)
     protected void stopAnimations() {
         if (!smoothScrollAnimations.isEmpty()) {
             smoothScrollAnimations.forEach(Animation::stop);
@@ -393,11 +365,9 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
         }
     }
 
-    /**
-     * Convenience method to build a {@link Timeline} animation for the "first tick".
-     * Uses {@link #FIRST_TICK_DURATION} and {@link #FIRST_TICK_CURVE} and moves the scroll bar's value towards the given
-     * target value.
-     */
+    /// Convenience method to build a [Timeline] animation for the "first tick".
+    /// Uses [#FIRST_TICK_DURATION] and [#FIRST_TICK_CURVE] and moves the scroll bar's value towards the given
+    /// target value.
     protected Animation firstTick(double targetVal) {
         return TimelineBuilder.build()
             .add(KeyFrames.of(
@@ -409,10 +379,8 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
             .getAnimation();
     }
 
-    /**
-     * Convenience method to build a {@link PauseTransition} used to detect "mouse hold" events. The duration is set to
-     * {@link #HOLD_DELAY} and the given handler determines what happens when the animation ends.
-     */
+    /// Convenience method to build a [PauseTransition] used to detect "mouse hold" events. The duration is set to
+    /// [#HOLD_DELAY] and the given handler determines what happens when the animation ends.
     protected Animation onHold(EventHandler<ActionEvent> handler) {
         return Animations.PauseBuilder.build()
             .setDuration(HOLD_DELAY)
@@ -420,10 +388,8 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
             .getAnimation();
     }
 
-    /**
-     * Convenience method to build a {@link MomentumTransition} using {@link MomentumTransition#fromTime(double, double)}
-     * with the two given parameters. Uses {@link #SMOOTH_SCROLL_CURVE} as the interpolator.
-     */
+    /// Convenience method to build a [MomentumTransition] using [MomentumTransition#fromTime(double, double)]
+    /// with the two given parameters. Uses [#SMOOTH_SCROLL_CURVE] as the interpolator.
     protected MomentumTransition withMomentum(double delta, Duration duration) {
         return (MomentumTransition) MomentumTransition.fromTime(delta, duration.toMillis())
             .setInterpolatorFluent(SMOOTH_SCROLL_CURVE);
@@ -433,16 +399,14 @@ public class VFXScrollBarBehavior extends MFXBehavior<VFXScrollBar> {
     // Overridden Methods
     //================================================================================
 
-    /**
-     * Action performed when a {@link ScrollEvent} occurs.
-     * <p></p>
-     * First the scroll delta is computed with {@link #getScrollDelta(ScrollEvent)} and in case it's 0
-     * it immediately exits.
-     * <p>
-     * Then we determine the scroll direction with {@link #getAndSetScrollDirection(boolean)} and depending on the
-     * {@link VFXScrollBar#smoothScrollProperty()} the scroll value is adjuster either by a {@link MomentumTransition} or
-     * by the setter.
-     */
+    /// Action performed when a [ScrollEvent] occurs.
+    ///
+    /// First the scroll delta is computed with [#getScrollDelta(ScrollEvent)] and in case it's 0
+    /// it immediately exits.
+    ///
+    /// Then we determine the scroll direction with [#getAndSetScrollDirection(boolean)] and depending on the
+    /// [VFXScrollBar#smoothScrollProperty()] the scroll value is adjuster either by a [MomentumTransition] or
+    /// by the setter.
     @Override
     public void scroll(ScrollEvent se, Runnable callback) {
         VFXScrollBar bar = getNode();

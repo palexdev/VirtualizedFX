@@ -28,12 +28,10 @@ public class Utils {
     //================================================================================
     // Static Properties
     //================================================================================
-    /**
-     * Special instance of {@link IntegerRange} with both {@code min} and {@code max} set to -1.
-     * This value is in fact invalid as indexes.
-     * <p>
-     * Avoids having to instantiate a new range everytime such values are needed.
-     */
+    /// Special instance of [IntegerRange] with both `min` and `max` set to -1.
+    /// This value is in fact invalid as indexes.
+    ///
+    /// Avoids having to instantiate a new range every time such values are needed.
     public static final IntegerRange INVALID_RANGE = IntegerRange.of(-1);
 
     //================================================================================

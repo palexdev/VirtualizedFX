@@ -18,28 +18,22 @@
 
 package io.github.palexdev.virtualizedfx.enums;
 
-/**
- * Enumeration to set the buffer size of virtualized containers. To avoid the user abusing the 'dynamic' buffer system, by
- * setting unreasonably high numbers or 0, an enumeration is used instead.
- * <p>
- * The size of the buffer is given by the constant's ordinal + 1, {@link #val()}.
- */
+/// Enumeration to set the buffer size of virtualized containers. To avoid the user abusing the 'dynamic' buffer system, by
+/// setting unreasonably high numbers or 0, an enumeration is used instead.
+///
+/// The size of the buffer is given by the constant's ordinal + 1, [#val()].
 public enum BufferSize {
     SMALL,
     MEDIUM,
     BIG,
     ;
 
-    /**
-     * @return the constant's {@link #ordinal()} + 1
-     */
+    /// @return the constant's [#ordinal()] + 1
     public int val() {
         return ordinal() + 1;
     }
 
-    /**
-     * @return the standard, recommended buffer size, which is {@link #MEDIUM} (2)
-     */
+    /// @return the standard, recommended buffer size, which is [#MEDIUM] (2)
     public static BufferSize standard() {
         return MEDIUM;
     }

@@ -36,33 +36,33 @@ import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onChanged;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
-/**
- * Default skin implementation for {@link VFXTable}, extends {@link MFXSkinBase} and expects behaviors of type
- * {@link VFXTableManager}.
- * <p>
- * The table is organized in columns, rows and cells. This architecture leads to more complex layout compared to other
- * containers because it comprises many more nodes. The 'viewport' node wraps two {@link Pane}s:
- * <p> 1) one contains the table's columns, can be selected in CSS as '.columns'
- * <p> 2) the other contains the rows, can be selected in CSS as '.rows'
- * <p>
- * The table's height and the viewport height are different here. The latter is given by the table's height minus
- * the columns pane height, specified by {@link VFXTable#columnsSizeProperty()}. The rows are given by the
- * {@link VFXTable#stateProperty()} and depends on the viewport's height. Each column produces one cell per row.
- * Columns and cells are kept aligned by the layout methods defined in {@link VFXTableHelper}.
- * <p></p>
- * Q: Why so many nodes?
- * <p>
- * A: scrolling in a table is a bit peculiar because: vertical scrolling should affect only the rows,
- * while horizontal scrolling should affect both rows and columns.
- * For such reason, a clip node is set on the rows container and avoids rows overflow on vertical scroll.
- * <p></p>
- * As all skins typically do, this is also responsible for catching any change in the component's properties.
- * The computation that leads to a new state is delegated to the controller/behavior, which is the {@link VFXTableManager}.
- * Read this {@link #addListeners()} to check which changes are handled.
- * <p></p>
- * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
- * by overriding the {@link #DEFAULT_SIZE} variable.
- */
+/// Default skin implementation for [VFXTable], extends [MFXSkinBase] and expects behaviors of type
+/// [VFXTableManager].
+///
+/// The table is organized in columns, rows and cells. This architecture leads to more complex layout compared to other
+/// containers because it comprises many more nodes. The 'viewport' node wraps two [Pane]s:
+///
+/// 1) one contains the table's columns, can be selected in CSS as '.columns'
+///
+/// 2) the other contains the rows, can be selected in CSS as '.rows'
+///
+/// The table's height and the viewport height are different here. The latter is given by the table's height minus
+/// the columns pane height, specified by [VFXTable#columnsSizeProperty()]. The rows are given by the
+/// [VFXTable#stateProperty()] and depends on the viewport's height. Each column produces one cell per row.
+/// Columns and cells are kept aligned by the layout methods defined in [VFXTableHelper].
+///
+/// Q: Why so many nodes?
+///
+/// A: scrolling in a table is a bit peculiar because: vertical scrolling should affect only the rows,
+/// while horizontal scrolling should affect both rows and columns.
+/// For such reason, a clip node is set on the rows container and avoids rows overflow on vertical scroll.
+///
+/// As all skins typically do, this is also responsible for catching any change in the component's properties.
+/// The computation that leads to a new state is delegated to the controller/behavior, which is the [VFXTableManager].
+/// Read this [#addListeners()] to check which changes are handled.
+///
+/// Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
+/// by overriding the [#DEFAULT_SIZE] variable.
 public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     //================================================================================
     // Properties
@@ -127,44 +127,57 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     // Methods
     //================================================================================
 
-    /**
-     * Adds listeners on the component's properties which need to produce a new {@link VFXTableState} upon changing.
-     * <p>
-     * Here's the list:
-     * <p> - Listener on {@link VFXTable#getColumns()}, will invoke {@link VFXTableManager#onColumnsChanged(ListChangeListener.Change)}.
-     * The method is also invoked the first time here with {@code null} as parameter to ensure that columns are initialized
-     * for the first time.
-     * <p> - Listener on {@link VFXTable#stateProperty()}, this is crucial to update the columns and rows containers'
-     * children, invoke {@link VFXTable#requestViewportLayout()} if {@link VFXTableState#isLayoutNeeded()} is {@code true}.
-     * Skips everything if the current state was cloned, {@link VFXTableState#isClone()}
-     * <p> - Listener on {@link VFXTable#needsViewportLayoutProperty()}, this is crucial because invokes both
-     * {@link #layoutColumns()} and {@link #layoutRows()}. The layout is performed only if {@link ViewportLayoutRequest#isValid()}
-     * returns {@code true}. Also, if the request carries a specific column ({@link ViewportLayoutRequest#column()}),
-     * the layout will be computed only partially by invoking {@link #partialLayout()} instead.
-     * <p> - Listener on {@link VFXTable#helperProperty()}, this is crucial because it's responsible for binding the
-     * viewport's translateX and rows container's translateY properties to the {@link VFXTableHelper#viewportPositionProperty()}.
-     * By translating the viewport, we give the illusion of scrolling (virtual scrolling)
-     * <p> - Listener on {@link VFXTable#widthProperty()}, will invoke {@link VFXTableManager#onGeometryChanged(GeometryChangeType)}
-     * <p> - Listener on {@link VFXTable#heightProperty()}, will invoke {@link VFXTableManager#onGeometryChanged(GeometryChangeType)}
-     * <p> - Listener on {@link VFXTable#columnsBufferSizeProperty()}, will invoke {@link VFXTableManager#onGeometryChanged(GeometryChangeType)}
-     * <p> - Listener on {@link VFXTable#rowsBufferSizeProperty()}, will invoke {@link VFXTableManager#onGeometryChanged(GeometryChangeType)}
-     * <p> - Listener on {@link VFXTable#vPosProperty()}, will invoke {@link VFXTableManager#onPositionChanged(Orientation)}
-     * <p> - Listener on {@link VFXTable#hPosProperty()}, will invoke {@link VFXTableManager#onPositionChanged(Orientation)}
-     * <p> - Listener on {@link VFXTable#itemsProperty()}, will invoke {@link VFXTableManager#onItemsChanged()}
-     * <p> - Listener on {@link VFXTable#rowFactoryProperty()}, will invoke {@link VFXTableManager#onRowFactoryChanged()}
-     * <p> - Listener on {@link VFXTable#rowsHeightProperty()}, will invoke {@link VFXTableManager#onRowHeightChanged()}
-     * <p> - Listener on {@link VFXTable#columnsSizeProperty()}, will invoke {@link VFXTableManager#onColumnsSizeChanged()}
-     * <p> - Listener on {@link VFXTable#columnsLayoutModeProperty()}, will invoke {@link VFXTableManager#onColumnsLayoutModeChanged()}
-     * <p></p>
-     * <b>Note:</b> in JavaFX there is no way to prioritize a listener over another, rather, the priority is given by
-     * which is added first (behind the scenes there must be a plain for loop running to call all the listeners).
-     * This causes a nasty bug regarding the table's width when using the {@link ColumnsLayoutMode#VARIABLE}. In that mode
-     * we cannot proceed with the {@link VFXTableManager#onGeometryChanged(GeometryChangeType)} method before the
-     * {@link ColumnsLayoutCache} is invalidated. A simple workaround for this, is to use a {@link ChangeListener}
-     * instead of a plain {@link InvalidationListener} for the {@link VFXTable#widthProperty()}, because the latter type
-     * will ALWAYS be invoked BEFORE the other listeners type. In my opinion, this mechanism is stupid and broken, bindings
-     * invalidation should ALWAYS happen before anything else!
-     */
+    /// Adds listeners on the component's properties which need to produce a new [VFXTableState] upon changing.
+    ///
+    /// Here's the list:
+    ///
+    /// - Listener on [VFXTable#getColumns()], will invoke [VFXTableManager#onColumnsChanged(ListChangeListener.Change)].
+    /// The method is also invoked the first time here with `null` as parameter to ensure that columns are initialized
+    /// for the first time.
+    ///
+    /// - Listener on [VFXTable#stateProperty()], this is crucial to update the columns and rows containers'
+    /// children, invoke [VFXTable#requestViewportLayout()] if [VFXTableState#isLayoutNeeded()] is `true`.
+    /// Skips everything if the current state was cloned, [VFXTableState#isClone()]
+    ///
+    /// - Listener on [VFXTable#needsViewportLayoutProperty()], this is crucial because invokes both
+    /// [#layoutColumns()] and [#layoutRows()]. The layout is performed only if [ViewportLayoutRequest#isValid()]
+    /// returns `true`. Also, if the request carries a specific column ([ViewportLayoutRequest#column()]),
+    /// the layout will be computed only partially by invoking [#partialLayout()] instead.
+    ///
+    /// - Listener on [VFXTable#helperProperty()], this is crucial because it's responsible for binding the
+    /// viewport's translateX and rows container's translateY properties to the [VFXTableHelper#viewportPositionProperty()].
+    /// By translating the viewport, we give the illusion of scrolling (virtual scrolling)
+    ///
+    /// - Listener on [VFXTable#widthProperty()], will invoke [VFXTableManager#onGeometryChanged(GeometryChangeType)]
+    ///
+    /// - Listener on [VFXTable#heightProperty()], will invoke [VFXTableManager#onGeometryChanged(GeometryChangeType)]
+    ///
+    /// - Listener on [VFXTable#columnsBufferSizeProperty()], will invoke [VFXTableManager#onGeometryChanged(GeometryChangeType)]
+    ///
+    /// - Listener on [VFXTable#rowsBufferSizeProperty()], will invoke [VFXTableManager#onGeometryChanged(GeometryChangeType)]
+    ///
+    /// - Listener on [VFXTable#vPosProperty()], will invoke [VFXTableManager#onPositionChanged(Orientation)]
+    ///
+    /// - Listener on [VFXTable#hPosProperty()], will invoke [VFXTableManager#onPositionChanged(Orientation)]
+    ///
+    /// - Listener on [VFXTable#itemsProperty()], will invoke [VFXTableManager#onItemsChanged()]
+    ///
+    /// - Listener on [VFXTable#rowFactoryProperty()], will invoke [VFXTableManager#onRowFactoryChanged()]
+    ///
+    /// - Listener on [VFXTable#rowsHeightProperty()], will invoke [VFXTableManager#onRowHeightChanged()]
+    ///
+    /// - Listener on [VFXTable#columnsSizeProperty()], will invoke [VFXTableManager#onColumnsSizeChanged()]
+    ///
+    /// - Listener on [VFXTable#columnsLayoutModeProperty()], will invoke [VFXTableManager#onColumnsLayoutModeChanged()]
+    ///
+    /// **Note:** in JavaFX there is no way to prioritize a listener over another, rather, the priority is given by
+    /// which is added first (behind the scenes there must be a plain for loop running to call all the listeners).
+    /// This causes a nasty bug regarding the table's width when using the [ColumnsLayoutMode#VARIABLE]. In that mode
+    /// we cannot proceed with the [VFXTableManager#onGeometryChanged(GeometryChangeType)] method before the
+    /// [ColumnsLayoutCache] is invalidated. A simple workaround for this, is to use a [ChangeListener]
+    /// instead of a plain [InvalidationListener] for the [VFXTable#widthProperty()], because the latter type
+    /// will ALWAYS be invoked BEFORE the other listeners type. In my opinion, this mechanism is stupid and broken, bindings
+    /// invalidation should ALWAYS happen before anything else!
     protected void addListeners() {
         VFXTable<T> table = getSkinnable();
 
@@ -260,14 +273,12 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         );
     }
 
-    /**
-     * This method redefines the viewport node layout. It's responsible for positioning and sizing both the
-     * columns and rows containers.
-     *
-     * @see #layoutColumns()
-     * @see #layoutRows()
-     * @see #partialLayout()
-     */
+    /// This method redefines the viewport node layout. It's responsible for positioning and sizing both the
+    /// columns and rows containers.
+    ///
+    /// @see #layoutColumns()
+    /// @see #layoutRows()
+    /// @see #partialLayout()
     protected void layout() {
         VFXTable<T> table = getSkinnable();
         double w = table.getVirtualMaxX();
@@ -278,22 +289,20 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         rContainer.resizeRelocate(0, cH, w, rH);
     }
 
-    /**
-     * This is responsible for sizing and positioning the columns specified by the current
-     * {@link VFXTableState#getColumnsRange()}.
-     * <p>
-     * If the state is {@link VFXTableState#INVALID} exits immediately.
-     * <p>
-     * The columns are actually laid out by using {@link VFXTableHelper#layoutColumn(int, VFXTableColumn)}.
-     * The layout index is given by an external 'i' counter which starts at 0 and is incremented at each loop iteration.
-     * <p>
-     * This is also responsible for updating the {@link VFXTableColumn#indexProperty()} by calling
-     * {@link #updateColumnIndex(VFXTableColumn, int)}. Why here? Because this core method will ensure all columns will
-     * always have the correct index set.
-     *
-     * @see #layoutRows()
-     * @see #partialLayout()
-     */
+    /// This is responsible for sizing and positioning the columns specified by the current
+    /// [VFXTableState#getColumnsRange()].
+    ///
+    /// If the state is [VFXTableState#INVALID] exits immediately.
+    ///
+    /// The columns are actually laid out by using [VFXTableHelper#layoutColumn(int, VFXTableColumn)].
+    /// The layout index is given by an external 'i' counter which starts at 0 and is incremented at each loop iteration.
+    ///
+    /// This is also responsible for updating the [VFXTableColumn#indexProperty()] by calling
+    /// [#updateColumnIndex(VFXTableColumn, int)]. Why here? Because this core method will ensure all columns will
+    /// always have the correct index set.
+    ///
+    /// @see #layoutRows()
+    /// @see #partialLayout()
     protected void layoutColumns() {
         VFXTable<T> table = getSkinnable();
         VFXTableState<T> state = table.getState();
@@ -311,19 +320,17 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         }
     }
 
-    /**
-     * This is responsible for sizing and positioning both the rows and their cells.
-     * <p>
-     * If the current {@link VFXTableState} is either {@link VFXTableState#INVALID} or {@link VFXTableState#isEmpty()} then
-     * exits and calls {@link #onLayoutCompleted(boolean)} with {@code false} as parameter.
-     * <p>
-     * The layout is computed by iterating over the rows given by {@link VFXTableState#getRowsByIndex()}.
-     * Each row is laid out by {@link VFXTableHelper#layoutRow(int, VFXTableRow)}, and on each row
-     * {@link VFXTableRow#layoutCells()} is called (this is actually responsible for the cells' layout).
-     * The layout index is given by an external 'i' counter which starts at 0 and is incremented at each loop iteration.
-     * <p>
-     * If the loop completes successfully, {@link #onLayoutCompleted(boolean)} is invoked with {@code true} as parameter.
-     */
+    /// This is responsible for sizing and positioning both the rows and their cells.
+    ///
+    /// If the current [VFXTableState] is either [VFXTableState#INVALID] or [VFXTableState#isEmpty()] then
+    /// exits and calls [#onLayoutCompleted(boolean)] with `false` as parameter.
+    ///
+    /// The layout is computed by iterating over the rows given by [VFXTableState#getRowsByIndex()].
+    /// Each row is laid out by [VFXTableHelper#layoutRow(int, VFXTableRow)], and on each row
+    /// [VFXTableRow#layoutCells()] is called (this is actually responsible for the cells' layout).
+    /// The layout index is given by an external 'i' counter which starts at 0 and is incremented at each loop iteration.
+    ///
+    /// If the loop completes successfully, [#onLayoutCompleted(boolean)] is invoked with `true` as parameter.
     protected void layoutRows() {
         VFXTable<T> table = getSkinnable();
         VFXTableHelper<T> helper = table.getHelper();
@@ -341,38 +348,38 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         onLayoutCompleted(false);
     }
 
-    /**
-     * There are certain situations in which it's not necessary to re-compute the whole table layout, but it's enough to
-     * only compute it partially, starting from a specific column. This is indeed a good optimization, especially when
-     * using the {@link ColumnsLayoutMode#VARIABLE} mode.
-     * <p>
-     * Examples of when this may happen: 1) when in {@code FIXED} mode, the table's width exceeds the {@code virtualMaxX},
-     * which means that only the last column (and all its related cells) needs to be resized to fill the space;
-     * 2) when in {@code VARIABLE} mode, for a column that changes its width, we need to recompute the layout only for
-     * the column itself and the others that come after.
-     * <p></p>
-     * So, how does this work?
-     * <p>
-     * If using the {@link ColumnsLayoutMode#FIXED}, we simply call {@link VFXTableHelper#layoutColumn(int, VFXTableColumn)}
-     * on the column given by {@link ViewportLayoutRequest#column()} (which is expected to be the last column in the table).
-     * Then iterates on all the rows in the state, {@link VFXTableState#getRowsByIndex()}, resize each of them because the
-     * {@code virtualMaxX} has probably changed, then from each row retrieves the column's related cell and call
-     * {@link VFXTableHelper#layoutRow(int, VFXTableRow)}. Note: the layout index is given by {@link IntegerRange#diff()}
-     * on {@link VFXTableState#getColumnsRange()}.
-     * <p></p>
-     * If using {@link ColumnsLayoutMode#VARIABLE} two things can happen:
-     * <p> 1) if the column carried by {@link ViewportLayoutRequest#column()} is the last one in the table, then we
-     * re-compute the whole layout. The issue is that there are some edge cases that may not be easy to manage, so
-     * the strategy here is to go for stability rather than performance (also because handling all the edge cases may
-     * actually harm it).
-     * <p> 2) for any other column we can actually optimize. First, it loops over the columns starting from the index
-     * of the changed column. Each column is resized and repositioned by {@link VFXTableHelper#layoutColumn(int, VFXTableColumn)}.
-     * Then iterates over the rows given by {@link VFXTableState#getRowsByIndex()}, iterates over then and resizes all
-     * of them by using {@link VFXTableHelper#layoutRow(int, VFXTableRow)}. In a nested loop, for each row, it updates
-     * only the cells from the aforementioned start index, uses {@link VFXTableHelper#layoutCell(int, VFXTableCell)}.
-     * <p>
-     * Finally calls {@link #onLayoutCompleted(boolean)} with {@code true} as parameter.
-     */
+    /// There are certain situations in which it's not necessary to re-compute the whole table layout, but it's enough to
+    /// only compute it partially, starting from a specific column. This is indeed a good optimization, especially when
+    /// using the [ColumnsLayoutMode#VARIABLE] mode.
+    ///
+    /// Examples of when this may happen: 1) when in `FIXED` mode, the table's width exceeds the `virtualMaxX`,
+    /// which means that only the last column (and all its related cells) needs to be resized to fill the space;
+    /// 2) when in `VARIABLE` mode, for a column that changes its width, we need to recompute the layout only for
+    /// the column itself and the others that come after.
+    ///
+    /// So, how does this work?
+    ///
+    /// If using the [ColumnsLayoutMode#FIXED], we simply call [VFXTableHelper#layoutColumn(int, VFXTableColumn)]
+    /// on the column given by [ViewportLayoutRequest#column()] (which is expected to be the last column in the table).
+    /// Then iterates on all the rows in the state, [VFXTableState#getRowsByIndex()], resize each of them because the
+    /// `virtualMaxX` has probably changed, then from each row retrieves the column's related cell and call
+    /// [VFXTableHelper#layoutRow(int, VFXTableRow)]. Note: the layout index is given by [IntegerRange#diff()]
+    /// on [VFXTableState#getColumnsRange()].
+    ///
+    /// If using [ColumnsLayoutMode#VARIABLE] two things can happen:
+    ///
+    /// 1) if the column carried by [ViewportLayoutRequest#column()] is the last one in the table, then we
+    /// re-compute the whole layout. The issue is that there are some edge cases that may not be easy to manage, so
+    /// the strategy here is to go for stability rather than performance (also because handling all the edge cases may
+    /// actually harm it).
+    ///
+    /// 2) for any other column we can actually optimize. First, it loops over the columns starting from the index
+    /// of the changed column. Each column is resized and repositioned by [VFXTableHelper#layoutColumn(int, VFXTableColumn)].
+    /// Then iterates over the rows given by [VFXTableState#getRowsByIndex()], iterates over then and resizes all
+    /// of them by using [VFXTableHelper#layoutRow(int, VFXTableRow)]. In a nested loop, for each row, it updates
+    /// only the cells from the aforementioned start index, uses [VFXTableHelper#layoutCell(int, VFXTableCell)].
+    ///
+    /// Finally calls [#onLayoutCompleted(boolean)] with `true` as parameter.
     protected void partialLayout() {
         VFXTable<T> table = getSkinnable();
         VFXTableState<T> state = table.getState();
@@ -415,20 +422,16 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         onLayoutCompleted(true);
     }
 
-    /**
-     * This must be called after processing a {@link ViewportLayoutRequest} to reset the {@link VFXTable#needsViewportLayoutProperty()}
-     * to {@link ViewportLayoutRequest#NULL}.
-     */
+    /// This must be called after processing a [ViewportLayoutRequest] to reset the [VFXTable#needsViewportLayoutProperty()]
+    /// to [ViewportLayoutRequest#NULL].
     protected void onLayoutCompleted(boolean done) {
         VFXTable<T> table = getSkinnable();
         table.setNeedsViewportLayout(ViewportLayoutRequest.NULL.setWasDone(done));
     }
 
-    /**
-     * This can be called during layout or other operations to update the given column's {@link VFXTableColumn#indexProperty()}
-     * to the given index. This is indeed a strange place to do so, but as it turns out, layout methods are the most
-     * reliable to ensure columns will always have the correct index.
-     */
+    /// This can be called during layout or other operations to update the given column's [VFXTableColumn#indexProperty()]
+    /// to the given index. This is indeed a strange place to do so, but as it turns out, layout methods are the most
+    /// reliable to ensure columns will always have the correct index.
     protected void updateColumnIndex(VFXTableColumn<T, ?> column, int index) {
         column.setIndex(index);
     }

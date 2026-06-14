@@ -29,21 +29,19 @@ import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import javafx.scene.Node;
 import javafx.util.StringConverter;
 
-/**
- * Simple extension of {@link VFXCellBase} which by default uses the skin {@link VFXLabeledCellSkin} to display its data
- * as text. This also expands the default style classes to be: '.cell-base' and '.cell'.
- * <p></p>
- * <b>Q:</b> Why not extend Labeled rather than Control? (Also considering that the default skin uses a Label)
- * <p>
- * <b>A:</b> Long story short, for flexibility. While it's true that in the vast majority of user cases, cells will just
- * display their data as a String, it's not always the case. Extending {@link MFXControl} does not allow users
- * to set the label's properties (font, text color, etc.) directly (you can still do it by CSS or by using
- * {@link CSSFragment} in code!!), but it indeed makes the architecture more flexible. See also {@link VFXCellBase}
- * <p></p>
- * <b>Note:</b> to make this even more flexible, I decided to add a {@link StringConverter} to convert an item {@link T}
- * to the {@code String} visualized by the label. However, to make use of it, the cell extends inline the {@link VFXLabeledCellSkin}
- * here {@link #buildSkin()} to override its {@link VFXLabeledCellSkin#update()} method.
- */
+/// Simple extension of [VFXCellBase] which by default uses the skin [VFXLabeledCellSkin] to display its data
+/// as text. This also expands the default style classes to be: '.cell-base' and '.cell'.
+///
+/// **Q:** Why not extend Labeled rather than Control? (Also considering that the default skin uses a Label)
+///
+/// **A:** Long story short, for flexibility. While it's true that in the vast majority of user cases, cells will just
+/// display their data as a String, it's not always the case. Extending [MFXControl] does not allow users
+/// to set the label's properties (font, text color, etc.) directly (you can still do it by CSS or by using
+/// [CSSFragment] in code!!), but it indeed makes the architecture more flexible. See also [VFXCellBase]
+///
+/// **Note:** to make this even more flexible, I decided to add a [StringConverter] to convert an item [T]
+/// to the `String` visualized by the label. However, to make use of it, the cell extends inline the [VFXLabeledCellSkin]
+/// here [#buildSkin()] to override its [VFXLabeledCellSkin#update()] method.
 public class VFXSimpleCell<T> extends VFXCellBase<T> {
     //================================================================================
     // Properties
@@ -85,25 +83,19 @@ public class VFXSimpleCell<T> extends VFXCellBase<T> {
     // Getters/Setters
     //================================================================================
 
-    /**
-     * @return the {@link StringConverter} used to convert an item {@link T} to a {@code String}
-     */
+    /// @return the [StringConverter] used to convert an item [T] to a `String`
     public StringConverter<T> getConverter() {
         return converter;
     }
 
-    /**
-     * Sets the {@link StringConverter} used to convert an extracted value {@link T} to a {@code String}
-     */
+    /// Sets the [StringConverter] used to convert an extracted value [T] to a `String`
     public VFXSimpleCell<T> setConverter(StringConverter<T> converter) {
         this.converter = converter;
         return this;
     }
 
-    /**
-     * Allows easily setting a {@link StringConverter} for the cell by just giving a {@link Function} as parameter,
-     * makes use of {@link FunctionalStringConverter#to(Function)}.
-     */
+    /// Allows easily setting a [StringConverter] for the cell by just giving a [Function] as parameter,
+    /// makes use of [FunctionalStringConverter#to(Function)].
     public VFXSimpleCell<T> setConverter(Function<T, String> fn) {
         return setConverter(FunctionalStringConverter.to(fn));
     }

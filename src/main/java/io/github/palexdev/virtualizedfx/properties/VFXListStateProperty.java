@@ -22,9 +22,7 @@ import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXListState;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
-/**
- * Convenience property that extends {@link ReadOnlyObjectWrapper} for {@link VFXListState}.
- */
+/// Convenience property that extends [ReadOnlyObjectWrapper] for [VFXListState].
 public class VFXListStateProperty<T, C extends VFXCell<T>> extends ReadOnlyObjectWrapper<VFXListState<T, C>> {
 
     //================================================================================

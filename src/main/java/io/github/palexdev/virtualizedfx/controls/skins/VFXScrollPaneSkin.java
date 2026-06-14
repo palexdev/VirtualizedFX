@@ -49,14 +49,12 @@ import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.*;
 import static io.github.palexdev.virtualizedfx.utils.Utils.mapOf;
 
-/**
- * Default skin implementation for {@link VFXScrollPane}.
- * <p></p>
- * There are three components: the content container (viewport) and the two scroll bars.
- * <p>
- * The viewport fills the entire scroll pane area, and the bars "float" on top of it. This means that the size and
- * positioning should be handled by the CSS.
- */
+/// Default skin implementation for [VFXScrollPane].
+///
+/// There are three components: the content container (viewport) and the two scroll bars.
+///
+/// The viewport fills the entire scroll pane area, and the bars "float" on top of it. This means that the size and
+/// positioning should be handled by the CSS.
 public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     //================================================================================
     // Properties
@@ -119,23 +117,24 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     // Methods
     //================================================================================
 
-    /**
-     * Binds all the delegate properties declared in {@link VFXScrollPane} to the corresponding {@link VFXScrollBar}.
-     * <p>
-     * Additionally binds the scroll bars' visibility to a custom property implementation: {@link BarsVisibilityProperty}.
-     * <p></p>
-     * <p>
-     * Adds the following listeners:
-     * <p> - A listener to update the layout to the following properties:
-     * {@link VFXScrollPane#fitToWidthProperty()}, {@link VFXScrollPane#fitToHeightProperty()},
-     * {@link VFXScrollPane#vBarPosProperty()}, {@link VFXScrollPane#hBarPosProperty()},
-     * {@link VFXScrollPane#barsInsetsProperty()}, {@link VFXScrollPane#barsAlignmentProperty()}
-     * <p> - A listener on the {@link VFXScrollPane#contentProperty()} to update the viewport and call {@link #updateScrollBindings(Node, Node)}
-     * <p> - A listener on the {@link VFXScrollPane#hoverProperty()} to hide/show the scroll bars according to the {@link VFXScrollPane#autoHideBarsProperty()}
-     * and a bunch of other conditions, see {@link #showBars(boolean)}
-     * <p> - A listener on {@link VFXScrollPane#minBarsOpacityProperty()} and {@link VFXScrollPane#maxBarsOpacityProperty()}
-     * to call {@link #buildBarsAnimations()}
-     */
+    /// Binds all the delegate properties declared in [VFXScrollPane] to the corresponding [VFXScrollBar].
+    ///
+    /// Additionally binds the scroll bars' visibility to a custom property implementation: [BarsVisibilityProperty].
+    ///
+    /// Adds the following listeners:
+    ///
+    /// - A listener to update the layout to the following properties:
+    /// [VFXScrollPane#fitToWidthProperty()], [VFXScrollPane#fitToHeightProperty()],
+    /// [VFXScrollPane#vBarPosProperty()], [VFXScrollPane#hBarPosProperty()],
+    /// [VFXScrollPane#barsInsetsProperty()], [VFXScrollPane#barsAlignmentProperty()]
+    ///
+    /// - A listener on the [VFXScrollPane#contentProperty()] to update the viewport and call [#updateScrollBindings(Node, Node)]
+    ///
+    /// - A listener on the [VFXScrollPane#hoverProperty()] to hide/show the scroll bars according to the [VFXScrollPane#autoHideBarsProperty()]
+    /// and a bunch of other conditions, see [#showBars(boolean)]
+    ///
+    /// - A listener on [VFXScrollPane#minBarsOpacityProperty()] and [VFXScrollPane#maxBarsOpacityProperty()]
+    /// to call [#buildBarsAnimations()]
     private void addListeners() {
         VFXScrollPane pane = getSkinnable();
 
@@ -201,21 +200,21 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         );
     }
 
-    /**
-     * This core method is responsible for laying out the scroll pane's content in the viewport.
-     * <p>
-     * Virtualized content ({@link VFXContainer}) always take all the available space and are positioned at [0, 0].
-     * <p>
-     * For standard content the layout depends on the following conditions:
-     * <p> - {@link VFXScrollPane#alignmentProperty()} which determines where the content is in the viewport.
-     * {@link Pos} carries both the vertical and horizontal positions into single enum constants. Note that if the content
-     * is taller/wider than the viewport this gets ignored and the content positioned in the top-left corner.
-     * <p> - If the {@link VFXScrollPane#fitToWidthProperty()} and {@link VFXScrollPane#fitToHeightProperty()} are active
-     * than the content will always take all the width/height available, regardless of its preferred sizes
-     * <p></p>
-     * Last but not least, this method calls {@link #updateVisualAmount(Node)} and {@link VFXScrollPaneBehavior#setViewportSize(Size)}
-     * at the end.
-     */
+    /// This core method is responsible for laying out the scroll pane's content in the viewport.
+    ///
+    /// Virtualized content ([VFXContainer]) always take all the available space and are positioned at [0,0].
+    ///
+    /// For standard content the layout depends on the following conditions:
+    ///
+    /// - [VFXScrollPane#alignmentProperty()] which determines where the content is in the viewport.
+    /// [Pos] carries both the vertical and horizontal positions into single enum constants. Note that if the content
+    /// is taller/wider than the viewport this gets ignored and the content positioned in the top-left corner.
+    ///
+    /// - If the [VFXScrollPane#fitToWidthProperty()] and [VFXScrollPane#fitToHeightProperty()] are active
+    /// than the content will always take all the width/height available, regardless of its preferred sizes
+    ///
+    /// Last but not least, this method calls [#updateVisualAmount(Node)] and [VFXScrollPaneBehavior#setViewportSize(Size)]
+    /// at the end.
     protected void layoutContent() {
         VFXScrollPane pane = getSkinnable();
         Node content = pane.getContent();
@@ -252,15 +251,13 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         Optional.ofNullable(getBehavior()).ifPresent(b -> b.setViewportSize(Size.of(w, h)));
     }
 
-    /**
-     * Computes the scrollable size of the given content node.
-     * <p>
-     * For virtualized containers ({@link VFXContainer}) the size is given by their virtual max properties.
-     * For standard resizable nodes ({@link Region}) the size is computed using {@link Region#prefWidth(double)}
-     * and {@link Region#prefHeight(double)} with content bias awareness, considering the
-     * {@link VFXScrollPane#fitToWidthProperty()} and {@link VFXScrollPane#fitToHeightProperty()} settings.
-     * For non-resizable nodes the size is derived from {@link Node#getLayoutBounds()}.
-     */
+    /// Computes the scrollable size of the given content node.
+    ///
+    /// For virtualized containers ([VFXContainer]) the size is given by their virtual max properties.
+    /// For standard resizable nodes ([Region]) the size is computed using [Region#prefWidth(double)]
+    /// and [Region#prefHeight(double)] with content bias awareness, considering the
+    /// [VFXScrollPane#fitToWidthProperty()] and [VFXScrollPane#fitToHeightProperty()] settings.
+    /// For non-resizable nodes the size is derived from [Node#getLayoutBounds()].
     protected Size computeContentBounds() {
         VFXScrollPane pane = getSkinnable();
         Node content = pane.getContent();
@@ -288,16 +285,14 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         };
     }
 
-    /**
-     * To avoid overcomplicating things by translating the viewport, because then we'd have to translate its clip too,
-     * this implementation translates the content directly.
-     * <p>
-     * This core method is responsible for re-creating the bindings that make the content scroll when it changes.
-     * <p>
-     * Virtualized content ({@link VFXContainer}) and standard content are treated differently! While the latter is
-     * translated for real by using the translateX/Y properties, the virtualized content is not moved but its
-     * {@link VFXContainer#vPosProperty()} and {@link VFXContainer#hPosProperty()} are bound appropriately.
-     */
+    /// To avoid overcomplicating things by translating the viewport, because then we'd have to translate its clip too,
+    /// this implementation translates the content directly.
+    ///
+    /// This core method is responsible for re-creating the bindings that make the content scroll when it changes.
+    ///
+    /// Virtualized content ([VFXContainer]) and standard content are treated differently! While the latter is
+    /// translated for real by using the translateX/Y properties, the virtualized content is not moved but its
+    /// [VFXContainer#vPosProperty()] and [VFXContainer#hPosProperty()] are bound appropriately.
     protected void updateScrollBindings(Node oldContent, Node newContent) {
         if (oldContent != null) {
             oldContent.translateXProperty().unbind();
@@ -339,16 +334,14 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         }
     }
 
-    /**
-     * This method is responsible for updating the {@link VFXScrollBar#visibleAmountProperty()} properties of both the
-     * scroll bars according to the sizes of the content and the viewport.
-     * <p>
-     * Trivially, the values are given by this formula {@code viewportSize / contentSize} and determines how much content
-     * is visible as a percentage (0.0 to 1.0)
-     * <p></p>
-     * For virtualized content ({@link VFXContainer}) the content's sizes are given by:
-     * {@link VFXContainer#virtualMaxXProperty()} and {@link VFXContainer#virtualMaxYProperty()}
-     */
+    /// This method is responsible for updating the [VFXScrollBar#visibleAmountProperty()] properties of both the
+    /// scroll bars according to the sizes of the content and the viewport.
+    ///
+    /// Trivially, the values are given by this formula `viewportSize / contentSize` and determines how much content
+    /// is visible as a percentage (0.0 to 1.0)
+    ///
+    /// For virtualized content ([VFXContainer]) the content's sizes are given by:
+    /// [VFXContainer#virtualMaxXProperty()] and [VFXContainer#virtualMaxYProperty()]
     protected void updateVisualAmount(Node content) {
         if (content == null) {
             vBar.setVisibleAmount(0.0);
@@ -365,12 +358,10 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         hBar.setVisibleAmount(viewportSize.width() / contentSize.width());
     }
 
-    /**
-     * This method animates the scroll bars' opacity according to the {@code show} parameter.
-     * <p>
-     * Both the animations last {@link #SHOW_HIDE_DURATION} and use {@link #SHOW_HIDE_CURVE} as the interpolator.
-     * The hide animation is delayed by {@link #HIDE_DELAY}.
-     */
+    /// This method animates the scroll bars' opacity according to the `show` parameter.
+    ///
+    /// Both the animations last [#SHOW_HIDE_DURATION] and use [#SHOW_HIDE_CURVE] as the interpolator.
+    /// The hide animation is delayed by [#HIDE_DELAY].
     protected void showBars(boolean show) {
         VFXScrollPane pane = getSkinnable();
 
@@ -400,10 +391,8 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         }
     }
 
-    /**
-     * Responsible for building the show and hide animations for the scroll bars according to the parameters specified
-     * by [VFXScrollPane#minBarsOpacityProperty()] and [VFXScrollPane#maxBarsOpacityProperty()].
-     */
+    /// Responsible for building the show and hide animations for the scroll bars according to the parameters specified
+    /// by [VFXScrollPane#minBarsOpacityProperty()] and [VFXScrollPane#maxBarsOpacityProperty()].
     private void buildBarsAnimations() {
         VFXScrollPane pane = getSkinnable();
         double min = NumberUtils.clamp(pane.getMinBarsOpacity(), 0.0, 1.0);
@@ -435,15 +424,18 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     // Overridden Methods
     //================================================================================
 
-    /**
-     * Initializes the behavior by calling {@link VFXScrollPaneBehavior#init()} and by registering the following handlers:
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_PRESSED} to call {@link VFXScrollBarBehavior#mousePressed(MouseEvent)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_DRAGGED} to call {@link VFXScrollBarBehavior#mouseDragged(MouseEvent)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_RELEASED} to call {@link VFXScrollBarBehavior#mouseReleased(MouseEvent)}
-     * <p> - intercepts events of type {@link ScrollEvent#SCROLL} and re-routes such events to the appropriate scroll bar,
-     * see {@link VFXScrollBarBehavior#scroll(ScrollEvent)}
-     * <p> - intercepts events of type {@link KeyEvent#KEY_PRESSED} to call {@link VFXScrollBarBehavior#keyPressed(KeyEvent)}
-     */
+    /// Initializes the behavior by calling [VFXScrollPaneBehavior#init()] and by registering the following handlers:
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] to call [VFXScrollBarBehavior#mousePressed(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_DRAGGED] to call [VFXScrollBarBehavior#mouseDragged(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] to call [VFXScrollBarBehavior#mouseReleased(MouseEvent)]
+    ///
+    /// - intercepts events of type [ScrollEvent#SCROLL] and re-routes such events to the appropriate scroll bar,
+    /// see [VFXScrollBarBehavior#scroll(ScrollEvent)]
+    ///
+    /// - intercepts events of type [KeyEvent#KEY_PRESSED] to call [VFXScrollBarBehavior#keyPressed(KeyEvent)]
     @Override
     protected void registerBehavior() {
         super.registerBehavior();
@@ -545,28 +537,28 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     // Inner Classes
     //================================================================================
 
-    /**
-     * Convenient custom property implementation that determines the visibility of the two scroll bars as an array of two
-     * boolean values arranged as: {@code [vBarVisibility, hBarVisibility]}.
-     * <p>
-     * The bars are visible only if their {@link VFXScrollBar#visibleAmountProperty()} is lesser than {@code 1.0} and the
-     * corresponding policy ({@link VFXScrollPane#vBarPolicyProperty()} and {@link VFXScrollPane#hBarPolicyProperty()})
-     * is not set to {@link ScrollBarPolicy#NEVER}.
-     * <p></p>
-     * The convenience of this is not only in having a single property carrying two pieces of information but also that we
-     * can perform common actions in a single place when any of the aforementioned dependencies change.
-     * <p>
-     * The {@link #invalidated()} method is overridden to:
-     * <p> - Call {@link VFXScrollPaneBehavior#setCanVScroll(boolean)} and {@link VFXScrollPaneBehavior#setCanHScroll(boolean)}
-     * <p> - Request a layout computation because the bars' visibility can also determine the size and position of the viewport
-     * <p></p>
-     * <b>Note:</b>
-     * <p>
-     * We are using a property rather than a binding because the binding would become invalid regardless of the computed
-     * value. A slight change in the visible amount properties causes the value to be re-computed and if the result is
-     * the same as the old one it would still fire a change event. This causes the layout to be computed when needed
-     * therefore wasting performance.
-     */
+    /// Convenient custom property implementation that determines the visibility of the two scroll bars as an array of two
+    /// boolean values arranged as: `[vBarVisibility, hBarVisibility]`.
+    ///
+    /// The bars are visible only if their [VFXScrollBar#visibleAmountProperty()] is lesser than `1.0` and the
+    /// corresponding policy ([VFXScrollPane#vBarPolicyProperty()] and [VFXScrollPane#hBarPolicyProperty()])
+    /// is not set to [ScrollBarPolicy#NEVER].
+    ///
+    /// The convenience of this is not only in having a single property carrying two pieces of information but also that we
+    /// can perform common actions in a single place when any of the aforementioned dependencies change.
+    ///
+    /// The [#invalidated()] method is overridden to:
+    ///
+    /// - Call [VFXScrollPaneBehavior#setCanVScroll(boolean)] and [VFXScrollPaneBehavior#setCanHScroll(boolean)]
+    ///
+    /// - Request a layout computation because the bars' visibility can also determine the size and position of the viewport
+    ///
+    /// **Note:**
+    ///
+    /// We are using a property rather than a binding because the binding would become invalid regardless of the computed
+    /// value. A slight change in the visible amount properties causes the value to be re-computed and if the result is
+    /// the same as the old one it would still fire a change event. This causes the layout to be computed when needed
+    /// therefore wasting performance.
     protected class BarsVisibilityProperty extends SimpleObjectProperty<boolean[]> {
         private When<?> listener;
 

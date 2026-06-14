@@ -37,44 +37,45 @@ import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 
-/**
- * The basic and typical implementation of a cell in JavaFX is a cell with just two properties: one to keep track
- * of the cell's index and the other to keep track of the displayed item.
- * <p>
- * This abstract class is a good starting point to implement concrete, usable cells.
- * <p>
- * Unusually, this enforces the structuring of cells as specified by the {@code MVC} pattern. In fact, this extends
- * {@link MFXControl}, expects behaviors of type {@link CellBaseBehavior} and doesn't come with a default skin.
- * <p>
- * The idea is to make the skin implementation responsible for how data is represented (a String, a Node, processing, etc.).
- * A downside of such approach is that for some reason, users are a bit reluctant in making or customizing skins, however,
- * I can assure you it's no big deal at all. Also, never forget that {@code VirtualizedFX} containers <b>do not</b>
- * enforce the usage of {@link VFXCellBase} or any of its implementations, if you are more comfortable using a simpler
- * cell system you are free do it.
- * <p>
- * The default style class is 'cell-base'.
- * <p></p>
- * <b>A word on performance</b>
- * As also stated in the javadocs of {@link #updateIndex(int)} and {@link #updateItem(Object)}, to simplify the internal
- * management of cells, there is no 100% guarantee that updates are called with a different index/item from what the cell
- * currently has. For this reason, here's how you should implement the 'rendering' operations: <p>
- * You probably want to execute some operations when the index or item change by listening to the respective properties,
- * {@link #indexProperty()} and {@link #itemProperty()}. This means that your operations will run only and only if the
- * property fires an invalidation/change event. In this base class the {@link #updateIndex(int)} and {@link #updateItem(Object)}
- * methods are implemented naively, because we work on generic items, we don't know the model, which means that they
- * update the respective properties without any check.
- * <p> - For the {@link #indexProperty()} it's tricky: the JVM caches Integers
- * between -128 and 127, which means that the '==' operator only works in that range; for larger datasets, you may want to
- * override the {@link #updateIndex(int)} method to actually check for equality.
- * <p> For the {@link #itemProperty()} it's the same concept. If you know the model, you may want to perform some equality
- * check in the {@link #updateItem(Object)} method to avoid useless updates. For example, if in your dataset there are two
- * {@code Person} objects with the same attributes but different references you may want to update the property (so that the
- * reference is correct) but not perform any operation that strictly depends on the attributes (if a label displays the attributes,
- * there's no need to re-compute the text)
- *
- * @see #alignmentProperty()
- * @see VFXCell
- */
+/// The basic and typical implementation of a cell in JavaFX is a cell with just two properties: one to keep track
+/// of the cell's index and the other to keep track of the displayed item.
+///
+/// This abstract class is a good starting point to implement concrete, usable cells.
+///
+/// Unusually, this enforces the structuring of cells as specified by the `MVC` pattern. In fact, this extends
+/// [MFXControl], expects behaviors of type [CellBaseBehavior] and doesn't come with a default skin.
+///
+/// The idea is to make the skin implementation responsible for how data is represented (a String, a Node, processing, etc.).
+/// A downside of such approach is that for some reason, users are a bit reluctant in making or customizing skins, however,
+/// I can assure you it's no big deal at all. Also, never forget that `VirtualizedFX` containers **do not**
+/// enforce the usage of [VFXCellBase] or any of its implementations, if you are more comfortable using a simpler
+/// cell system you are free do it.
+///
+/// The default style class is 'cell-base'.
+///
+/// **A word on performance**
+/// As also stated in the javadocs of [#updateIndex(int)] and [#updateItem(Object)], to simplify the internal
+/// management of cells, there is no 100% guarantee that updates are called with a different index/item from what the cell
+/// currently has. For this reason, here's how you should implement the 'rendering' operations:
+///
+/// You probably want to execute some operations when the index or item change by listening to the respective properties,
+/// [#indexProperty()] and [#itemProperty()]. This means that your operations will run only and only if the
+/// property fires an invalidation/change event. In this base class the [#updateIndex(int)] and [#updateItem(Object)]
+/// methods are implemented naively, because we work on generic items, we don't know the model, which means that they
+/// update the respective properties without any check.
+///
+/// - For the [#indexProperty()] it's tricky: the JVM caches Integers
+/// between -128 and 127, which means that the '==' operator only works in that range; for larger datasets, you may want to
+/// override the [#updateIndex(int)] method to actually check for equality.
+///
+/// For the [#itemProperty()] it's the same concept. If you know the model, you may want to perform some equality
+/// check in the [#updateItem(Object)] method to avoid useless updates. For example, if in your dataset there are two
+/// `Person` objects with the same attributes but different references you may want to update the property (so that the
+/// reference is correct) but not perform any operation that strictly depends on the attributes (if a label displays the attributes,
+/// there's no need to re-compute the text)
+///
+/// @see #alignmentProperty()
+/// @see VFXCell
 public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
     //================================================================================
     // Properties
@@ -117,31 +118,25 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Updates the {@link #itemProperty()}.
-     */
+    /// {@inheritDoc}
+    ///
+    /// Updates the [#itemProperty()].
     @Override
     public void updateItem(T item) {
         setItem(item);
     }
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Updates the {@link #indexProperty()}.
-     */
+    /// {@inheritDoc}
+    ///
+    /// Updates the [#indexProperty()].
     @Override
     public void updateIndex(int index) {
         setIndex(index);
     }
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * The implementation stores the context and prevents overwrites once the instance is set (not null anymore).
-     */
+    /// {@inheritDoc}
+    ///
+    /// The implementation stores the context and prevents overwrites once the instance is set (not null anymore).
     @Override
     public void onCreated(VFXContext<T> context) {
         if (this.context == null)
@@ -172,11 +167,9 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
         return alignment.get();
     }
 
-    /**
-     * Specifies the alignment of the displayed data. How this is used depends on the skin implementation.
-     * <p>
-     * This is settable via CSS with the "-fx-alignment" property.
-     */
+    /// Specifies the alignment of the displayed data. How this is used depends on the skin implementation.
+    ///
+    /// This is settable via CSS with the "-fx-alignment" property.
     public StyleableObjectProperty<Pos> alignmentProperty() {
         return alignment;
     }
@@ -221,9 +214,7 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
     // Getters/Setters
     //================================================================================
 
-    /**
-     * @see #onCreated(VFXContext)
-     */
+    /// @see #onCreated(VFXContext)
     protected VFXContext<T> context() {
         return context;
     }
@@ -232,9 +223,7 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
         return index.get();
     }
 
-    /**
-     * Specifies the cell's index.
-     */
+    /// Specifies the cell's index.
     public IntegerProperty indexProperty() {
         return index;
     }
@@ -247,9 +236,7 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
         return item.get();
     }
 
-    /**
-     * Specifies the cell's item.
-     */
+    /// Specifies the cell's item.
     public ObjectProperty<T> itemProperty() {
         return item;
     }
@@ -262,9 +249,7 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
         return graphic.get();
     }
 
-    /**
-     * Allows adding a {@code Node} to the cell. To be precise, how this property is used depends on the skin implementation.
-     */
+    /// Allows adding a `Node` to the cell. To be precise, how this property is used depends on the skin implementation.
     public ObjectProperty<Node> graphicProperty() {
         return graphic;
     }

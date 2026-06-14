@@ -21,9 +21,7 @@ package io.github.palexdev.virtualizedfx.enums;
 import javafx.geometry.HPos;
 import javafx.geometry.VPos;
 
-/**
- * Convenience class that contains several enumerators for scroll panes.
- */
+/// Convenience class that contains several enumerators for scroll panes.
 public class ScrollPaneEnums {
 
     private ScrollPaneEnums() {}
@@ -37,46 +35,32 @@ public class ScrollPaneEnums {
         CENTERED
     }
 
-    /**
-     * Enumeration to define the visibility of a scroll pane's scroll bars.
-     */
+    /// Enumeration to define the visibility of a scroll pane's scroll bars.
     public enum ScrollBarPolicy {
-        /**
-         * The scroll bars will be visible when needed.
-         */
+        /// The scroll bars will be visible when needed.
         DEFAULT,
 
-        /**
-         * The scroll bars will never be visible.
-         */
+        /// The scroll bars will never be visible.
         NEVER
     }
 
-    /**
-     * Enumeration to specify the position of the vertical scroll bar
-     * in a scroll pane.
-     */
+    /// Enumeration to specify the position of the vertical scroll bar
+    /// in a scroll pane.
     public enum VBarPos {
         RIGHT, LEFT;
 
-        /**
-         * Converts this enumeration to an {@link HPos} object.
-         */
+        /// Converts this enumeration to an [HPos] object.
         public HPos toHPos() {
             return (this == LEFT) ? HPos.LEFT : HPos.RIGHT;
         }
     }
 
-    /**
-     * Enumeration to specify the position of the horizontal scroll bar
-     * in a scroll pane.
-     */
+    /// Enumeration to specify the position of the horizontal scroll bar
+    /// in a scroll pane.
     public enum HBarPos {
         BOTTOM, TOP;
 
-        /**
-         * Converts this enumeration to a {@link VPos} object.
-         */
+        /// Converts this enumeration to a [VPos] object.
         public VPos toVPos() {
             return (this == TOP) ? VPos.TOP : VPos.BOTTOM;
         }

@@ -45,26 +45,26 @@ import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
-/**
- * My personal custom implementation of a scroll bar from scratch, follows the MVC pattern as enforced by {@link MFXControl}.
- * The default skin is {@link VFXScrollBarSkin}. The default behavior is {@link VFXScrollBarBehavior}. Also implements {@link MFXStyleable}.
- * <p></p>
- * In addition to an appealing style, the component offers many new features compared to the boring standard
- * JavaFX' scroll bar, such as:
- * <p> - the possibility of showing/hiding the increase and decrease buttons, {@link #showButtonsProperty()}
- * <p> - the possibility of controlling the gap between the buttons and the thumb, {@link #buttonsGapProperty()}
- * <p> - inbuilt smooth scroll both for the thumb and the track, {@link #smoothScrollProperty()}, {@link #trackSmoothScrollProperty()}
- * <p> - the possibility of querying the scroll direction, {@link #scrollDirectionProperty()}
- * <p></p>
- * Three {@link PseudoClass} worth mentioning:
- * <p> - ":dragging": active when the thumb is being dragged
- * <p> - ":horizontal": active when the scroll bar's orientation is HORIZONTAL
- * <p> - ":vertical": active when the scroll bar's orientation is VERTICAL
- * <p></p>
- * For the sake of simplicity and abstraction, the bar's values are expressed as percentages. The minimum and maximum values
- * can be set by using {@link #setMin(double)} and {@link #setMax(double)} but cannot go below {@code 0.0}
- * and above {@code 1.0} respectively. The {@link #valueProperty()} is automatically clamped between the min and max values.
- */
+/// My personal custom implementation of a scroll bar from scratch, follows the MVC pattern as enforced by [MFXControl].
+/// The default skin is [VFXScrollBarSkin]. The default behavior is [VFXScrollBarBehavior]. Also implements [MFXStyleable].
+///
+/// In addition to an appealing style, the component offers many new features compared to the boring standard
+/// JavaFX' scroll bar, such as:
+///
+/// - the possibility of showing/hiding the increase and decrease buttons, [#showButtonsProperty()]
+/// - the possibility of controlling the gap between the buttons and the thumb, [#buttonsGapProperty()]
+/// - inbuilt smooth scroll both for the thumb and the track, [#smoothScrollProperty()], [#trackSmoothScrollProperty()]
+/// - the possibility of querying the scroll direction, [#scrollDirectionProperty()]
+///
+/// Three [PseudoClass] worth mentioning:
+///
+/// - ":dragging": active when the thumb is being dragged
+/// - ":horizontal": active when the scroll bar's orientation is HORIZONTAL
+/// - ":vertical": active when the scroll bar's orientation is VERTICAL
+///
+/// For the sake of simplicity and abstraction, the bar's values are expressed as percentages. The minimum and maximum values
+/// can be set by using [#setMin(double)] and [#setMax(double)] but cannot go below `0.0`
+/// and above `1.0` respectively. The [#valueProperty()] is automatically clamped between the min and max values.
 public class VFXScrollBar extends MFXControl {
     //================================================================================
     // Static Properties
@@ -193,11 +193,9 @@ public class VFXScrollBar extends MFXControl {
         return orientation.get();
     }
 
-    /**
-     * Specifies the scroll bar's orientation.
-     * <p>
-     * This is also settable via CSS with the "-vfx-orientation" property.
-     */
+    /// Specifies the scroll bar's orientation.
+    ///
+    /// This is also settable via CSS with the "-vfx-orientation" property.
     public StyleableObjectProperty<Orientation> orientationProperty() {
         return orientation;
     }
@@ -210,11 +208,9 @@ public class VFXScrollBar extends MFXControl {
         return showButtons.get();
     }
 
-    /**
-     * Specifies whether the increase/decrease buttons are visible.
-     * <p>
-     * This is also settable via CSS with the "-vfx-show-buttons" property.
-     */
+    /// Specifies whether the increase/decrease buttons are visible.
+    ///
+    /// This is also settable via CSS with the "-vfx-show-buttons" property.
     public StyleableBooleanProperty showButtonsProperty() {
         return showButtons;
     }
@@ -227,11 +223,9 @@ public class VFXScrollBar extends MFXControl {
         return buttonsGap.get();
     }
 
-    /**
-     * Specifies the gap between the increase/decrease buttons and the track.
-     * <p>
-     * This is also settable via CSS with the "-vfx-buttons-gap" property.
-     */
+    /// Specifies the gap between the increase/decrease buttons and the track.
+    ///
+    /// This is also settable via CSS with the "-vfx-buttons-gap" property.
     public StyleableDoubleProperty buttonsGapProperty() {
         return buttonsGap;
     }
@@ -244,12 +238,10 @@ public class VFXScrollBar extends MFXControl {
         return trackIncrement.get();
     }
 
-    /**
-     * Specifies the amount added/subtracted to the {@link #valueProperty()} used by the
-     * scroll bar's track.
-     * <p>
-     * This is also settable via CSS with the "-vfx-track-increment" property.
-     */
+    /// Specifies the amount added/subtracted to the [#valueProperty()] used by the
+    /// scroll bar's track.
+    ///
+    /// This is also settable via CSS with the "-vfx-track-increment" property.
     public StyleableDoubleProperty trackIncrementProperty() {
         return trackIncrement;
     }
@@ -262,12 +254,10 @@ public class VFXScrollBar extends MFXControl {
         return unitIncrement.get();
     }
 
-    /**
-     * Specifies the amount added/subtracted to the {@link #valueProperty()} used by the
-     * increment/decrement buttons and by scrolling.
-     * <p>
-     * This is also settable via CSS with the "-vfx-unit-increment" property.
-     */
+    /// Specifies the amount added/subtracted to the [#valueProperty()] used by the
+    /// increment/decrement buttons and by scrolling.
+    ///
+    /// This is also settable via CSS with the "-vfx-unit-increment" property.
     public StyleableDoubleProperty unitIncrementProperty() {
         return unitIncrement;
     }
@@ -280,11 +270,9 @@ public class VFXScrollBar extends MFXControl {
         return smoothScroll.get();
     }
 
-    /**
-     * Specifies whether the scrolling should be smooth, done by animations.
-     * <p>
-     * This is also settable via CSS with the "-vfx-smooth-scroll" property.
-     */
+    /// Specifies whether the scrolling should be smooth, done by animations.
+    ///
+    /// This is also settable via CSS with the "-vfx-smooth-scroll" property.
     public StyleableBooleanProperty smoothScrollProperty() {
         return smoothScroll;
     }
@@ -297,14 +285,12 @@ public class VFXScrollBar extends MFXControl {
         return trackSmoothScroll.get();
     }
 
-    /**
-     * Specifies if the scrolling made by the track should be smooth, done by animations.
-     * <p></p>
-     * The default behavior considers this feature an addition to the {@link #smoothScrollProperty()},
-     * meaning that for this to work the aforementioned feature must be enabled too.
-     * <p>
-     * This is also settable via CSS with the "-vfx-track-smooth-scroll" property.
-     */
+    /// Specifies if the scrolling made by the track should be smooth, done by animations.
+    ///
+    /// The default behavior considers this feature an addition to the [#smoothScrollProperty()],
+    /// meaning that for this to work the aforementioned feature must be enabled too.
+    ///
+    /// This is also settable via CSS with the "-vfx-track-smooth-scroll" property.
     public StyleableBooleanProperty trackSmoothScrollProperty() {
         return trackSmoothScroll;
     }
@@ -397,9 +383,7 @@ public class VFXScrollBar extends MFXControl {
         return min.get();
     }
 
-    /**
-     * Specifies the minimum possible value for {@link #valueProperty()}.
-     */
+    /// Specifies the minimum possible value for [#valueProperty()].
     public DoubleProperty minProperty() {
         return min;
     }
@@ -412,9 +396,7 @@ public class VFXScrollBar extends MFXControl {
         return value.get();
     }
 
-    /**
-     * Specifies the scroll value, clamped between {@link #minProperty()} and {@link #maxProperty()}.
-     */
+    /// Specifies the scroll value, clamped between [#minProperty()] and [#maxProperty()].
     public DoubleProperty valueProperty() {
         return value;
     }
@@ -427,9 +409,7 @@ public class VFXScrollBar extends MFXControl {
         return max.get();
     }
 
-    /**
-     * Specifies the maximum possible value for {@link #valueProperty()}.
-     */
+    /// Specifies the maximum possible value for [#valueProperty()].
     public DoubleProperty maxProperty() {
         return max;
     }
@@ -442,13 +422,11 @@ public class VFXScrollBar extends MFXControl {
         return visibleAmount.get();
     }
 
-    /**
-     * Specifies how much content is visible. Depends on the components using the scroll bar and determines the length
-     * of the scroll bar's thumb relative to the track.
-     * <p>
-     * Not setting this property does not compromise the component's functionality but as a consequence the bar does not
-     * indicate clearly to the user how much content is hidden.
-     */
+    /// Specifies how much content is visible. Depends on the components using the scroll bar and determines the length
+    /// of the scroll bar's thumb relative to the track.
+    ///
+    /// Not setting this property does not compromise the component's functionality but as a consequence the bar does not
+    /// indicate clearly to the user how much content is hidden.
     public DoubleProperty visibleAmountProperty() {
         return visibleAmount;
     }
@@ -461,11 +439,9 @@ public class VFXScrollBar extends MFXControl {
         return scrollDirection.get();
     }
 
-    /**
-     * Specifies the current scroll direction. The default behavior implementation manages this.
-     *
-     * @see VFXScrollBarBehavior
-     */
+    /// Specifies the current scroll direction. The default behavior implementation manages this.
+    ///
+    /// @see VFXScrollBarBehavior
     public ReadOnlyObjectProperty<ScrollDirection> scrollDirectionProperty() {
         return scrollDirection;
     }

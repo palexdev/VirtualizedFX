@@ -21,18 +21,14 @@ package io.github.palexdev.virtualizedfx.base;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 
-/**
- * Defines the common API for every paginated virtualized container offered by VirtualizedFX. Extends {@link VFXContainer}.
- */
+/// Defines the common API for every paginated virtualized container offered by VirtualizedFX. Extends [VFXContainer].
 public interface VFXPaginated<T> extends VFXContainer<T> {
 
     default int getPage() {
         return pageProperty().get();
     }
 
-    /**
-     * Specifies the page at which the container is.
-     */
+    /// Specifies the page at which the container is.
     IntegerProperty pageProperty();
 
     default void setPage(int page) {
@@ -43,64 +39,50 @@ public interface VFXPaginated<T> extends VFXContainer<T> {
         return maxPageProperty().get();
     }
 
-    /**
-     * Specifies the maximum page index at which the container can go.
-     */
+    /// Specifies the maximum page index at which the container can go.
     ReadOnlyIntegerProperty maxPageProperty();
 
     default int getCellsPerPage() {
         return cellsPerPageProperty().get();
     }
 
-    /**
-     * Specifies the number of cells/items to show per each page.
-     */
+    /// Specifies the number of cells/items to show per each page.
     IntegerProperty cellsPerPageProperty();
 
     default void setCellsPerPage(int cellsPerPage) {
         cellsPerPageProperty().set(cellsPerPage);
     }
 
-    /**
-     * Goes to the next page if possible.
-     */
+    /// Goes to the next page if possible.
     default void next() {
         setPage(getPage() + 1);
     }
 
-    /**
-     * Goes to the previous page if possible.
-     */
+    /// Goes to the previous page if possible.
     default void previous() {
         setPage(getPage() - 1);
     }
 
-    /**
-     * Changes the page by the given delta.
-     */
+    /// Changes the page by the given delta.
     default void moveBy(int delta) {
         setPage(getPage() + delta);
     }
 
-    /**
-     * Given an index, returns the page at which it would be displayed by the container.
-     * <p></p>
-     * Note that this will never generate an exception, rather acts as follows for edge cases:
-     * <p> - empty list or max page is 0 or {@literal index < 0}: returns 0
-     * <p> - index > size: returns max page
-     */
+    /// Given an index, returns the page at which it would be displayed by the container.
+    ///
+    /// Note that this will never generate an exception, rather acts as follows for edge cases:
+    /// - empty list or max page is 0 or `index < 0`: returns 0
+    /// - index > size: returns max page
     default int findPageByIndex(int index) {
         if (isEmpty() || getMaxPage() == 0 || index < 0) return 0;
         if (index > size() - 1) return getMaxPage();
         return index / getCellsPerPage();
     }
 
-    /**
-     * Computes the maximum page index reachable by the container. This depends on the number of items and the number
-     * of cells/items per page.
-     * <p>
-     * The exact formula is as follows: {@code Math.max(0, ((int) Math.ceil(items / (double) cpp)) - 1)}
-     */
+    /// Computes the maximum page index reachable by the container. This depends on the number of items and the number
+    /// of cells/items per page.
+    ///
+    /// The exact formula is as follows: `Math.max(0, ((int) Math.ceil(items / (double) cpp)) - 1)`
     default int computeMaxPage() {
         int items = size();
         int cpp = getCellsPerPage();

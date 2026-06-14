@@ -23,24 +23,18 @@ import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
 
-/**
- * Enumerator to specify the layout modes for columns in {@link VFXTable}.
- */
+/// Enumerator to specify the layout modes for columns in [VFXTable].
 public enum ColumnsLayoutMode {
 
-    /**
-     * In this mode, all columns will have the same width specified by {@link VFXTable#columnsSizeProperty()}.
-     */
+    /// In this mode, all columns will have the same width specified by [VFXTable#columnsSizeProperty()].
     FIXED,
 
-    /**
-     * In this mode, columns are allowed to have different widths. This enables features like:
-     * columns auto-sizing ({@link VariableTableHelper#autosizeColumn(VFXTableColumn)}), or resizing at runtime
-     * through gestures.
-     * <p>
-     * A downside of such mode is that basically, virtualization along the x-axis is disabled. Which means that all columns
-     * will be added to the viewport. Internal optimizations should make this issue less impactful on performance.
-     */
+    /// In this mode, columns are allowed to have different widths. This enables features like:
+    /// columns auto-sizing ([VariableTableHelper#autosizeColumn(VFXTableColumn)]), or resizing at runtime
+    /// through gestures.
+    ///
+    /// A downside of such mode is that basically, virtualization along the x-axis is disabled. Which means that all columns
+    /// will be added to the viewport. Internal optimizations should make this issue less impactful on performance.
     VARIABLE,
     ;
 

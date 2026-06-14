@@ -34,25 +34,23 @@ import javafx.scene.layout.Pane;
 import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
-/**
- * Default skin implementation for {@link VFXGrid}, extends {@link MFXSkinBase} and expects behaviors of type
- * {@link VFXGridManager}.
- * <p>
- * The layout is quite simple: there is just one node, called the 'viewport', that is the {@code Pane} resposnible for
- * containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
- * {@link #layout()} method.
- * <p>
- * Compared to other virtualized components' skin, this implements a rather unique feature. It allows you, by setting the
- * {@link VFXGrid#alignmentProperty()}, to change the x and y coordinates of the viewport node. This is especially useful
- * if you want the content to be centered and in combination with {@link VFXGrid#autoArrange(int)} (think about a gallery, for example).
- * <p></p>
- * As all skins typically do, this is also responsible for catching any change in the component's properties.
- * The computation that leads to a new state is delegated to the controller/behavior, which is the {@link VFXGridManager}.
- * Read this {@link #addListeners()} to check which changes are handled.
- * <p></p>
- * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
- * by overriding the {@link #DEFAULT_SIZE} variable.
- */
+/// Default skin implementation for [VFXGrid], extends [MFXSkinBase] and expects behaviors of type
+/// [VFXGridManager].
+///
+/// The layout is quite simple: there is just one node, called the 'viewport', that is the `Pane` resposnible for
+/// containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
+/// [#layout()] method.
+///
+/// Compared to other virtualized components' skin, this implements a rather unique feature. It allows you, by setting the
+/// [VFXGrid#alignmentProperty()], to change the x and y coordinates of the viewport node. This is especially useful
+/// if you want the content to be centered and in combination with [VFXGrid#autoArrange(int)] (think about a gallery, for example).
+///
+/// As all skins typically do, this is also responsible for catching any change in the component's properties.
+/// The computation that leads to a new state is delegated to the controller/behavior, which is the [VFXGridManager].
+/// Read this [#addListeners()] to check which changes are handled.
+///
+/// Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
+/// by overriding the [#DEFAULT_SIZE] variable.
 public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T, C>> {
     //================================================================================
     // Properties
@@ -84,32 +82,45 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
     // Methods
     //================================================================================
 
-    /**
-     * Adds listeners on the component's properties which need to produce a new {@link VFXGridState} upon changing.
-     * <p>
-     * Here's the list:
-     * <p> - Listener on {@link VFXGrid#stateProperty()}, this is crucial to update the viewport's children and
-     * invoke {@link VFXGrid#requestViewportLayout()} if {@link VFXGridState#haveCellsChanged()} is {@code true}
-     * <p> - Listener on {@link VFXGrid#needsViewportLayoutProperty()}, this is crucial because invokes {@link #layout()}
-     * <p> - Listener on {@link VFXGrid#helperProperty()}, this is crucial because it's responsible for binding the
-     * viewport's translate properties to the {@link VFXGridHelper#viewportPositionProperty()}
-     * By translating the viewport, we give the illusion of scrolling (virtual scrolling)
-     * <p> - Listener on {@link VFXGrid#widthProperty()}, will invoke {@link VFXGridManager#onGeometryChanged()}
-     * <p> - Listener on {@link VFXGrid#helperProperty()}, will invoke {@link VFXGridManager#onGeometryChanged()}
-     * <p> - Listener on {@link VFXGrid#bufferSizeProperty()}, will invoke {@link VFXGridManager#onGeometryChanged()}.
-     * Yes, it is enough to threat this change as a geometry change to avoid code duplication
-     * <p> -Listener on {@link VFXGrid#vPosProperty()}, will invoke {@link VFXGridManager#onPositionChanged(Orientation)}
-     * with {@link Orientation#VERTICAL} as parameter
-     * <p> -Listener on {@link VFXGrid#hPosProperty()}, will invoke {@link VFXGridManager#onPositionChanged(Orientation)}
-     * with {@link Orientation#HORIZONTAL} as parameter
-     * <p> - Listener on {@link VFXGrid#columnsNumProperty()}, will invoke {@link VFXGridManager#onColumnsNumChanged()}
-     * <p> - Listener on {@link VFXGrid#getCellFactory()}, will invoke {@link VFXGridManager#onCellFactoryChanged()}
-     * <p> - Listener on {@link VFXGrid#cellSizeProperty()}, will invoke {@link VFXGridManager#onCellSizeChanged()}
-     * <p> - Listener on {@link VFXGrid#vSpacingProperty()}, will invoke {@link VFXGridManager#onSpacingChanged()}
-     * <p> - Listener on {@link VFXGrid#hSpacingProperty()}, will invoke {@link VFXGridManager#onSpacingChanged()}
-     * <p> - Listener on {@link VFXGrid#itemsProperty()}, will invoke {@link VFXGridManager#onItemsChanged()}
-     * <p> - Listener on {@link VFXGrid#alignmentProperty()}, will invoke {@link Parent#requestLayout()}
-     */
+    /// Adds listeners on the component's properties which need to produce a new [VFXGridState] upon changing.
+    ///
+    /// Here's the list:
+    ///
+    /// - Listener on [VFXGrid#stateProperty()], this is crucial to update the viewport's children and
+    /// invoke [VFXGrid#requestViewportLayout()] if [VFXGridState#haveCellsChanged()] is `true`
+    ///
+    /// - Listener on [VFXGrid#needsViewportLayoutProperty()], this is crucial because invokes [#layout()]
+    ///
+    /// - Listener on [VFXGrid#helperProperty()], this is crucial because it's responsible for binding the
+    /// viewport's translate properties to the [VFXGridHelper#viewportPositionProperty()]
+    /// By translating the viewport, we give the illusion of scrolling (virtual scrolling)
+    ///
+    /// - Listener on [VFXGrid#widthProperty()], will invoke [VFXGridManager#onGeometryChanged()]
+    ///
+    /// - Listener on [VFXGrid#helperProperty()], will invoke [VFXGridManager#onGeometryChanged()]
+    ///
+    /// - Listener on [VFXGrid#bufferSizeProperty()], will invoke [VFXGridManager#onGeometryChanged()].
+    /// Yes, it is enough to threat this change as a geometry change to avoid code duplication
+    ///
+    /// -Listener on [VFXGrid#vPosProperty()], will invoke [VFXGridManager#onPositionChanged(Orientation)]
+    /// with [Orientation#VERTICAL] as parameter
+    ///
+    /// -Listener on [VFXGrid#hPosProperty()], will invoke [VFXGridManager#onPositionChanged(Orientation)]
+    /// with [Orientation#HORIZONTAL] as parameter
+    ///
+    /// - Listener on [VFXGrid#columnsNumProperty()], will invoke [VFXGridManager#onColumnsNumChanged()]
+    ///
+    /// - Listener on [VFXGrid#getCellFactory()], will invoke [VFXGridManager#onCellFactoryChanged()]
+    ///
+    /// - Listener on [VFXGrid#cellSizeProperty()], will invoke [VFXGridManager#onCellSizeChanged()]
+    ///
+    /// - Listener on [VFXGrid#vSpacingProperty()], will invoke [VFXGridManager#onSpacingChanged()]
+    ///
+    /// - Listener on [VFXGrid#hSpacingProperty()], will invoke [VFXGridManager#onSpacingChanged()]
+    ///
+    /// - Listener on [VFXGrid#itemsProperty()], will invoke [VFXGridManager#onItemsChanged()]
+    ///
+    /// - Listener on [VFXGrid#alignmentProperty()], will invoke [Parent#requestLayout()]
     protected void addListeners() {
         VFXGrid<T, C> grid = getSkinnable();
 
@@ -164,36 +175,31 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
         );
     }
 
-    /**
-     * Core method responsible for resizing and positioning cells in the viewport.
-     * This method will not execute if the layout was not requested, {@link VFXGrid#needsViewportLayoutProperty()}
-     * is false, or if the {@link VFXGrid#stateProperty()} is {@link VFXGridState#INVALID}.
-     * <p>
-     * In any case, at the end of the method, {@link #onLayoutCompleted(boolean)} will be called.
-     * <p></p>
-     * Cells are retrieved from the current grid's state, given by the {@link VFXGrid#stateProperty()}.
-     * The iteration over each row and column gives us all the indexes to retrieve the cells from
-     * {@link VFXGridState#getCellsByIndex()}. For the actual layout, however, we use two counters because the layout
-     * is 'absolute'. Meaning that the row and column indexes are irrelevant for the cell's position, we just care about
-     * which comes before/after, above/below. Make sure to also read {@link VFXGridState} to understand how indexes are
-     * managed for the {@link VFXGrid}. In other words, it doesn't matter whether our range is [1, 5] or [4, 6] or whatever,
-     * the layout index will always start from 0 and increment towards the end of the range.
-     * <p>
-     * The layout is performed by {@link VFXGridHelper#layout(int, int, VFXCell)}, the two aforementioned counters are passed
-     * as arguments.
-     * <p></p>
-     * <pre>
-     * {@code
-     * Little example:
-     * For a rows range of [2, 7] and columns range of [2, 7]
-     * The first cell's coordinates are [2, 2], but its layout coordinates are [0, 0]
-     * The second cell's coordinates are [2, 3], but its layout coordinates are [0, 1]
-     * ...and so on
-     * }
-     * </pre>
-     *
-     * @see #onLayoutCompleted(boolean)
-     */
+    /// Core method responsible for resizing and positioning cells in the viewport.
+    /// This method will not execute if the layout was not requested, [VFXGrid#needsViewportLayoutProperty()]
+    /// is false, or if the [VFXGrid#stateProperty()] is [VFXGridState#INVALID].
+    ///
+    /// In any case, at the end of the method, [#onLayoutCompleted(boolean)] will be called.
+    ///
+    /// Cells are retrieved from the current grid's state, given by the [VFXGrid#stateProperty()].
+    /// The iteration over each row and column gives us all the indexes to retrieve the cells from
+    /// [VFXGridState#getCellsByIndex()]. For the actual layout, however, we use two counters because the layout
+    /// is 'absolute'. Meaning that the row and column indexes are irrelevant for the cell's position, we just care about
+    /// which comes before/after, above/below. Make sure to also read [VFXGridState] to understand how indexes are
+    /// managed for the [VFXGrid]. In other words, it doesn't matter whether our range is `[1, 5]` or `[4, 6]` or whatever,
+    /// the layout index will always start from 0 and increment towards the end of the range.
+    ///
+    /// The layout is performed by [VFXGridHelper#layout(int, int, VFXCell)], the two aforementioned counters are passed
+    /// as arguments.
+    /// ```
+    /// Little example:
+    /// For a rows range of [2, 7] and columns range of [2, 7]
+    /// The first cell's coordinates are [2, 2], but its layout coordinates are [0, 0]
+    /// The second cell's coordinates are [2, 3], but its layout coordinates are [0, 1]
+    /// ...and so on
+    /// ```
+    ///
+    /// @see #onLayoutCompleted(boolean)
     protected void layout() {
         VFXGrid<T, C> grid = getSkinnable();
         if (!grid.isNeedsViewportLayout()) return;
@@ -221,13 +227,11 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
         onLayoutCompleted(false);
     }
 
-    /**
-     * This method is <b>crucial</b> because it resets the {@link VFXGrid#needsViewportLayoutProperty()} to false.
-     * If you override this method or the {@link #layout()}, remember to call this!
-     *
-     * @param done this parameter can be useful to overriders as it gives information on whether the {@link #layout()}
-     * was executed correctly
-     */
+    /// This method is **crucial** because it resets the [VFXGrid#needsViewportLayoutProperty()] to false.
+    /// If you override this method or the [#layout()], remember to call this!
+    ///
+    /// @param done this parameter can be useful to overriders as it gives information on whether the [#layout()]
+    /// was executed correctly
     protected void onLayoutCompleted(boolean done) {
         VFXGrid<T, C> grid = getSkinnable();
         grid.setNeedsViewportLayout(false);

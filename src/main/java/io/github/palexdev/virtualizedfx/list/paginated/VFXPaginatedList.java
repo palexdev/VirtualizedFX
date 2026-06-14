@@ -56,38 +56,37 @@ import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
-/**
- * Simple and naive implementation of a paginated variant of {@link VFXList}.
- * The default style class is extended to: '.vfx-list.paginated'.
- * <p>
- * Extends {@link VFXList}, implements {@link VFXPaginated}, has its own skin {@link VFXPaginatedListSkin} and behavior
- * {@link VFXPaginatedListSkin}.
- * <p>
- * A: What do you mean by naive? <p>
- * Q: Since this extends {@link VFXList}, it uses its infrastructure as much as possible. After all, the only major
- * difference between the two is that this can't scroll freely because the position depends on the page index.
- * Although there is <b>a lot</b> going on in the background (range computation, viewport translation, spacing, etc...)
- * this solution works surprisingly well. Sure, there are some caveats and special cases to handle, but there is no
- * performance degradation, and this is a huge win.
- * <p>
- * For example, let's suppose the container is at the last page, and there aren't enough items to fill the page. You may
- * think that the {@link VFXListState} would contain only the items/cells that are "contained" by the page
- * (plus the buffer)... wrong. Because of how the system works by default, the number of cells will always be the sum
- * of the cells per page and the buffer (x2 top and bottom buffers). So, for example, if the last page can show only 5 elements
- * out of 10, the state will contain 14 cells anyway. The viewport translation mechanism described here
- * {@link VFXListHelper#viewportPositionProperty()} (check implementations for a more detailed explanation) ensures
- * that what we see is actually those 5 needed cells. Whether this is a waste in terms of performance is debatable.
- * While it's true that the paginated variant could avoid working on those unnecessary extra cells, we should also consider
- * that they act as a cache. In fact, if we go to the previous page, there won't be as many updates as you may expect,
- * because some of the cells from the previous state are already good to go.
- * <p>
- * Because of this, there are a couple of extra methods that give you information strictly on the visible cells.
- * See {@link #getVisibleRange()}, {@link #getVisibleCellsByIndex()} and {@link #getVisibleCellsByItem()}.
- * <p></p>
- * This variant is intended to use implementations of {@link VFXPaginatedListHelper}. Nothing prevents you from setting a
- * {@link #helperFactoryProperty()} that produces helpers of type {@link VFXListHelper}, don't do that!
- * You may end up with invalid states, thus a broken component.
- */
+/// Simple and naive implementation of a paginated variant of [VFXList].
+/// The default style class is extended to: '.vfx-list.paginated'.
+///
+/// Extends [VFXList], implements [VFXPaginated], has its own skin [VFXPaginatedListSkin] and behavior
+/// [VFXPaginatedListSkin].
+///
+/// A: What do you mean by naive?
+///
+/// Q: Since this extends [VFXList], it uses its infrastructure as much as possible. After all, the only major
+/// difference between the two is that this can't scroll freely because the position depends on the page index.
+/// Although there is **a lot** going on in the background (range computation, viewport translation, spacing, etc...)
+/// this solution works surprisingly well. Sure, there are some caveats and special cases to handle, but there is no
+/// performance degradation, and this is a huge win.
+///
+/// For example, let's suppose the container is at the last page, and there aren't enough items to fill the page. You may
+/// think that the [VFXListState] would contain only the items/cells that are "contained" by the page
+/// (plus the buffer)... wrong. Because of how the system works by default, the number of cells will always be the sum
+/// of the cells per page and the buffer (x2 top and bottom buffers). So, for example, if the last page can show only 5 elements
+/// out of 10, the state will contain 14 cells anyway. The viewport translation mechanism described here
+/// [VFXListHelper#viewportPositionProperty()] (check implementations for a more detailed explanation) ensures
+/// that what we see is actually those 5 needed cells. Whether this is a waste in terms of performance is debatable.
+/// While it's true that the paginated variant could avoid working on those unnecessary extra cells, we should also consider
+/// that they act as a cache. In fact, if we go to the previous page, there won't be as many updates as you may expect,
+/// because some of the cells from the previous state are already good to go.
+///
+/// Because of this, there are a couple of extra methods that give you information strictly on the visible cells.
+/// See [#getVisibleRange()], [#getVisibleCellsByIndex()] and [#getVisibleCellsByItem()].
+///
+/// This variant is intended to use implementations of [VFXPaginatedListHelper]. Nothing prevents you from setting a
+/// [#helperFactoryProperty()] that produces helpers of type [VFXListHelper], don't do that!
+/// You may end up with invalid states, thus a broken component.
 public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> implements VFXPaginated<T> {
     //================================================================================
     // Properties
@@ -127,10 +126,8 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
         );
     }
 
-    /**
-     * Computes the range of visible items for the current page. The computation is done by using the
-     * {@link VFXPaginatedListHelper}. The range doesn't include the buffer cells!
-     */
+    /// Computes the range of visible items for the current page. The computation is done by using the
+    /// [VFXPaginatedListHelper]. The range doesn't include the buffer cells!
     public IntegerRange getVisibleRange() {
         if (isEmpty()) return Utils.INVALID_RANGE;
         VFXListHelper<T, C> helper = getHelper();
@@ -139,10 +136,8 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
         return IntegerRange.of(first, last);
     }
 
-    /**
-     * By using the {@link IntegerRange} computed by {@link #getVisibleRange()}, filters the {@link StateMap}
-     * (from the current state {@link #stateProperty()}), and returns a map of the visible cells by their index.
-     */
+    /// By using the [IntegerRange] computed by [#getVisibleRange()], filters the [StateMap]
+    /// (from the current state [#stateProperty()]), and returns a map of the visible cells by their index.
     public Map<Integer, C> getVisibleCellsByIndex() {
         IntegerRange range = getVisibleRange();
         if (Utils.INVALID_RANGE.equals(range)) return Map.of();
@@ -151,10 +146,8 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    /**
-     * By using the {@link IntegerRange} computed by {@link #getVisibleRange()}, filters the {@link StateMap}
-     * (from the current state {@link #stateProperty()}), and returns a map of the visible cells by the displayed item.
-     */
+    /// By using the [IntegerRange] computed by [#getVisibleRange()], filters the [StateMap]
+    /// (from the current state [#stateProperty()]), and returns a map of the visible cells by the displayed item.
     public Map<T, C> getVisibleCellsByItem() {
         IntegerRange range = getVisibleRange();
         if (Utils.INVALID_RANGE.equals(range)) return Map.of();
@@ -171,11 +164,9 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     // Overridden Methods
     //================================================================================
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Overridden to use implementations of {@link VFXPaginatedListHelper} instead.
-     */
+    /// {@inheritDoc}
+    ///
+    /// Overridden to use implementations of [VFXPaginatedListHelper] instead.
     @Override
     protected Function<Orientation, VFXListHelper<T, C>> defaultHelperFactory() {
         return o -> (o == Orientation.VERTICAL) ?
@@ -198,51 +189,41 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
         return List.of("vfx-list", "paginated");
     }
 
-    /**
-     * Since for the paginated variant the position is bound to the {@link #pageProperty()}, this setter won't do
-     * anything if the current orientation is vertical. You could still use the {@link #vPosProperty()} to set the position,
-     * but that would generate an exception. Unbinding the property would result in invalid states, so, don't do it.
-     */
+    /// Since for the paginated variant the position is bound to the [#pageProperty()], this setter won't do
+    /// anything if the current orientation is vertical. You could still use the [#vPosProperty()] to set the position,
+    /// but that would generate an exception. Unbinding the property would result in invalid states, so, don't do it.
     @Override
     public void setVPos(double vPos) {
         if (vPosProperty().isBound()) return;
         super.setVPos(vPos);
     }
 
-    /**
-     * Since for the paginated variant the position is bound to the {@link #pageProperty()}, this setter won't do
-     * anything if the current orientation is horizontal. You could still use the {@link #hPosProperty()} to set the position,
-     * but that would generate an exception. Unbinding the property would result in invalid states, so, don't do it.
-     */
+    /// Since for the paginated variant the position is bound to the [#pageProperty()], this setter won't do
+    /// anything if the current orientation is horizontal. You could still use the [#hPosProperty()] to set the position,
+    /// but that would generate an exception. Unbinding the property would result in invalid states, so, don't do it.
     @Override
     public void setHPos(double hPos) {
         if (hPosProperty().isBound()) return;
         super.setHPos(hPos);
     }
 
-    /**
-     * Shortcut for {@code setPage(0)}.
-     */
+    /// Shortcut for `setPage(0)`.
     @Override
     public void scrollToFirst() {
         setPage(0);
     }
 
-    /**
-     * Shortcut for {@code setPage(getMaxPage())}.
-     */
+    /// Shortcut for `setPage(getMaxPage())`.
     @Override
     public void scrollToLast() {
         setPage(getMaxPage());
     }
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Note that a paginated component cannot scroll on the virtualized axis. The list uses both the x or y axis
-     * for virtualization depending on the {@link #orientationProperty()}, which means you will be able to scroll only
-     * in the opposite direction (e.g. VERTICAL -> horizontal scroll).
-     */
+    /// {@inheritDoc}
+    ///
+    /// Note that a paginated component cannot scroll on the virtualized axis. The list uses both the x or y axis
+    /// for virtualization depending on the [#orientationProperty()], which means you will be able to scroll only
+    /// in the opposite direction (e.g. VERTICAL -> horizontal scroll).
     @Override
     public VFXScrollPane makeScrollable() {
         // The policy is enough to hide the bar for which scroll is disabled by the pagination feature
@@ -265,11 +246,9 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
         10
     );
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Can be set in CSS via the property: '-vfx-cells-per-page'.
-     */
+    /// {@inheritDoc}
+    ///
+    /// Can be set in CSS via the property: '-vfx-cells-per-page'.
     @Override
     public StyleableIntegerProperty cellsPerPageProperty() {
         return cellsPerPage;

@@ -29,15 +29,16 @@ import javafx.scene.input.MouseEvent;
 
 import static io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn.DRAGGED;
 
-/**
- * This is the default behavior implementation for {@link VFXTableColumn}. This basic behavior instantiates a
- * {@link RegionDragResizer} which allows you to resize the column with the mouse cursor at runtime.
- * <p>
- * For the resizer to work, a series of conditions must be met:
- * <p> 1) the feature must be enabled by the {@link VFXTableColumn#gestureResizableProperty()}
- * <p> 2) the table's instance must not be {@code null}
- * <p> 3) the table's layout mode must be set to {@link ColumnsLayoutMode#VARIABLE}.
- */
+/// This is the default behavior implementation for [VFXTableColumn]. This basic behavior instantiates a
+/// [RegionDragResizer] which allows you to resize the column with the mouse cursor at runtime.
+///
+/// For the resizer to work, a series of conditions must be met:
+///
+/// 1) the feature must be enabled by the [VFXTableColumn#gestureResizableProperty()]
+///
+/// 2) the table's instance must not be `null`
+///
+/// 3) the table's layout mode must be set to [ColumnsLayoutMode#VARIABLE].
 public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBehavior<VFXTableColumn<T, C>> {
     //================================================================================
     // Properties
@@ -55,14 +56,12 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Methods
     //================================================================================
 
-    /**
-     * This method is responsible for enabling/disabling the {@link RegionDragResizer} by using {@link RegionDragResizer#makeResizable()}
-     * or {@link RegionDragResizer#uninstall()}.
-     * <p>
-     * Beware, this is automatically called by the default skin when needed. Neither the resizer nor this class check whether
-     * it is already enabled, which means that additional calls may add the same handlers multiple times, causing potential
-     * memory leaks!
-     */
+    /// This method is responsible for enabling/disabling the [RegionDragResizer] by using [RegionDragResizer#makeResizable()]
+    /// or [RegionDragResizer#uninstall()].
+    ///
+    /// Beware, this is automatically called by the default skin when needed. Neither the resizer nor this class check whether
+    /// it is already enabled, which means that additional calls may add the same handlers multiple times, causing potential
+    /// memory leaks!
     protected void onResizableChanged() {
         VFXTableColumn<T, C> column = getNode();
         boolean resizable = column.isGestureResizable();
@@ -73,10 +72,8 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
         if (resizer != null) resizer.makeResizable();
     }
 
-    /**
-     * The {@link RegionDragResizer} used here is an inline custom extension which uses this method to determine whether
-     * the column can be resized or not.
-     */
+    /// The [RegionDragResizer] used here is an inline custom extension which uses this method to determine whether
+    /// the column can be resized or not.
     protected boolean canResize() {
         VFXTableColumn<T, C> column = getNode();
         VFXTable<T> table = column.getTable();
@@ -120,11 +117,9 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
         if (column.isGestureResizable()) resizer.makeResizable();
     }
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Also disposed the {@link RegionDragResizer}.
-     */
+    /// {@inheritDoc}
+    ///
+    /// Also disposed the [RegionDragResizer].
     @Override
     public void dispose() {
         resizer.dispose();

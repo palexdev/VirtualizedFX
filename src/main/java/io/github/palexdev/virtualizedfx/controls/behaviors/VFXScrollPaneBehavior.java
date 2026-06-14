@@ -38,18 +38,17 @@ import javafx.util.Duration;
 
 import static javafx.scene.input.KeyCode.*;
 
-/**
- * Extension of {@link MFXBehavior} and default behavior implementation for {@link VFXScrollPane}.
- * <p></p>
- * Most of the work related to scrolling is already handled by the scroll bars present in the {@link VFXScrollPaneSkin}.
- * This just implements the methods necessary to make the {@link VFXScrollPane#dragToScrollProperty()} feature work.
- * <p>
- * You can fine-tune the {@link VFXScrollPane#dragSmoothScrollProperty()} by changing the properties:
- * <p> - {@link #DRAG_SMOOTH_SCROLL_DURATION}
- * <p> - {@link #DRAG_SMOOTH_SCROLL_CURVE}
- * <p> - {@link #SMOOTH_DRAG_SENSIBILITY} (this is basically a multiplier to scroll more/less and make the smooth scroll
- * more significant)
- */
+/// Extension of [MFXBehavior] and default behavior implementation for [VFXScrollPane].
+///
+/// Most of the work related to scrolling is already handled by the scroll bars present in the [VFXScrollPaneSkin].
+/// This just implements the methods necessary to make the [VFXScrollPane#dragToScrollProperty()] feature work.
+///
+/// You can fine-tune the [VFXScrollPane#dragSmoothScrollProperty()] by changing the properties:
+///
+/// - [#DRAG_SMOOTH_SCROLL_DURATION]
+/// - [#DRAG_SMOOTH_SCROLL_CURVE]
+/// - [#SMOOTH_DRAG_SENSIBILITY] (this is basically a multiplier to scroll more/less and make the smooth scroll
+/// more significant)
 public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     //================================================================================
     // Properties
@@ -78,11 +77,9 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     // Methods
     //================================================================================
 
-    /**
-     * Convenience method to build a {@link MomentumTransition} using {@link MomentumTransition#fromTime(double, double)}
-     * with the given parameter. Uses {@link #DRAG_SMOOTH_SCROLL_DURATION} as the duration and {@link #DRAG_SMOOTH_SCROLL_CURVE}
-     * as the interpolator.
-     */
+    /// Convenience method to build a [MomentumTransition] using [MomentumTransition#fromTime(double, double)]
+    /// with the given parameter. Uses [#DRAG_SMOOTH_SCROLL_DURATION] as the duration and [#DRAG_SMOOTH_SCROLL_CURVE]
+    /// as the interpolator.
     protected MomentumTransition withMomentum(double delta) {
         return (MomentumTransition) MomentumTransition.fromTime(delta, DRAG_SMOOTH_SCROLL_DURATION.toMillis())
             .setInterpolatorFluent(DRAG_SMOOTH_SCROLL_CURVE);
@@ -92,12 +89,10 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     // Overridden Methods
     //================================================================================
 
-    /**
-     * Action performed when a {@link MouseEvent#MOUSE_PRESSED} event occurs.
-     * <p></p>
-     * Stores both the mouse position and the scroll values which will be needed by {@link #mouseDragged(MouseEvent)}
-     * to compute how much to scroll if the drag to scroll feature is active.
-     */
+    /// Action performed when a [MouseEvent#MOUSE_PRESSED] event occurs.
+    ///
+    /// Stores both the mouse position and the scroll values which will be needed by [#mouseDragged(MouseEvent)]
+    /// to compute how much to scroll if the drag to scroll feature is active.
     @Override
     public void mousePressed(MouseEvent me, Runnable callback) {
         VFXScrollPane pane = getNode();
@@ -106,30 +101,34 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
         callback.run();
     }
 
-    /**
-     * Action performed when a {@link MouseEvent#MOUSE_DRAGGED} event occurs.
-     * <p></p>
-     * Adjusts both the vertical or the horizontal scroll values according to the mouse movement,
-     * immediately via setters or with an animation ({@link #withMomentum(double)}) if the "smooth drag to scroll feature" is active.
-     * <p>
-     * There are several conditions that get checked here:
-     * <p> 1) Exits if either the feature is off or the content is null
-     * <p> 2) Does not allow diagonal scrolling for a more pleasant UX and so the dominant axis is determined by how much
-     * the mouse moved vertically and horizontally since the press of the mouse.
-     * <p> 3) The scroll starts only after a certain threshold, by default 16px.
-     * <p> 4) The scroll occurs only if the bar for the determined axis is visible. This is managed by the
-     * {@link #canVScroll} and {@link #canHScroll} flags. The default skin does not allow the scroll when a bar is hidden,
-     * either because the content is smaller than the viewport on its axis or if the policies hide the bar.
-     * <p></p>
-     * The displacement is computed as follows:
-     * <p> - {@code mouseX - dragStartX} for the horizontal axis
-     * <p> - {@code mouseY - dragStartY} for the vertical axis
-     * <p></p>
-     * Also, if the values are adjusted by animations, every time one is played the {@code dragStart} positions are updated
-     * for a better user experience.
-     *
-     * @see #mousePressed(MouseEvent)
-     */
+    /// Action performed when a [MouseEvent#MOUSE_DRAGGED] event occurs.
+    ///
+    /// Adjusts both the vertical or the horizontal scroll values according to the mouse movement,
+    /// immediately via setters or with an animation ([#withMomentum(double)]) if the "smooth drag to scroll feature" is active.
+    ///
+    /// There are several conditions that get checked here:
+    ///
+    /// 1) Exits if either the feature is off or the content is null
+    ///
+    /// 2) Does not allow diagonal scrolling for a more pleasant UX and so the dominant axis is determined by how much
+    /// the mouse moved vertically and horizontally since the press of the mouse.
+    ///
+    /// 3) The scroll starts only after a certain threshold, by default 16px.
+    ///
+    /// 4) The scroll occurs only if the bar for the determined axis is visible. This is managed by the
+    /// [#canVScroll] and [#canHScroll] flags. The default skin does not allow the scroll when a bar is hidden,
+    /// either because the content is smaller than the viewport on its axis or if the policies hide the bar.
+    ///
+    /// The displacement is computed as follows:
+    ///
+    /// - `mouseX - dragStartX` for the horizontal axis
+    ///
+    /// - `mouseY - dragStartY` for the vertical axis
+    ///
+    /// Also, if the values are adjusted by animations, every time one is played the `dragStart` positions are updated
+    /// for a better user experience.
+    ///
+    /// @see #mousePressed(MouseEvent)
     @Override
     public void mouseDragged(MouseEvent me, Runnable callback) {
         VFXScrollPane pane = getNode();
@@ -206,11 +205,9 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
         callback.run();
     }
 
-    /**
-     * Action performed when a {@link MouseEvent#MOUSE_RELEASED} event occurs.
-     * <p></p>
-     * Resets the properties needed by {@link #mouseDragged(MouseEvent)}.
-     */
+    /// Action performed when a [MouseEvent#MOUSE_RELEASED] event occurs.
+    ///
+    /// Resets the properties needed by [#mouseDragged(MouseEvent)].
     @Override
     public void mouseReleased(MouseEvent e, Runnable callback) {
         dragStart.setPosition(-1, -1);
@@ -219,9 +216,7 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
         callback.run();
     }
 
-    /**
-     * Action performed when {@link KeyEvent#KEY_PRESSED} events occurs.
-     */
+    /// Action performed when [KeyEvent#KEY_PRESSED] events occurs.
     @Override
     public void keyPressed(KeyEvent ke, Runnable callback) {
         VFXScrollPane pane = getNode();
@@ -260,63 +255,47 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     // Getters/Setters
     //================================================================================
 
-    /**
-     * @see #setViewportSize(Size)
-     */
+    /// @see #setViewportSize(Size)
     public Size getViewportSize() {
         return viewportSize;
     }
 
-    /**
-     * This is called by the default skin to make the viewport's size available to the behavior. These values are important
-     * for the drag to scroll feature to work properly.
-     */
+    /// This is called by the default skin to make the viewport's size available to the behavior. These values are important
+    /// for the drag to scroll feature to work properly.
     public void setViewportSize(Size viewportSize) {
         this.viewportSize = viewportSize;
     }
 
-    /**
-     * @see #setCanVScroll(boolean)
-     */
+    /// @see #setCanVScroll(boolean)
     public boolean isCanVScroll() {
         return canVScroll;
     }
 
-    /**
-     * This is called by the default skin to make the behavior class aware of the vertical scroll bar's visibility.
-     * This information is important for the drag to scroll feature to work properly.
-     */
+    /// This is called by the default skin to make the behavior class aware of the vertical scroll bar's visibility.
+    /// This information is important for the drag to scroll feature to work properly.
     public void setCanVScroll(boolean canVScroll) {
         this.canVScroll = canVScroll;
     }
 
-    /**
-     * @see #setCanHScroll(boolean)
-     */
+    /// @see #setCanHScroll(boolean)
     public boolean isCanHScroll() {
         return canHScroll;
     }
 
-    /**
-     * This is called by the default skin to make the behavior class aware of the horizontal scroll bar's visibility.
-     * This information is important for the drag to scroll feature to work properly.
-     */
+    /// This is called by the default skin to make the behavior class aware of the horizontal scroll bar's visibility.
+    /// This information is important for the drag to scroll feature to work properly.
     public void setCanHScroll(boolean canHScroll) {
         this.canHScroll = canHScroll;
     }
 
-    /**
-     * @see #setDragThreshold(double)
-     */
+    /// @see #setDragThreshold(double)
     public double getDragThreshold() {
         return dragThreshold;
     }
 
-    /**
-     * Sets the number of pixels that act as a threshold before the scroll happens on drag.
-     *
-     * @see #mouseDragged(MouseEvent)
-     */
+    /// Sets the number of pixels that act as a threshold before the scroll happens on drag.
+    ///
+    /// @see #mouseDragged(MouseEvent)
     public void setDragThreshold(double dragThreshold) {
         this.dragThreshold = dragThreshold;
     }

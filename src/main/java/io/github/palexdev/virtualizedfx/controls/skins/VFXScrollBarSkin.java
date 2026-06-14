@@ -41,13 +41,11 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static io.github.palexdev.virtualizedfx.controls.VFXScrollBar.HORIZONTAL_PSEUDO_CLASS;
 import static io.github.palexdev.virtualizedfx.controls.VFXScrollBar.VERTICAL_PSEUDO_CLASS;
 
-/**
- * Default skin implementation for {@link VFXScrollBar}.
- * <p></p>
- * There are four components: the track, the thumb and the two buttons.
- *
- * @see LayoutHandler
- */
+/// Default skin implementation for [VFXScrollBar].
+///
+/// There are four components: the track, the thumb and the two buttons.
+///
+/// @see LayoutHandler
 public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
     //================================================================================
     // Properties
@@ -84,14 +82,15 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
     // Methods
     //================================================================================
 
-    /**
-     * Adds the following listeners:
-     * <p> - A listener to update the layout when these properties change:
-     * {@link  VFXScrollBar#buttonsGapProperty()}, {@link VFXScrollBar#visibleAmountProperty()}
-     * <p> - A listener on the {@link VFXScrollBar#showButtonsProperty()} to call {@link #updateChildren()} and update the layout
-     * <p> - A listener on the {@link VFXScrollBar#orientationProperty()} update the layout, bind the correct translation
-     * property for the thumb and rotate the buttons for the icon to face the right direction
-     */
+    /// Adds the following listeners:
+    ///
+    /// - A listener to update the layout when these properties change:
+    /// [VFXScrollBar#buttonsGapProperty()], [VFXScrollBar#visibleAmountProperty()]
+    ///
+    /// - A listener on the [VFXScrollBar#showButtonsProperty()] to call [#updateChildren()] and update the layout
+    ///
+    /// - A listener on the [VFXScrollBar#orientationProperty()] update the layout, bind the correct translation
+    /// property for the thumb and rotate the buttons for the icon to face the right direction
     protected void addListeners() {
         VFXScrollBar bar = getSkinnable();
         InvalidationListener ll = i -> bar.requestLayout();
@@ -119,9 +118,7 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
         );
     }
 
-    /**
-     * This is responsible for updating the children list according to the {@link VFXScrollBar#showButtonsProperty()}.
-     */
+    /// This is responsible for updating the children list according to the [VFXScrollBar#showButtonsProperty()].
     protected void updateChildren() {
         VFXScrollBar bar = getSkinnable();
         if (bar.isShowButtons()) {
@@ -135,25 +132,31 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
     // Overridden Methods
     //================================================================================
 
-    /**
-     * Initializes the behavior by calling {@link VFXScrollBarBehavior#init()} and by registering the following handlers:
-     * <p> - intercepts events of type {@link ScrollEvent#SCROLL} to call {@link VFXScrollBarBehavior#scroll(ScrollEvent)}
-     * <p>
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_PRESSED} on the thumb to call {@link VFXScrollBarBehavior#thumbPressed(MouseEvent)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_DRAGGED} on the thumb to call {@link VFXScrollBarBehavior#thumbDragged(MouseEvent)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_RELEASED} on the thumb to call {@link VFXScrollBarBehavior#thumbReleased(MouseEvent)}
-     * <p>
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_PRESSED} on the track to call {@link VFXScrollBarBehavior#trackPressed(MouseEvent)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_RELEASED} on the track to call {@link VFXScrollBarBehavior#trackReleased(MouseEvent)}
-     * <p>
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_PRESSED} on the decrease icon to call {@link VFXScrollBarBehavior#buttonPressed(MouseEvent, int)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_RELEASED} on the decrease icon to call {@link VFXScrollBarBehavior#buttonReleased(MouseEvent)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_EXITED} on the decrease icon to call {@link VFXScrollBarBehavior#buttonReleased(MouseEvent)}
-     * <p>
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_PRESSED} on the increase icon to call {@link VFXScrollBarBehavior#buttonPressed(MouseEvent, int)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_RELEASED} on the increase icon to call {@link VFXScrollBarBehavior#buttonReleased(MouseEvent)}
-     * <p> - intercepts events of type {@link MouseEvent#MOUSE_EXITED} on the increase icon to call {@link VFXScrollBarBehavior#buttonReleased(MouseEvent)}
-     */
+    /// Initializes the behavior by calling [VFXScrollBarBehavior#init()] and by registering the following handlers:
+    ///
+    /// - intercepts events of type [ScrollEvent#SCROLL] to call [VFXScrollBarBehavior#scroll(ScrollEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the thumb to call [VFXScrollBarBehavior#thumbPressed(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_DRAGGED] on the thumb to call [VFXScrollBarBehavior#thumbDragged(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the thumb to call [VFXScrollBarBehavior#thumbReleased(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the track to call [VFXScrollBarBehavior#trackPressed(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the track to call [VFXScrollBarBehavior#trackReleased(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the decrease icon to call [VFXScrollBarBehavior#buttonPressed(MouseEvent, int)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the decrease icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_EXITED] on the decrease icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the increase icon to call [VFXScrollBarBehavior#buttonPressed(MouseEvent, int)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the increase icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
+    ///
+    /// - intercepts events of type [MouseEvent#MOUSE_EXITED] on the increase icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
     @Override
     protected void registerBehavior() {
         super.registerBehavior();
@@ -227,12 +230,10 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
     // Inner Classes
     //================================================================================
 
-    /**
-     * Simplifies the layout algorithm by splitting it in two cases which depend on the {@link VFXScrollBar#orientationProperty()}.
-     *
-     * @see VerticalHandler
-     * @see HorizontalHandler
-     */
+    /// Simplifies the layout algorithm by splitting it in two cases which depend on the [VFXScrollBar#orientationProperty()].
+    ///
+    /// @see VerticalHandler
+    /// @see HorizontalHandler
     public interface LayoutHandler {
         void init();
 
@@ -247,16 +248,12 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
         }
     }
 
-    /**
-     * Manages the layout when the scroll bar is vertical.
-     */
+    /// Manages the layout when the scroll bar is vertical.
     public class VerticalHandler implements LayoutHandler {
 
-        /**
-         * Makes the thumb translate vertically depending on the bar's value and the heights of the track and thumb itself.
-         * <p>
-         * Also disables the ":horizontal" {@link PseudoClass} and activates ":vertical".
-         */
+        /// Makes the thumb translate vertically depending on the bar's value and the heights of the track and thumb itself.
+        ///
+        /// Also disables the ":horizontal" [PseudoClass] and activates ":vertical".
         @Override
         public void init() {
             VFXScrollBar bar = getSkinnable();
@@ -336,16 +333,12 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
         }
     }
 
-    /**
-     * Manages the layout when the scroll bar is horizontal.
-     */
+    /// Manages the layout when the scroll bar is horizontal.
     public class HorizontalHandler implements LayoutHandler {
 
-        /**
-         * Makes the thumb translate horizontally depending on the bar's value and the widths of the track and thumb itself.
-         * <p>
-         * Also disables the ":vertical" {@link PseudoClass} and activates ":horizontal".
-         */
+        /// Makes the thumb translate horizontally depending on the bar's value and the widths of the track and thumb itself.
+        ///
+        /// Also disables the ":vertical" [PseudoClass] and activates ":horizontal".
         @Override
         public void init() {
             VFXScrollBar bar = getSkinnable();

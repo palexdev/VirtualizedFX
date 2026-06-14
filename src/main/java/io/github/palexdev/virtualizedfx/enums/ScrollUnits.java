@@ -31,25 +31,21 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
-/**
- * Defines the unit of measurement used when setting the scroll increment for a {@link VFXScrollPane}.
- * <p>
- * Scroll units are used to convert a logical amount (e.g., 3 cells, 100 pixels) into a percentage value
- * in the range {@code [0.0, 1.0]}, which is then applied to the scroll pane.
- *
- * @see #calc(VFXScrollPane, double, Orientation)
- * @see #deps(VFXScrollPane, Orientation)
- */
+/// Defines the unit of measurement used when setting the scroll increment for a [VFXScrollPane].
+///
+/// Scroll units are used to convert a logical amount (e.g., 3 cells, 100 pixels) into a percentage value
+/// in the range `[0.0, 1.0]`, which is then applied to the scroll pane.
+///
+/// @see #calc(VFXScrollPane, double, Orientation)
+/// @see #deps(VFXScrollPane, Orientation)
 public enum ScrollUnits {
-    /**
-     * Scrolls by a number of cells/rows/columns, depending on the orientation.
-     * <p></p>
-     * This unit is only valid when the scroll pane's content is an instance of {@link VFXContainer}.
-     * The pixel size of each cell/row/column is multiplied by the specified amount and then converted into a percentage
-     * relative to the container's max scroll value ({@link VFXContainer#maxVScrollProperty()} or {@link VFXContainer#maxHScrollProperty()}).
-     * <p></p>
-     * Binding dependencies include the container's scroll bounds and its cell size property.
-     */
+    /// Scrolls by a number of cells/rows/columns, depending on the orientation.
+    ///
+    /// This unit is only valid when the scroll pane's content is an instance of [VFXContainer].
+    /// The pixel size of each cell/row/column is multiplied by the specified amount and then converted into a percentage
+    /// relative to the container's max scroll value ([VFXContainer#maxVScrollProperty()] or [VFXContainer#maxHScrollProperty()]).
+    ///
+    /// Binding dependencies include the container's scroll bounds and its cell size property.
     CELL {
         @Override
         public Supplier<Double> calc(VFXScrollPane vsp, double amount, Orientation orientation) {
@@ -92,14 +88,12 @@ public enum ScrollUnits {
         }
     },
 
-    /**
-     * Scrolls by a percentage of the total scrollable area.
-     * <p>
-     * This is the simplest unit, no conversion is performed. Because of that, bindings for this unit are ignored and
-     * fallback to a standard apply.
-     * <p>
-     * Use this when you want to directly specify the exact scroll delta in percentage terms.
-     */
+    /// Scrolls by a percentage of the total scrollable area.
+    ///
+    /// This is the simplest unit, no conversion is performed. Because of that, bindings for this unit are ignored and
+    /// fallback to a standard apply.
+    ///
+    /// Use this when you want to directly specify the exact scroll delta in percentage terms.
     PERCENTAGE {
         @Override
         public Supplier<Double> calc(VFXScrollPane vsp, double amount, Orientation orientation) {
@@ -112,15 +106,13 @@ public enum ScrollUnits {
         }
     },
 
-    /**
-     * Scrolls by a fixed number of pixels.
-     * <p>
-     * The specified pixel amount is converted into a percentage based on the scrollable content's
-     * size and the scroll pane's viewport size. If the content is a {@link VFXContainer}, its virtualized
-     * scroll bounds are used. Otherwise, the scrollable extent is derived from the layout bounds.
-     * <p></p>
-     * Binding dependencies include either virtual scroll bounds or layout bounds, depending on content type.
-     */
+    /// Scrolls by a fixed number of pixels.
+    ///
+    /// The specified pixel amount is converted into a percentage based on the scrollable content's
+    /// size and the scroll pane's viewport size. If the content is a [VFXContainer], its virtualized
+    /// scroll bounds are used. Otherwise, the scrollable extent is derived from the layout bounds.
+    ///
+    /// Binding dependencies include either virtual scroll bounds or layout bounds, depending on content type.
     PIXELS {
         @Override
         public Supplier<Double> calc(VFXScrollPane vsp, double amount, Orientation orientation) {
@@ -156,18 +148,14 @@ public enum ScrollUnits {
     },
     ;
 
-    /**
-     * Calculates the scroll amount as a percentage value in {@code [0.0, 1.0]}, based on the given unit type.
-     * <p></p>
-     * The {@code orientation} parameters specifies the axis on which select the properties.
-     * E.g: VERTICAL -> height, HORIZONTAL -> width
-     */
+    /// Calculates the scroll amount as a percentage value in `[0.0, 1.0]`, based on the given unit type.
+    ///
+    /// The `orientation` parameters specifies the axis on which select the properties.
+    /// E.g: VERTICAL -> height, HORIZONTAL -> width
     public abstract Supplier<Double> calc(VFXScrollPane vsp, double amount, Orientation orientation);
 
-    /**
-     * Lists observable properties that should be watched when using this unit in a binding context.
-     * <p>
-     * An empty array indicates that the binding is not necessary and should be ignored. This is the case of {@link #PERCENTAGE}.
-     */
+    /// Lists observable properties that should be watched when using this unit in a binding context.
+    ///
+    /// An empty array indicates that the binding is not necessary and should be ignored. This is the case of [#PERCENTAGE].
     public abstract ObservableValue<?>[] deps(VFXScrollPane vsp, Orientation orientation);
 }

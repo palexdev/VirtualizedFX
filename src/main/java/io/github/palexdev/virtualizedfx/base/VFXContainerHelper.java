@@ -27,113 +27,81 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.layout.Region;
 
-/**
- * Base API for all helpers used in virtualized containers.
- * <p>
- * Groups common properties, computations and utilities, minimizing redundancy and improving maintainability.
- */
+/// Base API for all helpers used in virtualized containers.
+///
+/// Groups common properties, computations and utilities, minimizing redundancy and improving maintainability.
 public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
 
-    /**
-     * @return the total number of pixels on the x-axis.
-     */
+    /// @return the total number of pixels on the x-axis.
     default double getVirtualMaxX() {
         return virtualMaxXProperty().get();
     }
 
-    /**
-     * Specifies the total number of pixels on the x-axis.
-     */
+    /// Specifies the total number of pixels on the x-axis.
     ReadOnlyDoubleProperty virtualMaxXProperty();
 
-    /**
-     * @return the total number of pixels on the y-axis.
-     */
+    /// @return the total number of pixels on the y-axis.
     default double getVirtualMaxY() {
         return virtualMaxYProperty().get();
     }
 
-    /**
-     * Specifies the total number of pixels on the y-axis.
-     */
+    /// Specifies the total number of pixels on the y-axis.
     ReadOnlyDoubleProperty virtualMaxYProperty();
 
-    /**
-     * @return the maximum possible vertical position.
-     */
+    /// @return the maximum possible vertical position.
     default double getMaxVScroll() {
         return maxVScrollProperty().get();
     }
 
-    /**
-     * Specifies the maximum possible vertical position.
-     */
+    /// Specifies the maximum possible vertical position.
     ReadOnlyDoubleProperty maxVScrollProperty();
 
-    /**
-     * @return the maximum possible horizontal position.
-     */
+    /// @return the maximum possible horizontal position.
     default double getMaxHScroll() {
         return maxHScrollProperty().get();
     }
 
-    /**
-     * Specifies the maximum possible horizontal position.
-     */
+    /// Specifies the maximum possible horizontal position.
     ReadOnlyDoubleProperty maxHScrollProperty();
 
-    /**
-     * @return the position the viewport should be at in the container
-     */
+    /// @return the position the viewport should be at in the container
     default Position getViewportPosition() {
         return viewportPositionProperty().get();
     }
 
-    /**
-     * Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
-     * <p>
-     * This property specifies the translation of the viewport, the value depends on the implementation.
-     */
+    /// Cells are actually contained in a separate pane called 'viewport'. The scroll is applied on this pane.
+    ///
+    /// This property specifies the translation of the viewport, the value depends on the implementation.
     ReadOnlyObjectProperty<Position> viewportPositionProperty();
 
-    /**
-     * @return the {@link VFXContainer} implementation instance associated to this helper
-     */
+    /// @return the [VFXContainer] implementation instance associated to this helper
     C getContainer();
 
-    /**
-     * Forces the {@link VFXContainer#vPosProperty()} and {@link VFXContainer#hPosProperty()} to be invalidated.
-     * <p>
-     * This is simply done by calling the respective setters with their current respective values. Those two properties
-     * will automatically call {@link #getMaxVScroll()} and {@link #getMaxHScroll()} to ensure the values are correct.
-     * <p>
-     * Automatically invoked when needed.
-     */
+    /// Forces the [VFXContainer#vPosProperty()] and [VFXContainer#hPosProperty()] to be invalidated.
+    ///
+    /// This is simply done by calling the respective setters with their current respective values. Those two properties
+    /// will automatically call [#getMaxVScroll()] and [#getMaxHScroll()] to ensure the values are correct.
+    ///
+    /// Automatically invoked when needed.
     default void invalidatePos() {
         C container = getContainer();
         container.setVPos(container.getVPos());
         container.setHPos(container.getHPos());
     }
 
-    /**
-     * Implementations should define the logic to manually invalidate the virtual sizes ({@link #virtualMaxXProperty()}
-     * and {@link #virtualMaxYProperty()}) of the container when needed.
-     * <p>
-     * There are exceptional cases where we can't rely on automatic invalidation because it could lead to incorrect states,
-     * the easiest and most stable solution for those is manual invalidation.
-     */
+    /// Implementations should define the logic to manually invalidate the virtual sizes ([#virtualMaxXProperty()]
+    /// and [#virtualMaxYProperty()]) of the container when needed.
+    ///
+    /// There are exceptional cases where we can't rely on automatic invalidation because it could lead to incorrect states,
+    /// the easiest and most stable solution for those is manual invalidation.
     void invalidateVirtualSizes();
 
-    /**
-     * Converts the given index to an item (shortcut for {@code getContainer().getItems().get(index)}).
-     */
+    /// Converts the given index to an item (shortcut for `getContainer().getItems().get(index)`).
     default T indexToItem(int index) {
         return getContainer().getItems().get(index);
     }
 
-    /**
-     * If the helper uses listeners/bindings that may lead to memory leaks, this is the right place to remove them.
-     */
+    /// If the helper uses listeners/bindings that may lead to memory leaks, this is the right place to remove them.
     default void dispose() {
     }
 
@@ -141,15 +109,13 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
     // Base Implementation
     //================================================================================
 
-    /**
-     * Abstract implementation of {@link VFXContainerHelper}.
-     * <p>
-     * This is the recommended class onto which base concrete helpers.
-     * <p>
-     * Stores the virtualized container's instance, defines common properties and thus implementing some of the APIs
-     * from {@link VFXContainerHelper}, and in addition defines some other APIs that should be hidden and known only to
-     * its implementations.
-     */
+    /// Abstract implementation of [VFXContainerHelper].
+    ///
+    /// This is the recommended class onto which base concrete helpers.
+    ///
+    /// Stores the virtualized container's instance, defines common properties and thus implementing some of the APIs
+    /// from [VFXContainerHelper], and in addition defines some other APIs that should be hidden and known only to
+    /// its implementations.
     abstract class VFXContainerHelperBase<T, C extends Region & VFXContainer<T>> implements VFXContainerHelper<T, C> {
         protected C container;
 
@@ -178,25 +144,19 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
             maxHScroll.bind(createMaxHScrollBinding());
         }
 
-        /**
-         * Implementations should use this build and return the {@link DoubleBinding} with the appropriate dependencies
-         * responsible for the {@link #virtualMaxXProperty()}'s value.
-         */
+        /// Implementations should use this build and return the [DoubleBinding] with the appropriate dependencies
+        /// responsible for the [#virtualMaxXProperty()]'s value.
         protected abstract DoubleBinding createVirtualMaxXBinding();
 
-        /**
-         * Implementations should use this build and return the {@link DoubleBinding} with the appropriate dependencies
-         * responsible for the {@link #virtualMaxXProperty()}'s value.
-         */
+        /// Implementations should use this build and return the [DoubleBinding] with the appropriate dependencies
+        /// responsible for the [#virtualMaxXProperty()]'s value.
         protected abstract DoubleBinding createVirtualMaxYBinding();
 
-        /**
-         * Builds and returns the binding which computes the {@link #maxVScrollProperty()}'s value.
-         * <p>
-         * For most containers the value is given by: {@code virtualMaxY - containerHeight}.
-         * <p>
-         * <i>The formula may vary for some containers!</i>
-         */
+        /// Builds and returns the binding which computes the [#maxVScrollProperty()]'s value.
+        ///
+        /// For most containers the value is given by: `virtualMaxY - containerHeight`.
+        ///
+        /// _The formula may vary for some containers!_
         protected DoubleBinding createMaxVScrollBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> Math.max(0, getVirtualMaxY() - container.getHeight()))
@@ -204,13 +164,11 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
                 .get();
         }
 
-        /**
-         * Builds and returns the binding which computes the {@link #maxHScrollProperty()}'s value.
-         * <p>
-         * For most containers the value is given by: {@code virtualMaxX - containerWidth}.
-         * <p>
-         * <i>The formula may vary for some containers!</i>
-         */
+        /// Builds and returns the binding which computes the [#maxHScrollProperty()]'s value.
+        ///
+        /// For most containers the value is given by: `virtualMaxX - containerWidth`.
+        ///
+        /// _The formula may vary for some containers!_
         protected DoubleBinding createMaxHScrollBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> Math.max(0, getVirtualMaxX() - container.getWidth()))

@@ -21,11 +21,9 @@ package io.github.palexdev.virtualizedfx.list.paginated;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 
-/**
- * Simple extension of {@link VFXListHelper} with to concrete implementations {@link VerticalHelper} and {@link HorizontalHelper}
- * to override the behavior of {@link #visibleNum()}, so that it always returns the value of cells per page
- * ({@link VFXPaginatedList#cellsPerPageProperty()}).
- */
+/// Simple extension of [VFXListHelper] with to concrete implementations [VerticalHelper] and [HorizontalHelper]
+/// to override the behavior of [#visibleNum()], so that it always returns the value of cells per page
+/// ([VFXPaginatedList#cellsPerPageProperty()]).
 public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXListHelper<T, C> {
 
     class VerticalHelper<T, C extends VFXCell<T>> extends VFXListHelper.VerticalHelper<T, C> implements VFXPaginatedListHelper<T, C> {
@@ -38,25 +36,19 @@ public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXList
             return getContainer().getCellsPerPage();
         }
 
-        /**
-         * @throws UnsupportedOperationException because the paginated variant cannot scroll by pixels
-         */
+        /// @throws UnsupportedOperationException because the paginated variant cannot scroll by pixels
         @Override
         public void scrollBy(double pixels) {
             throw new UnsupportedOperationException("This scrolls by page not pixels");
         }
 
-        /**
-         * @throws UnsupportedOperationException because the paginated variant cannot scroll by pixels
-         */
+        /// @throws UnsupportedOperationException because the paginated variant cannot scroll by pixels
         @Override
         public void scrollToPixel(double pixel) {
             throw new UnsupportedOperationException("This scrolls by page not pixels");
         }
 
-        /**
-         * Scrolls to the page containing the given item index.
-         */
+        /// Scrolls to the page containing the given item index.
         @Override
         public void scrollToIndex(int index) {
             VFXPaginatedList<T, C> list = getContainer();
@@ -79,25 +71,19 @@ public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXList
             return getContainer().getCellsPerPage();
         }
 
-        /**
-         * @throws UnsupportedOperationException because the paginated variant cannot scroll by pixels
-         */
+        /// @throws UnsupportedOperationException because the paginated variant cannot scroll by pixels
         @Override
         public void scrollBy(double pixels) {
             throw new UnsupportedOperationException("This scrolls by page not pixels");
         }
 
-        /**
-         * @throws UnsupportedOperationException because the paginated variant cannot scroll by pixels
-         */
+        /// @throws UnsupportedOperationException because the paginated variant cannot scroll by pixels
         @Override
         public void scrollToPixel(double pixel) {
             throw new UnsupportedOperationException("This scrolls by page not pixels");
         }
 
-        /**
-         * Scrolls to the page containing the given item index.
-         */
+        /// Scrolls to the page containing the given item index.
         @Override
         public void scrollToIndex(int index) {
             VFXPaginatedList<T, C> list = getContainer();

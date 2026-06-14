@@ -39,128 +39,90 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.Node;
 
-/**
- * This interface is a utility API for {@link VFXGrid}, despite computations not depending on other properties
- * (some VFXList values depend on the orientation, for example),
- * it's still a nice way to adhere to the encapsulation and separation of concerns principles.
- * Has one concrete implementation: {@link DefaultHelper}.
- */
+/// This interface is a utility API for [VFXGrid], despite computations not depending on other properties
+/// (some VFXList values depend on the orientation, for example),
+/// it's still a nice way to adhere to the encapsulation and separation of concerns principles.
+/// Has one concrete implementation: [DefaultHelper].
 public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelper<T, VFXGrid<T, C>> {
 
-    /**
-     * @return the maximum number of columns the grid can have. This value is essentially the same as
-     * {@link VFXGrid#columnsNumProperty()} but it's also taken into account the number of items (you can't have more
-     * columns than the number of items)
-     */
+    /// @return the maximum number of columns the grid can have. This value is essentially the same as
+    /// [VFXGrid#columnsNumProperty()] but it's also taken into account the number of items (you can't have more
+    /// columns than the number of items)
     int maxColumns();
 
-    /**
-     * @return the index of the first visible column
-     */
+    /// @return the index of the first visible column
     int firstColumn();
 
-    /**
-     * @return the index of the last visible column
-     */
+    /// @return the index of the last visible column
     int lastColumn();
 
-    /**
-     * @return the number of columns visible in the viewport. Not necessarily the same as {@link #totalColumns()}
-     */
+    /// @return the number of columns visible in the viewport. Not necessarily the same as [#totalColumns()]
     int visibleColumns();
 
-    /**
-     * @return the total number of columns in the viewport which doesn't include only the number of visible columns but also
-     * the number of buffer columns
-     */
+    /// @return the total number of columns in the viewport which doesn't include only the number of visible columns but also
+    /// the number of buffer columns
     int totalColumns();
 
-    /**
-     * Specifies the range of columns that should be present in the viewport. This also takes into account buffer columns,
-     * see {@link #visibleColumns()} and {@link #totalColumns()}.
-     */
+    /// Specifies the range of columns that should be present in the viewport. This also takes into account buffer columns,
+    /// see [#visibleColumns()] and [#totalColumns()].
     ReadOnlyObjectProperty<NumberRange<Integer>> columnsRangeProperty();
 
-    /**
-     * @return the range of columns that should be present in the viewport. This also takes into account buffer columns,
-     * see {@link #visibleColumns()} and {@link #totalColumns()}
-     */
+    /// @return the range of columns that should be present in the viewport. This also takes into account buffer columns,
+    /// see [#visibleColumns()] and [#totalColumns()]
     default IntegerRange columnsRange() {
         return (IntegerRange) columnsRangeProperty().get();
     }
 
-    /**
-     * @return the maximum number of rows the grid can have. This value depends on the number of items and the number of
-     * columns
-     */
+    /// @return the maximum number of rows the grid can have. This value depends on the number of items and the number of
+    /// columns
     int maxRows();
 
-    /**
-     * @return the index of the first visible row
-     */
+    /// @return the index of the first visible row
     int firstRow();
 
-    /**
-     * @return the index of the last visible row
-     */
+    /// @return the index of the last visible row
     int lastRow();
 
-    /**
-     * @return the number of rows visible in the viewport. Not necessarily the same as {@link #totalRows()}
-     */
+    /// @return the number of rows visible in the viewport. Not necessarily the same as [#totalRows()]
     int visibleRows();
 
-    /**
-     * @return the total number of rows in the viewport which doesn't include only the number of visible rows but also
-     * the number of buffer rows
-     */
+    /// @return the total number of rows in the viewport which doesn't include only the number of visible rows but also
+    /// the number of buffer rows
     int totalRows();
 
-    /**
-     * Specifies the range of rows that should be present in the viewport. This also takes into account buffer rows,
-     * see {@link #visibleRows()} and {@link #totalRows()}.
-     */
+    /// Specifies the range of rows that should be present in the viewport. This also takes into account buffer rows,
+    /// see [#visibleRows()] and [#totalRows()].
     ReadOnlyObjectProperty<NumberRange<Integer>> rowsRangeProperty();
 
-    /**
-     * @return the range of rows that should be present in the viewport. This also takes into account buffer rows,
-     * see {@link #visibleRows()} and {@link #totalRows()}.
-     */
+    /// @return the range of rows that should be present in the viewport. This also takes into account buffer rows,
+    /// see [#visibleRows()] and [#totalRows()].
     default IntegerRange rowsRange() {
         return (IntegerRange) rowsRangeProperty().get();
     }
 
-    /**
-     * Lays out the given cell.
-     * The row and column layout indexes are necessary to identify the position of a cell among the others
-     * (comes before/after, above/below).
-     *
-     * @see VFXGridSkin#layout()
-     */
+    /// Lays out the given cell.
+    /// The row and column layout indexes are necessary to identify the position of a cell among the others
+    /// (comes before/after, above/below).
+    ///
+    /// @see VFXGridSkin#layout()
     void layout(int rowLayoutIndex, int columnLayoutIndex, VFXCell<T> cell);
 
-    /**
-     * @return the total size of each cell, given by the {@link VFXGrid#cellSizeProperty()} summed to the horizontal and
-     * vertical spacing values
-     */
+    /// @return the total size of each cell, given by the [VFXGrid#cellSizeProperty()] summed to the horizontal and
+    /// vertical spacing values
     Size getTotalCellSize();
 
-    /**
-     * @return the theoretical number of cells in the viewport. The value depends on the number of visible columns and rows,
-     * however, doesn't take into account the possibility of incomplete columns/rows. For a precise value,
-     * use {@link #totalCells()} instead
-     */
+    /// @return the theoretical number of cells in the viewport. The value depends on the number of visible columns and rows,
+    /// however, doesn't take into account the possibility of incomplete columns/rows. For a precise value,
+    /// use [#totalCells()] instead
     default int visibleCells() {
         int nColumns = visibleColumns();
         int nRows = visibleRows();
         return nColumns * nRows;
     }
 
-    /**
-     * @return the precise number of cells present in the viewport at a given time. The value depends on the current range
-     * of rows and columns. Unfortunately, it's not very efficient as the count is computed by iterating over each row and
-     * column, but it's the only stable way I found to have a correct value.
-     */
+    /// @return the precise number of cells present in the viewport at a given time. The value depends on the current range
+    /// of rows and columns. Unfortunately, it's not very efficient as the count is computed by iterating over each row and
+    /// column, but it's the only stable way I found to have a correct value.
     default int totalCells() {
         // TODO can't find a better algorithm, probably with some nasty stupid math formula that I hate so much
         VFXGrid<T, C> grid = getContainer();
@@ -183,34 +145,26 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         return cnt;
     }
 
-    /**
-     * Scrolls to the given row index by setting the {@link VFXGrid#vPosProperty()} to {@code rowIndex * totalCellHeight}.
-     */
+    /// Scrolls to the given row index by setting the [VFXGrid#vPosProperty()] to `rowIndex * totalCellHeight`.
     default void scrollToRow(int row) {
         double h = getTotalCellSize().height();
         getContainer().setVPos((row * h));
     }
 
-    /**
-     * Scrolls to the given column index by setting the {@link VFXGrid#hPosProperty()} to {@code columnIndex * totalCellWidth}.
-     */
+    /// Scrolls to the given column index by setting the [VFXGrid#hPosProperty()] to `columnIndex * totalCellWidth`.
     default void scrollToColumn(int column) {
         double w = getTotalCellSize().width();
         getContainer().setHPos((column * w));
     }
 
-    /**
-     * Converts the given index to a cell. Uses {@link #itemToCell(Object)}.
-     */
+    /// Converts the given index to a cell. Uses [#itemToCell(Object)].
     default C indexToCell(int index) {
         T item = indexToItem(index);
         return itemToCell(item);
     }
 
-    /**
-     * Converts the given item to a cell. The result is either on of the cells cached in {@link VFXCellsCache} that
-     * is updated with the given item, or a totally new one created by the {@link VFXGrid#getCellFactory()}.
-     */
+    /// Converts the given item to a cell. The result is either on of the cells cached in [VFXCellsCache] that
+    /// is updated with the given item, or a totally new one created by the [VFXGrid#getCellFactory()].
     default C itemToCell(T item) {
         VFXGrid<T, C> grid = getContainer();
         VFXCellsCache<T, C> cache = grid.getCache();
@@ -219,50 +173,52 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         return opt.orElseGet(() -> grid.create(item));
     }
 
-    /**
-     * Concrete implementation of {@link VFXGridHelper}, here the range of rows and columns to display, as well as the
-     * viewport position, the virtual max x and y properties are defined as follows:
-     * <p> - the columns range is given by the {@link #firstColumn()} element minus the buffer size {@link VFXGrid#bufferSizeProperty()},
-     * (cannot be negative) and the sum between this start index and the total number of needed columns given by {@link #totalColumns()}
-     * (cannot exceed the maximum number of columns {@link #maxColumns()}). It may happen that the number of indexes given
-     * by the range {@code end - start + 1} is lesser than the total number of columns we need. In such cases, the range
-     * start is corrected to be {@code end - needed + 1}. A typical situation for this is when the grid's horizontal position
-     * reaches the max scroll.
-     * The range computation has the following dependencies: the number of columns, the grid's width, horizontal position,
-     * the buffer size, the number of items, the cell size and the horizontal spacing.
-     * <p> - the rows range is given by the {@link #firstRow()} element minus the buffer size {@link VFXGrid#bufferSizeProperty()},
-     * (cannot be negative) and the sum between this start index and the total number of needed rows given by {@link #totalRows()}
-     * (cannot exceed the maximum number of rows {@link #maxRows()}). It may happen that the number of indexes given
-     * by the range {@code end - start + 1} is lesser than the total number of rows we need. In such cases, the range
-     * start is corrected to be {@code end - needed + 1}. A typical situation for this is when the grid's vertical position
-     * reaches the max scroll.
-     * The range computation has the following dependencies: the number of columns, the grid's height, vertical position,
-     * the buffer size, the number of items, the cell size and the vertical spacing.
-     * <p> - the viewport position, a computation that is at the core of virtual scrolling. The viewport, which contains the cells,
-     * is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
-     * For both the horizontal and vertical positions, we use the same technique, just using the appropriate values according
-     * to the axis we are working on.
-     * First we get the range of rows/columns to display, then the total cell size given by {@link #getTotalCellSize()},
-     * yes, the spacing also affects the position. Then we compute the ranges to the first visible row/column, which
-     * are given by {@code IntegerRange.of(range.getMin(), first())}, in other words we limit the 'complete' ranges to the
-     * start buffer including the first row/column after the buffer. The number of indexes in the newfound ranges
-     * (given by {@link IntegerRange#diff()}) is multiplied by the total cell size, this way we are finding the number of pixels to the
-     * first visible cell, {@code pixelsToFirst}. We are missing only one last piece of information: how much of the first row/column
-     * do we actually see? We call this amount {@code visibleAmountFirst} and it's given by {@code pos % totalCellSize}.
-     * Finally, the viewport's position is given by this formula {@code -(pixelsToFirst + visibleAmountFirst)}
-     * (for both hPos and vPos of course).
-     * While it's true that the calculations are more complex and 'needy', it's important to note that this approach
-     * allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the top
-     * or bottom anymore.
-     * The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
-     * the cell size and both the vertical and horizontal spacing.
-     * <p> - the virtual max x and y properties, which give the total number of pixels on the x-axis and y-axis. Virtual
-     * means that it's not the actual size of the container, rather the size it would have if it was not virtualized.
-     * The two values are given by the max number of rows/columns multiplied by the total cell size, minus the spacing
-     * (otherwise we would have the spacing applied between the last row/column and the grid's border too).
-     * The computations have the following dependencies: the number of items, the number of columns, the cell size and
-     * the horizontal/vertical spacing (respectively).
-     */
+    /// Concrete implementation of [VFXGridHelper], here the range of rows and columns to display, as well as the
+    /// viewport position, the virtual max x and y properties are defined as follows:
+    ///
+    /// - the columns range is given by the [#firstColumn()] element minus the buffer size [VFXGrid#bufferSizeProperty()],
+    /// (cannot be negative) and the sum between this start index and the total number of needed columns given by [#totalColumns()]
+    /// (cannot exceed the maximum number of columns [#maxColumns()]). It may happen that the number of indexes given
+    /// by the range `end - start + 1` is lesser than the total number of columns we need. In such cases, the range
+    /// start is corrected to be `end - needed + 1`. A typical situation for this is when the grid's horizontal position
+    /// reaches the max scroll.
+    /// The range computation has the following dependencies: the number of columns, the grid's width, horizontal position,
+    /// the buffer size, the number of items, the cell size and the horizontal spacing.
+    ///
+    /// - the rows range is given by the [#firstRow()] element minus the buffer size [VFXGrid#bufferSizeProperty()],
+    /// (cannot be negative) and the sum between this start index and the total number of needed rows given by [#totalRows()]
+    /// (cannot exceed the maximum number of rows [#maxRows()]). It may happen that the number of indexes given
+    /// by the range `end - start + 1` is lesser than the total number of rows we need. In such cases, the range
+    /// start is corrected to be `end - needed + 1`. A typical situation for this is when the grid's vertical position
+    /// reaches the max scroll.
+    /// The range computation has the following dependencies: the number of columns, the grid's height, vertical position,
+    /// the buffer size, the number of items, the cell size and the vertical spacing.
+    ///
+    /// - the viewport position, a computation that is at the core of virtual scrolling. The viewport, which contains the cells,
+    /// is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
+    /// For both the horizontal and vertical positions, we use the same technique, just using the appropriate values according
+    /// to the axis we are working on.
+    /// First we get the range of rows/columns to display, then the total cell size given by [#getTotalCellSize()],
+    /// yes, the spacing also affects the position. Then we compute the ranges to the first visible row/column, which
+    /// are given by `IntegerRange.of(range.getMin(), first())`, in other words we limit the 'complete' ranges to the
+    /// start buffer including the first row/column after the buffer. The number of indexes in the newfound ranges
+    /// (given by [IntegerRange#diff()]) is multiplied by the total cell size, this way we are finding the number of pixels to the
+    /// first visible cell, `pixelsToFirst`. We are missing only one last piece of information: how much of the first row/column
+    /// do we actually see? We call this amount `visibleAmountFirst` and it's given by `pos % totalCellSize`.
+    /// Finally, the viewport's position is given by this formula `-(pixelsToFirst + visibleAmountFirst)`
+    /// (for both hPos and vPos of course).
+    /// While it's true that the calculations are more complex and 'needy', it's important to note that this approach
+    /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the top
+    /// or bottom anymore.
+    /// The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
+    /// the cell size and both the vertical and horizontal spacing.
+    ///
+    /// - the virtual max x and y properties, which give the total number of pixels on the x-axis and y-axis. Virtual
+    /// means that it's not the actual size of the container, rather the size it would have if it was not virtualized.
+    /// The two values are given by the max number of rows/columns multiplied by the total cell size, minus the spacing
+    /// (otherwise we would have the spacing applied between the last row/column and the grid's border too).
+    /// The computations have the following dependencies: the number of items, the number of columns, the cell size and
+    /// the horizontal/vertical spacing (respectively).
     class DefaultHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXGrid<T, C>> implements VFXGridHelper<T, C> {
         protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
         protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
@@ -370,21 +326,17 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                 .get();
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by {@code Math.min(nItems, nColumns)}.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by `Math.min(nItems, nColumns)`.
         @Override
         public int maxColumns() {
             return Math.min(container.size(), container.getColumnsNum());
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by {@code Math.floor(hPos / totalCellWidth)}, clamped between 0 and {@link #maxColumns()} - 1.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by `Math.floor(hPos / totalCellWidth)`, clamped between 0 and [#maxColumns()] - 1.
         @Override
         public int firstColumn() {
             return NumberUtils.clamp(
@@ -394,21 +346,17 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             );
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by the max in {@link #columnsRange()}.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by the max in [#columnsRange()].
         @Override
         public int lastColumn() {
             return columnsRange().getMax();
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by {@code Math.ceil(gridWidth / totalCellWidth)}. 0 if the total cells' width is also 0.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by `Math.ceil(gridWidth / totalCellWidth)`. 0 if the total cells' width is also 0.
         @Override
         public int visibleColumns() {
             double width = getTotalCellSize().width();
@@ -417,12 +365,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                 0;
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by {@link #visibleColumns()} plus double the value of {@link VFXGrid#bufferSizeProperty()} restricted to
-         * the maximum number of columns allowed, {@link #maxColumns()}.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by [#visibleColumns()] plus double the value of [VFXGrid#bufferSizeProperty()] restricted to
+        /// the maximum number of columns allowed, [#maxColumns()].
         @Override
         public int totalColumns() {
             int visible = visibleColumns();
@@ -434,11 +380,9 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             return columnsRange.getReadOnlyProperty();
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by {@code Math.ceil(itemsNum / maxColumns())}, see {@link #maxColumns()}.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by `Math.ceil(itemsNum / maxColumns())`, see [#maxColumns()].
         @Override
         public int maxRows() {
             return NumberUtils.clamp(
@@ -448,11 +392,9 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             );
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by {@code Math.floor(vPos / totalCellHeight)}, clamped between 0 and {@link #maxRows()} - 1.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by `Math.floor(vPos / totalCellHeight)`, clamped between 0 and [#maxRows()] - 1.
         @Override
         public int firstRow() {
             return NumberUtils.clamp(
@@ -462,21 +404,17 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             );
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by the max in {@link #maxRows()}.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by the max in [#maxRows()].
         @Override
         public int lastRow() {
             return rowsRange().getMax();
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by {@code Math.ceil(gridHeight / totalCellHeight)}.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by `Math.ceil(gridHeight / totalCellHeight)`.
         @Override
         public int visibleRows() {
             double height = getTotalCellSize().height();
@@ -485,12 +423,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                 0;
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * Given by {@link #visibleRows()} plus double the value of {@link VFXGrid#bufferSizeProperty()} restricted to
-         * the maximum number of rows allowed, {@link #maxRows()}.
-         */
+        /// {@inheritDoc}
+        ///
+        /// Given by [#visibleRows()] plus double the value of [VFXGrid#bufferSizeProperty()] restricted to
+        /// the maximum number of rows allowed, [#maxRows()].
         @Override
         public int totalRows() {
             int visible = visibleRows();
@@ -527,12 +463,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             return viewportPosition.getReadOnlyProperty();
         }
 
-        /**
-         * {@inheritDoc}
-         * <p></p>
-         * The x position is given by {@code totalCellWidth * columnIndex}, the y position is given by
-         * {@code totalCellHeight * rowIndex}, the width and height are given by the {@link VFXGrid#cellSizeProperty()}.
-         */
+        /// {@inheritDoc}
+        ///
+        /// The x position is given by `totalCellWidth * columnIndex`, the y position is given by
+        /// `totalCellHeight * rowIndex`, the width and height are given by the [VFXGrid#cellSizeProperty()].
         @Override
         public void layout(int rowLayoutIndex, int columnLayoutIndex, VFXCell<T> cell) {
             Node node = cell.toNode();

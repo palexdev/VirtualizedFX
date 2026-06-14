@@ -28,19 +28,17 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.geometry.Orientation;
 import javafx.scene.control.SkinBase;
 
-/**
- * Default skin implementation for the paginated variant of {@link VFXList}: {@link VFXPaginatedList}.
- * Extends {@link VFXListSkin} and expects behaviors of type {@link VFXPaginatedListManager}.
- * <p>
- * There's not much going on here, just the bare minimum to get the paginated variant work as intended.
- * <p>
- * First of all, the list position is bound to the current page specified by {@link VFXPaginatedList#pageProperty()}.
- * Only the position that is the same as the current orientation is bound. When the orientation changes, the binding is
- * swapped by {@link #swapPositionBinding()}. Also, there are a couple of extra listeners, {@link #addListeners()}.
- * <p></p>
- * As for the layout, the only thing that changes is that the container's size will adapt to the cell size and the number
- * of cells per page, the exact computation is described and done by {@link #getLength()}.
- */
+/// Default skin implementation for the paginated variant of [VFXList]: [VFXPaginatedList].
+/// Extends [VFXListSkin] and expects behaviors of type [VFXPaginatedListManager].
+///
+/// There's not much going on here, just the bare minimum to get the paginated variant work as intended.
+///
+/// First of all, the list position is bound to the current page specified by [VFXPaginatedList#pageProperty()].
+/// Only the position that is the same as the current orientation is bound. When the orientation changes, the binding is
+/// swapped by [#swapPositionBinding()]. Also, there are a couple of extra listeners, [#addListeners()].
+///
+/// As for the layout, the only thing that changes is that the container's size will adapt to the cell size and the number
+/// of cells per page, the exact computation is described and done by [#getLength()].
 public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T, C> {
     //================================================================================
     // Properties
@@ -65,10 +63,8 @@ public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T
     // Methods
     //================================================================================
 
-    /**
-     * Responsible for swapping the position's binding when the orientation changes. Since the base skin uses a similar
-     * mechanism for the scroll, this is called in the {@link #swapPositionListener()} method.
-     */
+    /// Responsible for swapping the position's binding when the orientation changes. Since the base skin uses a similar
+    /// mechanism for the scroll, this is called in the [#swapPositionListener()] method.
     protected void swapPositionBinding() {
         if (posBinding == null) return;
         VFXList<T, C> list = getSkinnable();
@@ -82,26 +78,25 @@ public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T
         }
     }
 
-    /**
-     * Computes the length the container should have, according to the following three properties:
-     * <p> - {@link VFXPaginatedList#cellsPerPageProperty()}
-     * <p> - {@link VFXPaginatedList#cellSizeProperty()}
-     * <p> - {@link VFXPaginatedList#spacingProperty()}
-     * <p>
-     * The formula is as follows: {@code (cellsPerPage * (cellSize + spacing)) - spacing}.
-     * <p></p>
-     * The result is enforced by the 'compute min/pref/max width/height' methods defined by {@link SkinBase} and overridden here.
-     * Note that only the methods relative to the current orientation (VERTICAL -> height / HORIZONTAL -> width) will use
-     * the resulting value. Which means that the size in the opposite direction can be changed as preferred.
-     */
+    /// Computes the length the container should have, according to the following three properties:
+    ///
+    /// - [VFXPaginatedList#cellsPerPageProperty()]
+    ///
+    /// - [VFXPaginatedList#cellSizeProperty()]
+    ///
+    /// - [VFXPaginatedList#spacingProperty()]
+    ///
+    /// The formula is as follows: `(cellsPerPage * (cellSize + spacing)) - spacing`.
+    ///
+    /// The result is enforced by the 'compute min/pref/max width/height' methods defined by [SkinBase] and overridden here.
+    /// Note that only the methods relative to the current orientation (VERTICAL -> height / HORIZONTAL -> width) will use
+    /// the resulting value. Which means that the size in the opposite direction can be changed as preferred.
     protected final double getLength() {
         VFXPaginatedList<T, C> list = getList();
         return (list.getCellsPerPage() * (list.getCellSize() + list.getSpacing())) - list.getSpacing();
     }
 
-    /**
-     * Convenience method to cast {@link #getSkinnable()} to {@link VFXPaginatedList}.
-     */
+    /// Convenience method to cast [#getSkinnable()] to [VFXPaginatedList].
     protected VFXPaginatedList<T, C> getList() {
         return (VFXPaginatedList<T, C>) getSkinnable();
     }
@@ -110,13 +105,13 @@ public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T
     // Overridden Methods
     //================================================================================
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * For the paginated variant there are the following additional listeners:
-     * <p> - Listener on {@link VFXPaginatedList#cellsPerPageProperty()}, will invoke {@link VFXPaginatedListManager#onCellsPerPageChanged()}
-     * <p> - Listener on {@link VFXPaginatedList#maxPageProperty()}, will invoke {@link VFXPaginatedListManager#onMaxPageChanged()}
-     */
+    /// {@inheritDoc}
+    ///
+    /// For the paginated variant there are the following additional listeners:
+    ///
+    /// - Listener on [VFXPaginatedList#cellsPerPageProperty()], will invoke [VFXPaginatedListManager#onCellsPerPageChanged()]
+    ///
+    /// - Listener on [VFXPaginatedList#maxPageProperty()], will invoke [VFXPaginatedListManager#onMaxPageChanged()]
     @Override
     protected void addListeners() {
         VFXPaginatedList<T, C> list = getList();
@@ -129,24 +124,20 @@ public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T
         );
     }
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Overridden to also call {@link #swapPositionBinding()}.
-     */
+    /// {@inheritDoc}
+    ///
+    /// Overridden to also call [#swapPositionBinding()].
     @Override
     protected void swapPositionListener() {
         super.swapPositionListener();
         swapPositionBinding();
     }
 
-    /**
-     * Overridden to cast the behavior to {@link VFXPaginatedListManager}.
-     * <p>
-     * Since {@link VFXPaginatedList} extends {@link VFXList} nothing prevents the user from using behaviors of type
-     * {@link VFXListManager}, but that would result in exceptions being thrown and invalid states.
-     * Long story short: don't do it!
-     */
+    /// Overridden to cast the behavior to [VFXPaginatedListManager].
+    ///
+    /// Since [VFXPaginatedList] extends [VFXList] nothing prevents the user from using behaviors of type
+    /// [VFXListManager], but that would result in exceptions being thrown and invalid states.
+    /// Long story short: don't do it!
     @Override
     protected VFXPaginatedListManager<T, C> getBehavior() {
         return (VFXPaginatedListManager<T, C>) super.getBehavior();

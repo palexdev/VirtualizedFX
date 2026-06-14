@@ -33,26 +33,27 @@ import javafx.geometry.VPos;
 import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
-/**
- * Simple skin implementation to be used with any descendant of {@link VFXCellBase}.
- * <p>
- * This will display the data specified by the {@link VFXCellBase#itemProperty()} as a {@code String} in a {@link Label}.
- * It's the only children of this skin, takes all the available space and has the following properties bound to the cell:
- * <p> - the alignment property bound to {@link VFXCellBase#alignmentProperty()}
- * <p> - the graphic property bound to {@link VFXCellBase#graphicProperty()}.
- * <p>
- * The label's text will be updated on two occasions:
- * <p> 1) when the {@link VFXCellBase#itemProperty()} is invalidated
- * <p> 2) when an event of type {@link VFXContainerEvent#UPDATE} reaches the cell
- * <p>
- * You can modify {@link #addListeners()} to change such behavior. For example, rather than using an {@link InvalidationListener}
- * you could use a {@link ChangeListener} instead, add your own logic, etc. (useful when you want to optimize update performance).
- * <p>
- * (It's recommended to use {@link #listeners(When[])}, {@link #events(WhenEvent[])} and in general {@link When} constructs.
- * Simply because they make your life easier, also disposal would be automatic this way).
- * <p>
- * Last but not least, the label's text is updated by the {@link #update()} method.
- */
+/// Simple skin implementation to be used with any descendant of [VFXCellBase].
+///
+/// This will display the data specified by the [VFXCellBase#itemProperty()] as a `String` in a [Label].
+/// It's the only children of this skin, takes all the available space and has the following properties bound to the cell:
+///
+/// - the alignment property bound to [VFXCellBase#alignmentProperty()]
+/// - the graphic property bound to [VFXCellBase#graphicProperty()].
+///
+/// The label's text will be updated on two occasions:
+///
+/// 1) when the [VFXCellBase#itemProperty()] is invalidated
+///
+/// 2) when an event of type [VFXContainerEvent#UPDATE] reaches the cell
+///
+/// You can modify [#addListeners()] to change such behavior. For example, rather than using an [InvalidationListener]
+/// you could use a [ChangeListener] instead, add your own logic, etc. (useful when you want to optimize update performance).
+///
+/// (It's recommended to use [#listeners(When\[\])], [#events(WhenEvent\[\])] and in general [When] constructs.
+/// Simply because they make your life easier, also disposal would be automatic this way).
+///
+/// Last but not least, the label's text is updated by the [#update()] method.
 public class VFXLabeledCellSkin<T> extends MFXSkinBase<VFXCellBase<T>> {
     //================================================================================
     // Properties
@@ -79,15 +80,13 @@ public class VFXLabeledCellSkin<T> extends MFXSkinBase<VFXCellBase<T>> {
     // Methods
     //================================================================================
 
-    /**
-     * Adds an {@link InvalidationListener} on the {@link VFXCellBase#itemProperty()} to call {@link #update()} when it changes,
-     * and an {@link EventHandler} to support "manual" updates through events of type {@link VFXContainerEvent#UPDATE}.
-     * <p>
-     * (Uses {@link When} and {@link WhenEvent} constructs).
-     *
-     * @see #listeners(When[])
-     * @see #events(WhenEvent[])
-     */
+    /// Adds an [InvalidationListener] on the [VFXCellBase#itemProperty()] to call [#update()] when it changes,
+    /// and an [EventHandler] to support "manual" updates through events of type [VFXContainerEvent#UPDATE].
+    ///
+    /// (Uses [When] and [WhenEvent] constructs).
+    ///
+    /// @see #listeners(When[])
+    /// @see #events(WhenEvent[])
     protected void addListeners() {
         VFXCellBase<T> cell = getSkinnable();
         listeners(
@@ -97,11 +96,9 @@ public class VFXLabeledCellSkin<T> extends MFXSkinBase<VFXCellBase<T>> {
         );
     }
 
-    /**
-     * This is responsible for updating the label's text using the value specified by the {@link VFXCellBase#itemProperty()}.
-     * <p>
-     * If the item is {@code null} sets the text to an empty string, otherwise calls {@code toString()} on it.
-     */
+    /// This is responsible for updating the label's text using the value specified by the [VFXCellBase#itemProperty()].
+    ///
+    /// If the item is `null` sets the text to an empty string, otherwise calls `toString()` on it.
     protected void update() {
         VFXCellBase<T> cell = getSkinnable();
         T item = cell.getItem();

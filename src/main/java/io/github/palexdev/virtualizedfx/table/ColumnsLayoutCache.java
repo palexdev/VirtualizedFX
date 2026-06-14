@@ -34,68 +34,73 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 
-/**
- * Complex cache mechanism to simplify and vastly improve layout performance for {@link ColumnsLayoutMode#VARIABLE}.
- * This mode essentially disables virtualization along the x-axis which makes some computations way more expensive.
- * <p>
- * Example 1: A columns width must be 'asked' to the column itself rather than using the value specified by
- * {@link VFXTable#columnsSizeProperty()}
- * <p>
- * Example 2: A columns position cannot be determined by a simple multiplication, but it's the sum of all previous
- * columns' widths (a loop)
- * <p>
- * Also, keep in mind that such computations are not needed only for the columns, but also for their corresponding cells
- * (can't rely on JavaFX bounds because sometimes they are messed up, garbage framework).
- * <p>
- * This cache implementation tries to mitigate this by caching columns' data such as their width, position and visibility
- * in the viewport. Listeners and bindings will automatically invalidate the data as needed, and re-compute it once
- * requested, which in other words means that the cache is 'lazy'.
- * <p></p>
- * <b>Why this extends</b> {@link DoubleBinding}
- * <p>
- * When I decided to create this special cache, it was mainly to improve the computation speed of the {@link VFXTable#virtualMaxXProperty()}
- * (in VARIABLE mode ofc), because it requires summing every column's width. So, I came up with a simple extension of
- * {@link DoubleBinding} which would invalidate the cached widths and thus re-compute upon request their sum.
- * It was then that I decided to expand the cache to also have positions and visibility checks, because the three pieces
- * of information are tightly coupled. Visibility depends on the width and the position, the latter depends on the width.
- * So, besides making such computations faster, this also still allows computing the {@code virtualMaxX} much faster.
- * There's even a special width value given by {@link #getPartialWidth()} which is the sum of all column's widths excluding
- * the last one. This is useful to compute the last column's width, as it may need to be bigger than expected to fill
- * the table (such value could be given by {@code tableWidth - partialWidth}).
- * <p></p>
- * <b>How data is stored</b>
- * <p>
- * The cache makes use of a {@link Map} and a wrapper class {@link LayoutInfo} to gather all the computations in one place.
- * Each table's column will have an entry in the map like this: [Column -> LayoutInfo]. When something needs to be
- * invalidated, setters are called on the appropriate {@link LayoutInfo} object.
- * <p></p>
- * <b>Listeners</b>
- * <p>
- * To manage invalidations and columns changes in the table, this uses a series of listeners.
- * <p> 1) A {@link ListChangeListener} ensures the above-mentioned map stays always updated, more info here {@link #handleColumns(ListChangeListener.Change)}
- * <p> 2) An {@link InvalidationListener} watches for {@link VFXTable#columnsSizeProperty()} changes and by iterating over
- * the {@link LayoutInfo} stored in the map, performs the following actions: a) resets both the positions and visibility
- * flags; b) invalidates the width if it's below the new value specified by the property; c) at the end it also invalidates
- * the width for the last column (if it wasn't done before). This is important to ensure that the last column takes all
- * the available space
- * <p> 3) An {@link InvalidationListener} added on both the {@link VFXTable#widthProperty()} and {@link VFXTable#hPosProperty()}.
- * This listener is responsible for clearing, thus forcing the re-computation when requested, of the visibility cache
- * <p> 4) Lastly, there an {@link InvalidationListener} for each column in the map to watch for {@link VFXTableColumn#prefWidthProperty()}
- * changes. This is managed by each {@link LayoutInfo}, more info there.
- * <p></p>
- * <b>Computing functions and initialization</b>
- * <p>
- * For the cache to work, the user must specify the three functions used to compute:
- * <p> 1) the widths, {@link #setWidthFunction(BiFunction)}
- * <p> 2) the positions, {@link #setPositionFunction(BiFunction)}
- * <p> 3) the visibility, {@link #setVisibilityFunction(Function)}
- * <p>
- * To avoid cluttering the constructors, and for other reasons, the cache won't be active until you call the
- * {@link #init()} method. Both the setters and the init methods follow the fluent API pattern. <b>Beware,</b> if any
- * of the three functions is not set, it will throw an exception!
- *
- * @see LayoutInfoCache
- */
+/// Complex cache mechanism to simplify and vastly improve layout performance for [ColumnsLayoutMode#VARIABLE].
+/// This mode essentially disables virtualization along the x-axis which makes some computations way more expensive.
+///
+/// Example 1: A columns width must be 'asked' to the column itself rather than using the value specified by
+/// [VFXTable#columnsSizeProperty()]
+///
+/// Example 2: A columns position cannot be determined by a simple multiplication, but it's the sum of all previous
+/// columns' widths (a loop)
+///
+/// Also, keep in mind that such computations are not needed only for the columns, but also for their corresponding cells
+/// (can't rely on JavaFX bounds because sometimes they are messed up, garbage framework).
+///
+/// This cache implementation tries to mitigate this by caching columns' data such as their width, position and visibility
+/// in the viewport. Listeners and bindings will automatically invalidate the data as needed, and re-compute it once
+/// requested, which in other words means that the cache is 'lazy'.
+///
+/// **Why this extends** [DoubleBinding]
+///
+/// When I decided to create this special cache, it was mainly to improve the computation speed of the [VFXTable#virtualMaxXProperty()]
+/// (in VARIABLE mode ofc), because it requires summing every column's width. So, I came up with a simple extension of
+/// [DoubleBinding] which would invalidate the cached widths and thus re-compute upon request their sum.
+/// It was then that I decided to expand the cache to also have positions and visibility checks, because the three pieces
+/// of information are tightly coupled. Visibility depends on the width and the position, the latter depends on the width.
+/// So, besides making such computations faster, this also still allows computing the `virtualMaxX` much faster.
+/// There's even a special width value given by [#getPartialWidth()] which is the sum of all column's widths excluding
+/// the last one. This is useful to compute the last column's width, as it may need to be bigger than expected to fill
+/// the table (such value could be given by `tableWidth - partialWidth`).
+///
+/// **How data is stored**
+///
+/// The cache makes use of a [Map] and a wrapper class [LayoutInfo] to gather all the computations in one place.
+/// Each table's column will have an entry in the map like this: [Column->LayoutInfo]. When something needs to be
+/// invalidated, setters are called on the appropriate [LayoutInfo] object.
+///
+/// **Listeners**
+///
+/// To manage invalidations and columns changes in the table, this uses a series of listeners.
+///
+/// 1) A [ListChangeListener] ensures the above-mentioned map stays always updated, more info here [#handleColumns(ListChangeListener.Change)]
+///
+/// 2) An [InvalidationListener] watches for [VFXTable#columnsSizeProperty()] changes and by iterating over
+/// the [LayoutInfo] stored in the map, performs the following actions: a) resets both the positions and visibility
+/// flags; b) invalidates the width if it's below the new value specified by the property; c) at the end it also invalidates
+/// the width for the last column (if it wasn't done before). This is important to ensure that the last column takes all
+/// the available space
+///
+/// 3) An [InvalidationListener] added on both the [VFXTable#widthProperty()] and [VFXTable#hPosProperty()].
+/// This listener is responsible for clearing, thus forcing the re-computation when requested, of the visibility cache
+///
+/// 4) Lastly, there an [InvalidationListener] for each column in the map to watch for [VFXTableColumn#prefWidthProperty()]
+/// changes. This is managed by each [LayoutInfo], more info there.
+///
+/// **Computing functions and initialization**
+///
+/// For the cache to work, the user must specify the three functions used to compute:
+///
+/// 1) the widths, [#setWidthFunction(BiFunction)]
+///
+/// 2) the positions, [#setPositionFunction(BiFunction)]
+///
+/// 3) the visibility, [#setVisibilityFunction(Function)]
+///
+/// To avoid cluttering the constructors, and for other reasons, the cache won't be active until you call the
+/// [#init()] method. Both the setters and the init methods follow the fluent API pattern. **Beware,** if any
+/// of the three functions is not set, it will throw an exception!
+///
+/// @see LayoutInfoCache
 public class ColumnsLayoutCache<T> extends DoubleBinding {
     //================================================================================
     // Properties
@@ -160,12 +165,10 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     // Methods
     //================================================================================
 
-    /**
-     * If {@link #preInitCheck()} does not throw any exception, initializes the cache by adding the needed listeners
-     * to the appropriate properties, as well as creating the cache mappings for each column in the table.
-     * <p>
-     * Further calls to this method won't do anything if the cache has already been initialized before.
-     */
+    /// If [#preInitCheck()] does not throw any exception, initializes the cache by adding the needed listeners
+    /// to the appropriate properties, as well as creating the cache mappings for each column in the table.
+    ///
+    /// Further calls to this method won't do anything if the cache has already been initialized before.
     public ColumnsLayoutCache<T> init() {
         if (!init) {
             preInitCheck();
@@ -183,13 +186,11 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         return this;
     }
 
-    /**
-     * Checks that all the computing functions are set.
-     *
-     * @see #setWidthFunction(BiFunction)
-     * @see #setPositionFunction(BiFunction)
-     * @see #setVisibilityFunction(Function)
-     */
+    /// Checks that all the computing functions are set.
+    ///
+    /// @see #setWidthFunction(BiFunction)
+    /// @see #setPositionFunction(BiFunction)
+    /// @see #setVisibilityFunction(Function)
     private void preInitCheck() {
         if (widthFn == null)
             throw new IllegalStateException("Cannot initialize because: width function has not been set.");
@@ -199,25 +200,19 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             throw new IllegalStateException("Cannot initialize because: visibility function has not been set.");
     }
 
-    /**
-     * Delegates to {@link LayoutInfoCache#getWidth(VFXTableColumn)}.
-     *
-     * @return either the cached or computed width for the given column
-     */
+    /// Delegates to [LayoutInfoCache#getWidth(VFXTableColumn)].
+    ///
+    /// @return either the cached or computed width for the given column
     public double getColumnWidth(VFXTableColumn<T, ?> column) {
         return cache.getWidth(column);
     }
 
-    /**
-     * Delegates to {@link #getColumnWidth(VFXTableColumn)} by passing the last column in the table.
-     */
+    /// Delegates to [#getColumnWidth(VFXTableColumn)] by passing the last column in the table.
     public double getLastColumnWidth() {
         return getColumnWidth(lColumn);
     }
 
-    /**
-     * @return the sum of all columns' widths excluding the last one
-     */
+    /// @return the sum of all columns' widths excluding the last one
     public double getPartialWidth() {
         return cache.entrySet().stream()
             .filter(e -> e.getKey() != lColumn)
@@ -225,40 +220,33 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             .sum();
     }
 
-    /**
-     * The position of the column at the given index. This method is recursive!
-     * <p>
-     * Detailing the internals:
-     * <pre>
-     * {@code
-     * // Let's suppose we want to compute the position of the column at index 2 (so third one)
-     * // First we convert the index to the corresponding column
-     * VFXTableColumn c = ...;
-     *
-     * // Then we query the map and get the known position for that column
-     * double pos = map.getPos(c);
-     * // Index 0 is a special case and we handle it as follows
-     * if (index == 0) {
-     *
-     *     map.setPos(c, 0); // Column 0 is always at x = 0
-     *     return 0;
-     * }
-     * // If 'pos' is lesser than 0, then it either means it was never been computed before or it was invalidated
-     * // We need to ask the position function to compute the value as follows...
-     * if (pos < 0) {
-     *     pos = posFn.apply(index -1, getColumnPos(index -1)); // Here's where the method calls itself
-     *     map.setPos(index, pos); // Store the found pos in the cache so we don't fall in this 'if' again until invalidated
-     * }
-     * return pos;
-     *
-     * // Why the recursion?
-     * // In general, to compute a column's position, we can simply get the position of the previous column + its width.
-     * // So, for the third one, we need the second one's position, and so on...
-     * // The recursion doesn't happen if the previous value is known, so the method acts almost like a simple getter
-     * // The recursion stops at column 0, because it's position is always 0.
-     * }
-     * </pre>
-     */
+    /// The position of the column at the given index. This method is recursive!
+    ///
+    /// Detailing the internals:
+    /// ```
+    /// // Let's suppose we want to compute the position of the column at index 2 (so third one)
+    /// // First we convert the index to the corresponding column
+    /// VFXTableColumn c = ...;
+    /// // Then we query the map and get the known position for that column
+    /// double pos = map.getPos(c);
+    /// // Index 0 is a special case and we handle it as follows
+    /// if (index == 0) {
+    ///     map.setPos(c, 0); // Column 0 is always at x = 0
+    ///     return 0;
+    /// }
+    /// // If 'pos' is lesser than 0, then it either means it was never been computed before or it was invalidated
+    /// // We need to ask the position function to compute the value as follows...
+    /// if (pos < 0) {
+    ///     pos = posFn.apply(index -1, getColumnPos(index -1)); // Here's where the method calls itself
+    ///     map.setPos(index, pos); // Store the found pos in the cache so we don't fall in this 'if' again until invalidated
+    /// }
+    /// return pos;
+    /// // Why the recursion?
+    /// // In general, to compute a column's position, we can simply get the position of the previous column + its width.
+    /// // So, for the third one, we need the second one's position, and so on...
+    /// // The recursion doesn't happen if the previous value is known, so the method acts almost like a simple getter
+    /// // The recursion stops at column 0, because it's position is always 0.
+    /// ```
     public double getColumnPos(int index) {
         VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
         LayoutInfo li = cache.get(column);
@@ -274,67 +262,61 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         return pos;
     }
 
-    /**
-     * Queries the map to check whether the given column is visible.
-     * <p>
-     * If the {@link LayoutInfo} mapped to the column returns a {@code null} value, then it means that the visibility
-     * check was either never done before or invalidated. In this case, the visibility function will compute it and the
-     * {@link LayoutInfo} object updated.
-     */
+    /// Queries the map to check whether the given column is visible.
+    ///
+    /// If the [LayoutInfo] mapped to the column returns a `null` value, then it means that the visibility
+    /// check was either never done before or invalidated. In this case, the visibility function will compute it and the
+    /// [LayoutInfo] object updated.
     public boolean isInViewport(VFXTableColumn<T, ?> column) {
         LayoutInfo li = cache.get(column);
         if (li.isVisible() == null) li.setVisible(vFn.apply(column));
         return li.isVisible();
     }
 
-    /**
-     * @return the number of entries in the cache's map. This should always be equal to the size of {@link VFXTable#getColumns()}
-     */
+    /// @return the number of entries in the cache's map. This should always be equal to the size of [VFXTable#getColumns()]
     public int size() {
         return cache.size();
     }
 
-    /**
-     * Invalidates the last column's width.
-     */
+    /// Invalidates the last column's width.
     private void invalidateLast() {
         cache.invalidateWidth(lColumn);
     }
 
-    /**
-     * This method is responsible for updating the cache map's entries when changes occur in {@link VFXTable#getColumns()}.
-     * <p>
-     * If there are no columns anymore, calls {@link #clear()} and {@link #invalidate()}, then exits.
-     * <p>
-     * Remember, the last column is always a special case in the table because it behaves a little different from the others.
-     * So, before processing the {@link Change}, we must ensure that the last column is still the same as before.
-     * If that's not the case, first we call {@link #invalidateLast()} to ensure that the 'now previously last' column
-     * has the right width (the width computing function is likely to return a different value now). It does not matter
-     * if the change is going to remove that column, we must do it anyway for consistency. Then we update the local
-     * reference for the last column (yes, the cache stores it for fast access), and at this point two things can happen:
-     * <p> 1) the new last column already was present in the cache, we simply call {@link LayoutInfo#invalidateWidth()}
-     * <p> 2) the new last column has been added by the {@link Change} so we need to create a new entry in the cache's map
-     * <p></p>
-     * After the above checks we can start processing the {@link Change}. We just need to handle additions and removals.
-     * For each removal, we remove the corresponding entry from the map and dispose it {@link LayoutInfo#dispose()}.
-     * For each addition, we create a new entry in the map {@link LayoutInfo#LayoutInfo(VFXTableColumn)}.
-     * <p>
-     * <b>Note:</b> as you may know, JavaFX sucks. So, we actually need to manage this a bit differently. You see,
-     * {@code setAll()} operations pose a big issue. As described in {@link Change}'s documentation, calling {@code set()}
-     * on the list will be treated as both an addition and a removal, also the {@code replaced} flag will return {@code true},
-     * which makes sens right? When such change occurs, the added and removed lists carried by the {@link Change}
-     * will respectively contain all the items in the list and all the previous items in the list. But what happens when
-     * the new ones are pretty much the same as the old ones, maybe with just a few additions/removals? We simply can't
-     * treat the change as suggested here {@link Change}, because we would first remove and dispose all the {@link LayoutInfo}
-     * objects, and then create them again. What. A. Waste. Of. Performance!
-     * <p>
-     * So, how do we handle this? A temporary collection stores all the removed values. When processing the additions,
-     * we remove any entry that is also present in that collection. This way we only keep the values that have actually
-     * been removed, and for these we can remove the entry and call {@link LayoutInfo#dispose()}.
-     * <p></p>
-     * Finally, we invalidate all the positions and visibility flags. Re-computing them is far more convenient and stable
-     * than trying to guess which one is still good and which not. We also call {@link #invalidate()} and {@link #invalidateLast()}.
-     */
+    /// This method is responsible for updating the cache map's entries when changes occur in [VFXTable#getColumns()].
+    ///
+    /// If there are no columns anymore, calls [#clear()] and [#invalidate()], then exits.
+    ///
+    /// Remember, the last column is always a special case in the table because it behaves a little different from the others.
+    /// So, before processing the [Change], we must ensure that the last column is still the same as before.
+    /// If that's not the case, first we call [#invalidateLast()] to ensure that the 'now previously last' column
+    /// has the right width (the width computing function is likely to return a different value now). It does not matter
+    /// if the change is going to remove that column, we must do it anyway for consistency. Then we update the local
+    /// reference for the last column (yes, the cache stores it for fast access), and at this point two things can happen:
+    ///
+    /// 1) the new last column already was present in the cache, we simply call [LayoutInfo#invalidateWidth()]
+    ///
+    /// 2) the new last column has been added by the [Change] so we need to create a new entry in the cache's map
+    ///
+    /// After the above checks we can start processing the [Change]. We just need to handle additions and removals.
+    /// For each removal, we remove the corresponding entry from the map and dispose it [LayoutInfo#dispose()].
+    /// For each addition, we create a new entry in the map [LayoutInfo#LayoutInfo(VFXTableColumn)].
+    ///
+    /// **Note:** as you may know, JavaFX sucks. So, we actually need to manage this a bit differently. You see,
+    /// `setAll()` operations pose a big issue. As described in [Change]'s documentation, calling `set()`
+    /// on the list will be treated as both an addition and a removal, also the `replaced` flag will return `true`,
+    /// which makes sense right? When such a change occurs, the added and removed lists carried by the [Change]
+    /// will respectively contain all the items in the list and all the previous items in the list. But what happens when
+    /// the new ones are pretty much the same as the old ones, maybe with just a few additions/removals? We simply can't
+    /// treat the change as suggested here [Change], because we would first remove and dispose all the [LayoutInfo]
+    /// objects, and then create them again. What. A. Waste. Of. Performance!
+    ///
+    /// So, how do we handle this? A temporary collection stores all the removed values. When processing the additions,
+    /// we remove any entry that is also present in that collection. This way we only keep the values that have actually
+    /// been removed, and for these we can remove the entry and call [LayoutInfo#dispose()].
+    ///
+    /// Finally, we invalidate all the positions and visibility flags. Re-computing them is far more convenient and stable
+    /// than trying to guess which one is still good and which not. We also call [#invalidate()] and [#invalidateLast()].
     private void handleColumns(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
         ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
         if (columns.isEmpty()) {
@@ -381,9 +363,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         invalidateLast();
     }
 
-    /**
-     * Clears the cache by removing all the entries from the map and setting the last column local reference to {@code null}.
-     */
+    /// Clears the cache by removing all the entries from the map and setting the last column local reference to `null`.
     private void clear() {
         cache.clear();
         anyChanged.set(false);
@@ -394,9 +374,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     // Overridden Methods
     //================================================================================
 
-    /**
-     * @return the sum of all columns' widths, each given by {@link LayoutInfo#getWidth()}
-     */
+    /// @return the sum of all columns' widths, each given by [LayoutInfo#getWidth()]
     @Override
     protected double computeValue() {
         anyChanged.set(false);
@@ -405,11 +383,9 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             .sum();
     }
 
-    /**
-     * Disposes the cache making it not usable anymore.
-     *
-     * @see #clear()
-     */
+    /// Disposes the cache making it not usable anymore.
+    ///
+    /// @see #clear()
     @Override
     public void dispose() {
         clear();
@@ -495,23 +471,17 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     // Getters/Setters
     //================================================================================
 
-    /**
-     * @return the {@link VFXTable} instance this cache is related to
-     */
+    /// @return the [VFXTable] instance this cache is related to
     public VFXTable<T> getTable() {
         return table;
     }
 
-    /**
-     * @return the map containing the columns' layout data as {@link LayoutInfo} objects
-     */
+    /// @return the map containing the columns' layout data as [LayoutInfo] objects
     protected Map<VFXTableColumn<T, ?>, LayoutInfo> getCacheMap() {
         return cache;
     }
 
-    /**
-     * @return the local reference to the last column in the table
-     */
+    /// @return the local reference to the last column in the table
     protected VFXTableColumn<T, ?> getLastColumn() {
         return lColumn;
     }
@@ -520,43 +490,35 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         return anyChanged.get();
     }
 
-    /**
-     * Specifies whether any of the {@link LayoutInfo} objects in {@link #getCacheMap()} was invalidated.
-     */
+    /// Specifies whether any of the [LayoutInfo] objects in [#getCacheMap()] was invalidated.
     public ReadOnlyBooleanProperty anyChangedProperty() {
         return anyChanged.getReadOnlyProperty();
     }
 
-    /**
-     * Sets the {@link BiFunction} responsible for computing a column's width. The function gives the following parameters:
-     * 1) the column to compute the width for; 2) whether it is the last column in the table which may need special handling.
-     * <p>
-     * You can check {@link VariableTableHelper#computeColumnWidth(VFXTableColumn, boolean)} for an example.
-     */
+    /// Sets the [BiFunction] responsible for computing a column's width. The function gives the following parameters:
+    /// 1) the column to compute the width for; 2) whether it is the last column in the table which may need special handling.
+    ///
+    /// You can check [VariableTableHelper#computeColumnWidth(VFXTableColumn, boolean)] for an example.
     public ColumnsLayoutCache<T> setWidthFunction(BiFunction<VFXTableColumn<T, ?>, Boolean, Double> widthFn) {
         this.widthFn = widthFn;
         return this;
     }
 
-    /**
-     * Sets the {@link BiFunction} responsible for computing a column's position. The function gives the following parameters:
-     * 1) the previous column's index; 2) the previous column's width.
-     * <p>
-     * To understand the why of those parameters, read {@link #getColumnPos(int)}.
-     * <p>
-     * You can check {@link VariableTableHelper#computeColumnPos(int, double)} for an example.
-     */
+    /// Sets the [BiFunction] responsible for computing a column's position. The function gives the following parameters:
+    /// 1) the previous column's index; 2) the previous column's width.
+    ///
+    /// To understand the why of those parameters, read [#getColumnPos(int)].
+    ///
+    /// You can check [VariableTableHelper#computeColumnPos(int, double)] for an example.
     public ColumnsLayoutCache<T> setPositionFunction(BiFunction<Integer, Double, Double> xPosFn) {
         this.xPosFn = xPosFn;
         return this;
     }
 
-    /**
-     * Sets the {@link Function} responsible for computing a column's width. The function gives the column for which
-     * compute the visibility as the parameter.
-     * <p>
-     * You can check {@link VariableTableHelper#computeVisibility(VFXTableColumn)} for an example.
-     */
+    /// Sets the [Function] responsible for computing a column's width. The function gives the column for which
+    /// compute the visibility as the parameter.
+    ///
+    /// You can check [VariableTableHelper#computeVisibility(VFXTableColumn)] for an example.
     public ColumnsLayoutCache<T> setVisibilityFunction(Function<VFXTableColumn<T, ?>, Boolean> vFn) {
         this.vFn = vFn;
         return this;
@@ -566,13 +528,11 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     // Internal Classes
     //================================================================================
 
-    /**
-     * Nothing special, just an extension of {@link HashMap} to store data about columns' layout as {@link LayoutInfo} objects.
-     * <p>
-     * Makes the variable declaration shorted and offers a bunch of convenience methods, that's all.
-     *
-     * @see LayoutInfo
-     */
+    /// Nothing special, just an extension of [HashMap] to store data about columns' layout as [LayoutInfo] objects.
+    ///
+    /// Makes the variable declaration shorted and offers a bunch of convenience methods, that's all.
+    ///
+    /// @see LayoutInfo
     public class LayoutInfoCache extends HashMap<VFXTableColumn<T, ?>, LayoutInfo> {
 
         //================================================================================
@@ -635,20 +595,18 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         }
     }
 
-    /**
-     * Wrapper class for layout data related to a specific {@link VFXTableColumn}.
-     * This stores: its index [init:-1], its width as a {@link DoubleBinding}, its x position [default:-1.0],
-     * and its visibility [default:null].
-     * <p></p>
-     * <b>Width handling</b>
-     * <p>
-     * For better performance, the column's width is stored as a binding, so the value is computed lazily (only upon request).
-     * Invalidation is handled "manually". Check {@link #createWidthBinding()} for more details.
-     * <p></p>
-     * <b>Null visibility? What?</b>
-     * <p>
-     * This uses {@code null} as a possible visibility value, to indicate that it is invalid and thus must be computed.
-     */
+    /// Wrapper class for layout data related to a specific [VFXTableColumn].
+    /// This stores: its index [init:-1], its width as a [DoubleBinding], its x position [default:-1.0],
+    /// and its visibility [default:null].
+    ///
+    /// **Width handling**
+    ///
+    /// For better performance, the column's width is stored as a binding, so the value is computed lazily (only upon request).
+    /// Invalidation is handled "manually". Check [#createWidthBinding()] for more details.
+    ///
+    /// **Null visibility? What?**
+    ///
+    /// This uses `null` as a possible visibility value, to indicate that it is invalid and thus must be computed.
     public class LayoutInfo implements Comparable<LayoutInfo> {
         //================================================================================
         // Properties
@@ -671,95 +629,73 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         // Methods
         //================================================================================
 
-        /**
-         * @return the column instance the layout data refers to
-         */
+        /// @return the column instance the layout data refers to
         public VFXTableColumn<T, ?> getColumn() {
             return column;
         }
 
-        /**
-         * @return the column's index retrieved the first time by {@link VFXTable#indexOf(VFXTableColumn)} (then cached)
-         */
+        /// @return the column's index retrieved the first time by [VFXTable#indexOf(VFXTableColumn)] (then cached)
         public int getIndex() {
             if (index == -1) index = table.indexOf(column);
             return index;
         }
 
-        /**
-         * Calls {@link DoubleBinding#get()} on the column's width binding.
-         */
+        /// Calls [DoubleBinding#get()] on the column's width binding.
         public double getWidth() {
             return wBinding.get();
         }
 
-        /**
-         * @return whether {@link DoubleBinding#isValid()} is true
-         */
+        /// @return whether [DoubleBinding#isValid()] is true
         public boolean isWidthValid() {
             return wBinding.isValid();
         }
 
-        /**
-         * Invalidates the width binding by calling {@link DoubleBinding#invalidate()}.
-         */
+        /// Invalidates the width binding by calling [DoubleBinding#invalidate()].
         private void invalidateWidth() {
             wBinding.invalidate();
         }
 
-        /**
-         * @return the stored column's x position
-         */
+        /// @return the stored column's x position
         public double getPos() {
             return pos;
         }
 
-        /**
-         * Sets the column's x position.
-         */
+        /// Sets the column's x position.
         private void setPos(double pos) {
             this.pos = pos;
         }
 
-        /**
-         * Resets, and thus invalidates, the column's x position to -1.0
-         */
+        /// Resets, and thus invalidates, the column's x position to -1.0
         private void resetPos() {
             setPos(-1.0);
         }
 
-        /**
-         * @return whether the column is visible in the viewport. Beware, this can also return {@code null} to indicate
-         * that the value is invalid and should be re-computed by the cache
-         */
+        /// @return whether the column is visible in the viewport. Beware, this can also return `null` to indicate
+        /// that the value is invalid and should be re-computed by the cache
         public Boolean isVisible() {
             return visible;
         }
 
-        /**
-         * Sets whether the column is visible in the viewport.
-         */
+        /// Sets whether the column is visible in the viewport.
         private void setVisible(Boolean visible) {
             this.visible = visible;
         }
 
-        /**
-         * Resets, and thus invalidates, the column's visibility to {@code null}.
-         */
+        /// Resets, and thus invalidates, the column's visibility to `null`.
         private void resetVisibility() {
             setVisible(null);
         }
 
-        /**
-         * This is responsible for creating the {@link DoubleBinding} which computes the column's width by using
-         * the function set by {@link #setWidthFunction(BiFunction)}.
-         * <p>
-         * It returns an inline custom binding which depends on {@link VFXTableColumn#prefWidthProperty()}. When this
-         * property changes two things must happen:
-         * <p> 1) obviously the binding must become invalid, because now the width function may return a different value
-         * <p> 2) we must partially invalidate the positions and visibility values. By partial, I mean only the columns
-         * starting from {@link #getIndex()} to the last one.
-         */
+        /// This is responsible for creating the [DoubleBinding] which computes the column's width by using
+        /// the function set by [#setWidthFunction(BiFunction)].
+        ///
+        /// It returns an inline custom binding which depends on [VFXTableColumn#prefWidthProperty()]. When this
+        /// property changes two things must happen:
+        ///
+        /// 1) obviously the binding must become invalid, because now the width function may return a different value
+        ///
+        /// 2) we must partially invalidate the positions and visibility values. By partial, I mean only the columns
+        /// starting from [#getIndex()] to the last one.
         private DoubleBinding createWidthBinding() {
             return new DoubleBinding() {
                 {
@@ -796,9 +732,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             };
         }
 
-        /**
-         * Calls {@link DoubleBinding#dispose()} and sets both the binding and the column instances to {@code null}.
-         */
+        /// Calls [DoubleBinding#dispose()] and sets both the binding and the column instances to `null`.
         private void dispose() {
             wBinding.dispose();
             wBinding = null;

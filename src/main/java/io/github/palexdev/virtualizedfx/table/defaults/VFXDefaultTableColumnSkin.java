@@ -34,23 +34,22 @@ import javafx.scene.layout.Region;
 import static io.github.palexdev.mfxcore.observables.When.onChanged;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
-/**
- * Default skin implementation for {@link VFXDefaultTableColumn}, extends {@link MFXSkinBase} and uses behaviors of type
- * {@link VFXTableColumnBehavior}.
- * <p>
- * The layout is simple, there are at max three nodes.
- * <p> - a {@link BoundLabel} to show the column's text
- * <p> - a generic {@link Node} specified by the column's {@link VFXTableColumn#graphicProperty()}. It is highly recommended
- * to use this "slot" just for icons
- * <p> - a {@link Region} called 'overlay' which can be used to indicate selection, hovering or other states for the column.
- * This region can be selected in CSS by the selector '.overlay'.
- * <p>
- * See also: {@link VFXDefaultTableColumn#enableOverlayProperty()}, {@link VFXDefaultTableColumn#overlayOnHeaderProperty()}.
- * <p></p>
- * There are three ways to arrange the text and the 'icon' as specified by the {@link VFXDefaultTableColumn#iconAlignmentProperty()}.
- * For {@link HPos#LEFT} and {@link HPos#RIGHT}, the 'icon' is going to be placed to the left and right respectively of the
- * label. For {@link HPos#CENTER} only the 'icon' will be visible at the center of the area, the label will be hidden.
- */
+/// Default skin implementation for [VFXDefaultTableColumn], extends [MFXSkinBase] and uses behaviors of type
+/// [VFXTableColumnBehavior].
+///
+/// The layout is simple, there are at max three nodes.
+///
+/// - a [BoundLabel] to show the column's text
+/// - a generic [Node] specified by the column's [VFXTableColumn#graphicProperty()]. It is highly recommended
+/// to use this "slot" just for icons
+/// - a [Region] called 'overlay' which can be used to indicate selection, hovering or other states for the column.
+/// This region can be selected in CSS by the selector '.overlay'.
+///
+/// See also: [VFXDefaultTableColumn#enableOverlayProperty()], [VFXDefaultTableColumn#overlayOnHeaderProperty()].
+///
+/// There are three ways to arrange the text and the 'icon' as specified by the [VFXDefaultTableColumn#iconAlignmentProperty()].
+/// For [HPos#LEFT] and [HPos#RIGHT], the 'icon' is going to be placed to the left and right respectively of the
+/// label. For [HPos#CENTER] only the 'icon' will be visible at the center of the area, the label will be hidden.
 public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXSkinBase<VFXTableColumn<T, C>> {
     //================================================================================
     // Properties
@@ -90,14 +89,15 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
     // Methods
     //================================================================================
 
-    /**
-     * Adds listeners to the following component's properties.
-     * <p> - Listener on the {@link VFXTableColumn#graphicProperty()} to call {@link #handleIcon(Node, Node)} when it changes,
-     * this is also called at init time by using {@link When#executeNow()}
-     * <p> - Listener on the {@link VFXDefaultTableColumn#iconAlignmentProperty()} to update the layout when it changes
-     * <p> - Listener on the {@link VFXTableColumn#gestureResizableProperty()} to enable or disable the feature by calling
-     * {@link VFXTableColumnBehavior#onResizableChanged()}; this is also called at init time by using {@link When#executeNow()}
-     */
+    /// Adds listeners to the following component's properties.
+    ///
+    /// - Listener on the [VFXTableColumn#graphicProperty()] to call [#handleIcon(Node, Node)] when it changes,
+    /// this is also called at init time by using [When#executeNow()]
+    ///
+    /// - Listener on the [VFXDefaultTableColumn#iconAlignmentProperty()] to update the layout when it changes
+    ///
+    /// - Listener on the [VFXTableColumn#gestureResizableProperty()] to enable or disable the feature by calling
+    /// [VFXTableColumnBehavior#onResizableChanged()]; this is also called at init time by using [When#executeNow()]
     private void addListeners() {
         VFXDefaultTableColumn<T, C> column = getColumn();
         listeners(
@@ -122,17 +122,13 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
         );
     }
 
-    /**
-     * Replaces the column's icon with the new given one.
-     */
+    /// Replaces the column's icon with the new given one.
     protected void handleIcon(Node oldIcon, Node newIcon) {
         if (oldIcon != null) getChildren().remove(oldIcon);
         if (newIcon != null) getChildren().addFirst(newIcon);
     }
 
-    /**
-     * Convenience method to cast {@link #getSkinnable()} to {@link VFXDefaultTableColumn}.
-     */
+    /// Convenience method to cast [#getSkinnable()] to [VFXDefaultTableColumn].
     protected VFXDefaultTableColumn<T, C> getColumn() {
         return (VFXDefaultTableColumn<T, C>) getSkinnable();
     }

@@ -30,21 +30,19 @@ import javafx.scene.layout.Pane;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
-/**
- * Default skin implementation for {@link VFXList}, extends {@link MFXSkinBase} and expects behaviors of type
- * {@link VFXListManager}.
- * <p>
- * The layout is quite simple: there is just one node, called the 'viewport', that is the {@code Pane} responsible for
- * containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
- * {@link #layout()} method.
- * <p></p>
- * As all skins typically do, this is also responsible for catching any change in the component's properties.
- * The computation that leads to a new state is delegated to the controller/behavior, which is the {@link VFXListManager}.
- * Read this {@link #addListeners()} to check which changes are handled.
- * <p></p>
- * Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
- * by overriding the {@link #DEFAULT_SIZE} variable.
- */
+/// Default skin implementation for [VFXList], extends [MFXSkinBase] and expects behaviors of type
+/// [VFXListManager].
+///
+/// The layout is quite simple: there is just one node, called the 'viewport', that is the `Pane` responsible for
+/// containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
+/// [#layout()] method.
+///
+/// As all skins typically do, this is also responsible for catching any change in the component's properties.
+/// The computation that leads to a new state is delegated to the controller/behavior, which is the [VFXListManager].
+/// Read this [#addListeners()] to check which changes are handled.
+///
+/// Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
+/// by overriding the [#DEFAULT_SIZE] variable.
 public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T, C>> {
     //================================================================================
     // Properties
@@ -81,30 +79,40 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
     // Methods
     //================================================================================
 
-    /**
-     * Adds listeners to the following component's properties which need to produce a new {@link VFXListState} upon changing.
-     * <p>
-     * Here's the list:
-     * <p> - Listener on {@link VFXList#stateProperty()}, this is crucial to update the viewport's children and
-     * invoke {@link VFXList#requestViewportLayout()} if {@link VFXListState#haveCellsChanged()} is true
-     * <p> - Listener on {@link VFXList#needsViewportLayoutProperty()}, this is crucial because invokes {@link #layout()}
-     * <p> - Listener on {@link VFXList#orientationProperty()}, this is crucial because invokes {@link #swapPositionListener()}
-     * <p> - Listener on {@link VFXList#helperProperty()}, this is crucial because it's responsible for invoking
-     * {@link VFXListManager#onOrientationChanged()}, as well as binding the viewport's translate properties to the
-     * {@link VFXListHelper#viewportPositionProperty()}. By translating the viewport, we give the illusion of scrolling
-     * (virtual scrolling)
-     * <p> - Listener on {@link VFXList#widthProperty()}, will invoke {@link VFXListManager#onGeometryChanged()}
-     * if the current orientation is {@link Orientation#HORIZONTAL}, otherwise will just call {@link VFXList#requestViewportLayout()}
-     * <p> - Listener on {@link VFXList#helperProperty()}, will invoke {@link VFXListManager#onGeometryChanged()}
-     * if the current orientation is {@link Orientation#VERTICAL}, otherwise will just call {@link VFXList#requestViewportLayout()}
-     * <p> - Listener on {@link VFXList#bufferSizeProperty()}, will invoke {@link VFXListManager#onGeometryChanged()}.
-     * Yes, it is enough to threat this change as a geometry change to avoid code duplication
-     * <p> - Listener on {@link VFXList#itemsProperty()}, will invoke {@link VFXListManager#onItemsChanged()}
-     * <p> - Listener on {@link VFXList#getCellFactory()}, will invoke {@link VFXListManager#onCellFactoryChanged()}
-     * <p> - Listener on {@link VFXList#fitToViewportProperty()}, will invoke {@link VFXListManager#onFitToViewportChanged()}
-     * <p> - Listener on {@link VFXList#cellSizeProperty()}, will invoke {@link VFXListManager#onCellSizeChanged()}
-     * <p> - Listener on {@link VFXList#spacingProperty()}, will invoke {@link VFXListManager#onSpacingChanged()}
-     */
+    /// Adds listeners to the following component's properties which need to produce a new [VFXListState] upon changing.
+    ///
+    /// Here's the list:
+    ///
+    /// - Listener on [VFXList#stateProperty()], this is crucial to update the viewport's children and
+    /// invoke [VFXList#requestViewportLayout()] if [VFXListState#haveCellsChanged()] is true
+    ///
+    /// - Listener on [VFXList#needsViewportLayoutProperty()], this is crucial because invokes [#layout()]
+    ///
+    /// - Listener on [VFXList#orientationProperty()], this is crucial because invokes [#swapPositionListener()]
+    ///
+    /// - Listener on [VFXList#helperProperty()], this is crucial because it's responsible for invoking
+    /// [VFXListManager#onOrientationChanged()], as well as binding the viewport's translate properties to the
+    /// [VFXListHelper#viewportPositionProperty()]. By translating the viewport, we give the illusion of scrolling
+    /// (virtual scrolling)
+    ///
+    /// - Listener on [VFXList#widthProperty()], will invoke [VFXListManager#onGeometryChanged()]
+    /// if the current orientation is [Orientation#HORIZONTAL], otherwise will just call [VFXList#requestViewportLayout()]
+    ///
+    /// - Listener on [VFXList#helperProperty()], will invoke [VFXListManager#onGeometryChanged()]
+    /// if the current orientation is [Orientation#VERTICAL], otherwise will just call [VFXList#requestViewportLayout()]
+    ///
+    /// - Listener on [VFXList#bufferSizeProperty()], will invoke [VFXListManager#onGeometryChanged()].
+    /// Yes, it is enough to threat this change as a geometry change to avoid code duplication
+    ///
+    /// - Listener on [VFXList#itemsProperty()], will invoke [VFXListManager#onItemsChanged()]
+    ///
+    /// - Listener on [VFXList#getCellFactory()], will invoke [VFXListManager#onCellFactoryChanged()]
+    ///
+    /// - Listener on [VFXList#fitToViewportProperty()], will invoke [VFXListManager#onFitToViewportChanged()]
+    ///
+    /// - Listener on [VFXList#cellSizeProperty()], will invoke [VFXListManager#onCellSizeChanged()]
+    ///
+    /// - Listener on [VFXList#spacingProperty()], will invoke [VFXListManager#onSpacingChanged()]
     protected void addListeners() {
         VFXList<T, C> list = getSkinnable();
         listeners(
@@ -161,32 +169,27 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
         );
     }
 
-    /**
-     * Core method responsible for resizing and positioning cells in the viewport.
-     * This method will not execute if the layout was not requested, {@link VFXList#needsViewportLayoutProperty()}
-     * is false, or if the {@link VFXList#stateProperty()} is {@link VFXListState#INVALID}.
-     * <p>
-     * In any case, at the end of the method, {@link #onLayoutCompleted(boolean)} will be called.
-     * <p></p>
-     * Cells are retrieved from the current list's state, given by the {@link VFXList#stateProperty()}.
-     * The loop on the cells uses an external {@code i} variable that tracks the iteration count. This is because cells in the
-     * state are already ordered by their index (since the state uses a {@link TreeMap}), and the layout is 'absolute'.
-     * Meaning that the index of the cell is irrelevant for its position, we just care about which comes before/after.
-     * The layout is performed by {@link VFXListHelper#layout(int, VFXCell)}, the index given to that method is the
-     * {@code i} variable.
-     * <p></p>
-     * <pre>
-     * {@code
-     * Little example:
-     * For a range of [16, 30]
-     * The first cell's index is 16, but its layout index is 0
-     * The second cell's index is 17, but its layout index is 1
-     * ...and so on
-     * }
-     * </pre>
-     *
-     * @see #onLayoutCompleted(boolean)
-     */
+    /// Core method responsible for resizing and positioning cells in the viewport.
+    /// This method will not execute if the layout was not requested, [VFXList#needsViewportLayoutProperty()]
+    /// is false, or if the [VFXList#stateProperty()] is [VFXListState#INVALID].
+    ///
+    /// In any case, at the end of the method, [#onLayoutCompleted(boolean)] will be called.
+    ///
+    /// Cells are retrieved from the current list's state, given by the [VFXList#stateProperty()].
+    /// The loop on the cells uses an external `i` variable that tracks the iteration count. This is because cells in the
+    /// state are already ordered by their index (since the state uses a [TreeMap]), and the layout is 'absolute'.
+    /// Meaning that the index of the cell is irrelevant for its position, we just care about which comes before/after.
+    /// The layout is performed by [VFXListHelper#layout(int, VFXCell)], the index given to that method is the
+    /// `i` variable.
+    /// ```
+    /// Little example:
+    /// For a range of [16, 30]
+    /// The first cell's index is 16, but its layout index is 0
+    /// The second cell's index is 17, but its layout index is 1
+    /// ...and so on
+    /// ```
+    ///
+    /// @see #onLayoutCompleted(boolean)
     protected void layout() {
         VFXList<T, C> list = getSkinnable();
         if (!list.isNeedsViewportLayout()) return;
@@ -205,29 +208,25 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
         onLayoutCompleted(false);
     }
 
-    /**
-     * This method is <b>crucial</b> because it resets the {@link VFXList#needsViewportLayoutProperty()} to false.
-     * If you override this method or the {@link #layout()}, remember to call this!
-     *
-     * @param done this parameter can be useful to overriders as it gives information on whether the {@link #layout()}
-     * was executed correctly
-     */
+    /// This method is **crucial** because it resets the [VFXList#needsViewportLayoutProperty()] to false.
+    /// If you override this method or the [#layout()], remember to call this!
+    ///
+    /// @param done this parameter can be useful to overriders as it gives information on whether the [#layout()]
+    /// was executed correctly
     protected void onLayoutCompleted(boolean done) {
         VFXList<T, C> list = getSkinnable();
         list.setNeedsViewportLayout(false);
     }
 
-    /**
-     * You can scroll along two directions: vertically and horizontally. However, only the direction which coincides with
-     * the orientation ({@link VFXList#orientationProperty()}) will generate a new {@link VFXListState},
-     * in other words needs the invocation of {@link VFXListManager#onPositionChanged()}.
-     * <p>
-     * For this reason, there is one and only listener for the position change. When the orientation is {@link Orientation#VERTICAL},
-     * the listener is added to the {@link VFXList#vPosProperty()}, otherwise it's added on the {@link VFXList#hPosProperty()}.
-     * <p></p>
-     * Note: this listener is not added through {@link #listeners(When[])}, which means that its disposal is not automatic,
-     * and it's done in the overridden {@link #dispose()}.
-     */
+    /// You can scroll along two directions: vertically and horizontally. However, only the direction which coincides with
+    /// the orientation ([VFXList#orientationProperty()]) will generate a new [VFXListState],
+    /// in other words needs the invocation of [VFXListManager#onPositionChanged()].
+    ///
+    /// For this reason, there is one and only listener for the position change. When the orientation is [Orientation#VERTICAL],
+    /// the listener is added to the [VFXList#vPosProperty()], otherwise it's added on the [VFXList#hPosProperty()].
+    ///
+    /// Note: this listener is not added through [#listeners(When\[\])], which means that its disposal is not automatic,
+    /// and it's done in the overridden [#dispose()].
     protected void swapPositionListener() {
         VFXList<T, C> list = getSkinnable();
         Orientation orientation = list.getOrientation();

@@ -36,20 +36,22 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
 import javafx.util.StringConverter;
 
-/**
- * Extension of {@link VFXCellBase} which also implements {@link VFXMappingTableCell}. Uses an inline extension of {@link VFXLabeledCellSkin}
- * as the default skin (see below why). This is intended to be used with models that do not use JavaFX's properties.
- * Expands the default style classes to be: ".cell-base" and ".table-cell".
- * <p>
- * There are four new properties:
- * <p> 1) The {@link #columnProperty()} holds the column that created the cell.
- * <p> 2) The {@link #rowProperty()} holds the row containing the cell.
- * <p> 3) The {@link #getExtractor()} is the function used to extract a piece of data {@link E} from an item of type {@link T}.
- * <b>Note</b> that the extractor function should take into account {@code null} inputs!
- * <p> 4) The {@link #getConverter()} is a helper class which converts data of type {@link E} to a {@code String}.
- * The method {@link #buildSkin()} will build an inline extension of {@link VFXLabeledCellSkin} to override its
- * {@link VFXLabeledCellSkin#update()} method and make use of the converter.
- */
+/// Extension of [VFXCellBase] which also implements [VFXMappingTableCell]. Uses an inline extension of [VFXLabeledCellSkin]
+/// as the default skin (see below why). This is intended to be used with models that do not use JavaFX's properties.
+/// Expands the default style classes to be: ".cell-base" and ".table-cell".
+///
+/// There are four new properties:
+///
+/// 1) The [#columnProperty()] holds the column that created the cell.
+///
+/// 2) The [#rowProperty()] holds the row containing the cell.
+///
+/// 3) The [#getExtractor()] is the function used to extract a piece of data [E] from an item of type [T].
+/// **Note** that the extractor function should take into account `null` inputs!
+///
+/// 4) The [#getConverter()] is a helper class which converts data of type [E] to a `String`.
+/// The method [#buildSkin()] will build an inline extension of [VFXLabeledCellSkin] to override its
+/// [VFXLabeledCellSkin#update()] method and make use of the converter.
 public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappingTableCell<T, E> {
     //================================================================================
     // Properties
@@ -76,17 +78,13 @@ public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappi
     // Delegate Methods
     //================================================================================
 
-    /**
-     * @return the {@link VFXTable} instance from the {@link VFXContext} stored by {@link #onCreated(VFXContext)}.
-     */
+    /// @return the [VFXTable] instance from the [VFXContext] stored by [#onCreated(VFXContext)].
     public VFXTable<T> getTable() {
         return ((VFXTable<T>) context().getContainer());
     }
 
-    /**
-     * @return the index of the row containing this cell by using the {@link #rowProperty()}. -1 if the row instance has
-     * not been set yet.
-     */
+    /// @return the index of the row containing this cell by using the [#rowProperty()]. -1 if the row instance has
+    /// not been set yet.
     public int getRowIndex() {
         return Optional.ofNullable(getRow())
             .map(VFXTableRow::getIndex)
@@ -131,9 +129,7 @@ public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappi
         return column.get();
     }
 
-    /**
-     * Specifies the instance of the column that created this cell.
-     */
+    /// Specifies the instance of the column that created this cell.
     public ReadOnlyObjectProperty<VFXTableColumn<T, ? extends VFXTableCell<T>>> columnProperty() {
         return column.getReadOnlyProperty();
     }
@@ -146,9 +142,7 @@ public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappi
         return row.get();
     }
 
-    /**
-     * Specifies the instance of the row that contains this cell.
-     */
+    /// Specifies the instance of the row that contains this cell.
     public ReadOnlyObjectProperty<VFXTableRow<T>> rowProperty() {
         return row.getReadOnlyProperty();
     }

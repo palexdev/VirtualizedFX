@@ -31,10 +31,8 @@ import io.github.palexdev.virtualizedfx.utils.IndexBiMap;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.RowsStateMap;
 import javafx.scene.Node;
 
-/**
- * Concrete and simple implementation of {@link VFXTableRow}. Nothing special here, just the default implementations
- * of the abstract core APIs.
- */
+/// Concrete and simple implementation of [VFXTableRow]. Nothing special here, just the default implementations
+/// of the abstract core APIs.
 public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 
     //================================================================================
@@ -48,30 +46,28 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
     // Overridden Methods
     //================================================================================
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * First and foremost, the algorithm will run only if: the given columns range is different from the current one, or
-     * if the {@code columnsChanged} flag is true (which means that the table's columns' list has changed).
-     * <p>
-     * The computation for the new row's state is simple. First we create a new state map which is going to replace the
-     * current one, considered now as 'old'. For each column (index) in the new range, we attempt at removing the corresponding
-     * cell from the old map. <b>Beware!</b> The removal is done by column not index because the list changed and now columns
-     * may be at different positions!!
-     * <p>
-     * If the retrieved cell is not {@code null}, then it means that the column is still present in the viewport and thus we can
-     * reuse its cell. We update the cell's index (only if {@code columnsChanged} is true), then put it in the new state
-     * map and continue to the next index.
-     * <p>
-     * If the cell is {@code null} then it means that the column is not visible anymore (either because by scrolling is
-     * now outside the new range, or because it was removed). In this case we request a new cell from the column at which
-     * the loop is by calling {@link #getCell(int, VFXTableColumn, boolean)} (we use the cache if possible) and put it
-     * in the new state map.
-     * <p>
-     * At the end of the loop, this invokes {@link #saveAllCells()} to cache all the remaining cells in the old map,
-     * then replace it with the new built map, update the columns range and if any cell has changed this also calls
-     * {@link #onCellsChanged()}.
-     */
+    /// {@inheritDoc}
+    ///
+    /// First and foremost, the algorithm will run only if: the given columns range is different from the current one, or
+    /// if the `columnsChanged` flag is true (which means that the table's columns' list has changed).
+    ///
+    /// The computation for the new row's state is simple. First we create a new state map which is going to replace the
+    /// current one, considered now as 'old'. For each column (index) in the new range, we attempt at removing the corresponding
+    /// cell from the old map. **Beware!** The removal is done by column not index because the list changed and now columns
+    /// may be at different positions!!
+    ///
+    /// If the retrieved cell is not `null`, then it means that the column is still present in the viewport and thus we can
+    /// reuse its cell. We update the cell's index (only if `columnsChanged` is true), then put it in the new state
+    /// map and continue to the next index.
+    ///
+    /// If the cell is `null` then it means that the column is not visible anymore (either because by scrolling is
+    /// now outside the new range, or because it was removed). In this case we request a new cell from the column at which
+    /// the loop is by calling [#getCell(int, VFXTableColumn, boolean)] (we use the cache if possible) and put it
+    /// in the new state map.
+    ///
+    /// At the end of the loop, this invokes [#saveAllCells()] to cache all the remaining cells in the old map,
+    /// then replace it with the new built map, update the columns range and if any cell has changed this also calls
+    /// [#onCellsChanged()].
     @SuppressWarnings("unchecked")
     @Override
     protected void updateColumns(IntegerRange columnsRange, boolean columnsChanged) {
@@ -104,33 +100,31 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
         if (update) onCellsChanged();
     }
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Before detailing the internals, there is a special property of the row's state map that should be mentioned.
-     * Maps of such type ({@link IndexBiMap}) must deal with duplicates and for this reason they store the
-     * 'reverse mappings' in a collection. However, the {@link RowsStateMap} is a special case. You see, every
-     * cell is associated with one unique column index, but it's also true that every cell is also associated with one
-     * and one only column (the one that built it). So, the collection will contain at most one single element.
-     * <p>
-     * First we remove the cells from the map by the given column using {@link RowsStateMap#remove(Object)}.
-     * If it is not {@code null} then we cache it with {@link #saveCell(VFXTableColumn, VFXTableCell)}, and remove it from
-     * the children list.
-     * <p>
-     * As for the new cell, we request a new one by calling {@link #getCell(int, VFXTableColumn, boolean)}
-     * (we don't use the cache as the cells stored in it may be invalid if the cell factory changed).
-     * The cell is added to the state map, to the children list and finally sized and positioned by calling
-     * {@link VFXTableHelper#layoutCell(int, VFXTableCell)}.
-     * <p>
-     * Note that to get a new cell, and to lay out it, we need two different indexes. The index of the column is retrieved
-     * by using {@link VFXTable#indexOf(VFXTableColumn)} and it's needed to update the cell. The other index is an important
-     * piece information for the layout method to decide at which x position to put the cell. This index is also called
-     * the 'layout index' depends on the {@link ColumnsLayoutMode} and its 'absolute'. For the {@code FIXED} mode it
-     * is given by {@code columnIndex - columnsRange.getMin()}, while for the {@code VARIABLE} mode is the column's index
-     * itself (since all columns are added to the viewport, layout indexes go from 0 to the number of column).
-     *
-     * @return whether the substitution was done successfully
-     */
+    /// {@inheritDoc}
+    ///
+    /// Before detailing the internals, there is a special property of the row's state map that should be mentioned.
+    /// Maps of such type ([IndexBiMap]) must deal with duplicates and for this reason they store the
+    /// 'reverse mappings' in a collection. However, the [RowsStateMap] is a special case. You see, every
+    /// cell is associated with one unique column index, but it's also true that every cell is also associated with one
+    /// and one only column (the one that built it). So, the collection will contain at most one single element.
+    ///
+    /// First we remove the cells from the map by the given column using [RowsStateMap#remove(Object)].
+    /// If it is not `null` then we cache it with [#saveCell(VFXTableColumn, VFXTableCell)], and remove it from
+    /// the children list.
+    ///
+    /// As for the new cell, we request a new one by calling [#getCell(int, VFXTableColumn, boolean)]
+    /// (we don't use the cache as the cells stored in it may be invalid if the cell factory changed).
+    /// The cell is added to the state map, to the children list and finally sized and positioned by calling
+    /// [VFXTableHelper#layoutCell(int, VFXTableCell)].
+    ///
+    /// Note that to get a new cell, and to lay out it, we need two different indexes. The index of the column is retrieved
+    /// by using [VFXTable#indexOf(VFXTableColumn)] and it's needed to update the cell. The other index is an important
+    /// piece information for the layout method to decide at which x position to put the cell. This index is also called
+    /// the 'layout index' depends on the [ColumnsLayoutMode] and its 'absolute'. For the `FIXED` mode it
+    /// is given by `columnIndex - columnsRange.getMin()`, while for the `VARIABLE` mode is the column's index
+    /// itself (since all columns are added to the viewport, layout indexes go from 0 to the number of column).
+    ///
+    /// @return whether the substitution was done successfully
     @Override
     protected boolean replaceCells(VFXTableColumn<T, VFXTableCell<T>> column) {
         VFXTable<T> table = getTable();
@@ -155,15 +149,13 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
         return true;
     }
 
-    /**
-     * {@inheritDoc}
-     * <p></p>
-     * Extract a cell from the state map by the given column using {@link RowsStateMap#getSingle(VFXTableColumn)}.
-     * If the cell is not {@code null} computes its width by calling {@link Node#prefWidth(double)}. Before doing so,
-     * if the {@code forceLayout} flag is true, also calls {@link Node#applyCss()}.
-     * <p>
-     * If the width can't be computed or if anything goes wrong, returns -1.0.
-     */
+    /// {@inheritDoc}
+    ///
+    /// Extract a cell from the state map by the given column using [RowsStateMap#getSingle(VFXTableColumn)].
+    /// If the cell is not `null` computes its width by calling [Node#prefWidth(double)]. Before doing so,
+    /// if the `forceLayout` flag is true, also calls [Node#applyCss()].
+    ///
+    /// If the width can't be computed or if anything goes wrong, returns -1.0.
     @Override
     protected double getWidthOf(VFXTableColumn<T, ?> column, boolean forceLayout) {
         try {
@@ -179,9 +171,7 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
         }
     }
 
-    /**
-     * Responsible for both updating the row's item property and all of its cells' item property.
-     */
+    /// Responsible for both updating the row's item property and all of its cells' item property.
     @Override
     public void updateItem(T item) {
         super.updateItem(item);
