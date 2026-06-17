@@ -59,11 +59,11 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     //================================================================================
     // Properties
     //================================================================================
-    private final Pane viewport;
-    private final Rectangle clip;
+    protected final Pane viewport;
+    protected final Rectangle clip;
 
-    private final VFXScrollBar vBar;
-    private final VFXScrollBar hBar;
+    protected final VFXScrollBar vBar;
+    protected final VFXScrollBar hBar;
     private BarsVisibilityProperty bvp;
 
     protected double DEFAULT_SIZE = 100.0;
