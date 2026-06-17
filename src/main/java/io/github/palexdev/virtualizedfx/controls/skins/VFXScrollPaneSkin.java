@@ -95,6 +95,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                 layoutContent();
             }
         };
+        viewport.setManaged(false);
         viewport.getStyleClass().add("viewport");
 
         clip = new Rectangle();
