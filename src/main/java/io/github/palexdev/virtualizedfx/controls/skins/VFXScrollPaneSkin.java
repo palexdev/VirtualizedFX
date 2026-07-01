@@ -252,6 +252,18 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         Optional.ofNullable(getBehavior()).ifPresent(b -> b.setViewportSize(Size.of(w, h)));
     }
 
+    /// Re-routes such events to the appropriate scroll bar, see [VFXScrollBarBehavior#scroll(ScrollEvent)].
+    protected void onScrollEvent(ScrollEvent e) {
+        VFXScrollPane pane = getSkinnable();
+        Orientation o = pane.getMainAxis();
+        VFXScrollBar target = switch (o) {
+            case VERTICAL -> e.isShiftDown() ? hBar : vBar;
+            case HORIZONTAL -> e.isShiftDown() ? vBar : hBar;
+        };
+        if (target.isVisible()) target.getBehavior().scroll(e);
+        e.consume();
+    }
+
     /// Computes the scrollable size of the given content node.
     ///
     /// For virtualized containers ([VFXContainer]) the size is given by their virtual max properties.
@@ -433,8 +445,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     ///
     /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] to call [VFXScrollBarBehavior#mouseReleased(MouseEvent)]
     ///
-    /// - intercepts events of type [ScrollEvent#SCROLL] and re-routes such events to the appropriate scroll bar,
-    /// see [VFXScrollBarBehavior#scroll(ScrollEvent)]
+    /// - intercepts events of type [ScrollEvent#SCROLL] to call [#onScrollEvent(ScrollEvent)]
     ///
     /// - intercepts events of type [KeyEvent#KEY_PRESSED] to call [VFXScrollBarBehavior#keyPressed(KeyEvent)]
     @Override
@@ -453,15 +464,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                 .asFilter()
                 .handle(behavior::mouseReleased),
             intercept(viewport, ScrollEvent.SCROLL)
-                .handle(e -> behavior.scroll(e, () -> {
-                    // Re-route scroll events to the appropriate scroll bar's behavior
-                    Orientation o = pane.getMainAxis();
-                    VFXScrollBar target = switch (o) {
-                        case VERTICAL -> e.isShiftDown() ? hBar : vBar;
-                        case HORIZONTAL -> e.isShiftDown() ? vBar : hBar;
-                    };
-                    if (target.isVisible()) target.getBehavior().scroll(e);
-                })),
+                .handle(e -> behavior.scroll(e, () -> onScrollEvent(e))),
             intercept(pane, KeyEvent.KEY_PRESSED)
                 .handle(behavior::keyPressed)
         );
