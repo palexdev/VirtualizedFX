@@ -68,6 +68,7 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     // Properties
     //================================================================================
     private final Pane viewport;
+    private final Rectangle viewportClip;
 
     private final Pane cContainer;
 
@@ -111,10 +112,26 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         };
         viewport.getStyleClass().add("viewport");
 
-        // Init rows clip
+        // Init clips.
+        // The viewport itself is clipped by a rounded rectangle: this defines the table's overall visible shape
+        // (including the corner radius aligned with the table's border) and covers horizontal overflow for both
+        // columns and rows. Since horizontal scrolling is implemented by translating the viewport, the clip is
+        // counter-translated on X to stay stationary in the parent's frame. Clipping the viewport (a child of the
+        // table) rather than the table node itself preserves any background/effect (e.g. a drop shadow) drawn on
+        // the table.
+        viewportClip = new Rectangle();
+        viewportClip.arcWidthProperty().bind(table.clipBorderRadiusProperty());
+        viewportClip.arcHeightProperty().bind(table.clipBorderRadiusProperty());
+        viewportClip.translateXProperty().bind(viewport.translateXProperty().multiply(-1));
+        viewport.setClip(viewportClip);
+
+        // The rows container also needs its own clip. Its sole purpose is to prevent rows from bleeding into the
+        // columns area during vertical scroll (rContainer is translated on Y to scroll and, without this clip,
+        // partially scrolled rows would render above the header). No corner radius here: rounded corners are the
+        // viewport clip's job. Sized to the full container (virtualW): horizontal clipping is also delegated to
+        // the viewport clip; if we sized this to the visible width instead, it would move left with the viewport
+        // during horizontal scroll and cut off the trailing cells.
         rClip = new Rectangle();
-        rClip.widthProperty().bind(rContainer.widthProperty());
-        rClip.heightProperty().bind(rContainer.heightProperty());
         rClip.translateYProperty().bind(rContainer.translateYProperty().multiply(-1));
         rContainer.setClip(rClip);
 
@@ -281,12 +298,18 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     /// @see #partialLayout()
     protected void layout() {
         VFXTable<T> table = getSkinnable();
-        double w = table.getVirtualMaxX();
-        double h = table.getHeight();
+        double w = table.getWidth() - snappedLeftInset() - snappedRightInset();
+        double virtualW = table.getVirtualMaxX();
+        double h = table.getHeight() - snappedTopInset() - snappedBottomInset();
         double cH = table.getColumnsSize().height();
         double rH = h - cH;
-        cContainer.resizeRelocate(0, 0, w, cH);
-        rContainer.resizeRelocate(0, cH, w, rH);
+        cContainer.resizeRelocate(0, 0, virtualW, cH);
+        rContainer.resizeRelocate(0, cH, virtualW, rH);
+
+        viewportClip.setWidth(w);
+        viewportClip.setHeight(h);
+        rClip.setWidth(virtualW);
+        rClip.setHeight(rH);
     }
 
     /// This is responsible for sizing and positioning the columns specified by the current

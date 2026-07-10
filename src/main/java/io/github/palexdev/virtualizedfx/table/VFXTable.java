@@ -390,31 +390,6 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         setNeedsViewportLayout(new ViewportLayoutRequest(column).setWasDone(false));
     }
 
-    /// Clips this virtualized container to avoid content from overflowing by using a [Rectangle] node with:
-    ///
-    /// - the width and height bound to the table's ones
-    ///
-    /// - the arc width and height bound to the [#clipBorderRadiusProperty()]
-    ///
-    /// By default, the clip is disabled because virtualized containers are meant to be used in combination with a scoll pane
-    /// which already clips its viewport. Fewer nodes, more performance.
-    ///
-    /// @param enable whether to enable or disable the clip
-    public void clip(boolean enable) {
-        if (!enable) {
-            setClip(null);
-            return;
-        }
-        if (getClip() != null) return;
-
-        Rectangle clip = new Rectangle();
-        clip.widthProperty().bind(widthProperty());
-        clip.heightProperty().bind(heightProperty());
-        clip.arcWidthProperty().bind(clipBorderRadiusProperty());
-        clip.arcHeightProperty().bind(clipBorderRadiusProperty());
-        setClip(clip);
-    }
-
     //================================================================================
     // Overridden Methods
     //================================================================================
@@ -910,8 +885,8 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 MFXControl.getClassCssMetaData(),
                 ROWS_HEIGHT, COLUMNS_SIZE, COLUMNS_LAYOUT_MODE, EXTRA_AUTOSIZE_WIDTH,
-                COLUMNS_BUFFER_SIZE, ROWS_BUFFER_SIZE, CLIP_BORDER_RADIUS,
-                ROWS_CACHE_CAPACITY
+                COLUMNS_BUFFER_SIZE, ROWS_BUFFER_SIZE, ROWS_CACHE_CAPACITY,
+                CLIP_BORDER_RADIUS
             );
         }
     }
