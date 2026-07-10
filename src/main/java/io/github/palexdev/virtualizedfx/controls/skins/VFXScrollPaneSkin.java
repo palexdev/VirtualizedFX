@@ -231,7 +231,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
         if (content instanceof VFXContainer<?>) {
             // Virtualized containers always take up all the space and thus ignore the alignment too
-            layoutInArea(content, 0, 0, w, h, 0, Insets.EMPTY, HPos.LEFT, VPos.TOP);
+            layoutInArea(content, 0, 0, w, h, 0, viewport.getPadding(), HPos.LEFT, VPos.TOP);
         } else {
             Pos alignment = pane.getAlignment();
             VPos vAlign = alignment.getVpos();
@@ -242,14 +242,16 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
             if (cs.height() > h) vAlign = VPos.TOP;
 
             content.resize(cs.width(), cs.height());
-            positionInArea(content, 0, 0, w, h, 0, Insets.EMPTY, hAlign, vAlign);
+            positionInArea(content, 0, 0, w, h, 0, viewport.getPadding(), hAlign, vAlign);
         }
 
         setContentBounds(cs);
         updateVisualAmount(content);
 
-        // Also update viewport size in behavior for features such as the drag to scroll
-        Optional.ofNullable(getBehavior()).ifPresent(b -> b.setViewportSize(Size.of(w, h)));
+        // Also update viewport size in behavior for features such as the drag to scroll.
+        // Note: the visible size (padding excluded) is used, otherwise drag-to-scroll would be off when the
+        // viewport has padding.
+        Optional.ofNullable(getBehavior()).ifPresent(b -> b.setViewportSize(getViewportSize()));
     }
 
     /// Re-routes such events to the appropriate scroll bar, see [VFXScrollBarBehavior#scroll(ScrollEvent)].
@@ -287,7 +289,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
             default -> {
                 if (content instanceof Region r && r.isResizable()) {
                     Orientation bias = r.getContentBias();
-                    yield ContentBiasHandler.computeSize(bias, pane, viewport);
+                    yield ContentBiasHandler.computeSize(bias, pane, getViewportSize());
                 }
                 Bounds b = content.getLayoutBounds();
                 yield Size.of(
@@ -318,22 +320,22 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
             newContent.translateXProperty().bind(DoubleBindingBuilder.build()
                 .setMapper(() -> {
                     double cw = getContentBounds().width();
-                    double vw = viewport.getWidth();
+                    double vw = getViewportSize().width();
                     double maxScroll = Math.max(0, cw - vw);
                     return -maxScroll * hBar.getValue();
                 })
-                .addSources(newContent.layoutBoundsProperty(), viewport.widthProperty())
+                .addSources(newContent.layoutBoundsProperty(), viewport.widthProperty(), viewport.paddingProperty())
                 .addSources(hBar.valueProperty())
                 .get()
             );
             newContent.translateYProperty().bind(DoubleBindingBuilder.build()
                 .setMapper(() -> {
                     double ch = getContentBounds().height();
-                    double vh = viewport.getHeight();
+                    double vh = getViewportSize().height();
                     double maxScroll = Math.max(0, ch - vh);
                     return -maxScroll * vBar.getValue();
                 })
-                .addSources(newContent.layoutBoundsProperty(), viewport.heightProperty())
+                .addSources(newContent.layoutBoundsProperty(), viewport.heightProperty(), viewport.paddingProperty())
                 .addSources(vBar.valueProperty())
                 .get()
             );
@@ -363,10 +365,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         }
 
         Size contentSize = getContentBounds();
-        Size viewportSize = Size.of(
-            viewport.getWidth(),
-            viewport.getHeight()
-        );
+        Size viewportSize = getViewportSize();
         vBar.setVisibleAmount(viewportSize.height() / contentSize.height());
         hBar.setVisibleAmount(viewportSize.width() / contentSize.width());
     }
@@ -431,6 +430,20 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
     protected void setContentBounds(Size contentBounds) {
         this.contentBounds.set(contentBounds);
+    }
+
+    /// @return the viewport's actual visible size, which is its size minus its padding.
+    ///
+    /// All scroll-related computations that need the size of the visible area (visible amount, scroll bindings for
+    /// standard content, content-bias fit sizing, drag-to-scroll) **must** use this instead of the raw
+    /// [Region#getWidth()]/[Region#getHeight()]. Otherwise any padding set on the viewport (e.g. to prevent the clip
+    /// from cutting the content's effects like drop shadows) would not be tracked and would lead to incorrect scrolling.
+    protected Size getViewportSize() {
+        Insets padding = viewport.getPadding();
+        return Size.of(
+            Math.max(0, viewport.getWidth() - padding.getLeft() - padding.getRight()),
+            Math.max(0, viewport.getHeight() - padding.getTop() - padding.getBottom())
+        );
     }
 
     //================================================================================
@@ -679,27 +692,27 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     @FunctionalInterface
     protected interface ContentBiasHandler {
         Map<Orientation, ContentBiasHandler> HANDLERS = mapOf(
-            null, (ContentBiasHandler) (vsp, vw, c) -> Size.of(
-                boundedSize(vsp.isFitToWidth() ? vw.getWidth() : c.prefWidth(-1), c.minWidth(-1), c.maxWidth(-1)),
-                boundedSize(vsp.isFitToHeight() ? vw.getHeight() : c.prefHeight(-1), c.minHeight(-1), c.maxHeight(-1))
+            null, (ContentBiasHandler) (vsp, vs, c) -> Size.of(
+                boundedSize(vsp.isFitToWidth() ? vs.width() : c.prefWidth(-1), c.minWidth(-1), c.maxWidth(-1)),
+                boundedSize(vsp.isFitToHeight() ? vs.height() : c.prefHeight(-1), c.minHeight(-1), c.maxHeight(-1))
             ),
-            Orientation.HORIZONTAL, (ContentBiasHandler) (vsp, vw, c) -> {
-                double cw = boundedSize(vsp.isFitToWidth() ? vw.getWidth() : c.prefWidth(-1), c.minWidth(-1), c.maxWidth(-1));
-                double ch = boundedSize(vsp.isFitToHeight() ? vw.getHeight() : c.prefHeight(cw), c.minHeight(cw), c.maxHeight(cw));
+            Orientation.HORIZONTAL, (ContentBiasHandler) (vsp, vs, c) -> {
+                double cw = boundedSize(vsp.isFitToWidth() ? vs.width() : c.prefWidth(-1), c.minWidth(-1), c.maxWidth(-1));
+                double ch = boundedSize(vsp.isFitToHeight() ? vs.height() : c.prefHeight(cw), c.minHeight(cw), c.maxHeight(cw));
                 return Size.of(cw, ch);
             },
-            Orientation.VERTICAL, (ContentBiasHandler) (vsp, vw, c) -> {
-                double ch = boundedSize(vsp.isFitToHeight() ? vw.getHeight() : c.prefHeight(-1), c.minHeight(-1), c.maxHeight(-1));
-                double cw = boundedSize(vsp.isFitToWidth() ? vw.getWidth() : c.prefWidth(ch), c.minWidth(ch), c.maxWidth(ch));
+            Orientation.VERTICAL, (ContentBiasHandler) (vsp, vs, c) -> {
+                double ch = boundedSize(vsp.isFitToHeight() ? vs.height() : c.prefHeight(-1), c.minHeight(-1), c.maxHeight(-1));
+                double cw = boundedSize(vsp.isFitToWidth() ? vs.width() : c.prefWidth(ch), c.minWidth(ch), c.maxWidth(ch));
                 return Size.of(cw, ch);
             }
         );
 
-        static Size computeSize(Orientation bias, VFXScrollPane vsp, Pane viewport) {
-            return HANDLERS.get(bias).computeSize(vsp, viewport, vsp.getContent());
+        static Size computeSize(Orientation bias, VFXScrollPane vsp, Size viewportSize) {
+            return HANDLERS.get(bias).computeSize(vsp, viewportSize, vsp.getContent());
         }
 
-        Size computeSize(VFXScrollPane vsp, Region viewport, Node content);
+        Size computeSize(VFXScrollPane vsp, Size viewportSize, Node content);
 
         private static double boundedSize(double value, double min, double max) {
             return Math.min(Math.max(value, min), Math.max(min, max));
