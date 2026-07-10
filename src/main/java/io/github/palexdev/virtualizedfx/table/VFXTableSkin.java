@@ -104,7 +104,7 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         };
         rContainer.getStyleClass().add("rows");
 
-        viewport = new Pane(cContainer, rContainer) {
+        viewport = new Pane(rContainer, cContainer) { // order matters for overlay
             @Override
             protected void layoutChildren() {
                 VFXTableSkin.this.layout();
