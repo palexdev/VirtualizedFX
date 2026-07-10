@@ -31,6 +31,7 @@ import io.github.palexdev.virtualizedfx.table.VFXTable;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.beans.Observable;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
@@ -154,6 +155,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         vBar.unitIncrementProperty().bind(pane.vUnitIncrementProperty());
         vBar.smoothScrollProperty().bind(pane.smoothScrollProperty());
         vBar.trackSmoothScrollProperty().bind(pane.trackSmoothScrollProperty());
+        ((DoubleProperty) pane.verticalVisibleAmountProperty()).bind(vBar.visibleAmountProperty());
 
         hBar.visibleProperty().bind(bvp.map(arr -> arr[1]));
         hBar.behaviorFactoryProperty().bind(pane.hBarBehaviorProperty().map(f -> () -> f.apply(hBar)));
@@ -166,6 +168,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         hBar.unitIncrementProperty().bind(pane.hUnitIncrementProperty());
         hBar.smoothScrollProperty().bind(pane.smoothScrollProperty());
         hBar.trackSmoothScrollProperty().bind(pane.trackSmoothScrollProperty());
+        ((DoubleProperty) pane.horizontalVisibleAmountProperty()).bind(hBar.visibleAmountProperty());
 
         // Listeners
         listeners(
@@ -213,9 +216,6 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     ///
     /// - If the [VFXScrollPane#fitToWidthProperty()] and [VFXScrollPane#fitToHeightProperty()] are active
     /// than the content will always take all the width/height available, regardless of its preferred sizes
-    ///
-    /// Last but not least, this method calls [#updateVisualAmount(Node)] and [VFXScrollPaneBehavior#setViewportSize(Size)]
-    /// at the end.
     protected void layoutContent() {
         VFXScrollPane pane = getSkinnable();
         Node content = pane.getContent();
@@ -251,7 +251,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         // Also update viewport size in behavior for features such as the drag to scroll.
         // Note: the visible size (padding excluded) is used, otherwise drag-to-scroll would be off when the
         // viewport has padding.
-        Optional.ofNullable(getBehavior()).ifPresent(b -> b.setViewportSize(getViewportSize()));
+        ((SizeProperty) pane.viewportSizeProperty()).set(getViewportSize());
     }
 
     /// Re-routes such events to the appropriate scroll bar, see [VFXScrollBarBehavior#scroll(ScrollEvent)].

@@ -62,7 +62,6 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     protected Interpolator DRAG_SMOOTH_SCROLL_CURVE = Curve.EASE_BOTH;
     protected double SMOOTH_DRAG_SENSIBILITY = 1.5;
 
-    private Size viewportSize;
     private boolean canVScroll = true;
     private boolean canHScroll = true;
 
@@ -138,6 +137,7 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
         double xDelta = -(meX - dragStart.getX());
         double meY = me.getSceneY();
         double yDelta = -(meY - dragStart.getY());
+        Size viewportSize = pane.getViewportSize();
         Size cb = pane.getContentBounds();
 
         // Do not allow diagonal scrolling as it feels unnatural and may result in a clumsy UX
@@ -254,17 +254,6 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     //================================================================================
     // Getters/Setters
     //================================================================================
-
-    /// @see #setViewportSize(Size)
-    public Size getViewportSize() {
-        return viewportSize;
-    }
-
-    /// This is called by the default skin to make the viewport's size available to the behavior. These values are important
-    /// for the drag to scroll feature to work properly.
-    public void setViewportSize(Size viewportSize) {
-        this.viewportSize = viewportSize;
-    }
 
     /// @see #setCanVScroll(boolean)
     public boolean isCanVScroll() {

@@ -43,10 +43,7 @@ import io.github.palexdev.virtualizedfx.controls.skins.VFXScrollPaneSkin;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarPolicy;
 import io.github.palexdev.virtualizedfx.enums.ScrollPaneEnums.ScrollBarsAlignment;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.css.CssMetaData;
 import javafx.css.PseudoClass;
 import javafx.css.Styleable;
@@ -121,6 +118,7 @@ public class VFXScrollPane extends MFXControl {
         this::getVMin,
         () -> 1.0
     );
+    private final DoubleProperty vVisibleAmount = new SimpleDoubleProperty();
     private final FunctionProperty<VFXScrollBar, VFXScrollBarBehavior> vBarBehavior = PropUtils.function(VFXScrollBarBehavior::new);
 
     // HBar
@@ -136,7 +134,10 @@ public class VFXScrollPane extends MFXControl {
         this::getHMin,
         () -> 1.0
     );
+    private final DoubleProperty hVisibleAmount = new SimpleDoubleProperty();
     private final FunctionProperty<VFXScrollBar, VFXScrollBarBehavior> hBarBehavior = PropUtils.function(VFXScrollBarBehavior::new);
+
+    private final SizeProperty viewportSize = new SizeProperty(Size.zero());
 
     //================================================================================
     // Constructors
@@ -1089,6 +1090,14 @@ public class VFXScrollPane extends MFXControl {
         this.vMax.set(vMax);
     }
 
+    public double getVerticalVisibleAmount() {
+        return vVisibleAmount.get();
+    }
+
+    public ReadOnlyDoubleProperty verticalVisibleAmountProperty() {
+        return vVisibleAmount;
+    }
+
     public double getHMin() {
         return hMin.get();
     }
@@ -1128,6 +1137,14 @@ public class VFXScrollPane extends MFXControl {
         this.hMax.set(hMax);
     }
 
+    public double getHorizontalVisibleAmount() {
+        return hVisibleAmount.get();
+    }
+
+    public ReadOnlyDoubleProperty horizontalVisibleAmountProperty() {
+        return hVisibleAmount;
+    }
+
     public Function<VFXScrollBar, VFXScrollBarBehavior> getVBarBehavior() {
         return vBarBehavior.get();
     }
@@ -1152,5 +1169,14 @@ public class VFXScrollPane extends MFXControl {
 
     public void setHBarBehavior(Function<VFXScrollBar, VFXScrollBarBehavior> hBarBehavior) {
         this.hBarBehavior.set(hBarBehavior);
+    }
+
+    public Size getViewportSize() {
+        return viewportSize.get();
+    }
+
+    /// Specifies the scroll pane viewport's size
+    public ReadOnlyObjectProperty<Size> viewportSizeProperty() {
+        return viewportSize;
     }
 }
