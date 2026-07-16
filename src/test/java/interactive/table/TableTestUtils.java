@@ -299,7 +299,7 @@ public class TableTestUtils {
         private static int priority = 0;
 
         {
-            setColumnsSize(Size.of(180, 32));
+            setColumnsSize(Size.size(180, 32));
 
             CSSFragment.Builder.build()
                 .select(".vfx-table")

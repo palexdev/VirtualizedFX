@@ -37,6 +37,8 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
+import static io.github.palexdev.mfxcore.base.beans.Position.position;
+
 /// This interface is a utility API for [VFXList] which helps to avoid if checks that depend on the container's
 /// orientation, [VFXList#orientationProperty()]. There are two concrete implementations: [VerticalHelper]
 /// and [HorizontalHelper]
@@ -214,7 +216,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
                     double x = -NumberUtils.clamp(container.getHPos(), 0.0, getMaxHScroll());
                     double y = -(pixelsToFirst + visibleAmountFirst);
-                    return Position.of(x, y);
+                    return position(x, y);
                 })
                 .addSources(container.layoutBoundsProperty())
                 .addSources(container.hPosProperty(), container.vPosProperty())
@@ -401,7 +403,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
                     double x = -(pixelsToFirst + visibleAmountFirst);
                     double y = -NumberUtils.clamp(container.getVPos(), 0.0, getMaxVScroll());
-                    return Position.of(x, y);
+                    return position(x, y);
                 })
                 .addSources(container.layoutBoundsProperty())
                 .addSources(container.hPosProperty(), container.vPosProperty())

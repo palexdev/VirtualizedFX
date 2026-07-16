@@ -36,6 +36,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
 
+import static io.github.palexdev.mfxcore.base.beans.Position.origin;
+import static io.github.palexdev.mfxcore.base.beans.Position.position;
 import static javafx.scene.input.KeyCode.*;
 
 /// Extension of [MFXBehavior] and default behavior implementation for [VFXScrollPane].
@@ -53,8 +55,8 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     //================================================================================
     // Properties
     //================================================================================
-    private Position initValues = Position.of(0, 0);
-    private final PositionProperty dragStart = new PositionProperty(Position.of(-1, -1));
+    private Position initValues = origin();
+    private final PositionProperty dragStart = new PositionProperty(position(-1, -1));
     private Orientation mainDragAxis;
     private double dragThreshold = 16.0;
 
@@ -96,7 +98,7 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     public void mousePressed(MouseEvent me, Runnable callback) {
         VFXScrollPane pane = getNode();
         dragStart.setPosition(me.getSceneX(), me.getSceneY());
-        initValues = Position.of(pane.getHValue(), pane.getVValue());
+        initValues = position(pane.getHValue(), pane.getVValue());
         callback.run();
     }
 
@@ -211,7 +213,7 @@ public class VFXScrollPaneBehavior extends MFXBehavior<VFXScrollPane> {
     @Override
     public void mouseReleased(MouseEvent e, Runnable callback) {
         dragStart.setPosition(-1, -1);
-        initValues = Position.origin();
+        initValues = origin();
         mainDragAxis = null;
         callback.run();
     }

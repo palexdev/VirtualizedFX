@@ -418,7 +418,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
         StyleableProperties.CELL_SIZE,
         this,
         "cellSize",
-        Size.of(100, 100)
+        Size.size(100, 100)
     );
 
     private final StyleableIntegerProperty columnsNum = new StyleableIntegerProperty(
@@ -497,11 +497,11 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     }
 
     public void setCellSize(double w, double h) {
-        setCellSize(Size.of(w, h));
+        setCellSize(Size.size(w, h));
     }
 
     public void setCellSize(double size) {
-        setCellSize(Size.of(size, size));
+        setCellSize(Size.size(size, size));
     }
 
     public int getColumnsNum() {
@@ -644,7 +644,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
             SizeProperty.cssMetaData(
                 "-vfx-cell-size",
                 VFXGrid::cellSizeProperty,
-                Size.of(100, 100)
+                Size.size(100, 100)
             );
 
         private static final CssMetaData<VFXGrid<?, ?>, Number> COLUMNS_NUM =

@@ -46,6 +46,8 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
+import static io.github.palexdev.mfxcore.base.beans.Position.position;
+
 /// This interface is a utility API for [VFXTable], computations may change depending on the
 /// [VFXTable#columnsLayoutModeProperty()]. For this reason, there are two concrete implementations:
 /// [FixedTableHelper] and [VariableTableHelper].
@@ -443,7 +445,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                         double cVisibleAmount = container.getHPos() % cWidth;
                         x = -(cPixelsToFirst + cVisibleAmount);
                     }
-                    return Position.of(x, y);
+                    return position(x, y);
                 })
                 .addSources(container.layoutBoundsProperty())
                 .addSources(container.vPosProperty(), container.hPosProperty())
@@ -890,7 +892,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                     if (!Utils.INVALID_RANGE.equals(columnsRange)) {
                         x = -container.getHPos();
                     }
-                    return Position.of(x, y);
+                    return position(x, y);
                 })
                 .addSources(container.layoutBoundsProperty())
                 .addSources(container.vPosProperty(), container.hPosProperty())

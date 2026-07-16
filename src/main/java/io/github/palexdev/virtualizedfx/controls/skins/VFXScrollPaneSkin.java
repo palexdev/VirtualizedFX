@@ -278,11 +278,11 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         Node content = pane.getContent();
         if (content == null) return zero();
         return switch (content) {
-            case VFXTable<?> t -> Size.of(
+            case VFXTable<?> t -> Size.size(
                 snapSizeX(t.getVirtualMaxX()),
                 snapSizeY(t.getVirtualMaxY() + t.getColumnsSize().height())
             );
-            case VFXContainer<?> c -> Size.of(
+            case VFXContainer<?> c -> Size.size(
                 snapSizeX(c.getVirtualMaxX()),
                 snapSizeY(c.getVirtualMaxY())
             );
@@ -292,7 +292,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                     yield ContentBiasHandler.computeSize(bias, pane, getViewportSize());
                 }
                 Bounds b = content.getLayoutBounds();
-                yield Size.of(
+                yield Size.size(
                     snapSizeX(b.getWidth()),
                     snapSizeY(b.getHeight())
                 );
@@ -440,7 +440,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     /// from cutting the content's effects like drop shadows) would not be tracked and would lead to incorrect scrolling.
     protected Size getViewportSize() {
         Insets padding = viewport.getPadding();
-        return Size.of(
+        return Size.size(
             Math.max(0, viewport.getWidth() - padding.getLeft() - padding.getRight()),
             Math.max(0, viewport.getHeight() - padding.getTop() - padding.getBottom())
         );
@@ -506,11 +506,11 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         HBarPos hBarPos = pane.getHBarPos();
         ScrollBarsAlignment barsAlignment = pane.getBarsAlignment();
 
-        Size vSize = Size.of(
+        Size vSize = Size.size(
             LayoutUtils.snappedBoundWidth(vBar),
             pane.getHeight() - barsInsets.getTop() - barsInsets.getBottom()
         );
-        Size hSize = Size.of(
+        Size hSize = Size.size(
             pane.getWidth() - barsInsets.getLeft() - barsInsets.getRight(),
             LayoutUtils.snappedBoundHeight(hBar)
         );
@@ -692,19 +692,19 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     @FunctionalInterface
     protected interface ContentBiasHandler {
         Map<Orientation, ContentBiasHandler> HANDLERS = mapOf(
-            null, (ContentBiasHandler) (vsp, vs, c) -> Size.of(
+            null, (ContentBiasHandler) (vsp, vs, c) -> Size.size(
                 boundedSize(vsp.isFitToWidth() ? vs.width() : c.prefWidth(-1), c.minWidth(-1), c.maxWidth(-1)),
                 boundedSize(vsp.isFitToHeight() ? vs.height() : c.prefHeight(-1), c.minHeight(-1), c.maxHeight(-1))
             ),
             Orientation.HORIZONTAL, (ContentBiasHandler) (vsp, vs, c) -> {
                 double cw = boundedSize(vsp.isFitToWidth() ? vs.width() : c.prefWidth(-1), c.minWidth(-1), c.maxWidth(-1));
                 double ch = boundedSize(vsp.isFitToHeight() ? vs.height() : c.prefHeight(cw), c.minHeight(cw), c.maxHeight(cw));
-                return Size.of(cw, ch);
+                return Size.size(cw, ch);
             },
             Orientation.VERTICAL, (ContentBiasHandler) (vsp, vs, c) -> {
                 double ch = boundedSize(vsp.isFitToHeight() ? vs.height() : c.prefHeight(-1), c.minHeight(-1), c.maxHeight(-1));
                 double cw = boundedSize(vsp.isFitToWidth() ? vs.width() : c.prefWidth(ch), c.minWidth(ch), c.maxWidth(ch));
-                return Size.of(cw, ch);
+                return Size.size(cw, ch);
             }
         );
 

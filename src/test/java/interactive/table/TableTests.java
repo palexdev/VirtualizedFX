@@ -61,6 +61,7 @@ import src.model.User;
 
 import static interactive.table.TableTestUtils.*;
 import static interactive.table.TableTestUtils.Table.emptyColumns;
+import static io.github.palexdev.mfxcore.base.beans.Size.size;
 import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.insets;
 import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.uniform;
 import static io.github.palexdev.virtualizedfx.table.VFXTableColumn.swapColumns;
@@ -2039,7 +2040,7 @@ public class TableTests {
         StackPane pane = setupStage();
         // Prepare table
         VFXTable<FXUser> table = new VFXTable<>(fxusers(20));
-        table.setColumnsSize(Size.of(180, 32));
+        table.setColumnsSize(size(180, 32));
         CSSFragment.Builder.build()
             .select(".vfx-table")
             .border("#353839")

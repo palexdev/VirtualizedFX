@@ -596,7 +596,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         StyleableProperties.COLUMNS_SIZE,
         this,
         "columnsSize",
-        Size.of(100.0, 32.0)
+        Size.size(100.0, 32.0)
     );
 
     private final StyleableObjectProperty<ColumnsLayoutMode> columnsLayoutMode = new StyleableObjectProperty<>(
@@ -692,19 +692,19 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     /// Convenience method to create a new [Size] object and set the [#columnsSizeProperty()].
     public void setColumnsSize(double w, double h) {
-        setColumnsSize(Size.of(w, h));
+        setColumnsSize(Size.size(w, h));
     }
 
     /// Convenience method to create a new [Size] object and set the [#columnsSizeProperty()].
     /// The old height will be kept.
     public void setColumnsWidth(double w) {
-        setColumnsSize(Size.of(w, getColumnsSize().height()));
+        setColumnsSize(Size.size(w, getColumnsSize().height()));
     }
 
     /// Convenience method to create a new [Size] object and set the [#columnsSizeProperty()].
     /// The old width will be kept.
     public void setColumnsHeight(double h) {
-        setColumnsSize(Size.of(getColumnsSize().width(), h));
+        setColumnsSize(Size.size(getColumnsSize().width(), h));
     }
 
     public ColumnsLayoutMode getColumnsLayoutMode() {
@@ -833,7 +833,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
             SizeProperty.cssMetaData(
                 "-vfx-columns-size",
                 VFXTable::columnsSizeProperty,
-                Size.of(100, 32)
+                Size.size(100, 32)
             );
 
         private static final CssMetaData<VFXTable<?>, ColumnsLayoutMode> COLUMNS_LAYOUT_MODE =

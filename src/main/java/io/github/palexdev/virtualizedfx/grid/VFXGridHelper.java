@@ -39,6 +39,9 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.Node;
 
+import static io.github.palexdev.mfxcore.base.beans.Position.position;
+import static io.github.palexdev.mfxcore.base.beans.Size.size;
+
 /// This interface is a utility API for [VFXGrid], despite computations not depending on other properties
 /// (some VFXList values depend on the orientation, for example),
 /// it's still a nice way to adhere to the encapsulation and separation of concerns principles.
@@ -286,7 +289,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
                     double x = -(cPixelsToFirst + cVisibleAmount);
                     double y = -(rPixelsToFirst + rVisibleAmount);
-                    return Position.of(x, y);
+                    return position(x, y);
 
                 })
                 .addSources(container.layoutBoundsProperty())
@@ -298,10 +301,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
             totalCellSize.bind(ObjectBindingBuilder.<Size>build()
                 .setMapper(() -> {
-                    Size size = container.getCellSize();
-                    return Size.of(
-                        size.width() + container.getHSpacing(),
-                        size.height() + container.getVSpacing()
+                    Size cs = container.getCellSize();
+                    return size(
+                        cs.width() + container.getHSpacing(),
+                        cs.height() + container.getVSpacing()
                     );
                 })
                 .addSources(container.cellSizeProperty(), container.vSpacingProperty(), container.hSpacingProperty())
