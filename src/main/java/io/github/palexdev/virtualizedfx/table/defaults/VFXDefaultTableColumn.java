@@ -60,6 +60,8 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
     }
 
     {
+        // Prevent overlay from capturing mouse events on rows (mouse transparent is not enough)
+        setPickOnBounds(false);
         // Start with a wider gap by default
         StyleUtils.initProperty(graphicTextGapProperty(), 8.0);
     }
