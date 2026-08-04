@@ -20,6 +20,7 @@ package app;
 
 import interactive.table.TableTestUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
+import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
@@ -34,6 +35,7 @@ public class Playground extends Application {
         StackPane root = new StackPane();
 
         TableTestUtils.Table table = new TableTestUtils.Table(users(100));
+        table.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
         table.getStylesheets().clear();
         root.getChildren().add(table.makeScrollable());
 
@@ -63,9 +65,11 @@ public class Playground extends Application {
             }
             
             .vfx-column {
-              -vfx-enable-overlay: true;
-              -vfx-overlay-on-header: true;
+              -fx-border-color: transparent grey transparent transparent;
+              -vfx-enable-overlay: false;
+              -vfx-overlay-on-header: false;
               -vfx-icon-alignment: LEFT;
+              -vfx-resizable: true;
             }
             
             .vfx-column:hover .overlay {

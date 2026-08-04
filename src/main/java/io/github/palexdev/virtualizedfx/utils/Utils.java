@@ -55,16 +55,4 @@ public class Utils {
             return INVALID_RANGE;
         }
     }
-
-    /// @return an unmodifiable hashmap with the provided key-value pairs
-    /// @throws IllegalArgumentException if the given arguments are odd
-    /// @throws ClassCastException if one of the values cannot be cast either to `K` or `V`
-    public static <K, V> Map<K, V> mapOf(Object... kv) {
-        if (kv.length % 2 != 0) throw new IllegalArgumentException("Invalid key-value pair count!");
-        Map<K, V> map = new HashMap<>();
-        for (int i = 0; i < kv.length; i += 2) {
-            map.put((K) kv[i], (V) kv[i + 1]);
-        }
-        return Collections.unmodifiableMap(map);
-    }
 }

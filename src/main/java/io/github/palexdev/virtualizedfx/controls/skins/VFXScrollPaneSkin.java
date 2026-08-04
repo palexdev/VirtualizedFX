@@ -1,8 +1,6 @@
 package io.github.palexdev.virtualizedfx.controls.skins;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 import io.github.palexdev.mfxcore.base.beans.Size;
@@ -48,7 +46,7 @@ import javafx.util.Duration;
 import static io.github.palexdev.mfxcore.base.beans.Size.zero;
 import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.*;
-import static io.github.palexdev.virtualizedfx.utils.Utils.mapOf;
+import static io.github.palexdev.mfxcore.utils.CollectionUtils.map;
 
 /// Default skin implementation for [VFXScrollPane].
 ///
@@ -691,7 +689,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
     @FunctionalInterface
     protected interface ContentBiasHandler {
-        Map<Orientation, ContentBiasHandler> HANDLERS = mapOf(
+        Map<Orientation, ContentBiasHandler> HANDLERS = Collections.unmodifiableMap(map(HashMap::new,
             null, (ContentBiasHandler) (vsp, vs, c) -> Size.size(
                 boundedSize(vsp.isFitToWidth() ? vs.width() : c.prefWidth(-1), c.minWidth(-1), c.maxWidth(-1)),
                 boundedSize(vsp.isFitToHeight() ? vs.height() : c.prefHeight(-1), c.minHeight(-1), c.maxHeight(-1))
@@ -706,7 +704,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                 double cw = boundedSize(vsp.isFitToWidth() ? vs.width() : c.prefWidth(ch), c.minWidth(ch), c.maxWidth(ch));
                 return Size.size(cw, ch);
             }
-        );
+        ));
 
         static Size computeSize(Orientation bias, VFXScrollPane vsp, Size viewportSize) {
             return HANDLERS.get(bias).computeSize(vsp, viewportSize, vsp.getContent());

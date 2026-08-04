@@ -20,17 +20,16 @@ package io.github.palexdev.virtualizedfx.table.defaults;
 
 import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.mfxcore.enums.Zone;
-import io.github.palexdev.mfxcore.utils.fx.resize.RegionDragResizer;
+import io.github.palexdev.mfxcore.utils.fx.resize.Resizer;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
-import javafx.scene.input.MouseEvent;
 
-import static io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn.DRAGGED;
+import static io.github.palexdev.mfxcore.utils.fx.resize.Resizer.resizer;
 
 /// This is the default behavior implementation for [VFXTableColumn]. This basic behavior instantiates a
-/// [RegionDragResizer] which allows you to resize the column with the mouse cursor at runtime.
+/// [Resizer] which allows you to resize the column with the mouse cursor at runtime.
 ///
 /// For the resizer to work, a series of conditions must be met:
 ///
@@ -43,7 +42,8 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     //================================================================================
     // Properties
     //================================================================================
-    protected RegionDragResizer resizer;
+
+    protected Resizer<VFXTableColumn<T ,C>> resizer;
 
     //================================================================================
     // Constructors
@@ -56,12 +56,8 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Methods
     //================================================================================
 
-    /// This method is responsible for enabling/disabling the [RegionDragResizer] by using [RegionDragResizer#makeResizable()]
-    /// or [RegionDragResizer#uninstall()].
-    ///
-    /// Beware, this is automatically called by the default skin when needed. Neither the resizer nor this class check whether
-    /// it is already enabled, which means that additional calls may add the same handlers multiple times, causing potential
-    /// memory leaks!
+    /// This method is responsible for enabling/disabling the [Resizer] by using [Resizer#install()()]
+    /// or [Resizer#uninstall()].
     protected void onResizableChanged() {
         VFXTableColumn<T, C> column = getNode();
         boolean resizable = column.isGestureResizable();
@@ -69,11 +65,10 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
             resizer.uninstall();
             return;
         }
-        if (resizer != null) resizer.makeResizable();
+        if (resizer != null && !resizer.isInstalled()) resizer.install();
     }
 
-    /// The [RegionDragResizer] used here is an inline custom extension which uses this method to determine whether
-    /// the column can be resized or not.
+    /// The [Resizer] checks for this condition to be `true` before attempting to resize the column.
     protected boolean canResize() {
         VFXTableColumn<T, C> column = getNode();
         VFXTable<T> table = column.getTable();
@@ -86,44 +81,23 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     @Override
     public void init() {
         VFXTableColumn<T, C> column = getNode();
-        resizer = new RegionDragResizer(column) {
-            @Override
-            protected void handleDragged(MouseEvent event) {
-                if (canResize()) {
-                    super.handleDragged(event);
-                    column.pseudoClassStateChanged(DRAGGED, true);
-                }
-            }
-
-            @Override
-            protected void handleMoved(MouseEvent event) {
-                if (canResize()) super.handleMoved(event);
-            }
-
-            @Override
-            protected void handlePressed(MouseEvent event) {
-                if (canResize()) super.handlePressed(event);
-            }
-
-            @Override
-            protected void handleReleased(MouseEvent event) {
-                super.handleReleased(event);
-                column.pseudoClassStateChanged(DRAGGED, false);
-            }
-        };
-        resizer.setMinWidthFunction(r -> column.getTable().getColumnsSize().width());
-        resizer.setAllowedZones(Zone.CENTER_RIGHT);
-        resizer.setResizeHandler((node, x, y, w, h) -> column.resize(w));
-        if (column.isGestureResizable()) resizer.makeResizable();
+        resizer = resizer(column)
+            .hitSource(column.getTable())
+            .condition((_, _) -> canResize())
+            .allowedZones(Zone.CENTER_RIGHT)
+            .resizeHandler((c, _, _, w, _) -> c.resize(w));
+        if (column.isGestureResizable()) resizer.install();
     }
 
     /// {@inheritDoc}
     ///
-    /// Also disposed the [RegionDragResizer].
+    /// Also disposed the [Resizer] if active.
     @Override
     public void dispose() {
-        resizer.dispose();
-        resizer = null;
+        if (resizer != null) {
+            resizer.dispose();
+            resizer = null;
+        }
         super.dispose();
     }
 }
