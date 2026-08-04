@@ -43,7 +43,7 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Properties
     //================================================================================
 
-    protected Resizer<VFXTableColumn<T ,C>> resizer;
+    protected Resizer<VFXTableColumn<T, C>> resizer;
 
     //================================================================================
     // Constructors
