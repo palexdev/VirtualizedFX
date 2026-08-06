@@ -138,6 +138,15 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
     //================================================================================
 
     @Override
+    protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
+        VFXTableColumn<T, C> column = getSkinnable();
+        Node icon = column.getGraphic();
+        return leftInset +
+               ((icon != null) ? LayoutUtils.boundWidth(icon) + column.getGraphicTextGap() : 0.0) +
+               rightInset;
+    }
+
+    @Override
     protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         VFXTableColumn<T, C> column = getSkinnable();
         Node icon = column.getGraphic();
