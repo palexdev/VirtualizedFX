@@ -110,9 +110,10 @@ public enum ScrollUnits {
     ///
     /// The specified pixel amount is converted into a percentage based on the scrollable content's
     /// size and the scroll pane's viewport size. If the content is a [VFXContainer], its virtualized
-    /// scroll bounds are used. Otherwise, the scrollable extent is derived from the layout bounds.
+    /// scroll bounds are used. Otherwise, the scrollable extent is derived from
+    /// [VFXScrollPane#contentBoundsProperty()] and [VFXScrollPane#viewportSizeProperty()].
     ///
-    /// Binding dependencies include either virtual scroll bounds or layout bounds, depending on content type.
+    /// Binding dependencies include either virtual scroll bounds or the above properties, depending on content type.
     PIXELS {
         @Override
         public Supplier<Double> calc(VFXScrollPane vsp, double amount, Orientation orientation) {
@@ -121,10 +122,10 @@ public enum ScrollUnits {
             Supplier<Double> scale = switch (node) {
                 case VFXContainer<?> c when orientation == Orientation.VERTICAL -> c::getMaxVScroll;
                 case VFXContainer<?> c when orientation == Orientation.HORIZONTAL -> c::getMaxHScroll;
-                case Node n when orientation == Orientation.VERTICAL ->
-                    () -> n.getLayoutBounds().getHeight() - vsp.getHeight();
-                case Node n when orientation == Orientation.HORIZONTAL ->
-                    () -> n.getLayoutBounds().getWidth() - vsp.getWidth();
+                case Node _ when orientation == Orientation.VERTICAL ->
+                    () -> vsp.getContentBounds().height() - vsp.getViewportSize().height();
+                case Node _ when orientation == Orientation.HORIZONTAL ->
+                    () -> vsp.getContentBounds().width() - vsp.getViewportSize().width();
                 default -> () -> 0.0;
             };
             return () -> {
@@ -142,7 +143,7 @@ public enum ScrollUnits {
                     new ObservableValue<?>[]{c.maxVScrollProperty()};
                 case VFXContainer<?> c when orientation == Orientation.HORIZONTAL ->
                     new ObservableValue<?>[]{c.maxHScrollProperty()};
-                default -> new ObservableValue<?>[]{node.layoutBoundsProperty(), vsp.layoutBoundsProperty()};
+                default -> new ObservableValue<?>[]{vsp.contentBoundsProperty(), vsp.viewportSizeProperty()};
             };
         }
     },
