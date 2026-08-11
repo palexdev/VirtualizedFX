@@ -120,6 +120,7 @@ public class VFXDefaultTableColumnSkin<T, C extends VFXTableCell<T>> extends MFX
             onInvalidated(column.overlayOnHeaderProperty())
                 .then(_ -> column.requestLayout())
         );
+        consumeMouseEvents(false); // JavaFX bullshit
     }
 
     /// Replaces the column's icon with the new given one.
