@@ -34,6 +34,8 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 
+import static java.util.Optional.ofNullable;
+
 /// Complex cache mechanism to simplify and vastly improve layout performance for [ColumnsLayoutMode#VARIABLE].
 /// This mode essentially disables virtualization along the x-axis which makes some computations way more expensive.
 ///
@@ -249,7 +251,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     ///```
     public double getColumnPos(int index) {
         VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
-        LayoutInfo li = cache.get(column);
+        LayoutInfo li = cache.require(column);
         double pos = li.getPos();
         if (index == 0) {
             li.setPos(0.0);
@@ -268,7 +270,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     /// check was either never done before or invalidated. In this case, the visibility function will compute it and the
     /// [LayoutInfo] object updated.
     public boolean isInViewport(VFXTableColumn<T, ?> column) {
-        LayoutInfo li = cache.get(column);
+        LayoutInfo li = cache.require(column);
         if (li.isVisible() == null) li.setVisible(vFn.apply(column));
         return li.isVisible();
     }
@@ -287,18 +289,14 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     ///
     /// If there are no columns anymore, calls [#clear()] and [#invalidate()], then exits.
     ///
-    /// Remember, the last column is always a special case in the table because it behaves a little different from the others.
-    /// So, before processing the [Change], we must ensure that the last column is still the same as before.
-    /// If that's not the case, first we call [#invalidateLast()] to ensure that the 'now previously last' column
-    /// has the right width (the width computing function is likely to return a different value now). It does not matter
-    /// if the change is going to remove that column, we must do it anyway for consistency. Then we update the local
-    /// reference for the last column (yes, the cache stores it for fast access), and at this point two things can happen:
+    /// **Beware, the order of the operations is crucial here!** The map must be synchronized with the list _before_
+    /// any invalidation occurs. The reason is that invalidating a width triggers the 'partial invalidation' mechanism
+    /// described in [LayoutInfo#createWidthBinding()], which iterates over [VFXTable#getColumns()] and queries the map
+    /// for **each** of them. If we were to invalidate first, entries for the columns added by the [Change] would still
+    /// be missing, and the resulting failure would also abort this method, leaving the cache in a corrupted state
+    /// (missing entries) forever.
     ///
-    /// 1) the new last column already was present in the cache, we simply call [LayoutInfo#invalidateWidth()]
-    ///
-    /// 2) the new last column has been added by the [Change] so we need to create a new entry in the cache's map
-    ///
-    /// After the above checks we can start processing the [Change]. We just need to handle additions and removals.
+    /// So, first, we process the [Change]. We just need to handle additions and removals.
     /// For each removal, we remove the corresponding entry from the map and dispose it [LayoutInfo#dispose()].
     /// For each addition, we create a new entry in the map [LayoutInfo#LayoutInfo(VFXTableColumn)].
     ///
@@ -315,6 +313,17 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     /// we remove any entry that is also present in that collection. This way we only keep the values that have actually
     /// been removed, and for these we can remove the entry and call [LayoutInfo#dispose()].
     ///
+    /// Once the map is up-to-date, we invalidate every cached index [LayoutInfo#invalidateIndex()], because any
+    /// structural change (additions, removals, permutations) is likely to have shifted the columns in the list.
+    ///
+    /// Then, remember, the last column is always a special case in the table because it behaves a little different from
+    /// the others. So, we must ensure that the last column is still the same as before. If that's not the case, first we
+    /// call [#invalidateLast()] to ensure that the 'now previously last' column has the right width (the width computing
+    /// function is likely to return a different value now); note that this is a no-op if the change removed it, as its
+    /// entry is already gone by now. Then we update the local reference for the last column (yes, the cache stores it
+    /// for fast access) and invalidate its width too, since the `widthFn` is likely to return a different value for it
+    /// as well.
+    ///
     /// Finally, we invalidate all the positions and visibility flags. Re-computing them is far more convenient and stable
     /// than trying to guess which one is still good and which not. We also call [#invalidate()] and [#invalidateLast()].
     private void handleColumns(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
@@ -325,35 +334,36 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             return;
         }
 
-        VFXTableColumn<T, ? extends VFXTableCell<T>> last = columns.getLast();
-        if (last != lColumn) {
-            // Invalidate the previous last's binding
-            invalidateLast();
-            lColumn = last;
-            /*
-             * Since bindings are all the same whether it's the first column, in the middle or the last one...
-             * There is no need to replace the binding.
-             * What we want to do here is: if the binding is already present, we just invalidate it
-             * (since the widthFn is likely to return a different value now), otherwise we just create it.
-             */
-            cache.computeIfAbsent(last, LayoutInfo::new).invalidateWidth();
-        }
-
+        // Sync the map with the list first!
         Set<VFXTableColumn<T, ?>> rm = new HashSet<>();
         while (change.next()) {
             if (change.wasRemoved()) rm.addAll(change.getRemoved());
             if (change.wasAdded()) {
                 for (VFXTableColumn<T, ?> c : change.getAddedSubList()) {
-                    if (rm.contains(c)) {
-                        rm.remove(c);
-                        continue;
-                    }
-                    if (c == lColumn) continue;
-                    cache.put(c, new LayoutInfo(c));
+                    if (rm.remove(c)) continue;
+                    /*
+                     * Since bindings are all the same whether it's the first column, in the middle or the last one...
+                     * There is no need to replace an already existing binding.
+                     */
+                    cache.computeIfAbsent(c, LayoutInfo::new);
                 }
             }
         }
-        rm.forEach(c -> cache.remove(c).dispose());
+        for (VFXTableColumn<T, ?> c : rm) {
+            LayoutInfo li = cache.remove(c);
+            if (li != null) li.dispose();
+        }
+
+        // Indexes are likely to be stale now
+        cache.values().forEach(LayoutInfo::invalidateIndex);
+
+        VFXTableColumn<T, ? extends VFXTableCell<T>> last = columns.getLast();
+        if (last != lColumn) {
+            // Invalidate the previous last's binding (no-op if it's not in the cache anymore)
+            invalidateLast();
+            lColumn = last;
+            cache.invalidateWidth(last);
+        }
 
         cache.values().forEach(li -> {
             li.resetPos();
@@ -417,7 +427,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         // Pretty print
         int maxL = 0;
         for (VFXTableColumn<T, ?> c : cache.keySet()) {
-            String text = Optional.ofNullable(c.getText()).orElse("");
+            String text = ofNullable(c.getText()).orElse("");
             maxL = Math.max(maxL, text.length());
         }
 
@@ -426,7 +436,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             VFXTableColumn<T, ?> c = entry.getKey();
             LayoutInfo i = entry.getValue();
             int index = i.getIndex();
-            String text = Optional.ofNullable(c.getText()).orElse("");
+            String text = ofNullable(c.getText()).orElse("");
 
             DoubleBinding b = i.wBinding;
             double pos = i.getPos();
@@ -535,17 +545,33 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     /// @see LayoutInfo
     public class LayoutInfoCache extends HashMap<VFXTableColumn<T, ?>, LayoutInfo> {
 
+        // Every column in the table must have an entry in this map, invariant guaranteed by handleColumns(Change).
+        // A missing entry means the cache is out of sync with the table: since every layout computation depends on this
+        // data, going on would just produce a wrong layout with no hint whatsoever about the cause. Fail loudly instead
+        private LayoutInfo require(VFXTableColumn<T, ?> column) {
+            LayoutInfo li = get(column);
+            if (li == null) {
+                String name = (column == null) ? "null" : ofNullable(column.getText()).orElse(column.toString());
+                throw new IllegalStateException(
+                    "The layout cache is out of sync with the table. No layout info found for column: " + name
+                );
+            }
+            return li;
+        }
+
         //================================================================================
         // Width
         //================================================================================
         public double getWidth(VFXTableColumn<T, ?> column) {
-            return get(column).getWidth();
+            return require(column).getWidth();
         }
 
         public boolean isWidthValid(VFXTableColumn<T, ?> column) {
-            return get(column).isWidthValid();
+            return require(column).isWidthValid();
         }
 
+        // Lenient on purpose: invalidateLast() may run when there is no last column at all, or when the previous last
+        // column has just been removed from the table (and thus from this map)
         private void invalidateWidth(VFXTableColumn<T, ?> column) {
             LayoutInfo li = get(column);
             if (li == null) return;
@@ -557,24 +583,24 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         //================================================================================
         public double getPos(int index) {
             ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
-            return get(columns.get(index)).getPos();
+            return require(columns.get(index)).getPos();
         }
 
         private void setPos(int index, double pos) {
             ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
             if (index > columns.size() - 1) return;
-            get(columns.get(index)).setPos(pos);
+            require(columns.get(index)).setPos(pos);
         }
 
         //================================================================================
         // Visibility
         //================================================================================
         public boolean isVisible(VFXTableColumn<T, ?> column) {
-            return get(column).isVisible();
+            return require(column).isVisible();
         }
 
         private void setVisibility(VFXTableColumn<T, ?> column, Boolean visibility) {
-            get(column).setVisible(visibility);
+            require(column).setVisible(visibility);
         }
 
         //================================================================================
@@ -634,10 +660,24 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             return column;
         }
 
-        /// @return the column's index retrieved the first time by [VFXTable#indexOf(VFXTableColumn)] (then cached)
+        /// @return the column's index in [VFXTable#getColumns()], computed the first time (then cached)
+        ///
+        /// **Note:** this purposefully does not go through [VFXTable#indexOf(VFXTableColumn)]. That method relies on
+        /// [VFXTableColumn#indexProperty()], which is refreshed by the skin during the layout pass, and thus is stale
+        /// in the window that goes from a change in [VFXTable#getColumns()] to the next layout. Since this is
+        /// re-computed only when invalidated by [#invalidateIndex()] (so, once per structural change at most), we can
+        /// afford to ask the list itself, which is always right.
         public int getIndex() {
-            if (index == -1) index = table.indexOf(column);
+            if (index == -1) index = table.getColumns().indexOf(column);
             return index;
+        }
+
+        /// Resets, and thus invalidates, the cached index to -1, so that it will be recomputed by [#getIndex()].
+        ///
+        /// Needed because any structural change in [VFXTable#getColumns()] (additions, removals, permutations) is
+        /// likely to shift the columns' indexes.
+        private void invalidateIndex() {
+            index = -1;
         }
 
         /// Calls [DoubleBinding#get()] on the column's width binding.

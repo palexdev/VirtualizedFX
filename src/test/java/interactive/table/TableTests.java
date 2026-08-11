@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.gson.reflect.TypeToken;
 import io.github.palexdev.mfxcore.base.beans.Size;
@@ -39,6 +40,7 @@ import io.github.palexdev.mfxresources.icon.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cells.VFXObservingTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.table.*;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
 import javafx.animation.Animation;
@@ -1292,6 +1294,26 @@ public class TableTests {
         assertState(table, INVALID_RANGE, INVALID_RANGE);
         assertCounter(0, 0, 0, 0, 0, 112, 42);
         assertEquals(0.0, table.getHPos());
+    }
+
+    @Test
+    void testRemoveAndAddColumnVariable(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20));
+        table.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
+        robot.interact(() -> pane.getChildren().add(table));
+
+        // Assert init
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 48, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+
+        // Remove
+        var removed = new AtomicReference<VFXTableColumn<User, ?>>();
+        robot.interact(() -> removed.set(table.getColumns().removeFirst()));
+
+        // Add
+        robot.interact(() -> table.getColumns().add(removed.get()));
     }
 
     @Test
