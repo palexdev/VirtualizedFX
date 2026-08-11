@@ -94,6 +94,7 @@ public class VFXLabeledCellSkin<T> extends MFXSkinBase<VFXCellBase<T>> {
                 .then(t -> update())
                 .executeNow()
         );
+        consumeMouseEvents(false); // JavaFX bullshit
     }
 
     /// This is responsible for updating the label's text using the value specified by the [VFXCellBase#itemProperty()].
