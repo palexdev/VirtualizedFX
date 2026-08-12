@@ -76,7 +76,7 @@ public class ScrollTests extends Application {
         TableTestUtils.Table vc = new TableTestUtils.Table(users(15));
         vc.setColumnsWidth(50.0);
         vc.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
-        vc.autosizeColumns();
+        vc.autosizeColumns(true);
 
         vc.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
             if (e.getButton() != MouseButton.SECONDARY) return;

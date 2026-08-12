@@ -1926,27 +1926,18 @@ public class TableTests {
             table.switchColumnsLayoutMode();
 
             // Issue autosize here to also test the "delay" functionality
-            table.autosizeColumns();
+            table.autosizeColumns(true);
             pane.getChildren().add(table);
         });
 
-        double[] vals = new double[]{
-            239.0,
-            96.0,
-            93.0,
-            109.0,
-            199.0,
-            80.0,
-            384.0
-        };
-        for (int i = 0; i < table.getColumns().size(); i++) {
-            VFXTableColumn<User, ? extends VFXTableCell<User>> c = table.getColumns().get(i);
-            try {
-                assertEquals(vals[i], c.getWidth(), 5);
-            } catch (AssertionError er) {
-                System.err.println("Failed assertion for column: " + c.getText());
-                System.err.println(er.getMessage());
-            }
+        // Hardcoding the expected widths would make this depend on the platform's font rendering.
+        // What we want to check is that every column is wide enough for its own header and for all of its cells
+        for (VFXTableColumn<User, ? extends VFXTableCell<User>> c : table.getColumns()) {
+            if (!c.isVisible()) continue; // Columns outside the viewport are not even laid out in this mode
+            assertTrue(c.getWidth() >= c.computePrefWidth(-1), () -> "Header does not fit in column: " + c.getText());
+        }
+        for (Node label : table.lookupAll(".label")) {
+            assertFalse(((Label) label).isTruncated());
         }
     }
 
@@ -1963,7 +1954,7 @@ public class TableTests {
             table.setColumnsWidth(80.0);
 
             // Issue autosize here to also test the "delay" functionality
-            table.autosizeColumns();
+            table.autosizeColumns(true);
             pane.getChildren().add(table);
         });
 
@@ -1985,7 +1976,7 @@ public class TableTests {
             table.switchColumnsLayoutMode();
 
             // Issue autosize here
-            table.autosizeColumn(0);
+            table.autosizeColumn(0, true);
             pane.getChildren().add(table);
         });
 
@@ -1994,7 +1985,7 @@ public class TableTests {
 
         // Sleep for a bit and try auto-sizing again
         sleep(2000);
-        robot.interact(() -> table.autosizeColumn(0));
+        robot.interact(() -> table.autosizeColumn(0, true));
     }
 
     @Test
@@ -2009,7 +2000,7 @@ public class TableTests {
             table.switchColumnsLayoutMode();
 
             // Issue autosize here
-            table.autosizeColumns();
+            table.autosizeColumns(false);
             pane.getChildren().add(table);
         });
 
