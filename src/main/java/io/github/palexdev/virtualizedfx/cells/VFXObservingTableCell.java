@@ -167,6 +167,7 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
                     .then(t -> onItemChanged())
                     .executeNow()
             );
+            consumeMouseEvents(false); // JavaFX bullshit
         }
 
         /// Updates the label's text by using the converter on the property extracted by [#getProperty()].
