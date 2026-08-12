@@ -382,6 +382,9 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     ///
     /// So, how does this work?
     ///
+    /// If the current [VFXTableState] is [VFXTableState#INVALID] exits immediately and calls
+    /// [#onLayoutCompleted(boolean)] with `false` as parameter.
+    ///
     /// If using the [ColumnsLayoutMode#FIXED], we simply call [VFXTableHelper#layoutColumn(int, VFXTableColumn)]
     /// on the column given by [ViewportLayoutRequest#column()] (which is expected to be the last column in the table).
     /// Then iterates on all the rows in the state, [VFXTableState#getRowsByIndex()], resize each of them because the
@@ -406,7 +409,10 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     protected void partialLayout() {
         VFXTable<T> table = getSkinnable();
         VFXTableState<T> state = table.getState();
-        if (state == VFXTableState.INVALID) return;
+        if (state == VFXTableState.INVALID) {
+            onLayoutCompleted(false);
+            return;
+        }
 
         VFXTableHelper<T> helper = table.getHelper();
         ColumnsLayoutMode layoutMode = table.getColumnsLayoutMode();
@@ -445,11 +451,12 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         onLayoutCompleted(true);
     }
 
-    /// This must be called after processing a [ViewportLayoutRequest] to reset the [VFXTable#needsViewportLayoutProperty()]
-    /// to [ViewportLayoutRequest#NULL].
+    /// This must be called after processing a [ViewportLayoutRequest] to bring the [VFXTable#needsViewportLayoutProperty()]
+    /// back to the idle state, which is [ViewportLayoutRequest#DONE] if the layout was computed,
+    /// [ViewportLayoutRequest#NULL] otherwise.
     protected void onLayoutCompleted(boolean done) {
         VFXTable<T> table = getSkinnable();
-        table.setNeedsViewportLayout(ViewportLayoutRequest.NULL.setWasDone(done));
+        table.setNeedsViewportLayout(done ? ViewportLayoutRequest.DONE : ViewportLayoutRequest.NULL);
     }
 
     /// This can be called during layout or other operations to update the given column's [VFXTableColumn#indexProperty()]

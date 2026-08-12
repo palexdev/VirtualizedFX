@@ -85,7 +85,7 @@ import javafx.scene.Node;
 /// to determine the minimum width. If you want a column to have a specific width (in variable mode ofc!!) then you must
 /// use this method to resize it: [#resize(double)]. This new implementation uses the [#prefWidthProperty()]
 /// to store the user's preferred width for the column. Not only that, this 'slot'/variable/property is used by autosize methods
-/// too [VFXTable#autosizeColumn(VFXTableColumn)], and should be used by gestures too (see [VFXTableColumnBehavior]).
+/// too [VFXTable#autosizeColumn(VFXTableColumn,boolean)], and should be used by gestures too (see [VFXTableColumnBehavior]).
 ///
 /// The default behavior implementation allows you to resize the column at runtime with the mouse cursor. The feature can
 /// be enabled/disabled through the [#gestureResizableProperty()].

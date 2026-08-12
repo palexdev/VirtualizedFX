@@ -143,10 +143,15 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// the column's header as well as all the related cells' content will be fully visible.
     ///
     /// Note: for obvious reasons, the computation is done on the currently visible items!
-    void autosizeColumn(VFXTableColumn<T, ?> column);
+    ///
+    /// @return whether the resize was actually performed. There are conditions that may prevent it, in which case
+    /// implementations are free to either delay the operation or ignore it
+    boolean autosizeColumn(VFXTableColumn<T, ?> column);
 
     /// Depends on the implementation!
-    void autosizeColumns();
+    ///
+    /// @return whether the resize was actually performed
+    boolean autosizeColumns();
 
     /// Depends on the implementation!
     int visibleCells();
@@ -227,6 +232,10 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     abstract class AbstractHelper<T> extends VFXContainerHelperBase<T, VFXTable<T>> implements VFXTableHelper<T> {
         protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
         protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
+
+        // Resizing a column (or the columns' size) issues a layout request, and its completion may very well lead to
+        // another autosize request, recursing until the stack blows up. This flag is here to break such loops
+        protected boolean autosizing = false;
 
         public AbstractHelper(VFXTable<T> table) {
             super(table);
@@ -378,7 +387,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// the rows' height.
     @SuppressWarnings("JavadocReference") // I don't know why since the method is public
     class FixedTableHelper<T> extends AbstractHelper<T> {
-        private boolean forceLayout = false;
 
         public FixedTableHelper(VFXTable<T> table) {
             super(table);
@@ -575,8 +583,12 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         }
 
         /// This method is a no-op as the operation is not possible in [ColumnsLayoutMode#FIXED].
+        ///
+        /// @return always `false`
         @Override
-        public void autosizeColumn(VFXTableColumn<T, ?> column) {/*NO-OP*/}
+        public boolean autosizeColumn(VFXTableColumn<T, ?> column) {
+            return false;
+        }
 
         /// In [ColumnsLayoutMode#FIXED] this can be still used by setting the [VFXTable#columnsSizeProperty()]
         /// rather than the width of each column.
@@ -595,23 +607,23 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         /// property itself.
         ///
         /// The second pass is to get the widest cell among the ones in the viewport by using
-        /// [VFXTableRow#getWidthOf(VFXTableColumn, boolean)]. The `forceLayout` flag is `true` if
-        /// this operation was 'delayed' before for the aforementioned reasons.
+        /// [VFXTableRow#getWidthOf(VFXTableColumn)].
         ///
         /// Finally, the [VFXTable#columnsSizeProperty()] is set to:
         /// `Math.max(Math.max(fixedW, maxColumnsW + extra), maxCellsW + extra)`, where 'fixedW' is the current width
         /// specified by the property itself.
         ///
+        /// @return whether the resize was actually performed. `false` if the state is invalid or if the operation was
+        /// delayed because of the columns' skin
         /// @see VFXTable#extraAutosizeWidthProperty()
         @Override
-        public void autosizeColumns() {
+        public boolean autosizeColumns() {
             VFXTableState<T> state = container.getState();
-            if (state == VFXTableState.INVALID) return;
+            if (autosizing || state == VFXTableState.INVALID) return false;
             ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = container.getColumns();
 
-            // It may happen that the columns still have a null skin
-            // In such case, we must delay the autosize while also ensuring that layout infos are available
-            // by forcing the computation of CSS.
+            // It may happen that the columns still have a null skin, in such cases we must delay the operation,
+            // otherwise there would be no way to compute their width.
             //
             // Check this by getting the last column in range
             // If the first's skin is still null, then most probably every other column is in the same situation
@@ -620,38 +632,39 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             if (column.getSkin() == null) {
                 When.onInvalidated(column.skinProperty())
                     .condition(Objects::nonNull)
-                    .then(v -> {
-                        forceLayout = true;
-                        container.applyCss();
-                        autosizeColumns();
-                    })
+                    .then(v -> autosizeColumns())
                     .oneShot()
                     .listen();
-                return;
+                return false;
             }
 
-            double extra = container.getExtraAutosizeWidth();
-            double fixedW = container.getColumnsSize().width();
-            double maxColumnsW = columns.stream()
-                .mapToDouble(c -> c.computePrefWidth(-1))
-                .max()
-                .orElse(-1);
-            if (state.isEmpty()) {
-                container.setColumnsWidth(Math.max(fixedW, maxColumnsW + extra));
-                return;
-            }
-
-            double maxCellsW = columns.stream()
-                .mapToDouble(c -> state.getRowsByIndex().values()
-                    .stream()
-                    .mapToDouble(r -> r.getWidthOf(c, forceLayout))
+            try {
+                autosizing = true;
+                double extra = container.getExtraAutosizeWidth();
+                double fixedW = container.getColumnsSize().width();
+                double maxColumnsW = columns.stream()
+                    .mapToDouble(c -> c.computePrefWidth(-1))
                     .max()
-                    .orElse(-1.0)
-                )
-                .max()
-                .orElse(-1.0);
-            container.setColumnsWidth(Math.max(Math.max(fixedW, maxColumnsW + extra), maxCellsW + extra));
-            forceLayout = false;
+                    .orElse(-1);
+                if (state.isEmpty()) {
+                    container.setColumnsWidth(Math.max(fixedW, maxColumnsW + extra));
+                    return true;
+                }
+
+                double maxCellsW = columns.stream()
+                    .mapToDouble(c -> state.getRowsByIndex().values()
+                        .stream()
+                        .mapToDouble(r -> r.getWidthOf(c))
+                        .max()
+                        .orElse(-1.0)
+                    )
+                    .max()
+                    .orElse(-1.0);
+                container.setColumnsWidth(Math.max(Math.max(fixedW, maxColumnsW + extra), maxCellsW + extra));
+                return true;
+            } finally {
+                autosizing = false;
+            }
         }
 
         /// @return the theoretical number of cells present in the viewport. It's given by `visibleRows * visibleColumns`,
@@ -762,10 +775,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     @SuppressWarnings("JavadocReference") // I don't know why since the method is public
     class VariableTableHelper<T> extends AbstractHelper<T> {
         private ColumnsLayoutCache<T> layoutCache;
-
-        private boolean forced = false;
-        private boolean forceLayout = false;
-        private boolean forceAll = false;
 
         public VariableTableHelper(VFXTable<T> table) {
             super(table);
@@ -1035,63 +1044,65 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         /// above formula.
         ///
         /// The second pass is to get the widest cell among the ones in the viewport by using
-        /// [VFXTableRow#getWidthOf(VFXTableColumn, boolean)]. The `forceLayout` flag is `true` if
-        /// this operation was 'delayed' before for the aforementioned reasons.
+        /// [VFXTableRow#getWidthOf(VFXTableColumn)].
         ///
         /// Finally, the column's width is set to: `Math.max(Math.max(minW, prefW), maxCellsWidth) + extra`.
         ///
         /// **Note:** the columns are resized using the method [VFXTableColumn#resize(double)].
         ///
+        /// @return whether the resize was actually performed. `false` if the state is invalid or if the operation was
+        /// delayed because of the column's skin
         /// @see VFXTableColumn
         /// @see VFXTable#extraAutosizeWidthProperty()
         @Override
-        public void autosizeColumn(VFXTableColumn<T, ?> column) {
+        public boolean autosizeColumn(VFXTableColumn<T, ?> column) {
             VFXTableState<T> state = container.getState();
-            if (state == VFXTableState.INVALID) return;
+            if (autosizing || state == VFXTableState.INVALID) return false;
 
-            // It may happen that the column still has a null skin
-            // In such cases, we must delay the autosize while also ensuring that layout infos are available
-            // by forcing the computation of CSS.
+            // It may happen that the column still has a null skin, in such cases we must delay the operation,
+            // otherwise there would be no way to compute its width
             if (column.getSkin() == null) {
                 When.onInvalidated(column.skinProperty())
                     .condition(Objects::nonNull)
-                    .then(_ -> {
-                        if (!forced) {
-                            forced = true;
-                            forceLayout = true;
-                            container.applyCss();
-                        }
-                        autosizeColumn(column);
-                    })
+                    .then(_ -> autosizeColumn(column))
                     .oneShot()
                     .listen();
-                return;
+                return false;
             }
 
-            double extra = container.getExtraAutosizeWidth();
-            double minW = container.getColumnsSize().width();
-            double prefW = column.computePrefWidth(-1);
-            if (state.isEmpty()) {
-                column.resize(Math.max(minW, prefW) + extra);
-                return;
-            }
+            try {
+                autosizing = true;
+                double extra = container.getExtraAutosizeWidth();
+                double minW = container.getColumnsSize().width();
+                double prefW = column.computePrefWidth(-1);
+                if (state.isEmpty()) {
+                    column.resize(Math.max(minW, prefW) + extra);
+                    return true;
+                }
 
-            double maxCellsW = state.getRowsByIndex().values().stream()
-                .mapToDouble(r -> r.getWidthOf(column, forceLayout))
-                .max()
-                .orElse(-1.0);
-            column.resize(Math.max(Math.max(minW, prefW), maxCellsW) + extra);
-            if (!forceAll) forceLayout = false;
+                double maxCellsW = state.getRowsByIndex().values().stream()
+                    .mapToDouble(r -> r.getWidthOf(column))
+                    .max()
+                    .orElse(-1.0);
+                column.resize(Math.max(Math.max(minW, prefW), maxCellsW) + extra);
+                return true;
+            } finally {
+                autosizing = false;
+            }
         }
 
         /// This simply calls [#autosizeColumn(VFXTableColumn)] on all the table's columns.
+        ///
+        /// @return whether **every** column was resized
         @Override
-        public void autosizeColumns() {
+        public boolean autosizeColumns() {
             VFXTableState<T> state = container.getState();
-            if (state == VFXTableState.INVALID) return;
-            forceAll = true;
-            container.getColumns().forEach(this::autosizeColumn);
-            forceLayout = false;
+            if (autosizing || state == VFXTableState.INVALID) return false;
+            boolean done = true;
+            for (VFXTableColumn<T, ?> column : container.getColumns()) {
+                done &= autosizeColumn(column);
+            }
+            return done;
         }
 
         /// @return the number of cells for which the corresponding column is visible in the viewport

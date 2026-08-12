@@ -123,16 +123,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
 
     /// This method should be responsible for computing the ideal width of a cell given the corresponding column so that
     /// its content can be fully shown. This is important for the table's autosize feature to work properly!
-    ///
-    /// @param forceLayout it may happen that this garbage that is JavaFX to still have an incomplete scene graph, meaning
-    /// for example that skins are not still available for some controls/cells, which means that we could
-    /// fail in computing any size. This may happen even if the table's layout has been already computed
-    /// at least once. Internal checks try to identify such occasions and may pass 'true' to this method.
-    /// What implementations could do to get a correct value is to force the cells to compute their
-    /// layout (as well as all of their children) by invoking [Node#applyCss()].
-    /// Note, however, that this is going to be a **costly** operation at init, but it's pretty much
-    /// the only way.
-    protected abstract double getWidthOf(VFXTableColumn<T, ?> column, boolean forceLayout);
+    protected abstract double getWidthOf(VFXTableColumn<T, ?> column);
 
     //================================================================================
     // Methods

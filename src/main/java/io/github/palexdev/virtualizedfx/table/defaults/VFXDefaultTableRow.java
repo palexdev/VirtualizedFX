@@ -152,18 +152,18 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
     /// {@inheritDoc}
     ///
     /// Extract a cell from the state map by the given column using [RowsStateMap#getSingle(VFXTableColumn)].
-    /// If the cell is not `null` computes its width by calling [Node#prefWidth(double)]. Before doing so,
-    /// if the `forceLayout` flag is true, also calls [Node#applyCss()].
+    /// If the cell is not `null` computes its width by calling [Node#prefWidth(double)], but not before calling
+    /// [Node#applyCss()] on the row itself.
     ///
     /// If the width can't be computed or if anything goes wrong, returns -1.0.
     @Override
-    protected double getWidthOf(VFXTableColumn<T, ?> column, boolean forceLayout) {
+    protected double getWidthOf(VFXTableColumn<T, ?> column) {
         try {
             return Optional.ofNullable(cells.getSingle(column))
                 .map(c -> {
-                    Node node = c.toNode();
-                    if (forceLayout) applyCss();
-                    return node.prefWidth(-1);
+                    // Make sure CSS is computed or not stale before measuring
+                    applyCss();
+                    return c.toNode().prefWidth(-1);
                 })
                 .orElse(-1.0);
         } catch (Exception ex) {

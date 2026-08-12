@@ -40,15 +40,15 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 /// Also, this class can also be used as a callback, because you can query the [#wasDone()] flag to check
 /// whether the request lead to layout computation or not (there may be conditions that prevent it!)
 ///
-/// Since we are using a class in this case, there are two special values to avoid creating objects every time:
+/// Instances of this class are **immutable**. An actual request is always a new instance, while the idle state
+/// (nothing pending) is represented by two special values, which also spare us from potential `NullPointerExceptions`:
 ///
-/// 1) [#NULL] is used as both the initial value and the 'reset' value. The default table's skin sets the
-/// request property to this special value as soon as the layout methods complete their work. Also, this way we avoid
-/// potential `NullPointerExceptions`.
+/// 1) [#NULL] is the initial value, and the one the skin sets when the layout could **not** be computed
 ///
-/// 2) [#EMPTY] is simply used to request a full layout. Statistically speaking, there are going to be many
-/// more cases when we want to perform a full layout than a partial one. After all, a partial layout is possible pretty much
-/// only in the above-mentioned cases.
+/// 2) [#DONE] is the one the skin sets when the layout was computed successfully
+///
+/// Neither of the two is a valid request, [#isValid()], so the skin ignores them; they differ only in what
+/// [#wasDone()] reports.
 ///
 /// @see #isValid()
 /// @see #isPartial()
@@ -58,21 +58,23 @@ public class ViewportLayoutRequest<T> {
     // Static Properties
     //================================================================================
     public static final ViewportLayoutRequest NULL = new ViewportLayoutRequest<>();
-    public static final ViewportLayoutRequest EMPTY = new ViewportLayoutRequest<>();
+    public static final ViewportLayoutRequest DONE = new ViewportLayoutRequest<>();
 
     //================================================================================
     // Properties
     //================================================================================
     private final VFXTableColumn<T, ?> column;
-    private boolean wasDone = false;
 
     //================================================================================
     // Constructors
     //================================================================================
-    private ViewportLayoutRequest() {
+
+    /// Builds a request for a full layout computation.
+    public ViewportLayoutRequest() {
         this.column = null;
     }
 
+    /// Builds a request for a partial layout computation, starting from the given column.
     public ViewportLayoutRequest(VFXTableColumn<T, ?> column) {
         assert column != null;
         this.column = column;
@@ -82,9 +84,9 @@ public class ViewportLayoutRequest<T> {
     // Methods
     //================================================================================
 
-    /// @return whether this instance is not equal to the special object [#NULL].
+    /// @return whether this instance is an actual request, thus neither [#NULL] nor [#DONE]
     public boolean isValid() {
-        return this != NULL;
+        return this != NULL && this != DONE;
     }
 
     /// @return whether the column instance passed to this request is not `null`.
@@ -97,14 +99,9 @@ public class ViewportLayoutRequest<T> {
         return column;
     }
 
-    /// @return whether it was possible to fulfill the layout request
+    /// @return whether it was possible to fulfill the last layout request
     public boolean wasDone() {
-        return wasDone;
-    }
-
-    protected ViewportLayoutRequest<T> setWasDone(boolean wasDone) {
-        this.wasDone = wasDone;
-        return this;
+        return this == DONE;
     }
 
     //================================================================================

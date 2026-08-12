@@ -192,7 +192,7 @@ import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
 /// or not. This is crucial to make the autosize feature work (see below).
 ///
 /// - The table allows you to autosize all or specific columns so that the content is fully shown. You can do so by
-/// calling either: [#autosizeColumn(int)], [#autosizeColumn(VFXTableColumn)] or [#autosizeColumns()].
+/// calling either: [#autosizeColumn(int,boolean)], [#autosizeColumn(VFXTableColumn,boolean)] or [#autosizeColumns(boolean)].
 /// Their behavior depends on the set [ColumnsLayoutMode].
 /// In [ColumnsLayoutMode#VARIABLE] mode, columns will be resized to make their header and all their "children" cells fit the content.
 /// In [ColumnsLayoutMode#FIXED] mode, since columns can't have different size, the algorithm chooses the greatest
@@ -297,12 +297,12 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     }
 
     /// Tries to retrieve a column from the columns' list by the given index
-    /// to then delegate to [#autosizeColumn(VFXTableColumn)].
-    public void autosizeColumn(int index) {
+    /// to then delegate to [#autosizeColumn(VFXTableColumn,boolean)].
+    public void autosizeColumn(int index, boolean waitState) {
         try {
             VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(index);
             if (column == null) return;
-            autosizeColumn(column);
+            autosizeColumn(column, waitState);
         } catch (Exception ignored) {}
     }
 
@@ -310,34 +310,62 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     /// The actual resize is delegated to the helper: [VFXTableHelper#autosizeColumn(VFXTableColumn)].
     ///
     /// **Note:** this operation is peculiar in the sense that there are a few conditions to meet before the actual
-    /// resize is done. You see, to compute the maximum width to allow the content to fit, first the table, the columns
-    /// and the cells must have been laid out at least one time. So, if, when calling this method, the last layout request
-    /// was not processed ([ViewportLayoutRequest#wasDone()]), the operation is **delayed**,
-    /// and will run as soon as the condition is met.
+    /// resize is done. You see, to compute the maximum width to allow the content to fit, the table must be in a scene
+    /// (otherwise CSS is not processed and any measurement would be meaningless), its state must be valid, and the
+    /// table, the columns and the cells must have been laid out at least one time ([ViewportLayoutRequest#wasDone()]).
+    /// So, if any of these conditions is not met when calling this method, the operation is **delayed**,
+    /// and will run as soon as they all are.
     /// To be precise, the operation could still be delayed, the other conditions are defined in the helper,
     /// see [VFXTableHelper#autosizeColumn(VFXTableColumn)].
-    public void autosizeColumn(VFXTableColumn<T, ?> column) {
+    ///
+    /// @param waitState whether to also wait for the state to have rows. A state with no rows means no cells to measure,
+    /// which in turn means a column sized to fit its header only. Pass `true` when the table's items are going to be
+    /// set/loaded after this call.
+    /// **Beware:** if the table never gets any item, the operation is going to be delayed forever
+    public void autosizeColumn(VFXTableColumn<T, ?> column, boolean waitState) {
         if (getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) return;
         When.onChanged(needsViewportLayout)
-            .condition((o, n) -> n.wasDone())
+            .condition((o, n) ->
+                getScene() != null &&
+                getState() != VFXTableState.INVALID &&
+                (!waitState || !getState().isEmpty()) &&
+                n.wasDone())
             .then((o, n) -> getHelper().autosizeColumn(column))
+            .invalidating(sceneProperty())
             .oneShot(true)
-            .executeNow(() -> getViewportLayoutRequest().wasDone())
+            .executeNow(() ->
+                getScene() != null &&
+                getState() != VFXTableState.INVALID &&
+                (!waitState || !getState().isEmpty()) &&
+                getViewportLayoutRequest().wasDone())
             .listen();
     }
 
-    /// This will simply call [#autosizeColumn(VFXTableColumn)] on all the table's columns.
+    /// This will simply call [#autosizeColumn(VFXTableColumn,boolean)] on all the table's columns.
     /// To be precise, the actual operation is delegated to the helper: [VFXTableHelper#autosizeColumns()].
     ///
-    /// Just like [#autosizeColumn(VFXTableColumn)], the operation could be **delayed** if the last layout request
-    /// was not processed [ViewportLayoutRequest#wasDone()] or if the control is not in a scene yet at the time calling this.
-    public void autosizeColumns() {
+    /// Just like [#autosizeColumn(VFXTableColumn,boolean)], the operation could be **delayed** until all the conditions
+    /// to fulfill it are met.
+    ///
+    /// @param waitState whether to also wait for the state to have rows. A state with no rows means no cells to measure,
+    /// which in turn means columns sized to fit their header only. Pass `true` when the table's items are going to be
+    /// set/loaded after this call.
+    /// **Beware:** if the table never gets any item, the operation is going to be delayed forever
+    public void autosizeColumns(boolean waitState) {
         When.onChanged(needsViewportLayout)
-            .condition((o, n) -> getScene() != null && n.wasDone())
+            .condition((o, n) ->
+                getScene() != null &&
+                getState() != VFXTableState.INVALID &&
+                (!waitState || !getState().isEmpty()) &&
+                n.wasDone())
             .then((o, n) -> getHelper().autosizeColumns())
             .invalidating(sceneProperty())
             .oneShot(true)
-            .executeNow(() -> getScene() != null && getViewportLayoutRequest().wasDone())
+            .executeNow(() ->
+                getScene() != null &&
+                getState() != VFXTableState.INVALID &&
+                (!waitState || !getState().isEmpty()) &&
+                getViewportLayoutRequest().wasDone())
             .listen();
     }
 
@@ -378,16 +406,16 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     }
 
     /// Setter for the [#needsViewportLayoutProperty()].
-    /// This sets the property to [ViewportLayoutRequest#EMPTY], causing the default skin to recompute the entire layout.
+    /// This sets the property to a new [ViewportLayoutRequest], causing the default skin to recompute the entire layout.
     public void requestViewportLayout() {
-        setNeedsViewportLayout(ViewportLayoutRequest.EMPTY.setWasDone(false));
+        setNeedsViewportLayout(new ViewportLayoutRequest<>());
     }
 
     /// Setter for the [#needsViewportLayoutProperty()].
     /// This sets the property to a new [ViewportLayoutRequest] with the given column, causing the default skin to
     /// recompute only a portion of the layout.
     protected void requestViewportLayout(VFXTableColumn<T, ?> column) {
-        setNeedsViewportLayout(new ViewportLayoutRequest(column).setWasDone(false));
+        setNeedsViewportLayout(new ViewportLayoutRequest<>(column));
     }
 
     //================================================================================
