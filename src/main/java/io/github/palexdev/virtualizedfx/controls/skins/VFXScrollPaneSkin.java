@@ -106,7 +106,9 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
         // Init scroll bars
         vBar = new VFXScrollBar(Orientation.VERTICAL);
+        vBar.setManaged(false);
         hBar = new VFXScrollBar(Orientation.HORIZONTAL);
+        hBar.setManaged(false);
 
         // Finalize init
         addListeners();
