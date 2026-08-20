@@ -2025,7 +2025,7 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Get text before change row 5
-        VFXTableCell<User> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
+        VFXTableCell<User> row5 = table.getState().getRowsByIndex().get(5).getCellsByIndex().get(0);
         Label label5 = (Label) row5.toNode().lookup(".label");
         String text5 = label5.getText();
 
@@ -2038,7 +2038,7 @@ public class TableTests {
         assertNotEquals(text5, label5.getText());
 
         // Get text before change row 7
-        VFXTableCell<User> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
+        VFXTableCell<User> row7 = table.getState().getRowsByIndex().get(7).getCellsByIndex().get(0);
         Label label7 = (Label) row7.toNode().lookup(".label");
         String text7 = label7.getText();
 
@@ -2105,7 +2105,7 @@ public class TableTests {
         assertEquals(IntegerRange.of(0, 6), table.getColumnsRange());
 
         // Get text before change row 5
-        VFXTableCell<FXUser> row5 = table.getState().getRowsByIndexUnmodifiable().get(5).getCellsUnmodifiable().get(0);
+        VFXTableCell<FXUser> row5 = table.getState().getRowsByIndex().get(5).getCellsByIndex().get(0);
         Label label5 = (Label) row5.toNode().lookup(".label");
         String text5 = label5.getText();
 
@@ -2114,7 +2114,7 @@ public class TableTests {
         assertNotEquals(text5, label5.getText());
 
         // Get text before change row 7
-        VFXTableCell<FXUser> row7 = table.getState().getRowsByIndexUnmodifiable().get(7).getCellsUnmodifiable().get(0);
+        VFXTableCell<FXUser> row7 = table.getState().getRowsByIndex().get(7).getCellsByIndex().get(0);
         Label label7 = (Label) row7.toNode().lookup(".label");
         String text7 = label7.getText();
 

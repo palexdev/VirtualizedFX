@@ -141,7 +141,7 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     public Map<Integer, C> getVisibleCellsByIndex() {
         IntegerRange range = getVisibleRange();
         if (Utils.INVALID_RANGE.equals(range)) return Map.of();
-        return getCellsByIndexUnmodifiable().entrySet().stream()
+        return getCellsByIndex().entrySet().stream()
             .filter(e -> IntegerRange.inRangeOf(e.getKey(), range))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -152,7 +152,7 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
         IntegerRange range = getVisibleRange();
         if (Utils.INVALID_RANGE.equals(range)) return Map.of();
         Map<T, C> map = new HashMap<>();
-        SequencedMap<Integer, C> byIndex = getCellsByIndexUnmodifiable();
+        SequencedMap<Integer, C> byIndex = getCellsByIndex();
         for (Integer i : range) {
             T t = getItems().get(i);
             map.put(t, byIndex.get(i));

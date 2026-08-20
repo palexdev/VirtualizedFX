@@ -173,17 +173,15 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
         }
 
         // Remaining cells are updated according to the above-built queue
-        Iterator<C> it = state.getCellsByIndex().values().iterator();
-        while (it.hasNext()) {
+        for (C cell : state.getCellsByIndex().values()) {
             int idx = needed.removeFirst();
-            C cell = it.next();
             cell.updateIndex(idx);
             cell.updateItem(helper.indexToItem(idx));
             newState.addCell(idx, cell);
-            it.remove();
         }
         list.update(newState);
         list.requestViewportLayout();
+        state.clear();
     }
 
     /// This method is responsible for updating the list's state when the [VFXList#getCellFactory()] changes.

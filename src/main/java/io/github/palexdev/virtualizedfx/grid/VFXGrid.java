@@ -348,12 +348,12 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     /// Delegate for [VFXGridState#getColumnsRange()]
     public IntegerRange getColumnsRange() {return getState().getColumnsRange();}
 
-    /// Delegate for [VFXGridState#getCellsByIndexUnmodifiable()]
-    public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {return getState().getCellsByIndexUnmodifiable();}
+    /// Delegate for [VFXGridState#getCellsByIndex()]
+    public SequencedMap<Integer, C> getCellsByIndex() {return getState().getCellsByIndex();}
 
-    /// Delegate for [VFXGridState#getCellsByItemUnmodifiable()]
-    public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
-        return getState().getCellsByItemUnmodifiable();
+    /// Delegate for [VFXGridState#getCellsByItem()]
+    public List<Map.Entry<T, C>> getCellsByItem() {
+        return getState().getCellsByItem();
     }
 
     /// Delegate for [VFXGridHelper#virtualMaxXProperty()].

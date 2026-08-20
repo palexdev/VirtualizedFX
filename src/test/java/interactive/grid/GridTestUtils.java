@@ -68,7 +68,7 @@ public class GridTestUtils {
         assertEquals(helper.columnsRange(), columnsRange);
         assertEquals(helper.totalCells(), state.size());
 
-        SequencedMap<Integer, VFXCell<Integer>> cells = state.getCellsByIndexUnmodifiable();
+        SequencedMap<Integer, VFXCell<Integer>> cells = state.getCellsByIndex();
         ObservableList<Integer> items = grid.getItems();
         int i = 0, j = 0;
         for (Integer rIdx : rowsRange) {

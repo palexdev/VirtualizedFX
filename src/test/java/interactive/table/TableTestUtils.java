@@ -135,7 +135,7 @@ public class TableTestUtils {
         }
 
         ObservableList<User> items = table.getItems();
-        SequencedMap<Integer, VFXTableRow<User>> rows = state.getRowsByIndexUnmodifiable();
+        SequencedMap<Integer, VFXTableRow<User>> rows = state.getRowsByIndex();
         if (rows.isEmpty()) return;
         int i = 0;
         for (Integer rIdx : rowsRange) {
@@ -153,7 +153,7 @@ public class TableTestUtils {
             assertEquals(items.get(rIdx), row.getItem());
             assertLayout(table, i, row);
 
-            SequencedMap<Integer, VFXTableCell<User>> cells = row.getCellsUnmodifiable();
+            SequencedMap<Integer, VFXTableCell<User>> cells = row.getCellsByIndex();
             j = 0;
             for (Integer cIdx : columnsRange) {
                 VFXTableCell<User> cell = null;

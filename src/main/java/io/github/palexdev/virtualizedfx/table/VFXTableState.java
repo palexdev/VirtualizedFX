@@ -202,7 +202,6 @@ public class VFXTableState<T> implements Cloneable {
         return clone;
     }
 
-
     //================================================================================
     // Getters/Setters
     //================================================================================
@@ -228,26 +227,15 @@ public class VFXTableState<T> implements Cloneable {
         return rows;
     }
 
-    /// @return the map containing the rows by their index
-    protected SequencedMap<Integer, VFXTableRow<T>> getRowsByIndex() {
+    /// @return the map containing the rows by their index, unmodifiable
+    public SequencedMap<Integer, VFXTableRow<T>> getRowsByIndex() {
         return rows.getByIndex();
     }
 
     /// @return the list containing the rows by their item, as entries because of possible duplicates
     /// @see StateMap#resolve()
-    protected List<Map.Entry<T, VFXTableRow<T>>> getRowsByItem() {
+    public List<Map.Entry<T, VFXTableRow<T>>> getRowsByItem() {
         return rows.resolve();
-    }
-
-    /// @return the map containing the rows by their index, unmodifiable
-    public SequencedMap<Integer, VFXTableRow<T>> getRowsByIndexUnmodifiable() {
-        return Collections.unmodifiableSequencedMap(rows.getByIndex());
-    }
-
-    /// @return the list containing the rows by their item, as entries because of possible duplicates, unmodifiable
-    /// @see StateMap#resolve()
-    public List<Map.Entry<T, VFXTableRow<T>>> getRowsByItemUnmodifiable() {
-        return Collections.unmodifiableList(rows.resolve());
     }
 
     /// @return the total number of cells by summing the number cells of each row in the [StateMap]

@@ -120,14 +120,19 @@ public class VFXListState<T, C extends VFXCell<T>> {
         return cells.remove(item);
     }
 
+    /// Clears the [StateMap] without caching the cells.
+    protected void clear() {
+        cells.clear();
+    }
+
     /// Disposes this state object by: caching all the cells ([VFXCellsCache#cache(Collection)]), and then
-    /// clearing the [StateMap] by calling [StateMap#clear()].
+    /// calls [#clear()]
     ///
     /// @see StateMap
     protected void dispose() {
         VFXCellsCache<T, C> cache = list.getCache();
         cache.cache(getCellsByIndex().values());
-        cells.clear();
+        clear();
     }
 
     //================================================================================
@@ -150,26 +155,15 @@ public class VFXListState<T, C extends VFXCell<T>> {
         return cells;
     }
 
-    /// @return the map containing the cells by their index
-    protected SequencedMap<Integer, C> getCellsByIndex() {
+    /// @return the map containing the cells by their index, unmodifiable
+    public SequencedMap<Integer, C> getCellsByIndex() {
         return cells.getByIndex();
     }
 
     /// @return the list containing the cells by their item, as entries because of possible duplicates
     /// @see StateMap#resolve()
-    protected List<Entry<T, C>> getCellsByItem() {
+    public List<Entry<T, C>> getCellsByItem() {
         return cells.resolve();
-    }
-
-    /// @return the map containing the cells by their index, unmodifiable
-    public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {
-        return Collections.unmodifiableSequencedMap(cells.getByIndex());
-    }
-
-    /// @return the list containing the cells by their item, as entries because of possible duplicates, unmodifiable
-    /// @see StateMap#resolve()
-    public List<Entry<T, C>> getCellsByItemUnmodifiable() {
-        return Collections.unmodifiableList(cells.resolve());
     }
 
     /// @return converts the cells' map to a list of nodes by calling [C#toNode()] on each cell

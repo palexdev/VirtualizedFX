@@ -356,14 +356,14 @@ public class IndexBiMap<K, V> {
         return resolved;
     }
 
-    /// @return the map used to store the values by their index [Integer,V], a copy!
+    /// @return the map used to store the values by their index [Integer,V] unmodifiable!
     public SequencedMap<Integer, V> getByIndex() {
-        return byIndex;
+        return Collections.unmodifiableSequencedMap(byIndex);
     }
 
-    /// @return the map used to store the indexes by key [K,Integer], a copy!
+    /// @return the map used to store the indexes by key [K,Integer] unmodifiable!
     public Map<K, SequencedSet<Integer>> getByKey() {
-        return byKey;
+        return Collections.unmodifiableMap(byKey);
     }
 
     /// Flattens the values of the `byKey` map (which uses mappings of type `[k, SequencedSet<Integer>]` to

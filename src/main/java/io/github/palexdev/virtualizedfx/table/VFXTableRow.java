@@ -343,18 +343,13 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
     }
 
     /// @return the row's cells as an unmodifiable [SequencedMap], mapped by the row's [#indexProperty()].
-    public SequencedMap<Integer, VFXTableCell<T>> getCellsUnmodifiable() {
-        return Collections.unmodifiableSequencedMap(cells.getByIndex());
+    public SequencedMap<Integer, VFXTableCell<T>> getCellsByIndex() {
+        return cells.getByIndex();
     }
 
     /// @return the row's state map, which contains the cells both mapped by the row's index or the cell's "parent" column.
     protected RowsStateMap<T, VFXTableCell<T>> getCells() {
         return cells;
-    }
-
-    /// @return the row's cells as a [SequencedMap], mapped by the row's [#indexProperty()].
-    protected SequencedMap<Integer, VFXTableCell<T>> getCellsByIndex() {
-        return cells.getByIndex();
     }
 
     /// Converts and collects all the cells from the row's state map to JavaFX nodes by using [VFXCell#toNode()].

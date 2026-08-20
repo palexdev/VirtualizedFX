@@ -1517,7 +1517,7 @@ public class GridTests {
         assertCounter(40, 1, 40, 40, 0, 0, 0);
 
         // Get text before change cell 5
-        VFXCell<User> cell5 = grid.getState().getCellsByIndexUnmodifiable().get(5);
+        VFXCell<User> cell5 = grid.getState().getCellsByIndex().get(5);
         Label label5 = (Label) cell5.toNode().lookup(".label");
         String text5 = label5.getText();
 
@@ -1530,7 +1530,7 @@ public class GridTests {
         assertNotEquals(text5, label5.getText());
 
         // Get text before change cell 7
-        VFXCell<User> cell7 = grid.getState().getCellsByIndexUnmodifiable().get(7);
+        VFXCell<User> cell7 = grid.getState().getCellsByIndex().get(7);
         Label label7 = (Label) cell7.toNode().lookup(".label");
         String text7 = label7.getText();
 

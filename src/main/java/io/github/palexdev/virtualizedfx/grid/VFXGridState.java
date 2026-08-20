@@ -227,26 +227,15 @@ public class VFXGridState<T, C extends VFXCell<T>> {
         return cells;
     }
 
-    /// @return the map containing the cells by their index
-    protected SequencedMap<Integer, C> getCellsByIndex() {
+    /// @return the map containing the cells by their index, unmodifiable
+    public SequencedMap<Integer, C> getCellsByIndex() {
         return cells.getByIndex();
     }
 
     /// @return the list containing the cells by their item, as entries because of possible duplicates
     /// @see StateMap#resolve()
-    protected List<Map.Entry<T, C>> getCellsByItem() {
+    public List<Map.Entry<T, C>> getCellsByItem() {
         return cells.resolve();
-    }
-
-    /// @return the map containing the cells by their index, unmodifiable
-    public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {
-        return Collections.unmodifiableSequencedMap(cells.getByIndex());
-    }
-
-    /// @return the list containing the cells by their item, as entries because of possible duplicates, unmodifiable
-    /// @see StateMap#resolve()
-    public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
-        return Collections.unmodifiableList(cells.resolve());
     }
 
     /// @return converts the cells' map to a list of nodes by calling [C#toNode()] on each cell

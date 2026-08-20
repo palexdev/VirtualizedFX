@@ -322,14 +322,14 @@ public class VFXList<T, C extends VFXCell<T>> extends MFXControl
         return getState().getRange();
     }
 
-    /// Delegate for [VFXListState#getCellsByIndexUnmodifiable()]
-    public SequencedMap<Integer, C> getCellsByIndexUnmodifiable() {
-        return getState().getCellsByIndexUnmodifiable();
+    /// Delegate for [VFXListState#getCellsByIndex()]
+    public SequencedMap<Integer, C> getCellsByIndex() {
+        return getState().getCellsByIndex();
     }
 
-    /// Delegate for [VFXListState#getCellsByItemUnmodifiable()]
-    public List<Map.Entry<T, C>> getCellsByItemUnmodifiable() {
-        return getState().getCellsByItemUnmodifiable();
+    /// Delegate for [VFXListState#getCellsByItem()]
+    public List<Map.Entry<T, C>> getCellsByItem() {
+        return getState().getCellsByItem();
     }
 
     /// Delegate for [VFXListHelper#virtualMaxXProperty()]

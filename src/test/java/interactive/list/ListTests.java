@@ -350,14 +350,14 @@ public class ListTests {
         robot.interact(() -> pane.getChildren().add(list));
 
         // Test init
-        list.getState().getCellsByIndexUnmodifiable().values().stream()
+        list.getState().getCellsByIndex().values().stream()
             .map(VFXCell::toNode)
             .forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
 
         // Disable and test again
         robot.interact(() -> list.setFitToViewport(false));
         assertEquals(800.0, list.getHelper().getVirtualMaxX());
-        list.getState().getCellsByIndexUnmodifiable().values().stream()
+        list.getState().getCellsByIndex().values().stream()
             .map(VFXCell::toNode)
             .forEach(n -> assertNotEquals(400.0, n.getLayoutBounds().getWidth()));
 
@@ -367,7 +367,7 @@ public class ListTests {
 
         robot.interact(() -> list.setFitToViewport(true));
         assertEquals(0.0, list.getHPos());
-        list.getState().getCellsByIndexUnmodifiable().values().stream()
+        list.getState().getCellsByIndex().values().stream()
             .map(VFXCell::toNode)
             .forEach(n -> assertEquals(400.0, n.getLayoutBounds().getWidth()));
     }
@@ -966,7 +966,7 @@ public class ListTests {
         assertCounter(17, 1, 17, 17, 0, 0, 0);
 
         // Get text before change cell 5
-        VFXCell<User> cell5 = list.getState().getCellsByIndexUnmodifiable().get(5);
+        VFXCell<User> cell5 = list.getState().getCellsByIndex().get(5);
         Label label5 = (Label) cell5.toNode().lookup(".label");
         String text5 = label5.getText();
 
@@ -979,7 +979,7 @@ public class ListTests {
         assertNotEquals(text5, label5.getText());
 
         // Get text before change cell 7
-        VFXCell<User> cell7 = list.getState().getCellsByIndexUnmodifiable().get(7);
+        VFXCell<User> cell7 = list.getState().getCellsByIndex().get(7);
         Label label7 = (Label) cell7.toNode().lookup(".label");
         String text7 = label7.getText();
 

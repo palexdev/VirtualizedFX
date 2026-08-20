@@ -517,14 +517,14 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         return getState().getColumnsRange();
     }
 
-    /// Delegate for [VFXTableState#getRowsByIndexUnmodifiable()]
-    public SequencedMap<Integer, VFXTableRow<T>> getRowsByIndexUnmodifiable() {
-        return getState().getRowsByIndexUnmodifiable();
+    /// Delegate for [VFXTableState#getRowsByIndex()]
+    public SequencedMap<Integer, VFXTableRow<T>> getRowsByIndex() {
+        return getState().getRowsByIndex();
     }
 
-    /// Delegate for [VFXTableState#getRowsByItemUnmodifiable()]
-    public List<Map.Entry<T, VFXTableRow<T>>> getRowsByItemUnmodifiable() {
-        return getState().getRowsByItemUnmodifiable();
+    /// Delegate for [VFXTableState#getRowsByItem()]
+    public List<Map.Entry<T, VFXTableRow<T>>> getRowsByItem() {
+        return getState().getRowsByItem();
     }
 
     /// Delegate for [VFXTableHelper#virtualMaxXProperty()]

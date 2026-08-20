@@ -67,7 +67,7 @@ public class ListTestUtils {
         assertEquals(helper.range(), range);
         assertEquals(helper.totalNum(), state.size());
 
-        Map<Integer, VFXCell<Integer>> cells = state.getCellsByIndexUnmodifiable();
+        Map<Integer, VFXCell<Integer>> cells = state.getCellsByIndex();
         ObservableList<Integer> items = list.getItems();
         for (Integer index : range) {
             VFXCell<Integer> cell = cells.get(index);
