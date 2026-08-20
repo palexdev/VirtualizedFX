@@ -434,7 +434,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             return NumberUtils.clamp(
                 (int) Math.floor(container.getHPos() / getTotalCellSize()),
                 0,
-                container.size()
+                container.size() - 1
             );
         }
 
@@ -446,7 +446,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             return NumberUtils.clamp(
                 (int) Math.floor((container.getHPos() + container.getWidth()) / getTotalCellSize()),
                 0,
-                container.size()
+                container.size() - 1
             );
         }
 
