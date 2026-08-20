@@ -804,10 +804,16 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             return column.snapSizeX(Math.max(prefW, container.getWidth() - partialW));
         }
 
-        /// This is used by the [ColumnsLayoutCache] to compute the x position of a given column (by its index)
-        /// and the last know position. For example, let's suppose I want to lay out the column at index 1, and the column
-        /// at index 0 (the previous one) is 100px wider. The `prevPos` parameter passed to this method will be 100px.
-        /// This makes the computation for index 1 easy, as it is simply is the sum `prevPos + col1Width`.
+        /// This is used by the [ColumnsLayoutCache] to compute the x position of a column.
+        ///
+        /// **Careful, both parameters describe the previous column, not the one being positioned.** Given the
+        /// index and the position of the column at `index`, this returns the position of the column at
+        /// `index + 1`, which is simply `prevPos + width(index)`.
+        ///
+        /// For example, to lay out the column at index 1, the cache calls this with `index = 0` and
+        /// `prevPos = 0.0` (column 0 always sits at x 0). If column 0 is 100px wide, the result is
+        /// `0.0 + 100 = 100`, which is where column 1 goes. To then place column 2, the cache calls this
+        /// again with `index = 1` and `prevPos = 100`.
         protected double computeColumnPos(int index, double prevPos) {
             VFXTableColumn<T, ? extends VFXTableCell<T>> column = container.getColumns().get(index);
             return column.snapPositionX(prevPos + layoutCache.getColumnWidth(column));

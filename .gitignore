@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 Documentation/
 profilings/
+.docs/
 *.gz
 *.log
 scenicView.properties

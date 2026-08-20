@@ -224,6 +224,10 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 
     /// The position of the column at the given index. This method is recursive!
     ///
+    /// A column's x position is the sum of all the previous columns' widths, in other words a prefix
+    /// sum. Rather than looping from 0 on every query, the values are memoized in the [LayoutInfo]
+    /// objects, using `-1.0` as the 'invalid' sentinel, see [LayoutInfo#getPos()].
+    ///
     /// Detailing the internals:
     /// ```
     ///// Let's suppose we want to compute the position of the column at index 2 (so third one)
@@ -249,6 +253,12 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     ///// The recursion doesn't happen if the previous value is known, so the method acts almost like a simple getter
     ///// The recursion stops at column 0, because it's position is always 0.
     ///```
+    ///
+    /// **Mind the arguments given to the position function.** It is invoked as
+    /// `posFn.apply(index - 1, getColumnPos(index - 1))`, not as `(index, ...)`. That is not an
+    /// off-by-one: the function takes the **previous** column's index and the **previous** column's
+    /// position, and returns the position of the one that follows it, which is
+    /// `pos(index - 1) + width(index - 1)`. See [VariableTableHelper#computeColumnPos(int, double)].
     public double getColumnPos(int index) {
         VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(index);
         LayoutInfo li = cache.require(column);
@@ -444,32 +454,32 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 
             sb.append("  ")
                 .append("Column: ")
-                .append(" ".repeat(maxL - "Column".length()))
+                .repeat(" ", maxL - "Column".length())
                 .append(text)
                 .append("\n")
                 .append("  ")
                 .append("Index: ")
-                .append(" ".repeat(maxL - "Index".length()))
+                .repeat(" ", maxL - "Index".length())
                 .append("[%d]".formatted(index))
                 .append("\n")
                 .append("  ")
                 .append("Width: ")
-                .append(" ".repeat(maxL - "Width".length()))
+                .repeat(" ", maxL - "Width".length())
                 .append(b.isValid() ? "[valid:%.2f]".formatted(b.get()) : "[invalid]")
                 .append("\n")
                 .append("  ")
                 .append("Position: ")
-                .append(" ".repeat(maxL - "Position".length()))
-                .append((pos == -1.0) ? "[valid:%.2f]".formatted(pos) : "[invalid]")
+                .repeat(" ", maxL - "Position".length())
+                .append((pos <= -1.0) ? "[invalid]" : "[valid:%.2f]".formatted(pos))
                 .append("\n")
                 .append("  ")
                 .append("Visible: ")
-                .append(" ".repeat(maxL - "Visible".length()))
-                .append((visibility != null && visibility) ? "[valid:true]" : "[invalid]")
+                .repeat(" ", maxL - "Visible".length())
+                .append((visibility == null) ? "[invalid]" : visibility ? "[valid:true]" : "[valid:false]")
                 .append("\n");
             if (iterator.hasNext()) {
                 sb.append("  ");
-                sb.append("_".repeat(30));
+                sb.repeat("_", 30);
                 sb.append("\n");
             }
         }
@@ -515,9 +525,11 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     }
 
     /// Sets the [BiFunction] responsible for computing a column's position. The function gives the following parameters:
-    /// 1) the previous column's index; 2) the previous column's width.
+    /// 1) the **previous** column's index;
+    /// 2) the **previous** column's position. It returns the position of the
+    /// column that follows it, so `f.apply(i, pos(i))` gives `pos(i + 1)`.
     ///
-    /// To understand the why of those parameters, read [#getColumnPos(int)].
+    /// To understand the why of those shifted parameters, read [#getColumnPos(int)].
     ///
     /// You can check [VariableTableHelper#computeColumnPos(int, double)] for an example.
     public ColumnsLayoutCache<T> setPositionFunction(BiFunction<Integer, Double, Double> xPosFn) {
