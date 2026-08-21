@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.gson.reflect.TypeToken;
-import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
@@ -1305,15 +1304,19 @@ public class TableTests {
 
         // Assert init
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
-        assertCounter(112, 48, 112, 112, 0, 0, 0);
+        assertCounter(112, 112, 112, 112, 0, 0, 0);
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
-        // Remove
+        // Remove.
         var removed = new AtomicReference<VFXTableColumn<User, ?>>();
         robot.interact(() -> removed.set(table.getColumns().removeFirst()));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 5));
+        assertCounter(0, 96, 96, 0, 0, 16, 6);
 
-        // Add
+        // Add it back, now as the last column.
         robot.interact(() -> table.getColumns().add(removed.get()));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(6, 16, 112, 16, 10, 0, 0);
     }
 
     @Test
@@ -1721,36 +1724,36 @@ public class TableTests {
 
         // Switch mode
         robot.interact(table::switchColumnsLayoutMode);
-        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
-        assertCounter(48, 0, 48, 48, 0, 0, 0);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 0, 0, 0, 0, 0, 0);
         assertLength(table, 50 * 32, 10 * 180);
-        assertEquals(48, table.getHelper().visibleCells());
+        assertEquals(36, table.getHelper().visibleCells());
 
-        // Increase width of column to random value
-        int w = RandomUtils.random.nextInt((int) table.getColumnsSize().width() + 1, 300);
-        robot.interact(() -> setColumnWidth(table, 6, w));
-        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
-        assertCounter(0, 0, 0, 0, 0, 0, 0); // 0 layouts because none of the columns from 6 are in the viewport
-        assertLength(table, 50 * 32, (10 * 180) - 180 + w);
+        double inc1 = 200, inc2 = 300;
+        // Increase width of column (out of viewport)
+        robot.interact(() -> setColumnWidth(table, 8, inc1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 0, 0, 0, 0, 0, 0);
+        assertLength(table, 50 * 32, (9 * 180) + inc1);
 
         // Increase width of column (in viewport) to random value
-        int w2 = RandomUtils.random.nextInt((int) table.getColumnsSize().width() + 1, 200);
-        robot.interact(() -> setColumnWidth(table, 1, w2));
-        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
-        assertCounter(0, 32, 0, 0, 0, 0, 0);
-        assertLength(table, 50 * 32, (10 * 180) - 360 + w + w2);
+        robot.interact(() -> setColumnWidth(table, 1, inc2));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 5)); // now the visible columns are 0 and 1 (+4 buffer)
+        assertCounter(0, 80, 0, 0, 0, 16, 6); // 80 instead of 96 because column 0 is unaffected
+        assertLength(table, 50 * 32, (8 * 180) + inc1 + inc2);
 
-        // Decrease below minimum
-        robot.interact(() -> setColumnWidth(table, 6, 100));
-        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
-        assertCounter(0, 0, 0, 0, 0, 0, 0); // 0 layouts because none of the columns from 6 are in the viewport
-        assertLength(table, 50 * 32, (10 * 180) - 180 + w2);
+        double dec1 = 100, dec2 = 100;
+        // Decrease below minimum (out of viewport)
+        robot.interact(() -> setColumnWidth(table, 6, dec1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 5));
+        assertCounter(0, 0, 0, 0, 0, 0, 0);
+        assertLength(table, 50 * 32, (7 * 180) + inc1 + inc2 + 180); // doesn't go below min, therefore +180
 
         // Decrease below the minimum (in viewport)
-        robot.interact(() -> setColumnWidth(table, 1, 100));
-        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
-        assertCounter(0, 32, 0, 0, 0, 0, 0); // 32 layouts because only columns 1 and 2 are in the viewport
-        assertLength(table, 50 * 32, 10 * 180);
+        robot.interact(() -> setColumnWidth(table, 1, dec2));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(6, 86, 16, 16, 10, 0, 0); // 86 instead of 96 because of the cache, the 10 extracted are already valid in terms of layout
+        assertLength(table, 50 * 32, (7 * 180) + inc1 + 180 + 180); // columns 1 and 6 both reset to 180 (min)
 
         // Increase table's width and test the last column
         robot.interact(() -> {
@@ -1758,8 +1761,8 @@ public class TableTests {
             setWindowSize(table, 1920, -1);
         });
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
-        assertCounter(0, 112, 0, 0, 0, 0, 0);
-        assertEquals(300, table.getColumns().getLast().getWidth());
+        assertCounter(48, 48, 48, 48, 0, 0, 0);
+        assertEquals(table.getWidth() - (8 * 180) - inc1, table.getColumns().getLast().getWidth());
         // Columns from 3 to 9 are now in the viewport and need to lay out
 
         // Decrease table's width and test the last column
@@ -1767,38 +1770,38 @@ public class TableTests {
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
         assertCounter(0, 16, 0, 0, 0, 0, 0);
         assertLength(table, 50 * 32, 1840);
-        assertEquals(220, table.getColumns().getLast().getWidth());
+        assertEquals(table.getWidth() - (8 * 180) - inc1, table.getColumns().getLast().getWidth());
 
         // Now increase the last column's width
         // Window size is still at 1840
         robot.interact(() -> table.getColumns().getLast().resize(250));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
         assertCounter(0, 16, 0, 0, 0, 0, 0);
-        assertLength(table, 50 * 32, 1870);
+        assertLength(table, 50 * 32, (8 * 180) + inc1 + 250);
         assertEquals(250, table.getColumns().getLast().getWidth(), 1); // Fucking scaling settings may make the tests fail for no real reason
 
         // Increase window size
-        // Column is now at 300
+        // Column is now at 280
         robot.interact(() -> setWindowSize(table, 1920, -1));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
         assertCounter(0, 16, 0, 0, 0, 0, 0);
         assertLength(table, 50 * 32, 1920);
-        assertEquals(300, table.getColumns().getLast().getWidth());
+        assertEquals(280, table.getColumns().getLast().getWidth());
 
         // Decrease by a lot
         robot.interact(() -> setWindowSize(table, 720, -1));
-        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
-        assertCounter(0, 0, 0, 0, 0, 0, 0);
-        assertLength(table, 50 * 32, 1870);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 8)); // [0, 3] +4 buffer
+        assertCounter(0, 0, 0, 0, 0, 16, 6);
+        assertLength(table, 50 * 32, (8 * 180) + inc1 + 250);
         // 0 layouts because positions and visibility are valid
 
         // We must do two checks here
-        // There is the actual width that is 300.0
+        // There is the actual width that is 280.0
         // And the supposed width which is 250.0
         // The thing is, the actual width does not change because of the "partial layout" mechanism.
         // Since the last column is not visible anymore, it is not updated, thus it still has the old width
         VFXTableColumn<User, ? extends VFXTableCell<User>> last = table.getColumns().getLast();
-        assertEquals(300, last.getWidth());
+        assertEquals(280, last.getWidth());
         assertEquals(250, table.getHelper().getColumnWidth(last), 1); // Fucking scaling settings may make the tests fail for no real reason
     }
 
@@ -1887,27 +1890,74 @@ public class TableTests {
         Table table = new Table(users(50))
             .addEmptyColumns(3);
         robot.interact(() -> {
-            // Randomize widths
-            table.getColumns().forEach(c -> c.resize(RandomUtils.random.nextInt(
-                (int) (table.getColumnsSize().width() + 1),
-                240
-            )));
-            table.setHPos(table.getMaxHScroll() / 2.0);
+            // Varied but deterministic widths
+            ObservableList<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns = table.getColumns();
+            for (int i = 0; i < columns.size(); i++) columns.get(i).resize(i % 2 == 0 ? 180 : 220);
             pane.getChildren().add(table);
         });
 
-        robot.interact(table::switchColumnsLayoutMode);
-
         // Assert init
-        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 9));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 0, 0, 0);
 
-        // Switch back
-        robot.interact(table::switchColumnsLayoutMode);
-        assertState(table, IntegerRange.of(0, 15), table.getHelper().columnsRange());
+        robot.interact(() -> table.setHPos(table.getMaxHScroll() / 2.0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(1, 7));
+        assertCounter(16, 1, 16, 16, 0, 16, 6); // cache is 10 default, 6 disposed because of that
+
+        robot.interact(table::switchColumnsLayoutMode); // -> VARIABLE
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(1, 7)); // Range remains the same in this case
+        assertCounter(0, 112, 0, 0, 0, 0, 0); // Only cell layouts due to different columns size
+
+        // Switch back.
+        robot.interact(table::switchColumnsLayoutMode); // -> FIXED
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(1, 7)); // Same range again
+        assertCounter(0, 1, 0, 0, 0, 0, 0); // 1 instead of 112 because FIXED counter is bumped once by onLayoutCompleted
 
         // Scroll to max and check again
         robot.interact(table::scrollToLastColumn);
-        assertState(table, IntegerRange.of(0, 15), table.getHelper().columnsRange());
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(3, 9));
+        assertCounter(32, 1, 32, 32, 0, 32, 12);
+    }
+
+    // Invariants rather than literal ranges. The other VARIABLE tests pin specific scenarios with
+    // exact numbers, which is what makes them useful but also what makes them brittle to a change in
+    // the default buffer size or column widths. These assert the properties x-axis virtualization is
+    // supposed to guarantee, so they keep holding across those.
+    @Test
+    void testVariableColumnsRangeIsBounded(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50))
+            .addEmptyColumns(13); // 7 default + 13
+        table.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
+        robot.interact(() -> pane.getChildren().add(table));
+
+        int columnsCount = table.getColumns().size();
+        assertEquals(20, columnsCount);
+
+        // The range is a window over the columns, never the whole list. This is the property the
+        // whole change exists for: VARIABLE used to hardcode IntegerRange.of(0, size - 1)
+        IntegerRange initial = table.getHelper().columnsRange();
+        assertTrue(initial.diff() + 1 < columnsCount);
+
+        // Narrowing the viewport cannot widen the range
+        robot.interact(() -> setWindowSize(table, 260, -1));
+        IntegerRange narrow = table.getHelper().columnsRange();
+        assertTrue(narrow.diff() <= initial.diff());
+
+        // Widening it cannot shrink it
+        robot.interact(() -> setWindowSize(table, 900, -1));
+        IntegerRange wide = table.getHelper().columnsRange();
+        assertTrue(wide.diff() >= narrow.diff());
+
+        // At max scroll the range must still be valid, in bounds, contain the last column, and
+        // remain a window. The state has to agree with it
+        robot.interact(() -> table.setHPos(Double.MAX_VALUE));
+        IntegerRange atMax = table.getHelper().columnsRange();
+        assertNotEquals(INVALID_RANGE, atMax);
+        assertTrue(atMax.getMin() >= 0);
+        assertEquals(columnsCount - 1, atMax.getMax());
+        assertTrue(atMax.diff() + 1 < columnsCount);
+        assertState(table, table.getHelper().rowsRange(), atMax);
     }
 
     @Test

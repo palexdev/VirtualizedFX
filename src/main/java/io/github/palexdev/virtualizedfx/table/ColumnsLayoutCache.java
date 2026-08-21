@@ -21,7 +21,6 @@ package io.github.palexdev.virtualizedfx.table;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
@@ -90,13 +89,11 @@ import static java.util.Optional.ofNullable;
 ///
 /// **Computing functions and initialization**
 ///
-/// For the cache to work, the user must specify the three functions used to compute:
+/// For the cache to work, the user must specify the two functions used to compute:
 ///
 /// 1) the widths, [#setWidthFunction(BiFunction)]
 ///
 /// 2) the positions, [#setPositionFunction(BiFunction)]
-///
-/// 3) the visibility, [#setVisibilityFunction(Function)]
 ///
 /// To avoid cluttering the constructors, and for other reasons, the cache won't be active until you call the
 /// [#init()] method. Both the setters and the init methods follow the fluent API pattern. **Beware,** if any
@@ -130,12 +127,11 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     // Layout functions
     private BiFunction<VFXTableColumn<T, ?>, Boolean, Double> widthFn;
     private BiFunction<Integer, Double, Double> xPosFn;
-    private Function<VFXTableColumn<T, ?>, Boolean> vFn;
 
     // Listeners
     private ListChangeListener<VFXTableColumn<T, ?>> clListener;
     private InvalidationListener csListener;
-    private InvalidationListener vListener;
+    private InvalidationListener wListener;
 
     //================================================================================
     // Constructors
@@ -146,9 +142,8 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         clListener = this::handleColumns;
         csListener = i -> {
             for (LayoutInfo li : cache.values()) {
-                // Resets all positions and visibility flags
+                // Resets all positions
                 li.resetPos();
-                li.resetVisibility();
                 // Invalidate only the ones that are now below the minimum
                 if (!li.isWidthValid()) continue;
                 if (li.getWidth() < table.getColumnsSize().width()) li.invalidateWidth();
@@ -156,11 +151,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             // Also invalidate last
             invalidateLast();
         };
-        vListener = i -> {
-            // Too unpredictable, better safe than sorry strategy, invalidate the whole cache
-            cache.clearVisibilityCache();
-            invalidateLast();
-        };
+        wListener = _ -> invalidateLast();
     }
 
     //================================================================================
@@ -181,8 +172,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             }
             columns.addListener(clListener);
             table.columnsSizeProperty().addListener(csListener);
-            table.widthProperty().addListener(vListener);
-            table.hPosProperty().addListener(vListener);
+            table.widthProperty().addListener(wListener);
             init = true;
         }
         return this;
@@ -192,14 +182,11 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     ///
     /// @see #setWidthFunction(BiFunction)
     /// @see #setPositionFunction(BiFunction)
-    /// @see #setVisibilityFunction(Function)
     private void preInitCheck() {
         if (widthFn == null)
             throw new IllegalStateException("Cannot initialize because: width function has not been set.");
         if (xPosFn == null)
             throw new IllegalStateException("Cannot initialize because: x position function has not been set.");
-        if (vFn == null)
-            throw new IllegalStateException("Cannot initialize because: visibility function has not been set.");
     }
 
     /// Delegates to [LayoutInfoCache#getWidth(VFXTableColumn)].
@@ -272,17 +259,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             li.setPos(pos);
         }
         return pos;
-    }
-
-    /// Queries the map to check whether the given column is visible.
-    ///
-    /// If the [LayoutInfo] mapped to the column returns a `null` value, then it means that the visibility
-    /// check was either never done before or invalidated. In this case, the visibility function will compute it and the
-    /// [LayoutInfo] object updated.
-    public boolean isInViewport(VFXTableColumn<T, ?> column) {
-        LayoutInfo li = cache.require(column);
-        if (li.isVisible() == null) li.setVisible(vFn.apply(column));
-        return li.isVisible();
     }
 
     /// @return the number of entries in the cache's map. This should always be equal to the size of [VFXTable#getColumns()]
@@ -375,10 +351,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             cache.invalidateWidth(last);
         }
 
-        cache.values().forEach(li -> {
-            li.resetPos();
-            li.resetVisibility();
-        });
+        cache.values().forEach(LayoutInfo::resetPos);
         invalidate();
         invalidateLast();
     }
@@ -413,11 +386,10 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         invalidatingAction = null;
         table.getColumns().removeListener(clListener);
         table.columnsSizeProperty().removeListener(csListener);
-        table.widthProperty().removeListener(vListener);
-        table.hPosProperty().removeListener(vListener);
+        table.widthProperty().removeListener(wListener);
         clListener = null;
         csListener = null;
-        vListener = null;
+        wListener = null;
         table = null;
     }
 
@@ -450,7 +422,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 
             DoubleBinding b = i.wBinding;
             double pos = i.getPos();
-            Boolean visibility = i.isVisible();
 
             sb.append("  ")
                 .append("Column: ")
@@ -471,11 +442,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
                 .append("Position: ")
                 .repeat(" ", maxL - "Position".length())
                 .append((pos <= -1.0) ? "[invalid]" : "[valid:%.2f]".formatted(pos))
-                .append("\n")
-                .append("  ")
-                .append("Visible: ")
-                .repeat(" ", maxL - "Visible".length())
-                .append((visibility == null) ? "[invalid]" : visibility ? "[valid:true]" : "[valid:false]")
                 .append("\n");
             if (iterator.hasNext()) {
                 sb.append("  ");
@@ -534,15 +500,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     /// You can check [VariableTableHelper#computeColumnPos(int, double)] for an example.
     public ColumnsLayoutCache<T> setPositionFunction(BiFunction<Integer, Double, Double> xPosFn) {
         this.xPosFn = xPosFn;
-        return this;
-    }
-
-    /// Sets the [Function] responsible for computing a column's width. The function gives the column for which
-    /// compute the visibility as the parameter.
-    ///
-    /// You can check [VariableTableHelper#computeVisibility(VFXTableColumn)] for an example.
-    public ColumnsLayoutCache<T> setVisibilityFunction(Function<VFXTableColumn<T, ?>, Boolean> vFn) {
-        this.vFn = vFn;
         return this;
     }
 
@@ -605,25 +562,10 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         }
 
         //================================================================================
-        // Visibility
-        //================================================================================
-        public boolean isVisible(VFXTableColumn<T, ?> column) {
-            return require(column).isVisible();
-        }
-
-        private void setVisibility(VFXTableColumn<T, ?> column, Boolean visibility) {
-            require(column).setVisible(visibility);
-        }
-
-        //================================================================================
         // Misc
         //================================================================================
         public void clearPositionCache() {
             values().forEach(LayoutInfo::resetPos);
-        }
-
-        public void clearVisibilityCache() {
-            values().forEach(LayoutInfo::resetVisibility);
         }
 
         @Override
@@ -653,7 +595,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         private int index = -1;
         private DoubleBinding wBinding;
         private double pos = -1.0;
-        private Boolean visible = null;
 
         //================================================================================
         // Constructors
@@ -722,22 +663,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             setPos(-1.0);
         }
 
-        /// @return whether the column is visible in the viewport. Beware, this can also return `null` to indicate
-        /// that the value is invalid and should be re-computed by the cache
-        public Boolean isVisible() {
-            return visible;
-        }
-
-        /// Sets whether the column is visible in the viewport.
-        private void setVisible(Boolean visible) {
-            this.visible = visible;
-        }
-
-        /// Resets, and thus invalidates, the column's visibility to `null`.
-        private void resetVisibility() {
-            setVisible(null);
-        }
-
         /// This is responsible for creating the [DoubleBinding] which computes the column's width by using
         /// the function set by [#setWidthFunction(BiFunction)].
         ///
@@ -762,7 +687,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
                     for (int i = index; i < size; i++) {
                         if (cache.getPos(i) == -1.0) break;
                         cache.setPos(i, -1.0);
-                        if (i + 1 < size) cache.setVisibility(columns.get(i + 1), null);
                     }
                 }
 

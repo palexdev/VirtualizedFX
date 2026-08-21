@@ -121,13 +121,10 @@ public class TableTestUtils {
                 assertNotNull(column.getCellFactory().getOwner());
                 assertEquals(cIdx, column.getIndex());
                 assertNotNull(column.getParent()); // Assert that the column is actually in the viewport before checking the position
-                boolean inViewport = helper.isInViewport(column);
-                assertEquals(inViewport, column.isVisible());
-                if (inViewport) {
-                    assertLayout(table, j, column);
-                } else {
-                    assertFalse(column.isVisible());
-                }
+                // Every column in the range is in the viewport by definition now, and nothing hides
+                // columns any more, so the old isInViewport/isVisible gating was both vacuous and
+                // harmful: it let the layout assertion be skipped rather than fail
+                assertLayout(table, j, column);
             } catch (Exception ex) {
                 fail(ex);
             }
@@ -154,6 +151,16 @@ public class TableTestUtils {
             assertLayout(table, i, row);
 
             SequencedMap<Integer, VFXTableCell<User>> cells = row.getCellsByIndex();
+            // The defining property of x-axis virtualization: a row holds cells for the columns range,
+            // never one per column. Asserted here rather than per-test because the loop below only
+            // *reads* cells by index, so a row carrying extras beyond the range would go unnoticed,
+            // and carrying extras is exactly the pre-virtualization behaviour.
+            // Partial states legitimately hold fewer (null cell factories), so only the bound holds there.
+            if (partial) {
+                assertTrue(cells.size() <= columnsRange.diff() + 1);
+            } else {
+                assertEquals(columnsRange.diff() + 1, cells.size());
+            }
             j = 0;
             for (Integer cIdx : columnsRange) {
                 VFXTableCell<User> cell = null;
@@ -172,12 +179,7 @@ public class TableTestUtils {
                     if (!(sCell instanceof EmptyCell)) {
                         assertEquals(items.get(rIdx), sCell.getItem());
                     }
-                    assertEquals(sCell.isVisible(), sCell.getColumn().isVisible());
-                    if (helper.isInViewport(sCell.getColumn())) {
-                        assertLayout(table, j, sCell);
-                    } else {
-                        assertFalse(sCell.isVisible());
-                    }
+                    assertLayout(table, j, sCell);
                 } else {
                     System.err.println("Cannot assert for cell of type: " + cell);
                 }

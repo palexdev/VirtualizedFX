@@ -117,12 +117,9 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
     /// The cell is added to the state map, to the children list and finally sized and positioned by calling
     /// [VFXTableHelper#layoutCell(int, VFXTableCell)].
     ///
-    /// Note that to get a new cell, and to lay out it, we need two different indexes. The index of the column is retrieved
-    /// by using [VFXTable#indexOf(VFXTableColumn)] and it's needed to update the cell. The other index is an important
-    /// piece information for the layout method to decide at which x position to put the cell. This index is also called
-    /// the 'layout index' depends on the [ColumnsLayoutMode] and its 'absolute'. For the `FIXED` mode it
-    /// is given by `columnIndex - columnsRange.getMin()`, while for the `VARIABLE` mode is the column's index
-    /// itself (since all columns are added to the viewport, layout indexes go from 0 to the number of column).
+    /// The column's index, retrieved with [VFXTable#indexOf(VFXTableColumn)], is used both to update the cell and to
+    /// lay it out: [VFXTableHelper#layoutCell(int, VFXTableCell)] takes the column's absolute index, in either
+    /// [ColumnsLayoutMode].
     ///
     /// @return whether the substitution was done successfully
     @Override
@@ -138,14 +135,13 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
         }
 
         int cIdx = table.indexOf(column);
-        int lIdx = (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) ? cIdx - columnsRange.getMin() : cIdx;
         VFXTableCell<T> nCell = getCell(cIdx, column, false);
         if (nCell == null) return false;
 
         Node nNode = nCell.toNode();
         cells.put(cIdx, column, nCell);
         getChildren().add(nNode);
-        helper.layoutCell(lIdx, nCell);
+        helper.layoutCell(cIdx, nCell);
         return true;
     }
 

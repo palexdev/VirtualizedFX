@@ -20,7 +20,6 @@ package interactive.table;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.Objects;
 import java.util.Set;
 
 import interactive.table.TableTestUtils.EmptyColumn;
@@ -357,46 +356,6 @@ public class ColumnsLayoutCacheTests {
     }
 
     @Test
-    void testColumnsVisibilityCache(FxRobot robot) {
-        StackPane pane = setupStage();
-        Table table = new Table(users(50));
-        DebuggableCache cache = new DebuggableCache(table);
-        robot.interact(() -> pane.getChildren().add(table));
-
-        // Initial check
-        cache.assertVisible(0, 1, 2);
-        cache.assertNotVisible(3, 4, 5, 6);
-
-        // Make the table bigger
-        robot.interact(() -> setWindowSize(pane, 1024, -1));
-        cache.assertVisible(0, 1, 2, 3, 4, 5);
-        cache.assertNotVisible(6);
-
-        // Increase the minimum width
-        robot.interact(() -> table.setColumnsWidth(240));
-        cache.assertVisibilityCount(0);
-        cache.assertVisible(0, 1, 2, 3, 4);
-        cache.assertNotVisible(5, 6);
-
-        // Increase a column's width by a lot
-        robot.interact(() -> setColumnWidth(table, 2, 400));
-        cache.assertVisibilityCount(3);
-        cache.assertVisible(0, 1, 2, 3);
-        cache.assertNotVisible(4, 5, 6);
-
-        // Now scroll to max
-        robot.interact(() -> table.setHPos(Double.MAX_VALUE));
-        cache.assertVisibilityCount(0);
-        cache.assertVisible(2, 3, 4, 5, 6);
-        cache.assertNotVisible(0, 1);
-
-        // Decrease table's width
-        robot.interact(() -> setWindowSize(pane, 500, -1));
-        cache.assertVisible(2, 3, 4);
-        cache.assertNotVisible(0, 1, 5, 6);
-    }
-
-    @Test
     void testColumnsLayoutCacheDisposal(FxRobot robot) {
         StackPane pane = setupStage();
         Table table = new Table(users(50));
@@ -435,7 +394,6 @@ public class ColumnsLayoutCacheTests {
             super(table);
             setWidthFunction(this::computeColumnWidth);
             setPositionFunction(this::computeColumnPos);
-            setVisibilityFunction(this::computeVisibility);
             init();
             sortToString = true;
         }
@@ -508,32 +466,10 @@ public class ColumnsLayoutCacheTests {
             }
         }
 
-        void assertVisible(int... idxs) {
-            VFXTable<User> table = getTable();
-            for (int idx : idxs) {
-                assertTrue(isInViewport(table.getColumns().get(idx)));
-            }
-        }
-
-        void assertNotVisible(int... idxs) {
-            VFXTable<User> table = getTable();
-            for (int idx : idxs) {
-                assertFalse(isInViewport(table.getColumns().get(idx)));
-            }
-        }
-
         void assertPositionCount(int expected) {
             long cnt = getCacheMap().values().stream()
                 .map(LayoutInfo::getPos)
                 .filter(x -> x >= 0.0)
-                .count();
-            assertEquals(expected, cnt);
-        }
-
-        void assertVisibilityCount(long expected) {
-            long cnt = getCacheMap().values().stream()
-                .map(LayoutInfo::isVisible)
-                .filter(Objects::nonNull)
                 .count();
             assertEquals(expected, cnt);
         }

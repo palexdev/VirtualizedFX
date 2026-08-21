@@ -41,10 +41,6 @@ import javafx.scene.Node;
 /// This behavior is defined in the default skin.
 /// - the [#overlayOnHeaderProperty()] makes the aforementioned node cover the column's header too
 public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTableColumn<T, C> {
-    //================================================================================
-    // Properties
-    //================================================================================
-    public static final PseudoClass DRAGGED = PseudoClass.getPseudoClass("dragged");
 
     //================================================================================
     // Constructors

@@ -134,9 +134,26 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     protected void onColumnWidthChanged(VFXTableColumn<T, ?> column) {
         VFXTable<T> table = getNode();
         if (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) return;
+
         invalidatingPos = true;
         table.getHelper().invalidatePos();
-        table.requestViewportLayout(column);
+
+        VFXTableState<T> state = table.getState();
+        IntegerRange columnsRange = table.getHelper().columnsRange();
+        // If the range didn't change request a partial layout (resize rows at least) and bail out immediately
+        if (state.getColumnsRange().equals(columnsRange)) {
+            table.requestViewportLayout(column);
+            invalidatingPos = false;
+            return;
+        }
+
+        IntegerRange rowsRange = state.getRowsRange();
+        VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, columnsRange);
+        newState.setColumnsChanged(table.getState());
+        moveReuseCreateAlgorithm(rowsRange, columnsRange, newState);
+
+        if (disposeCurrent()) newState.setRowsChanged(true);
+        table.update(newState);
         invalidatingPos = false;
     }
 
@@ -366,11 +383,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         // However, in variable mode the range is always the same, so no update in the rows,
         // but we still update the layout because of the "partial layout" feature.
         if (axis == Orientation.HORIZONTAL) {
-            if (table.getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) {
-                table.requestViewportLayout();
-                return;
-            }
-
             // If the range didn't change, don't update
             if (state.getColumnsRange().equals(columnsRange)) return;
 
@@ -570,7 +582,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         ColumnsLayoutMode newMode = table.getColumnsLayoutMode();
         if (newMode == ColumnsLayoutMode.FIXED) {
             invalidatingPos = true;
-            table.getColumns().forEach(c -> c.setVisible(true));
             helper.invalidatePos();
         }
 
@@ -580,15 +591,18 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         // which uses all the rows from the current state and just update them with the new columns range.
         IntegerRange columnsRange = helper.columnsRange();
         VFXTableState<T> newState = new VFXTableState<>(table, current.getRowsRange(), columnsRange, current.getRows());
-        newState.getRowsByIndex().values().forEach(r -> {
-            if (newMode == ColumnsLayoutMode.FIXED)
-                r.getCellsByIndex().values().forEach(c -> c.toNode().setVisible(true));
-            r.updateColumns(columnsRange, false);
-        });
+        newState.getRowsByIndex().values().forEach(r -> r.updateColumns(columnsRange, false));
         newState.setColumnsChanged(current);
 
         table.update(newState);
-        if (newMode == ColumnsLayoutMode.FIXED && !newState.isLayoutNeeded()) table.requestViewportLayout();
+        // A layout is always needed on a mode switch, even when the columns range did not change.
+        // The two modes compute positions differently: FIXED lays out at slots relative to the range start,
+        // VARIABLE at absolute prefix sums.
+        //
+        // Before the columns range existed, switching to VARIABLE always widened the range to the whole list,
+        // so the change was implied by the state and this could be left to `isLayoutNeeded()`.
+        // Both modes now window the same way, so an unchanged range is normal and the layout has to be asked for explicitly.
+        if (!newState.isLayoutNeeded()) table.requestViewportLayout();
         invalidatingPos = false;
     }
 

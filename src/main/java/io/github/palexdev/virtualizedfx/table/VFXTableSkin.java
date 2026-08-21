@@ -247,22 +247,20 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
                 .executeNow(),
 
             // Geometry changes
-            /*
-             * BUG: unfortunately we must use a ChangeListener here because JavaFX is stupid.
-             * You see, for the VARIABLE_MODE layout, we rely on a cache to compute the columns' width only when needed.
-             * The last column is a special case because it's the only one for which the value becomes invalid if the
-             * table's width changes. Since JavaFX bindings use some sort of InvalidationListeners on the dependencies to
-             * invalidate the bindings itself, there's a huge pain in the ass problem: priority.
-             * Under the hood, these things are simple; there is a for loop somewhere that calls the listeners
-             * (or at least you can think at the mechanism like this), which means that if a listener is added before
-             * another one, it's executed first.
-             * This is a huge problem here, because we can't proceed with the onGeometryChanged() computation before the
-             * cache is invalidated.
-             * A simple workaround is to use ChangeListeners which are always invoked AFTER InvalidationListeners.
-             *
-             * In my opinion, this mechanism is stupid and broken, an InvalidationListener whose purpose is to invalidate
-             * a binding should ALWAYS be called BEFORE any other InvalidationListener
-             */
+            // BUG: unfortunately we must use a ChangeListener here because JavaFX is stupid.
+            // You see, for the VARIABLE_MODE layout, we rely on a cache to compute the columns' width only when needed.
+            // The last column is a special case because it's the only one for which the value becomes invalid if the
+            // table's width changes. Since JavaFX bindings use some sort of InvalidationListeners on the dependencies to
+            // invalidate the bindings itself, there's a huge pain in the ass problem: priority.
+            // Under the hood, these things are simple; there is a for loop somewhere that calls the listeners
+            // (or at least you can think at the mechanism like this), which means that if a listener is added before
+            // another one, it's executed first.
+            // This is a huge problem here, because we can't proceed with the onGeometryChanged() computation before the
+            // cache is invalidated.
+            // A simple workaround is to use ChangeListeners which are always invoked AFTER InvalidationListeners.
+            //
+            // In my opinion, this mechanism is stupid and broken, an InvalidationListener whose purpose is to invalidate
+            // a binding should ALWAYS be called BEFORE any other InvalidationListener
             onChanged(table.widthProperty())
                 .then((ow, nw) -> getBehavior().onGeometryChanged(GeometryChangeType.WIDTH)),
             onInvalidated(table.heightProperty())
@@ -270,11 +268,18 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
             withListener(table.columnsBufferSizeProperty(), gcl),
             withListener(table.rowsBufferSizeProperty(), gcl),
 
-            // Position changes
-            onInvalidated(table.vPosProperty())
-                .then(v -> getBehavior().onPositionChanged(Orientation.VERTICAL)),
-            onInvalidated(table.hPosProperty())
-                .then(h -> getBehavior().onPositionChanged(Orientation.HORIZONTAL)),
+            // Position changes.
+            // ChangeListeners for the same priority reason described above for the width property.
+            // onPositionChanged() reads the helper's ranges, and those are lazy bindings that depend on
+            // vPos/hPos. As InvalidationListeners these would run before the bindings' own invalidation
+            // listeners, so the ranges would still be valid-but-stale and the manager would compare the
+            // state against the *previous* range, conclude nothing changed and skip the update entirely.
+            // Registration order normally saves us, since the helper is built before the skin, but a
+            // layout mode switch builds a new helper whose listeners then land after the skin's.
+            onChanged(table.vPosProperty())
+                .then((ov, nv) -> getBehavior().onPositionChanged(Orientation.VERTICAL)),
+            onChanged(table.hPosProperty())
+                .then((oh, nh) -> getBehavior().onPositionChanged(Orientation.HORIZONTAL)),
 
             // Others
             onInvalidated(table.itemsProperty())
@@ -317,8 +322,8 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     ///
     /// If the state is [VFXTableState#INVALID] exits immediately.
     ///
-    /// The columns are actually laid out by using [VFXTableHelper#layoutColumn(int, VFXTableColumn)].
-    /// The layout index is given by an external 'i' counter which starts at 0 and is incremented at each loop iteration.
+    /// The columns are actually laid out by using [VFXTableHelper#layoutColumn(int, VFXTableColumn)], which takes
+    /// the column's absolute index in [VFXTable#getColumns()], so the range index is passed straight through.
     ///
     /// This is also responsible for updating the [VFXTableColumn#indexProperty()] by calling
     /// [#updateColumnIndex(VFXTableColumn, int)]. Why here? Because this core method will ensure all columns will
@@ -333,13 +338,11 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
 
         VFXTableHelper<T> helper = table.getHelper();
         IntegerRange columnsRange = state.getColumnsRange();
-        int i = 0;
         ObservableList<VFXTableColumn<T, ?>> columns = table.getColumns();
         for (Integer idx : columnsRange) {
             VFXTableColumn<T, ?> column = columns.get(idx);
             updateColumnIndex(column, idx); // Updating the columns' index here should ensure to always have a correct index
-            helper.layoutColumn(i, column);
-            i++;
+            helper.layoutColumn(idx, column);
         }
     }
 
@@ -419,12 +422,11 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         VFXTableColumn<T, ?> column = table.getViewportLayoutRequest().column();
         int cIndex = table.indexOf(column);
         if (layoutMode == ColumnsLayoutMode.FIXED) {
-            int layoutIndex = state.getColumnsRange().diff();
-            helper.layoutColumn(layoutIndex, column);
+            helper.layoutColumn(cIndex, column);
             state.getRowsByIndex().values().forEach(r -> {
                 r.resize(table.getVirtualMaxX(), r.getHeight());
                 VFXTableCell<T> cell = r.getCells().get(cIndex);
-                helper.layoutCell(layoutIndex, cell);
+                helper.layoutCell(cIndex, cell);
             });
             onLayoutCompleted(true);
             return;
@@ -440,13 +442,23 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
 
         // If it's VARIABLE mode, and it's not the last column, then it means we can actually do some optimization.
         // Rather than looping over all the columns, we just need to update those starting from the index that changed.
+        int min = state.getColumnsRange().getMin();
+        int max = state.getColumnsRange().getMax();
+        int from = Math.max(cIndex, min);
+        if (from > max) {
+            // Even if outside range, the rows must be resized in case the vMaxX changed (for example column grow/shrink)
+            state.getRowsByIndex().values().forEach(r -> r.resize(table.getVirtualMaxX(), r.getHeight()));
+            onLayoutCompleted(false);
+            return;
+        }
+
         ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
-        IntegerRange range = IntegerRange.of(cIndex, columns.size() - 1);
-        range.forEach(i -> helper.layoutColumn(i, columns.get(i)));
+        IntegerRange cRange = IntegerRange.of(from, max);
+        cRange.forEach(i -> helper.layoutColumn(i, columns.get(i)));
 
         state.getRowsByIndex().values().forEach(r -> {
             r.resize(table.getVirtualMaxX(), r.getHeight());
-            range.forEach(i -> helper.layoutCell(i, r.getCells().get(i)));
+            cRange.forEach(i -> helper.layoutCell(i, r.getCells().get(i)));
         });
         onLayoutCompleted(true);
     }

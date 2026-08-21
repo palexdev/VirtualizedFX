@@ -240,17 +240,15 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
     ///
     /// **Note** that this implementation allows having columns that produce `null` cells.
     protected void layoutCells() {
-        // It's crucial to process the layout this way.
-        // Some columns may not be present in the map as the cell factory could be null or produce null cells.
-        // So, we have to skip such cases, but we still need to increment the 'i' counter to get the correct absolute position
+        // Some columns may not be present in the map as the cell factory could be null or produce null cells,
+        // so such cases are simply skipped. The range index is the column's absolute index, which is both how the
+        // cells are mapped and what the layout method expects, so it is passed straight through.
         VFXTable<T> table = getTable();
         if (table == null || !table.isNeedsViewportLayout()) return;
         VFXTableHelper<T> helper = table.getHelper();
-        int i = 0;
         for (Integer idx : columnsRange) {
             VFXTableCell<T> cell = cells.get(idx);
-            if (cell != null) helper.layoutCell(i, cell);
-            i++;
+            if (cell != null) helper.layoutCell(idx, cell);
         }
     }
 

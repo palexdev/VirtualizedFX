@@ -20,11 +20,9 @@ package io.github.palexdev.virtualizedfx.table;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
-import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
 import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
@@ -33,7 +31,6 @@ import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainerHelper;
-import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.utils.Utils;
@@ -42,7 +39,6 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
-import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
@@ -103,18 +99,36 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// @return the width for the given column
     double getColumnWidth(VFXTableColumn<T, ?> column);
 
-    /// @return the x position for the given column and its layout index in the viewport
-    double getColumnPos(int layoutIdx, VFXTableColumn<T, ?> column);
+    /// The index is the column's **absolute** index in [VFXTable#getColumns()], the same index space used by
+    /// the columns range, the rows' cells map and [VFXTableColumn#indexProperty()]. Implementations that need a
+    /// range-relative index convert it themselves.
+    ///
+    /// @return the x position for the given column
+    double getColumnPos(int columnIdx, VFXTableColumn<T, ?> column);
 
     /// @return whether the given column is currently visible in the viewport
-    boolean isInViewport(VFXTableColumn<T, ?> column);
+    default boolean isInViewport(VFXTableColumn<T, ?> column) {
+        if (column.getTable() == null || column.getScene() == null || column.getParent() == null) return false;
+        VFXTableState<T> state = getContainer().getState();
+        if (state == VFXTableState.INVALID) return false;
+        int index = getContainer().indexOf(column);
+        return IntegerRange.inRangeOf(index, state.getColumnsRange());
+    }
 
-    /// Lays out the given column.
-    /// The layout index is necessary to identify the position of a column among the others (comes before/after).
+    /// Lays out the given column, identified by its **absolute** index in [VFXTable#getColumns()].
     ///
-    /// @return whether the column was sized and positioned successfully
+    /// Positions the column at `X: getColumnPos(columnIdx, column)` and `Y: 0`.
+    ///
+    /// Sizes the column to `W: getColumnWidth(column)` and `H: columnsHeight`
+    ///
     /// @see VFXTableSkin#layoutColumns()
-    boolean layoutColumn(int layoutIdx, VFXTableColumn<T, ?> column);
+    default void layoutColumn(int columnIdx, VFXTableColumn<T, ?> column) {
+        Size size = getContainer().getColumnsSize();
+        double x = getColumnPos(columnIdx, column);
+        double w = getColumnWidth(column);
+        double h = size.height();
+        column.resizeRelocate(x, 0, w, h);
+    }
 
     /// Lays out the given row.
     /// The layout index is necessary to identify the position of a row among the others (comes above/below).
@@ -133,11 +147,32 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         row.afterLayout();
     }
 
-    /// Lays out the given cell.
-    /// The layout index is necessary to identify the position of a cell among the others (comes before/after).
+    /// Lays out the given cell. The index is the **absolute** index of the cell's column in
+    /// [VFXTable#getColumns()], the same index space the cell is mapped by in the row's state.
+    ///
+    /// [VFXCell#beforeLayout()] runs before the width and position are read, deliberately: a cell may change its
+    /// content there, which changes its `prefWidth`, which feeds the column's width computation.
     ///
     /// @see VFXTableRow#layoutCells()
-    boolean layoutCell(int layoutIdx, VFXTableCell<T> cell);
+    default boolean layoutCell(int columnIdx, VFXTableCell<T> cell) {
+        if (cell == null) return false;
+        ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = getContainer().getColumns();
+        VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(columnIdx);
+        Node node = cell.toNode();
+        cell.beforeLayout();
+        double w = getColumnWidth(column);
+        double h = getContainer().getRowsHeight();
+        double x = getColumnPos(columnIdx, column);
+        if (node.getLayoutX() == x &&
+            node.getLayoutBounds().getWidth() == w &&
+            node.getLayoutBounds().getHeight() == h) {
+            cell.afterLayout();
+            return false;
+        }
+        node.resizeRelocate(x, 0, w, h);
+        cell.afterLayout();
+        return true;
+    }
 
     /// Determines and sets the ideal width for the given column, where 'ideal' means that
     /// the column's header as well as all the related cells' content will be fully visible.
@@ -154,7 +189,11 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     boolean autosizeColumns();
 
     /// Depends on the implementation!
-    int visibleCells();
+    default int visibleCells() {
+        int nColumns = visibleColumns();
+        int nRows = visibleRows();
+        return nColumns * nRows;
+    }
 
     /// @return the total number of cells in the viewport which doesn't include only the number of visible cells but also
     /// the number of buffer cells
@@ -192,6 +231,10 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = getContainer().getColumns();
         if (columns.isEmpty()) return false;
         return columns.getLast() == column;
+    }
+
+    default int columnsCount() {
+        return getContainer().getColumns().size();
     }
 
     /// Scrolls in the viewport, in the given direction (orientation) by the given number of pixels.
@@ -239,6 +282,48 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
         public AbstractHelper(VFXTable<T> table) {
             super(table);
+        }
+
+        @Override
+        protected void createBindings() {
+            super.createBindings();
+            columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
+                .setMapper(() -> {
+                    if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
+                    int needed = totalColumns();
+                    if (needed == 0) return Utils.INVALID_RANGE;
+
+                    int start = Math.max(0, firstColumn() - container.getColumnsBufferSize().val());
+                    int end = Math.min(columnsCount() - 1, start + needed - 1);
+                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
+                    return IntegerRange.of(start, end);
+                })
+                .addSources(container.getColumns())
+                .addSources(container.widthProperty())
+                .addSources(container.hPosProperty())
+                .addSources(container.columnsBufferSizeProperty())
+                .addSources(container.columnsSizeProperty())
+                .addSources(virtualMaxX)
+                .get()
+            );
+            rowsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
+                .setMapper(() -> {
+                    if (getViewportHeight() <= 0) return Utils.INVALID_RANGE;
+                    int needed = totalRows();
+                    if (needed == 0) return Utils.INVALID_RANGE;
+
+                    int start = Math.max(0, firstRow() - container.getRowsBufferSize().val());
+                    int end = Math.min(container.size() - 1, start + needed - 1);
+                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
+                    return IntegerRange.of(start, end);
+                })
+                .addSources(container.sizeProperty())
+                .addSources(container.heightProperty(), container.columnsSizeProperty())
+                .addSources(container.vPosProperty())
+                .addSources(container.rowsBufferSizeProperty())
+                .addSources(container.rowsHeightProperty())
+                .get()
+            );
         }
 
         @Override
@@ -395,43 +480,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
         @Override
         protected void createBindings() {
-            columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
-                .setMapper(() -> {
-                    if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
-                    int needed = totalColumns();
-                    if (needed == 0) return Utils.INVALID_RANGE;
-
-                    int start = Math.max(0, firstColumn() - container.getColumnsBufferSize().val());
-                    int end = Math.min(container.getColumns().size() - 1, start + needed - 1);
-                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
-                    return IntegerRange.of(start, end);
-                })
-                .addSources(container.getColumns())
-                .addSources(container.widthProperty())
-                .addSources(container.hPosProperty())
-                .addSources(container.columnsBufferSizeProperty())
-                .addSources(container.columnsSizeProperty())
-                .get()
-            );
-            rowsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
-                .setMapper(() -> {
-                    if (getViewportHeight() <= 0) return Utils.INVALID_RANGE;
-                    int needed = totalRows();
-                    if (needed == 0) return Utils.INVALID_RANGE;
-
-                    int start = Math.max(0, firstRow() - container.getRowsBufferSize().val());
-                    int end = Math.min(container.size() - 1, start + needed - 1);
-                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
-                    return IntegerRange.of(start, end);
-                })
-                .addSources(container.sizeProperty())
-                .addSources(container.heightProperty(), container.columnsSizeProperty())
-                .addSources(container.vPosProperty())
-                .addSources(container.rowsBufferSizeProperty())
-                .addSources(container.rowsHeightProperty())
-                .get()
-            );
-
+            super.createBindings();
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
                     double x = 0;
@@ -460,14 +509,12 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                 .addSources(container.rowsHeightProperty(), container.columnsSizeProperty())
                 .get()
             );
-
-            super.createBindings();
         }
 
         @Override
         protected DoubleBinding createVirtualMaxXBinding() {
             return DoubleBindingBuilder.build()
-                .setMapper(() -> Math.max(container.getWidth(), container.getColumns().size() * container.getColumnsSize().width()))
+                .setMapper(() -> Math.max(container.getWidth(), columnsCount() * container.getColumnsSize().width()))
                 .addSources(container.widthProperty())
                 .addSources(container.getColumns(), container.columnsSizeProperty())
                 .get();
@@ -476,7 +523,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
-                .setMapper(() -> container.getColumns().isEmpty() ? 0.0 : container.size() * container.getRowsHeight())
+                .setMapper(() -> (columnsCount() == 0) ? 0.0 : container.size() * container.getRowsHeight())
                 .addSources(container.getColumns(), container.columnsSizeProperty())
                 .addSources(container.sizeProperty(), container.rowsHeightProperty())
                 .get();
@@ -490,7 +537,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             return NumberUtils.clamp(
                 (int) Math.floor(container.getHPos() / container.getColumnsSize().width()),
                 0,
-                container.getColumns().size() - 1
+                columnsCount() - 1
             );
         }
 
@@ -512,7 +559,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         public int totalColumns() {
             int visible = visibleColumns();
-            return visible == 0 ? 0 : Math.min(visible + container.getColumnsBufferSize().val() * 2, container.getColumns().size());
+            return visible == 0 ? 0 : Math.min(visible + container.getColumnsBufferSize().val() * 2, columnsCount());
         }
 
         /// {@inheritDoc}
@@ -526,60 +573,20 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             VFXTable<T> table = getContainer();
             double width = table.getColumnsSize().width();
             if (!isLastColumn(column)) return width;
-            return Math.max(width, table.getWidth() - ((table.getColumns().size() - 1) * width));
+            return Math.max(width, table.getWidth() - ((columnsCount() - 1) * width));
         }
 
         /// {@inheritDoc}
         ///
-        /// Given by `columnsWidth * layoutIndex`.
+        /// Given by `columnsWidth * (columnIdx - columnsRange().getMin())`.
+        ///
+        /// This is the only place in the table that still needs a range-relative index, and the reason is local to
+        /// this mode: [#viewportPositionProperty()] already encodes the offset from the range's start to the first
+        /// visible column, so columns and cells are laid out at `0, w, 2w, ...` relative to the range.
+        /// [ColumnsLayoutMode#VARIABLE] instead lays out at absolute positions with `x = -hPos`.
         @Override
-        public double getColumnPos(int layoutIdx, VFXTableColumn<T, ?> column) {
-            return container.getColumnsSize().width() * layoutIdx;
-        }
-
-        /// {@inheritDoc}
-        ///
-        /// Positions the column at `X: getColumnPos(index, column)` and `Y: 0`.
-        ///
-        /// Sizes the column to `W: getColumnWidth(column)` and `H: columnsHeight`
-        ///
-        /// @return always true
-        @Override
-        public boolean layoutColumn(int layoutIdx, VFXTableColumn<T, ?> column) {
-            Size size = getContainer().getColumnsSize();
-            double x = getColumnPos(layoutIdx, column);
-            double w = getColumnWidth(column);
-            double h = size.height();
-            column.resizeRelocate(x, 0, w, h);
-            return true;
-        }
-
-        /// {@inheritDoc}
-        ///
-        /// The width and x position values are the exact same used by the [#lastColumn()] method.
-        /// So both [#getColumnPos(int, VFXTableColumn)] and [#getColumnWidth(VFXTableColumn)] are used
-        /// to find the cell's x and w respectively. However, before doing so, we must convert the given layout index to
-        /// the respective column index and then extract the column (since the aforementioned methods need the column as a parameter).
-        /// The conversion is done by this simple formula: `columnsRange.getMin() + layoutIdx`.
-        ///
-        /// The y position will be 0 and the height will be `rowsHeight`.
-        ///
-        /// @return always true
-        @Override
-        public boolean layoutCell(int layoutIdx, VFXTableCell<T> cell) {
-            if (cell == null) return false;
-            VFXTable<T> table = getContainer();
-            IntegerRange columnsRange = columnsRange();
-            int colIndex = columnsRange.getMin() + layoutIdx;
-            VFXTableColumn<T, ? extends VFXTableCell<T>> column = table.getColumns().get(colIndex);
-            Node node = cell.toNode();
-            double x = getColumnPos(layoutIdx, column);
-            double w = getColumnWidth(column);
-            double h = table.getRowsHeight();
-            cell.beforeLayout();
-            node.resizeRelocate(x, 0, w, h);
-            cell.afterLayout();
-            return true;
+        public double getColumnPos(int columnIdx, VFXTableColumn<T, ?> column) {
+            return container.getColumnsSize().width() * (columnIdx - columnsRange().getMin());
         }
 
         /// This method is a no-op as the operation is not possible in [ColumnsLayoutMode#FIXED].
@@ -665,30 +672,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             } finally {
                 autosizing = false;
             }
-        }
-
-        /// @return the theoretical number of cells present in the viewport. It's given by `visibleRows * visibleColumns`,
-        /// which means that it does not take into account `null` cells or anything else
-        @Override
-        public int visibleCells() {
-            int nColumns = visibleColumns();
-            int nRows = visibleRows();
-            return nColumns * nRows;
-        }
-
-        /// {@inheritDoc}
-        ///
-        /// To check whether the given column is visible this uses its index and the current state's columns range to
-        /// call [IntegerRange#inRangeOf(int, IntegerRange)].
-        ///
-        /// The index is retrieved with [VFXTable#indexOf(VFXTableColumn)].
-        @Override
-        public boolean isInViewport(VFXTableColumn<T, ?> column) {
-            if (column.getTable() == null || column.getScene() == null || column.getParent() == null) return false;
-            VFXTableState<T> state = container.getState();
-            if (state == VFXTableState.INVALID) return false;
-            int index = container.indexOf(column);
-            return IntegerRange.inRangeOf(index, state.getColumnsRange());
         }
 
         @Override
@@ -797,7 +780,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         protected double computeColumnWidth(VFXTableColumn<T, ?> column, boolean isLast) {
             double minW = container.getColumnsSize().width();
             double prefW = Math.max(column.prefWidth(-1), minW);
-            if (container.getColumns().size() == 1) return Math.max(prefW, container.getWidth());
+            if (columnsCount() == 1) return Math.max(prefW, container.getWidth());
             if (!isLast) return column.snapSizeX(prefW);
 
             double partialW = layoutCache.getPartialWidth();
@@ -819,36 +802,20 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             return column.snapPositionX(prevPos + layoutCache.getColumnWidth(column));
         }
 
-        /// This is used by the [ColumnsLayoutCache] to compute the visibility of a given column (and all its
-        /// related cells ofc). There are a lot of requirements for this check but the concept is quite simple.
-        ///
-        /// Before getting all the dependencies, we ensure that the column's table instance is not `null`, that its index
-        /// is not negative, that the column is in the scene graph (`null` check on the column's Scene and Parent).
-        /// If any of these conditions fail `false` is returned.
-        ///
-        /// The idea is to use something similar to [Bounds#intersects(Bounds)] but only for the width and x position.
-        /// First we compute the viewport bounds which are given by `[hPos, hPos + tableWidth]`, then we get the
-        /// column's position and width by using [ColumnsLayoutCache#getColumnPos(int)] and [ColumnsLayoutCache#getColumnWidth(VFXTableColumn)].
-        ///
-        /// The result is given by this formula: `(columnX + columnWidth >= vBounds.getMin()) && (columnX <= vBounds.getMax())`
-        protected boolean computeVisibility(VFXTableColumn<T, ?> column) {
-            VFXTable<T> table = column.getTable();
-            int index = column.getIndex();
-            if (table == null ||
-                index < 0 ||
-                column.getScene() == null ||
-                column.getParent() == null
-            ) return false;
-            try {
-                double tableW = table.getWidth();
-                double hPos = table.getHPos();
-                DoubleRange viewBounds = DoubleRange.of(hPos, hPos + tableW);
-                double columnX = layoutCache.getColumnPos(index);
-                double columnW = layoutCache.getColumnWidth(column);
-                return (columnX + columnW >= viewBounds.getMin()) && (columnX <= viewBounds.getMax());
-            } catch (Exception ex) {
-                return false;
+        protected int columnAt(double x) {
+            int lo = 0;
+            int hi = columnsCount() - 1;
+            int res = 0;
+            while (lo <= hi) {
+                int mid = (lo + hi) >>> 1;
+                if (layoutCache.getColumnPos(mid) <= x) {
+                    res = mid;
+                    lo = mid + 1;
+                } else {
+                    hi = mid - 1;
+                }
             }
+            return res;
         }
 
         @Override
@@ -857,39 +824,11 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             layoutCache = new ColumnsLayoutCache<>(container)
                 .setWidthFunction(this::computeColumnWidth)
                 .setPositionFunction(this::computeColumnPos)
-                .setVisibilityFunction(this::computeVisibility)
                 .init();
 
             // Initialize bindings
-            columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
-                .setMapper(() -> {
-                    ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = container.getColumns();
-                    if (columns.isEmpty()) return Utils.INVALID_RANGE;
-                    return IntegerRange.of(0, columns.size() - 1);
-                })
-                .addSources(container.getColumns())
-                .get()
-            );
-            rowsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
-                .setMapper(() -> {
-                    if (getViewportHeight() <= 0) return Utils.INVALID_RANGE;
-                    int needed = totalRows();
-                    if (needed == 0) return Utils.INVALID_RANGE;
-
-                    int start = Math.max(0, firstRow() - container.getRowsBufferSize().val());
-                    int end = Math.min(container.size() - 1, start + needed - 1);
-                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
-                    return IntegerRange.of(start, end);
-                })
-                .addSources(container.heightProperty(), container.columnsSizeProperty())
-                .addSources(container.vPosProperty())
-                .addSources(container.rowsBufferSizeProperty())
-                .addSources(container.sizeProperty(), container.rowsHeightProperty())
-                .get()
-            );
-
+            super.createBindings();
             virtualMaxX.bind(layoutCache);
-
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
                     double x = 0;
@@ -914,8 +853,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                 .addSources(container.rowsHeightProperty(), container.columnsSizeProperty())
                 .get()
             );
-
-            super.createBindings();
         }
 
         @Override
@@ -926,7 +863,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
-                .setMapper(() -> container.getColumns().isEmpty() ? 0.0 : container.size() * container.getRowsHeight())
+                .setMapper(() -> (columnsCount() == 0) ? 0.0 : container.size() * container.getRowsHeight())
                 .addSources(container.getColumns(), container.columnsSizeProperty())
                 .addSources(container.sizeProperty(), container.rowsHeightProperty())
                 .get();
@@ -935,19 +872,23 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         /// Always 0.
         @Override
         public int firstColumn() {
-            return 0;
+            if (columnsCount() == 0) return 0;
+            return NumberUtils.clamp(columnAt(container.getHPos()), 0, columnsCount() - 1);
         }
 
         /// Always the size of [VFXTable#getColumns()].
         @Override
         public int visibleColumns() {
-            return container.getColumns().size();
+            if (columnsCount() == 0 || container.getWidth() <= 0) return 0;
+            return columnAt(container.getHPos() + container.getWidth()) - firstColumn() + 1;
         }
 
         /// Always the size of [VFXTable#getColumns()].
         @Override
         public int totalColumns() {
-            return container.getColumns().size();
+            int visible = visibleColumns();
+            int buffer = container.getColumnsBufferSize().val();
+            return visible == 0 ? 0 : Math.min(visible + buffer * 2, columnsCount());
         }
 
         /// Delegates to [ColumnsLayoutCache#getColumnWidth(VFXTableColumn)].
@@ -958,79 +899,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
         /// Delegates to [ColumnsLayoutCache#getColumnPos(int)].
         @Override
-        public double getColumnPos(int layoutIdx, VFXTableColumn<T, ?> column) {
-            return layoutCache.getColumnPos(layoutIdx);
-        }
-
-        /// Delegates to [ColumnsLayoutCache#isInViewport(VFXTableColumn)].
-        @Override
-        public boolean isInViewport(VFXTableColumn<T, ?> column) {
-            return layoutCache.isInViewport(column);
-        }
-
-        /// {@inheritDoc}
-        ///
-        /// In [ColumnsLayoutMode#VARIABLE] the `layoutIndex` is always the same as the column's index.
-        ///
-        /// Positions the column at `X: getColumnPos(index, column)` and `Y: 0`.
-        ///
-        /// Sizes the column to `W: getColumnWidth(column)` and `H: columnsHeight`
-        ///
-        /// Additionally, this method makes use of the 'inViewport' functionality to hide and not lay out columns when they
-        /// are not visible in the viewport. The layout operation is also avoided in case the column is visible and both
-        /// its x positions and width are already good to go.
-        ///
-        /// @return `false` if the column was hidden or no layout operation was run, `true` otherwise
-        @Override
-        public boolean layoutColumn(int layoutIdx, VFXTableColumn<T, ?> column) {
-            if (!isInViewport(column)) {
-                column.setVisible(false);
-                return false;
-            }
-            Size size = getContainer().getColumnsSize();
-            double x = getColumnPos(layoutIdx, column);
-            double w = getColumnWidth(column);
-            double h = size.height();
-            if (column.isVisible() && column.getLayoutX() == x && column.getWidth() == w) return false;
-            column.resizeRelocate(x, 0, w, h);
-            column.setVisible(true);
-            return true;
-        }
-
-        /// {@inheritDoc}
-        ///
-        /// In [ColumnsLayoutMode#VARIABLE] the `layoutIndex` is always the same as the column's index.
-        ///
-        /// The layout logic is the exact same as described here [#layoutColumn(int, VFXTableColumn)].
-        ///
-        /// Here's where the [ColumnsLayoutCache] shines. Since cells are laid out the exact same way as
-        /// the corresponding column, the width, positions and visibility computations are already done when invoking
-        /// [#layoutColumn(int, VFXTableColumn)]. Obviously, to do so, we first need to get the cell's corresponding
-        /// column from [VFXTable#getColumns()] by the given index.
-        ///
-        /// Note: the pre/post layout hooks defined by [VFXCell] are called even if the cell will only be set to
-        /// hidden. This allows implementations to perform actions depending on the visibility state without relying on
-        /// listeners.
-        @Override
-        public boolean layoutCell(int layoutIdx, VFXTableCell<T> cell) {
-            if (cell == null) return false;
-            ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = container.getColumns();
-            VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(layoutIdx);
-            Node node = cell.toNode();
-            cell.beforeLayout();
-            if (!isInViewport(column)) {
-                node.setVisible(false);
-                cell.afterLayout();
-                return false;
-            }
-            double w = getColumnWidth(column);
-            double h = getContainer().getRowsHeight();
-            double x = getColumnPos(layoutIdx, column);
-            if (node.isVisible() && node.getLayoutX() == x && node.getLayoutBounds().getWidth() == w) return false;
-            node.resizeRelocate(x, 0, w, h);
-            node.setVisible(true);
-            cell.afterLayout();
-            return true;
+        public double getColumnPos(int columnIdx, VFXTableColumn<T, ?> column) {
+            return layoutCache.getColumnPos(columnIdx);
         }
 
         /// If the current state is [VFXTableState#INVALID] then exits immediately.
@@ -1109,21 +979,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                 done &= autosizeColumn(column);
             }
             return done;
-        }
-
-        /// @return the number of cells for which the corresponding column is visible in the viewport
-        /// @see #isInViewport(VFXTableColumn)
-        @Override
-        public int visibleCells() {
-            VFXTableState<T> state = container.getState();
-            if (state.isEmpty()) return 0;
-            IntegerRange cRange = state.getColumnsRange();
-            int nRows = state.getRowsRange().diff() + 1;
-            int nCellsPerRow = (int) IntStream.rangeClosed(cRange.getMin(), cRange.getMax())
-                .mapToObj(container.getColumns()::get)
-                .filter(this::isInViewport)
-                .count();
-            return nRows * nCellsPerRow;
         }
 
         @Override
