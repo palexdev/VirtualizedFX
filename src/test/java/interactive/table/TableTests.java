@@ -1961,6 +1961,27 @@ public class TableTests {
     }
 
     @Test
+    void testColumnsChangedAfterModeSwitch(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20));
+        robot.interact(() -> pane.getChildren().add(table));
+
+        // Builds a new helper and a new ColumnsLayoutCache. Its list listener now registers
+        // AFTER the skin's, inverting the order every other path relies on.
+        robot.interact(table::switchColumnsLayoutMode);
+
+        // Add: the skin's listener runs first, so the manager computes columnsRange(), which
+        // binary-searches through a cache that has no entry for the new column yet.
+        robot.interact(() -> table.getColumns().add(new EmptyColumn("Added", 0)));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+
+        // Remove: same ordering, but the cache holds an extra entry rather than missing one,
+        // so nothing throws and the range is simply computed from stale positions.
+        robot.interact(() -> table.getColumns().removeFirst());
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
     void testAutosizeVariable(FxRobot robot) {
         StackPane pane = setupStage();
         Table table = new Table(FXCollections.observableArrayList(AUTOSIZE_USERS));

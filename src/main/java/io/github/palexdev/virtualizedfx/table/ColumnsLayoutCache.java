@@ -73,7 +73,9 @@ import static java.util.Optional.ofNullable;
 ///
 /// To manage invalidations and columns changes in the table, this uses a series of listeners.
 ///
-/// 1) A [ListChangeListener] ensures the above-mentioned map stays always updated, more info here [#handleColumns(ListChangeListener.Change)]
+/// 1) An [InvalidationListener] on [VFXTable#getColumns()] ensures the above-mentioned map stays always updated,
+/// more info here [#handleColumns()]. It is deliberately not a [ListChangeListener]: that would make it run
+/// *after* [VFXTableSkin]'s, which is too late. See the method's docs
 ///
 /// 2) An [InvalidationListener] watches for [VFXTable#columnsSizeProperty()] changes and by iterating over
 /// the [LayoutInfo] stored in the map, performs the following actions: a) resets both the positions and visibility
@@ -129,7 +131,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     private BiFunction<Integer, Double, Double> xPosFn;
 
     // Listeners
-    private ListChangeListener<VFXTableColumn<T, ?>> clListener;
+    private InvalidationListener clListener;
     private InvalidationListener csListener;
     private InvalidationListener wListener;
 
@@ -139,7 +141,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     public ColumnsLayoutCache(VFXTable<T> table) {
         this.table = table;
         cache = new LayoutInfoCache();
-        clListener = this::handleColumns;
+        clListener = _ -> handleColumns();
         csListener = i -> {
             for (LayoutInfo li : cache.values()) {
                 // Resets all positions
@@ -278,41 +280,48 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     /// **Beware, the order of the operations is crucial here!** The map must be synchronized with the list _before_
     /// any invalidation occurs. The reason is that invalidating a width triggers the 'partial invalidation' mechanism
     /// described in [LayoutInfo#createWidthBinding()], which iterates over [VFXTable#getColumns()] and queries the map
-    /// for **each** of them. If we were to invalidate first, entries for the columns added by the [Change] would still
-    /// be missing, and the resulting failure would also abort this method, leaving the cache in a corrupted state
-    /// (missing entries) forever.
+    /// for **each** of them. If we were to invalidate first, entries for newly added columns would still be missing,
+    /// and the resulting failure would also abort this method, leaving the cache in a corrupted state (missing entries)
+    /// forever.
     ///
-    /// So, first, we process the [Change]. We just need to handle additions and removals.
-    /// For each removal, we remove the corresponding entry from the map and dispose it [LayoutInfo#dispose()].
-    /// For each addition, we create a new entry in the map [LayoutInfo#LayoutInfo(VFXTableColumn)].
+    /// So, first, we synchronize. One pass over the list gives every column an entry, creating the missing ones, and
+    /// invalidates the index and position of each: any structural change (addition, removal, permutation) is likely to
+    /// have shifted the columns, so re-computing is both simpler and more reliable than guessing which values survived.
+    /// Freshly created [LayoutInfo] objects already start invalid, so for them those two calls are no-ops.
     ///
-    /// **Note:** as you may know, JavaFX sucks. So, we actually need to manage this a bit differently. You see,
-    /// `setAll()` operations pose a big issue. As described in [Change]'s documentation, calling `set()`
-    /// on the list will be treated as both an addition and a removal, also the `replaced` flag will return `true`,
-    /// which makes sense right? When such a change occurs, the added and removed lists carried by the [Change]
-    /// will respectively contain all the items in the list and all the previous items in the list. But what happens when
-    /// the new ones are pretty much the same as the old ones, maybe with just a few additions/removals? We simply can't
-    /// treat the change as suggested here [Change], because we would first remove and dispose all the [LayoutInfo]
-    /// objects, and then create them again. What. A. Waste. Of. Performance!
-    ///
-    /// So, how do we handle this? A temporary collection stores all the removed values. When processing the additions,
-    /// we remove any entry that is also present in that collection. This way we only keep the values that have actually
-    /// been removed, and for these we can remove the entry and call [LayoutInfo#dispose()].
-    ///
-    /// Once the map is up-to-date, we invalidate every cached index [LayoutInfo#invalidateIndex()], because any
-    /// structural change (additions, removals, permutations) is likely to have shifted the columns in the list.
+    /// The map can only hold **more** entries than the list if something was removed, so the sweep that disposes stale
+    /// entries is guarded by that check and skipped entirely for pure additions.
     ///
     /// Then, remember, the last column is always a special case in the table because it behaves a little different from
     /// the others. So, we must ensure that the last column is still the same as before. If that's not the case, first we
     /// call [#invalidateLast()] to ensure that the 'now previously last' column has the right width (the width computing
-    /// function is likely to return a different value now); note that this is a no-op if the change removed it, as its
+    /// function is likely to return a different value now); note that this is a no-op if the column was removed, as its
     /// entry is already gone by now. Then we update the local reference for the last column (yes, the cache stores it
     /// for fast access) and invalidate its width too, since the `widthFn` is likely to return a different value for it
-    /// as well.
+    /// as well. Finally we call [#invalidate()] and [#invalidateLast()].
     ///
-    /// Finally, we invalidate all the positions and visibility flags. Re-computing them is far more convenient and stable
-    /// than trying to guess which one is still good and which not. We also call [#invalidate()] and [#invalidateLast()].
-    private void handleColumns(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
+    /// **Why this takes no [ListChangeListener.Change] and is driven by an [InvalidationListener]**
+    ///
+    /// Two reasons, and the second is the important one.
+    ///
+    /// 1) The [Change] was never a good fit. `setAll()` is reported as a removal of everything plus an addition of
+    /// everything, even when the two lists are nearly identical, so an implementation that trusts it would dispose and
+    /// re-create every [LayoutInfo] for no reason. Working around that needed a temporary collection to cancel out the
+    /// columns that appear on both sides. Diffing against the list itself never sees that distinction, so the special
+    /// case simply disappears.
+    ///
+    /// 2) **Listener ordering.** [VFXTableSkin] also listens to [VFXTable#getColumns()], and its listener computes a
+    /// new state, which triggers a layout, which reads [VFXTable#virtualMaxXProperty()], which is bound to this cache.
+    /// So this cache *must* be up to date first. Registration order used to decide that, and it is not something we
+    /// control: the helper is built before the skin at construction, but a [ColumnsLayoutMode] switch builds a **new**
+    /// helper, and therefore a new cache, whose listener lands *after* the skin's. The result was a layout computed
+    /// against a stale `virtualMaxX`, with nothing to correct it afterwards.
+    ///
+    /// JavaFX invokes **all** [InvalidationListener]s before **any** [ListChangeListener]
+    /// (`ListListenerHelper.Generic#fireValueChangedEvent`), so registering as the former guarantees this runs first
+    /// no matter when it was added. The skin relies on the same guarantee, for the same reason, on
+    /// [VFXTable#widthProperty()].
+    private void handleColumns() {
         ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = table.getColumns();
         if (columns.isEmpty()) {
             clear();
@@ -321,27 +330,26 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         }
 
         // Sync the map with the list first!
-        Set<VFXTableColumn<T, ?>> rm = new HashSet<>();
-        while (change.next()) {
-            if (change.wasRemoved()) rm.addAll(change.getRemoved());
-            if (change.wasAdded()) {
-                for (VFXTableColumn<T, ?> c : change.getAddedSubList()) {
-                    if (rm.remove(c)) continue;
-                    /*
-                     * Since bindings are all the same whether it's the first column, in the middle or the last one...
-                     * There is no need to replace an already existing binding.
-                     */
-                    cache.computeIfAbsent(c, LayoutInfo::new);
-                }
-            }
-        }
-        for (VFXTableColumn<T, ?> c : rm) {
-            LayoutInfo li = cache.remove(c);
-            if (li != null) li.dispose();
+        for (VFXTableColumn<T, ? extends VFXTableCell<T>> c : columns) {
+            /*
+             * Since bindings are all the same whether it's the first column, in the middle or the last one...
+             * There is no need to replace an already existing binding.
+             */
+            LayoutInfo li = cache.computeIfAbsent(c, LayoutInfo::new);
+            li.invalidateIndex();
+            li.resetPos();
         }
 
-        // Indexes are likely to be stale now
-        cache.values().forEach(LayoutInfo::invalidateIndex);
+        // More entries than columns can only mean something was removed
+        if (cache.size() > columns.size()) {
+            Set<VFXTableColumn<T, ?>> live = Collections.newSetFromMap(new IdentityHashMap<>());
+            live.addAll(columns);
+            cache.entrySet().removeIf(e -> {
+                if (live.contains(e.getKey())) return false;
+                e.getValue().dispose();
+                return true;
+            });
+        }
 
         VFXTableColumn<T, ? extends VFXTableCell<T>> last = columns.getLast();
         if (last != lColumn) {
@@ -351,7 +359,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             cache.invalidateWidth(last);
         }
 
-        cache.values().forEach(LayoutInfo::resetPos);
         invalidate();
         invalidateLast();
     }
