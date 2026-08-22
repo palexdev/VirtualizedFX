@@ -68,7 +68,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     // Properties
     //================================================================================
     protected boolean invalidatingPos = false;
-    protected boolean wasGeometryChange = false;
 
     //================================================================================
     // Constructors
@@ -118,10 +117,8 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         invalidatingPos = false;
 
         if (gct == GeometryChangeType.WIDTH && !newState.isLayoutNeeded()) {
-            wasGeometryChange = true;
             VFXTableColumn<T, ? extends VFXTableCell<T>> last = table.getColumns().getLast();
             table.requestViewportLayout(last);
-            wasGeometryChange = false;
         }
     }
 
