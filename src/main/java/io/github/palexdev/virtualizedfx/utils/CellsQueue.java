@@ -66,21 +66,13 @@ public class CellsQueue<T, C extends VFXCell<T>> extends LinkedList<C> {
         return capacity;
     }
 
-    /// Sets the queue's capacity. If the parameter is 0, every cell is disposed and removed. If the new capacity is
-    /// lesser than the current one, then the oldest cell is removed until the capacity is reached.
+    /// Sets the queue's capacity. If the new capacity is lesser than the current size, the oldest cells are disposed
+    /// and removed until the size fits. A capacity of 0 is just the degenerate case of that: the queue is emptied and
+    /// caching is effectively disabled, see [#queue(VFXCell)].
     public void setCapacity(int capacity) {
-        if (capacity == 0) {
-            forEach(C::dispose);
-            clear();
-            this.capacity = capacity;
-            return;
-        }
-
-        if (capacity < super.size()) {
-            for (int i = 0; i < (super.size() - capacity); i++) {
-                C excess = super.remove();
-                excess.dispose();
-            }
+        while (super.size() > capacity) {
+            C excess = super.remove();
+            excess.dispose();
         }
         this.capacity = capacity;
     }
