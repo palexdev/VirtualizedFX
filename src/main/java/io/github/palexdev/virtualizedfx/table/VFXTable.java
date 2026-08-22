@@ -207,7 +207,9 @@ import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
 /// container. So, the system tries to avoid as much as possible to use columns' indexes, BUT implements a mechanism to
 /// make it much, much faster. Every [VFXTableColumn] has a read-only property to store its index: [VFXTableColumn#indexProperty()].
 /// The system automatically updates the property at layout time (see [VFXTableSkin#updateColumnIndex(VFXTableColumn, int)]),
-/// and offers a method [#indexOf(VFXTableColumn)] to retrieve it (it's more than just a getter!).
+/// and offers a method [#indexOf(VFXTableColumn)] to retrieve it. That method is more than a getter: it validates the
+/// cached value against the list and repairs it when it has gone stale, so always go through it rather than reading
+/// the property.
 ///
 /// - **Columns re-ordering/swapping**. Since table's columns are nodes which are part of the viewport, adding duplicates
 /// to the list will generate a JavaFX exception. For this reason, any time you want to make some changes to the columns'
@@ -373,15 +375,30 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     /// Retrieves the given column's index in the table's columns' list.
     ///
-    /// Since every [VFXTableColumn] has its index as a property, [VFXTableColumn#indexProperty()], this method
-    /// will simply invoke the related getter.
-    /// **However**, if the returned index is invalid `(< 0)`, then it resorts to [List#indexOf(Object)] which is much
-    /// slower. The good thing is that if it resorts to the latter, then it also updates the column's index property,
-    /// so that the next time the index will be available through the property.
+    /// Every [VFXTableColumn] caches its own index in [VFXTableColumn#indexProperty()], which the skin refreshes at
+    /// layout time. That cache can lag, so this does not trust it: it checks that the column really sits at the index
+    /// it claims, `columns.get(idx) == column`. Columns are nodes and the list cannot hold duplicates, so that check
+    /// is exact rather than a heuristic, it cannot pass for a wrong index nor fail for a right one.
+    ///
+    /// On a hit the cost is a bounds check and a reference comparison. On a miss it falls back to
+    /// [List#indexOf(Object)], which is much slower, and **writes the result back onto the column**, so the next call
+    /// is cheap again. Being self-repairing is what makes this safe to call from anywhere, and it is why nothing in
+    /// the library reads [VFXTableColumn#indexProperty()] directly anymore.
+    ///
+    /// **Mind that this writes.** The repair sets the column's index property, and this method is reached from inside
+    /// a binding's invalidation ([ColumnsLayoutCache]'s width binding gets here through its `LayoutInfo`). That is
+    /// safe only as long as nothing listens to [VFXTableColumn#indexProperty()]; a listener there would turn this into
+    /// a re-entrant write during binding invalidation.
+    ///
+    /// @return the column's index, or -1 if the column is `null` or does not belong to this table
     public int indexOf(VFXTableColumn<T, ?> column) {
         if (column == null) return -1;
-        if (column.getIndex() < 0) column.setIndex(columns.indexOf(column));
-        return column.getIndex();
+        int idx = column.getIndex();
+        if (idx < 0 || idx >= columns.size() || columns.get(idx) != column) {
+            idx = columns.indexOf(column);
+            column.setIndex(idx);
+        }
+        return idx;
     }
 
     /// Setter for the [#stateProperty()].

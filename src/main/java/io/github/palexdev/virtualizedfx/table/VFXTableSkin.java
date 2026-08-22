@@ -491,8 +491,12 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     }
 
     /// This can be called during layout or other operations to update the given column's [VFXTableColumn#indexProperty()]
-    /// to the given index. This is indeed a strange place to do so, but as it turns out, layout methods are the most
-    /// reliable to ensure columns will always have the correct index.
+    /// to the given index. This is indeed a strange place to do so, but layout is the moment at which the right index
+    /// is already in hand, so writing it costs nothing.
+    ///
+    /// Note this is an **optimization, not a correctness requirement**: [VFXTable#indexOf(VFXTableColumn)] validates
+    /// and repairs the property by itself. All this does is keep the cache warm so that `indexOf` takes its fast path.
+    /// It covers only the columns in the current range, since that is what [#layoutColumns()] iterates.
     protected void updateColumnIndex(VFXTableColumn<T, ?> column, int index) {
         column.setIndex(index);
     }

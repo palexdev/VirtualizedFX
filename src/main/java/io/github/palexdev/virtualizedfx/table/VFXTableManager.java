@@ -205,6 +205,8 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
                 }
             }
         }
+        // Resetting the index is no longer what makes removals safe: VFXTable.indexOf spots a detached column by
+        // itself, since it no longer sits where it claims to. This only spares that column one O(n) rescan.
         rm.forEach(c -> {
             c.setTable(null);
             c.setIndex(-1);

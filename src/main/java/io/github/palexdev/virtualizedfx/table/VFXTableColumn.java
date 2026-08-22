@@ -64,6 +64,8 @@ import javafx.scene.Node;
 /// [VFXTable#getColumns()]. However, there is not a fast way to know the index of a column from its instance,
 /// [List#indexOf(Object)] is way too slow for a virtualized container. For this reason, the property is automatically
 /// updated by the [VFXTableSkin] when a layout is performed, see [VFXTableSkin#updateColumnIndex(VFXTableColumn, int)].
+/// Being a cache refreshed at layout time it can lag, so read it through [VFXTable#indexOf(VFXTableColumn)], which
+/// validates and repairs it. Details on the property itself.
 ///
 /// 3) Every column should specify a function to build cells for some data from the model of type `T`. These functions
 /// do not have to produce different cell types necessarily. Rather, since every column is probably going to refer to a specific
@@ -367,8 +369,13 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
     /// Specifies the index of the columns in the list [VFXTable#getColumns()].
     /// The value will be -1 if the property has not been updated yet or if the column is not in a table.
     ///
-    /// This method will be reliable 99% of the time, however, just to be sure I suggest you to use
-    /// [VFXTable#indexOf(VFXTableColumn)] instead.
+    /// **This is a cache, and it can lag.** [VFXTableSkin#layoutColumns()] refreshes it only for the columns in the
+    /// current range, so a column outside the viewport keeps whatever index it last had; and a change to
+    /// [VFXTable#getColumns()] shifts every column from the change point onwards without touching this property.
+    ///
+    /// Which is why you should not read it directly. [VFXTable#indexOf(VFXTableColumn)] validates this value against
+    /// the list and repairs it when it is wrong, at no meaningful cost when it is right. Nothing in the library reads
+    /// this property outside of that one method.
     public ReadOnlyIntegerProperty indexProperty() {
         return index.getReadOnlyProperty();
     }

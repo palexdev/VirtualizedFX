@@ -126,7 +126,8 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
     protected boolean replaceCells(VFXTableColumn<T, VFXTableCell<T>> column) {
         VFXTable<T> table = getTable();
         VFXTableHelper<T> helper = table.getHelper();
-        if (!IntegerRange.inRangeOf(column.getIndex(), columnsRange)) return false;
+        int cIdx = table.indexOf(column);
+        if (!IntegerRange.inRangeOf(cIdx, columnsRange)) return false;
 
         VFXTableCell<T> oCell = cells.remove(column);
         if (oCell != null) {
@@ -134,7 +135,6 @@ public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
             saveCell(column, oCell);
         }
 
-        int cIdx = table.indexOf(column);
         VFXTableCell<T> nCell = getCell(cIdx, column, false);
         if (nCell == null) return false;
 

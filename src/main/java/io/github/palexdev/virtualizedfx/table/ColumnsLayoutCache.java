@@ -116,7 +116,12 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     private final LayoutInfoCache cache;
     private boolean init = false;
     /// When `true`, [#toString()] sorts the entries by column index rather than printing them in the map's own
-    /// (arbitrary) order. Debugging aid, off by default because it copies the map into a [TreeMap] on every call.
+    /// (arbitrary) order. Debugging aid, off by default because it copies the map into a [TreeMap] ordered by
+    /// [VFXTable#indexOf(VFXTableColumn)] on every call.
+    ///
+    /// One thing to know while debugging a cache you suspect is corrupted: every column that is no longer in
+    /// [VFXTable#getColumns()] resolves to -1, so they all compare equal and the [TreeMap] prints them as a single
+    /// entry.
     public boolean sortToString = false;
 
     private VFXTableColumn<T, ?> lColumn;
@@ -344,7 +349,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
              * There is no need to replace an already existing binding.
              */
             LayoutInfo li = cache.computeIfAbsent(c, LayoutInfo::new);
-            li.invalidateIndex();
             li.resetPos();
         }
 
@@ -410,8 +414,13 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 
     @Override
     public String toString() {
-        Map<VFXTableColumn<T, ?>, LayoutInfo> cache = this.cache;
-        if (sortToString) cache = new TreeMap<>(this.cache);
+        Map<VFXTableColumn<T, ?>, LayoutInfo> cache;
+        if (sortToString) {
+            cache = new TreeMap<>(Comparator.comparingInt(table::indexOf));
+            cache.putAll(this.cache);
+        } else {
+            cache = this.cache;
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append("ColumnsLayoutCache [%s][%d] {".formatted(isValid() ? "valid:[%f]".formatted(get()) : "invalid", size()));
@@ -592,8 +601,8 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     }
 
     /// Wrapper class for layout data related to a specific [VFXTableColumn].
-    /// This stores: its index in [VFXTable#getColumns()] [init:-1], its width as a [DoubleBinding], and its x
-    /// position [default:-1.0].
+    /// This stores the column's width as a [DoubleBinding] and its x position [default:-1.0]. The index is **not**
+    /// stored here, see [#getIndex()].
     ///
     /// **Width handling**
     ///
@@ -602,15 +611,14 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     ///
     /// **Why -1 as a sentinel**
     ///
-    /// Both the index and the position use a negative value to mean 'not computed yet, or invalidated'. Neither can
-    /// legitimately be negative (column 0 sits at x 0), so one field carries both the value and its validity, with no
-    /// boxing and no companion flag. See [#getIndex()] and [#getPos()].
-    public class LayoutInfo implements Comparable<LayoutInfo> {
+    /// The position uses a negative value to mean 'not computed yet, or invalidated'. It cannot legitimately be
+    /// negative, column 0 always sits at x 0, so the single field carries both the value and its validity, with no
+    /// boxing and no companion flag. See [#getPos()].
+    public class LayoutInfo {
         //================================================================================
         // Properties
         //================================================================================
         private VFXTableColumn<T, ?> column;
-        private int index = -1;
         private DoubleBinding wBinding;
         private double pos = -1.0;
 
@@ -631,24 +639,15 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
             return column;
         }
 
-        /// @return the column's index in [VFXTable#getColumns()], computed the first time (then cached)
+        /// @return the column's index in [VFXTable#getColumns()], by delegating to
+        /// [VFXTable#indexOf(VFXTableColumn)]
         ///
-        /// **Note:** this purposefully does not go through [VFXTable#indexOf(VFXTableColumn)]. That method relies on
-        /// [VFXTableColumn#indexProperty()], which is refreshed by the skin during the layout pass, and thus is stale
-        /// in the window that goes from a change in [VFXTable#getColumns()] to the next layout. Since this is
-        /// re-computed only when invalidated by [#invalidateIndex()] (so, once per structural change at most), we can
-        /// afford to ask the list itself, which is always right.
+        /// This used to keep a memo of its own, blanked on every structural change. It does not need one: `indexOf`
+        /// validates the column's own cached index and repairs it on a miss. That is also cheaper, because the columns
+        /// before a change point pass the check and never rescan, and it removes any assumption about *when* this runs
+        /// relative to the invalidation that made the index stale.
         public int getIndex() {
-            if (index == -1) index = table.getColumns().indexOf(column);
-            return index;
-        }
-
-        /// Resets, and thus invalidates, the cached index to -1, so that it will be recomputed by [#getIndex()].
-        ///
-        /// Needed because any structural change in [VFXTable#getColumns()] (additions, removals, permutations) is
-        /// likely to shift the columns' indexes.
-        private void invalidateIndex() {
-            index = -1;
+            return table.indexOf(column);
         }
 
         /// Calls [DoubleBinding#get()] on the column's width binding.
@@ -737,10 +736,6 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         //================================================================================
         // Overridden Methods
         //================================================================================
-        @Override
-        public int compareTo(LayoutInfo o) {
-            return Integer.compare(getIndex(), o.getIndex());
-        }
 
         @SuppressWarnings("unchecked")
         @Override

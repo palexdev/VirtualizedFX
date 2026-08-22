@@ -111,10 +111,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// virtualize the x-axis, so a column outside that range has neither a header nor any cell in the viewport.
     /// Buffer columns count as in range, so this can be `true` for a column that is just off-screen.
     ///
-    /// Beware that it goes through [VFXTable#indexOf(VFXTableColumn)], which repairs only
-    /// a *negative* index: in the window between a change to [VFXTable#getColumns()] and the next layout pass, a
-    /// column's cached index can be stale but positive, and this answer wrong with it.
-    ///
     /// @return whether the given column is currently visible in the viewport
     default boolean isInViewport(VFXTableColumn<T, ?> column) {
         if (column.getTable() == null || column.getScene() == null || column.getParent() == null) return false;
