@@ -134,8 +134,8 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
 
     /// Sets this row's state to be exactly the same as the one given as parameter. This is mainly useful when the table
     /// changes its [VFXTable#rowFactoryProperty()] because while it's true that the old rows are to be disposed
-    /// abd removed, the new ones would still have the same state of the old ones. In such occasions, it's a great
-    /// optimization to just copy the state of the old corresponsig row rather than re-computing it from zero.
+    /// and removed, the new ones would still have the same state of the old ones. In such occasions, it's a great
+    /// optimization to just copy the state of the old corresponding row rather than re-computing it from zero.
     ///
     /// To further detail what happens when this is called:
     ///
@@ -340,12 +340,14 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
         return columnsRange;
     }
 
-    /// @return the row's cells as an unmodifiable [SequencedMap], mapped by the row's [#indexProperty()].
+    /// @return the row's cells as an unmodifiable [SequencedMap], mapped by their column's **absolute** index in
+    /// [VFXTable#getColumns()] (not by the row's own [#indexProperty()], every cell in a row shares that one)
     public SequencedMap<Integer, VFXTableCell<T>> getCellsByIndex() {
         return cells.getByIndex();
     }
 
-    /// @return the row's state map, which contains the cells both mapped by the row's index or the cell's "parent" column.
+    /// @return the row's state map, which contains the cells mapped both by their column's **absolute** index in
+    /// [VFXTable#getColumns()] and by the cell's "parent" column instance
     protected RowsStateMap<T, VFXTableCell<T>> getCells() {
         return cells;
     }

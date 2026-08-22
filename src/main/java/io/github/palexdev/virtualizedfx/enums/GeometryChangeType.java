@@ -18,9 +18,18 @@
 
 package io.github.palexdev.virtualizedfx.enums;
 
+/// Tells a virtualized container's manager what kind of geometry change it is reacting to.
+///
+/// A geometry change generally means recomputing the ranges and producing a new state, but the two dimensions do not
+/// invalidate the same things, so knowing which one moved lets a manager skip work that cannot have been affected, or
+/// do extra work that only that dimension requires.
 public enum GeometryChangeType {
+    /// The container's width changed.
     WIDTH,
+    /// The container's height changed.
     HEIGHT,
+    /// Neither dimension changed, but a geometry pass is needed anyway. A buffer size change is the typical case: it
+    /// alters how many cells the viewport needs without altering its size.
     OTHER,
     ;
 }

@@ -125,10 +125,18 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         }
     }
 
-    /// Used in [ColumnsLayoutMode#VARIABLE] mode to call [VFXTable#requestViewportLayout(VFXTableColumn)].
-    /// Essentially, this should trigger a partial layout computation.
+    /// This is called when a column changes its width, see [VFXTableColumn#resize(double)]. It only concerns
+    /// [ColumnsLayoutMode#VARIABLE], since in the other mode every column shares one width, so it exits immediately
+    /// for [ColumnsLayoutMode#FIXED].
     ///
-    /// Position is invalidated too!
+    /// The horizontal position is invalidated first: a resize changes [VFXTable#virtualMaxXProperty()] and thus the
+    /// max horizontal scroll, which may leave the current `hPos` out of bounds.
+    ///
+    /// A resize also moves every column that comes after the resized one, so the columns range may change with it.
+    /// If it did **not**, this only calls [VFXTable#requestViewportLayout(VFXTableColumn)] with the resized column,
+    /// which triggers a partial layout from that column rightwards, a nice optimization over a full one.
+    /// If it **did**, a new state is computed by [#moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXTableState)]
+    /// and the layout follows from the state itself.
     ///
     /// @see VFXTableSkin#partialLayout()
     protected void onColumnWidthChanged(VFXTableColumn<T, ?> column) {
@@ -354,14 +362,13 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     ///
     /// **Horizontal**
     ///
-    /// Requests the layout computation through [VFXTable#requestViewportLayout()] and exits immediately if the layout
-    /// mode is set to [ColumnsLayoutMode#VARIABLE]. In such mode, the columns range will never change, but the
-    /// layout is still required.
-    ///
-    /// Does nothing and exits if the new columns range is the same as the old one.
+    /// Does nothing and exits if the new columns range is the same as the old one. Both [ColumnsLayoutMode]s take
+    /// this branch: they window the columns the same way, and differ only in how the range is computed. This early
+    /// exit is what keeps horizontal scrolling cheap, since most events do not move the window at all.
     ///
     /// The new state is computed by simply copying all the rows from the old state and just calling
-    /// [VFXTableRow#updateColumns(IntegerRange, boolean)] on each of them.
+    /// [VFXTableRow#updateColumns(IntegerRange, boolean)] on each of them. No layout is requested explicitly here:
+    /// the new state carries the 'columns changed' flag, and the skin lays out on it.
     ///
     /// **Vertical**
     ///
@@ -378,10 +385,9 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         VFXTableHelper<T> helper = table.getHelper();
         IntegerRange columnsRange = helper.columnsRange();
 
-        // If the scroll was alongside the x-axis, then the columns range may change
-        // We have two cases here: layout mode fixed and variable.
-        // However, in variable mode the range is always the same, so no update in the rows,
-        // but we still update the layout because of the "partial layout" feature.
+        // If the scroll was alongside the x-axis, then the columns range may change.
+        // Both layout modes are handled by the same code: they window the columns identically and differ only in how
+        // the range is computed (a division by the fixed width vs a binary search over the memoized prefix sums).
         if (axis == Orientation.HORIZONTAL) {
             // If the range didn't change, don't update
             if (state.getColumnsRange().equals(columnsRange)) return;
@@ -441,7 +447,7 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         newState.setRowsChanged(true);
 
         // Iterate over the rows range and generate a row with the new factory for each index/item.
-        // The new rows will copy the state of the previous row at the same index (expect if the old state is INVALID or empty)
+        // The new rows will copy the state of the previous row at the same index (except if the old state is INVALID or empty)
         for (Integer idx : rowsRange) {
             T item = table.getItems().get(idx);
             VFXTableRow<T> row = rf.create(item);
@@ -564,15 +570,14 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     /// [VFXTableRow#updateColumns(IntegerRange, boolean)]. The new state is almost a copy of the old one except for
     /// the columns range.
     ///
-    /// There are three extra steps when it's switching from VARIABLE to FIXED mode:
+    /// There is one extra step when switching from VARIABLE to FIXED: the horizontal position must be validated with
+    /// [VFXTableHelper#invalidatePos()] before the rows are updated, because VARIABLE's `hPos` can exceed FIXED's max
+    /// horizontal scroll.
     ///
-    /// 1) Before updating the rows, we need to validate the horizontal position by using [VFXTableHelper#invalidatePos()].
-    /// Also, since in VARIABLE mode columns and cells may be hidden to enhance performance, this also resets all columns' visibility.
-    ///
-    /// 2) When updating the rows we also reset every cell's visibility.
-    ///
-    /// 3) At the end of the computation, if [VFXTableState#isLayoutNeeded()] returns false, we still trigger
-    /// a layout computation with [VFXTable#requestViewportLayout()].
+    /// Finally, a layout is **always** requested with [VFXTable#requestViewportLayout()] when
+    /// [VFXTableState#isLayoutNeeded()] returns false. That is not a precaution: the two modes compute positions
+    /// differently (slots relative to the range start against absolute prefix sums), so even an unchanged columns
+    /// range leaves every column sitting at the wrong x.
     protected void onColumnsLayoutModeChanged() {
         VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = table.getHelper();

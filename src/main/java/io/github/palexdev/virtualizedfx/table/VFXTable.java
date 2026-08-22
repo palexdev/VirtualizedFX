@@ -103,9 +103,10 @@ import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
 /// There are a bunch of properties to do what I just described which will be discussed more in depth below. The point is,
 /// usually, tables have fixed cell heights, but the width depends on the "parent" column. Also, they often offer the possibility
 /// of resizing columns to fit the "children" cells' content, or even the possibility of resizing each column with the mouse.
-/// In other words, to support such features, we would have no choice but to disable the virtualization on the x-axis,
-/// which means a potentially huge performance hit. For this reason, and because I strive to make things as flexible as possible for
-/// the sake of the users, I implemented two layout modes [ColumnsLayoutMode]. I'll detail how it works below, just
+/// In other words, to support such features the x-axis can't be virtualized by a simple multiplication anymore, since
+/// every column may then have a different width. For this reason, and because I strive to make things as flexible as
+/// possible for the sake of the users, I implemented two layout modes [ColumnsLayoutMode]. Both virtualize the
+/// x-axis; what differs is how a column's width and position are computed. I'll detail how it works below, just
 /// know that this is only one of the many mechanisms that regulate the columns' width.
 ///
 /// - The default behavior implementation, [VFXTableManager], can be considered as the name suggests more like
@@ -161,9 +162,8 @@ import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
 ///
 /// Just like the list and the grid, the table also makes use of buffers to render a couple more rows and columns to
 /// make the scrolling smoother. There are two buffers, one for the columns [#columnsBufferSizeProperty()] and one
-/// for the rows [#rowsBufferSizeProperty()]. Beware, since the [ColumnsLayoutMode#VARIABLE] basically disables
-/// the virtualization alongside the x-axis, the columns' buffer won't be used, all columns will be rendered (although with
-/// some internal optimizations).
+/// for the rows [#rowsBufferSizeProperty()]. Both [ColumnsLayoutMode]s honor the columns' buffer: they window the
+/// columns the same way and differ only in how a column's width and position are computed.
 ///
 /// Also, just like the list and the grid, the table makes use of caches to store rows and cells that are not needed
 /// anymore but could be used again in the future. One cache is here (table's class) and is responsible for storing rows
@@ -198,7 +198,9 @@ import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
 /// In [ColumnsLayoutMode#FIXED] mode, since columns can't have different size, the algorithm chooses the greatest
 /// needed width among all the columns and then sets the [#columnsSizeProperty()].
 /// Of course, the width computation is done on the currently shown items, meaning that if you scroll and there are now
-/// items that are even bigger than the current set width, then you'll have to autosize again.
+/// items that are even bigger than the current set width, then you'll have to autosize again. The same holds on the
+/// columns axis: a column outside the current columns range has no cells in the viewport to measure, so it can only
+/// be sized to fit its header.
 ///
 /// - Columns' indexes. Since columns are stored in a list, there is not a fast way to retrieve
 /// the index of a column from the instance itself, [List#indexOf(Object)] is too slow in the context of a virtualized
@@ -553,8 +555,9 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     /// {@inheritDoc}
     ///
-    /// For the table this is a delegate to [#rowsCacheCapacityProperty()], so that it can honor the
-    /// [VFXContainer] API.
+    /// For the table this is a delegate to [#rowsBufferSizeProperty()], so that it can honor the
+    /// [VFXContainer] API. There is no single 'buffer size' here, the two axes have their own,
+    /// see also [#columnsBufferSizeProperty()].
     @Override
     public StyleableObjectProperty<BufferSize> bufferSizeProperty() {
         return rowsBufferSize;
@@ -765,7 +768,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     /// which is rather unpleasant to see. This extra amount acts like a "spacing" property between the columns
     /// when auto-sizing.
     ///
-    /// Can be set in CSS via the property: '-fx-extra-autosize-width'.
+    /// Can be set in CSS via the property: '-vfx-extra-autosize-width'.
     public StyleableDoubleProperty extraAutosizeWidthProperty() {
         return extraAutosizeWidth;
     }
@@ -779,7 +782,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     }
 
     /// Specifies the number of extra columns to add to the viewport to make scrolling smoother.
-    /// See also [VFXContainer#bufferSizeProperty()] and [VFXTableHelper#totalRows()]
+    /// See also [VFXContainer#bufferSizeProperty()] and [VFXTableHelper#totalColumns()]
     ///
     /// Can be set in CSS via the property: '-vfx-columns-buffer-size'.
     public StyleableObjectProperty<BufferSize> columnsBufferSizeProperty() {
@@ -797,7 +800,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     /// Specifies the number of extra rows to add to the viewport to make scrolling smoother.
     /// See also [VFXContainer#bufferSizeProperty()] and [VFXTableHelper#totalRows()].
     ///
-    /// Can be set in CSS via the property: '-vfx-columns-buffer-size'.
+    /// Can be set in CSS via the property: '-vfx-rows-buffer-size'.
     public StyleableObjectProperty<BufferSize> rowsBufferSizeProperty() {
         return rowsBufferSize;
     }

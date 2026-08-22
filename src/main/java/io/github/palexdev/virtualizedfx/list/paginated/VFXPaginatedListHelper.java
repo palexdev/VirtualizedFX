@@ -20,17 +20,28 @@ package io.github.palexdev.virtualizedfx.list.paginated;
 
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXListHelper;
+import javafx.geometry.Orientation;
 
-/// Simple extension of [VFXListHelper] with to concrete implementations [VerticalHelper] and [HorizontalHelper]
-/// to override the behavior of [#visibleNum()], so that it always returns the value of cells per page
+/// Simple extension of [VFXListHelper] with two concrete implementations, [VerticalHelper] and [HorizontalHelper],
+/// which override the behavior of [#visibleNum()] so that it always returns the value of cells per page
 /// ([VFXPaginatedList#cellsPerPageProperty()]).
+///
+/// That single override is what turns the range computation into a paginated one: everything above it, buffer
+/// included, keeps working exactly as in [VFXListHelper], it just windows a page's worth of cells instead of a
+/// viewport's worth. The pixel-scrolling methods are then refused, since the position is driven by the page.
 public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXListHelper<T, C> {
 
+    /// Concrete implementation of [VFXPaginatedListHelper] for [Orientation#VERTICAL], on top of
+    /// [VFXListHelper.VerticalHelper].
     class VerticalHelper<T, C extends VFXCell<T>> extends VFXListHelper.VerticalHelper<T, C> implements VFXPaginatedListHelper<T, C> {
         public VerticalHelper(VFXPaginatedList<T, C> list) {
             super(list);
         }
 
+        /// {@inheritDoc}
+        ///
+        /// Given by [VFXPaginatedList#cellsPerPageProperty()], regardless of the container's height. A page shows the
+        /// same number of cells whether or not they all fit.
         @Override
         public int visibleNum() {
             return getContainer().getCellsPerPage();
@@ -61,11 +72,17 @@ public interface VFXPaginatedListHelper<T, C extends VFXCell<T>> extends VFXList
         }
     }
 
+    /// Concrete implementation of [VFXPaginatedListHelper] for [Orientation#HORIZONTAL], on top of
+    /// [VFXListHelper.HorizontalHelper].
     class HorizontalHelper<T, C extends VFXCell<T>> extends VFXListHelper.HorizontalHelper<T, C> implements VFXPaginatedListHelper<T, C> {
         public HorizontalHelper(VFXPaginatedList<T, C> list) {
             super(list);
         }
 
+        /// {@inheritDoc}
+        ///
+        /// Given by [VFXPaginatedList#cellsPerPageProperty()], regardless of the container's width. A page shows the
+        /// same number of cells whether or not they all fit.
         @Override
         public int visibleNum() {
             return getContainer().getCellsPerPage();

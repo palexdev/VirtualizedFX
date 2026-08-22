@@ -48,7 +48,8 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 ///
 /// The table's height and the viewport height are different here. The latter is given by the table's height minus
 /// the columns pane height, specified by [VFXTable#columnsSizeProperty()]. The rows are given by the
-/// [VFXTable#stateProperty()] and depends on the viewport's height. Each column produces one cell per row.
+/// [VFXTable#stateProperty()] and depends on the viewport's height. Each column **in the current columns range**
+/// produces one cell per row.
 /// Columns and cells are kept aligned by the layout methods defined in [VFXTableHelper].
 ///
 /// Q: Why so many nodes?
@@ -189,12 +190,24 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     ///
     /// **Note:** in JavaFX there is no way to prioritize a listener over another, rather, the priority is given by
     /// which is added first (behind the scenes there must be a plain for loop running to call all the listeners).
-    /// This causes a nasty bug regarding the table's width when using the [ColumnsLayoutMode#VARIABLE]. In that mode
-    /// we cannot proceed with the [VFXTableManager#onGeometryChanged(GeometryChangeType)] method before the
-    /// [ColumnsLayoutCache] is invalidated. A simple workaround for this, is to use a [ChangeListener]
-    /// instead of a plain [InvalidationListener] for the [VFXTable#widthProperty()], because the latter type
-    /// will ALWAYS be invoked BEFORE the other listeners type. In my opinion, this mechanism is stupid and broken, bindings
-    /// invalidation should ALWAYS happen before anything else!
+    /// That's a trap for every handler here that reads something which is itself a binding on the property it is
+    /// listening to: registered as an [InvalidationListener], it may run *before* that binding invalidates and read a
+    /// stale value.
+    ///
+    /// Three of the listeners above are in exactly that position. [VFXTable#widthProperty()], because in
+    /// [ColumnsLayoutMode#VARIABLE] the [ColumnsLayoutCache] must be invalidated before
+    /// [VFXTableManager#onGeometryChanged(GeometryChangeType)] runs. And [VFXTable#vPosProperty()] /
+    /// [VFXTable#hPosProperty()], because [VFXTableManager#onPositionChanged(Orientation)] reads the helper's ranges,
+    /// which are lazy bindings on those same two properties.
+    ///
+    /// The workaround is the same for all three: use a [ChangeListener] instead of a plain [InvalidationListener],
+    /// because the latter type will ALWAYS be invoked BEFORE the former. In my opinion, this mechanism is stupid and
+    /// broken, bindings invalidation should ALWAYS happen before anything else!
+    ///
+    /// Registration order normally hides the problem, since the helper is built before the skin. What exposes it is a
+    /// [ColumnsLayoutMode] switch, because it builds a **new** helper whose listeners then land after the skin's.
+    /// The same trap seen from the other side is why [ColumnsLayoutCache] listens to [VFXTable#getColumns()] as an
+    /// [InvalidationListener] rather than a [ListChangeListener].
     protected void addListeners() {
         VFXTable<T> table = getSkinnable();
 
@@ -391,22 +404,28 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     /// If using the [ColumnsLayoutMode#FIXED], we simply call [VFXTableHelper#layoutColumn(int, VFXTableColumn)]
     /// on the column given by [ViewportLayoutRequest#column()] (which is expected to be the last column in the table).
     /// Then iterates on all the rows in the state, [VFXTableState#getRowsByIndex()], resize each of them because the
-    /// `virtualMaxX` has probably changed, then from each row retrieves the column's related cell and call
-    /// [VFXTableHelper#layoutRow(int, VFXTableRow)]. Note: the layout index is given by [IntegerRange#diff()]
-    /// on [VFXTableState#getColumnsRange()].
+    /// `virtualMaxX` has probably changed, then from each row retrieves the column's related cell and lays it out with
+    /// [VFXTableHelper#layoutCell(int, VFXTableCell)]. Both layout methods take the column's **absolute** index in
+    /// [VFXTable#getColumns()], so the one resolved by [VFXTable#indexOf(VFXTableColumn)] is passed straight through.
     ///
     /// If using [ColumnsLayoutMode#VARIABLE] two things can happen:
     ///
     /// 1) if the column carried by [ViewportLayoutRequest#column()] is the last one in the table, then we
-    /// re-compute the whole layout. The issue is that there are some edge cases that may not be easy to manage, so
-    /// the strategy here is to go for stability rather than performance (also because handling all the edge cases may
-    /// actually harm it).
+    /// re-compute the whole layout through [#layoutColumns()] and [#layoutRows()] (the latter reports the completion,
+    /// so this branch does not call [#onLayoutCompleted(boolean)] itself). The last column's width depends on every
+    /// other column's, so a change there is never local, and the remaining edge cases are not easy to manage; the
+    /// strategy here is to go for stability rather than performance (also because handling all the edge cases may
+    /// actually harm it). Note that a 'whole' layout is still bounded by the columns range, so it covers the window
+    /// and not the entire list.
     ///
-    /// 2) for any other column we can actually optimize. First, it loops over the columns starting from the index
-    /// of the changed column. Each column is resized and repositioned by [VFXTableHelper#layoutColumn(int, VFXTableColumn)].
-    /// Then iterates over the rows given by [VFXTableState#getRowsByIndex()], iterates over then and resizes all
-    /// of them by using [VFXTableHelper#layoutRow(int, VFXTableRow)]. In a nested loop, for each row, it updates
-    /// only the cells from the aforementioned start index, uses [VFXTableHelper#layoutCell(int, VFXTableCell)].
+    /// 2) for any other column we can actually optimize, since a resize can only move the columns that come after it.
+    /// The start index is the changed column's, clamped up to the state's [VFXTableState#getColumnsRange()] minimum,
+    /// and the end is that range's maximum. If the changed column sits past the range there is nothing on screen to
+    /// re-lay out, but the rows are still resized, because `virtualMaxX` may have changed, and
+    /// [#onLayoutCompleted(boolean)] is called with `false`.
+    /// Otherwise, each column in `[from, max]` is resized and repositioned by [VFXTableHelper#layoutColumn(int, VFXTableColumn)].
+    /// Then it iterates over the rows given by [VFXTableState#getRowsByIndex()], resizes each of them, and in a nested
+    /// loop lays out only their cells in that same sub-range, with [VFXTableHelper#layoutCell(int, VFXTableCell)].
     ///
     /// Finally calls [#onLayoutCompleted(boolean)] with `true` as parameter.
     protected void partialLayout() {
@@ -433,7 +452,7 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         }
 
         // There are too many edge cases, taking into account all of them may degrade performance rather than improving it.
-        // Leave the rest to the layout methods, columns and cells which are not visible will not be laid out (by default).
+        // Not that costly anyway: a full layout only ever covers the columns range, never the whole columns' list.
         if (helper.isLastColumn(column)) {
             layoutColumns();
             layoutRows();

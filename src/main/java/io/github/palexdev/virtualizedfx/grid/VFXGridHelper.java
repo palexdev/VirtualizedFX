@@ -107,6 +107,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// The row and column layout indexes are necessary to identify the position of a cell among the others
     /// (comes before/after, above/below).
     ///
+    /// Both are **relative to the current ranges**, not grid coordinates: [VFXGridSkin#layout()] counts them from 0
+    /// while iterating the state's two ranges. The offset from each range's start to the first visible row/column is
+    /// carried by [#viewportPositionProperty()] instead.
+    ///
     /// @see VFXGridSkin#layout()
     void layout(int rowLayoutIndex, int columnLayoutIndex, VFXCell<T> cell);
 
@@ -123,9 +127,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         return nColumns * nRows;
     }
 
-    /// @return the precise number of cells present in the viewport at a given time. The value depends on the current range
-    /// of rows and columns. Unfortunately, it's not very efficient as the count is computed by iterating over each row and
-    /// column, but it's the only stable way I found to have a correct value.
+    /// @return the precise number of cells present in the viewport at a given time, incomplete last rows included,
+    /// which is what makes it differ from [#visibleCells()]. The value depends on the current ranges of rows and
+    /// columns. Unfortunately it's not free, since the count is computed by walking the rows range, but it's the only
+    /// stable way I found to have a correct value.
     default int totalCells() {
         // TODO can't find a better algorithm, probably with some nasty stupid math formula that I hate so much
         VFXGrid<T, C> grid = getContainer();
@@ -220,8 +225,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// means that it's not the actual size of the container, rather the size it would have if it was not virtualized.
     /// The two values are given by the max number of rows/columns multiplied by the total cell size, minus the spacing
     /// (otherwise we would have the spacing applied between the last row/column and the grid's border too).
-    /// The computations have the following dependencies: the number of items, the number of columns, the cell size and
-    /// the horizontal/vertical spacing (respectively).
+    /// The computations depend on the number of columns and on the total cell size (which in turn folds in the cell
+    /// size and both spacings). They do **not** depend on the number of items, even though [#maxColumns()] and
+    /// [#maxRows()] both read it: an items change is handled by [VFXGridManager#onItemsChanged()], which invalidates
+    /// them explicitly through [#invalidateVirtualSizes()], on purpose and before anything else can read a stale value.
     class DefaultHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXGrid<T, C>> implements VFXGridHelper<T, C> {
         protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
         protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
@@ -409,7 +416,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         /// {@inheritDoc}
         ///
-        /// Given by the max in [#maxRows()].
+        /// Given by the max in [#rowsRange()].
         @Override
         public int lastRow() {
             return rowsRange().getMax();

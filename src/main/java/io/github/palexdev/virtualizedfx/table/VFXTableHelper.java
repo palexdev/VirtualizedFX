@@ -31,6 +31,7 @@ import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainerHelper;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.utils.Utils;
@@ -106,6 +107,14 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// @return the x position for the given column
     double getColumnPos(int columnIdx, VFXTableColumn<T, ?> column);
 
+    /// "Visible" here means membership in the current state's [VFXTableState#getColumnsRange()]. Both layout modes
+    /// virtualize the x-axis, so a column outside that range has neither a header nor any cell in the viewport.
+    /// Buffer columns count as in range, so this can be `true` for a column that is just off-screen.
+    ///
+    /// Beware that it goes through [VFXTable#indexOf(VFXTableColumn)], which repairs only
+    /// a *negative* index: in the window between a change to [VFXTable#getColumns()] and the next layout pass, a
+    /// column's cached index can be stale but positive, and this answer wrong with it.
+    ///
     /// @return whether the given column is currently visible in the viewport
     default boolean isInViewport(VFXTableColumn<T, ?> column) {
         if (column.getTable() == null || column.getScene() == null || column.getParent() == null) return false;
@@ -132,6 +141,9 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
     /// Lays out the given row.
     /// The layout index is necessary to identify the position of a row among the others (comes above/below).
+    /// Unlike the columns' methods, this index really is **range-relative**: rows sit at `0, h, 2h, ...` and
+    /// [VFXTableSkin#layoutRows()] counts from 0, the offset to the first row being carried by
+    /// [#viewportPositionProperty()].
     ///
     /// Positions the row at `X: 0` and `Y: index * rowsHeight`.
     ///
@@ -153,6 +165,11 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// [VFXCell#beforeLayout()] runs before the width and position are read, deliberately: a cell may change its
     /// content there, which changes its `prefWidth`, which feeds the column's width computation.
     ///
+    /// If the cell's node already sits at exactly that x, width and height, the layout is skipped. [VFXCell#afterLayout()]
+    /// still runs: both hooks are promised to always run, whatever this returns.
+    ///
+    /// @return whether the cell was actually moved or resized. `false` also for a `null` cell, which is legal since a
+    /// column may have no cell factory or one that produces `null`
     /// @see VFXTableRow#layoutCells()
     default boolean layoutCell(int columnIdx, VFXTableCell<T> cell) {
         if (cell == null) return false;
@@ -177,7 +194,9 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// Determines and sets the ideal width for the given column, where 'ideal' means that
     /// the column's header as well as all the related cells' content will be fully visible.
     ///
-    /// Note: for obvious reasons, the computation is done on the currently visible items!
+    /// Note: for obvious reasons, the computation is done on the currently visible items! Since both layout modes
+    /// virtualize the x-axis, the same is true along the other axis: only the columns in [#columnsRange()], buffer
+    /// included, have cells in the viewport at all, so only those can be measured against their content.
     ///
     /// @return whether the resize was actually performed. There are conditions that may prevent it, in which case
     /// implementations are free to either delay the operation or ignore it
@@ -188,7 +207,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// @return whether the resize was actually performed
     boolean autosizeColumns();
 
-    /// Depends on the implementation!
+    /// @return the **theoretical** number of cells visible in the viewport, `visibleColumns() * visibleRows()`.
+    /// Theoretical because it excludes the buffer and assumes every column produces a cell, see [#totalCells()]
     default int visibleCells() {
         int nColumns = visibleColumns();
         int nRows = visibleRows();
@@ -233,6 +253,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         return columns.getLast() == column;
     }
 
+    /// @return the number of columns in the table, [VFXTable#getColumns()]. Not to be confused with
+    /// [#visibleColumns()] or [#totalColumns()], which count columns in the *viewport*
     default int columnsCount() {
         return getContainer().getColumns().size();
     }
@@ -267,11 +289,13 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// Abstract implementation of [VFXTableHelper], contains common members for the two concrete implementations
     /// [FixedTableHelper] and [VariableTableHelper], such as:
     ///
-    /// - the range of columns to display as a [IntegerRangeProperty]
+    /// - the range of columns to display as a [IntegerRangeProperty], and its binding
     ///
-    /// - the range of rows to display as a [IntegerRangeProperty]
+    /// - the range of rows to display as a [IntegerRangeProperty], and its binding
     ///
-    /// @param <T>
+    /// Both range bindings are defined here, in [#createBindings()], and are identical for the two modes. What
+    /// differs is what feeds them: [#firstColumn()], [#visibleColumns()] and [#totalColumns()] are left to the
+    /// subclasses. So the windowing policy is written once and the geometry twice.
     abstract class AbstractHelper<T> extends VFXContainerHelperBase<T, VFXTable<T>> implements VFXTableHelper<T> {
         protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
         protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
@@ -284,6 +308,26 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             super(table);
         }
 
+        /// Defines the two range bindings, which share the same shape.
+        ///
+        /// The start is the first visible row/column minus the buffer size ([VFXTable#rowsBufferSizeProperty()],
+        /// [VFXTable#columnsBufferSizeProperty()]), never negative. The end is that start plus the total number of
+        /// needed rows/columns ([#totalRows()], [#totalColumns()]), never past the last index. It may happen that the
+        /// resulting `end - start + 1` is lesser than what is needed, typically when the position reaches the max
+        /// scroll; in such cases the start is corrected back to `end - needed + 1`.
+        ///
+        /// If the table's width (the viewport's height for the rows) is 0, or the number of needed rows/columns is 0,
+        /// the range is [Utils#INVALID_RANGE].
+        ///
+        /// The columns range depends on: the columns' list, the table's width, the horizontal position, the columns
+        /// buffer size, the columns' size and [#virtualMaxXProperty()]. That last one matters only in
+        /// [ColumnsLayoutMode#VARIABLE], where resizing a column moves every column after it and thus changes which
+        /// ones fall in the viewport; the columns' size alone would only cover [ColumnsLayoutMode#FIXED], where it
+        /// *is* the column width.
+        ///
+        /// The rows range depends on: the items' list size, the table's height, the columns' size (which also
+        /// specifies the header height, and therefore influences the viewport's height), the vertical position, the
+        /// rows buffer size and the rows' height.
         @Override
         protected void createBindings() {
             super.createBindings();
@@ -420,27 +464,13 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     }
 
     /// Concrete implementation of [AbstractHelper] for [ColumnsLayoutMode#FIXED].
-    /// Here the range of rows and columns to display, as well as the viewport position,
-    /// the virtual max x and y properties are defined as follows:
+    /// Every column has the same width, given by [VFXTable#columnsSizeProperty()], which makes all of the x-axis
+    /// geometry a matter of dividing and multiplying by that one value.
     ///
-    /// - the columns range is given by the [#firstColumn()] element minus the buffer size [VFXTable#columnsBufferSizeProperty()],
-    /// (cannot be negative) and the sum between this start index and the total number of needed columns given by [#totalColumns()].
-    /// It may happen that the number of indexes given by the range `end - start + 1` is
-    /// lesser than the total number of columns we need. In such cases, the range start is corrected to be
-    /// `end - needed + 1`. A typical situation for this is when the table's horizontal position reaches the max scroll.
-    /// If the table's width is 0 or the number of needed columns is 0, then the range will be [Utils#INVALID_RANGE].
-    /// The computation has the following dependencies: the columns' list, the table width, the horizontal position,
-    /// the columns buffer size and the columns' size.
-    ///
-    /// - the rows range is given by the [#firstRow()] element minus the buffer size [VFXTable#rowsBufferSizeProperty()],
-    /// (cannot be negative) and the sum between this start index and the total number of needed rows given by [#totalRows()].
-    /// It may happen that the number of indexes given by the range `end - start + 1` is
-    /// lesser than the number of rows we need. In such cases, the range start is corrected to be
-    /// `end - needed + 1`. A typical situation for this is when the table's vertical position reaches the max scroll.
-    /// If the viewport's height is 0 or the number of needed rows is 0, then the range will be [Utils#INVALID_RANGE].
-    /// The computation has the following dependencies: the table's height, the column's size (because it also specifies the
-    /// header height, which influences the viewport's height), the vertical position, the rows buffer size, the rows' height
-    /// and the items' list size.
+    /// The two range bindings are not defined here, they live in [AbstractHelper#createBindings()] and are shared
+    /// with the other mode. What this class provides are the values they run on: [#firstColumn()],
+    /// [#visibleColumns()] and [#totalColumns()]. On top of those, it defines the viewport position and the virtual
+    /// max x and y as follows:
     ///
     /// - the viewport's position, a computation that is at the core of virtual scrolling. The viewport, which contains
     /// the columns and the cells (even though the table's viewport is a bit more complex), is not supposed to scroll by insane
@@ -614,7 +644,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         /// property itself.
         ///
         /// The second pass is to get the widest cell among the ones in the viewport by using
-        /// [VFXTableRow#getWidthOf(VFXTableColumn)].
+        /// [VFXTableRow#getWidthOf(VFXTableColumn)]. Note that the loop runs over every column, but only those in
+        /// [#columnsRange()] have cells in the rows, so the others contribute nothing to this pass.
         ///
         /// Finally, the [VFXTable#columnsSizeProperty()] is set to:
         /// `Math.max(Math.max(fixedW, maxColumnsW + extra), maxCellsW + extra)`, where 'fixedW' is the current width
@@ -685,22 +716,13 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     }
 
     /// Concrete implementation of [AbstractHelper] for [ColumnsLayoutMode#VARIABLE].
-    /// Here the range of rows and columns to display, as well as the viewport position,
-    /// the virtual max x and y properties are defined as follows:
+    /// Columns are allowed to have different widths, so none of the x-axis geometry can be derived from a single
+    /// value the way [FixedTableHelper] does it.
     ///
-    /// - the columns range is always given by the number of columns in the table - 1. If there are no column, then it
-    /// will be [Utils#INVALID_RANGE].
-    /// The computation depends only on the columns' list.
-    ///
-    /// - the rows range is given by the [#firstRow()] element minus the buffer size [VFXTable#rowsBufferSizeProperty()],
-    /// (cannot be negative) and the sum between this start index and the total number of needed rows given by [#totalRows()].
-    /// It may happen that the number of indexes given by the range `end - start + 1` is
-    /// lesser than the number of rows we need. In such cases, the range start is corrected to be
-    /// `end - needed + 1`. A typical situation for this is when the table's vertical position reaches the max scroll.
-    /// If the viewport's height is 0 or the number of needed rows is 0, then the range will be [Utils#INVALID_RANGE].
-    /// The computation has the following dependencies: the table's height, the column's size (because it also specifies the
-    /// header height, which influences the viewport's height), the vertical position, the rows buffer size, the rows' height
-    /// and the items' list size.
+    /// The two range bindings are not defined here, they live in [AbstractHelper#createBindings()] and are shared
+    /// with the other mode. What this class provides are the values they run on: [#firstColumn()],
+    /// [#visibleColumns()] and [#totalColumns()], all three built on [#columnAt(double)]. On top of those, it defines
+    /// the viewport position and the virtual max x and y as follows:
     ///
     /// - the viewport's position, a computation that is at the core of virtual scrolling. The viewport, which contains
     /// the columns and the cells (even though the table's viewport is a bit more complex), is not supposed to scroll by insane
@@ -713,8 +735,9 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// At this point, we are missing only one last piece of information: how much of the first row do we actually see?
     /// We call this amount `visibleAmountFirst` and it's given by `vPos % size`.
     /// Finally, the viewport's vertical position is given by this formula `-(pixelsToFirst + visibleAmountFirst)`.
-    /// Since this layout mode disables virtualization along the x-axis, the horizontal position is simply given by
-    /// `-hPos`.
+    /// The horizontal position needs none of that and is simply `-hPos`: unlike [FixedTableHelper], columns and cells
+    /// here are laid out at their **absolute** x positions, so translating by the raw scroll offset already lands
+    /// them in the right place.
     /// If a range is equal to [Utils#INVALID_RANGE], the respective position will be 0!
     /// While it's true that the calculations are more complex and 'needy', it's important to note that this approach
     /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the top
@@ -728,33 +751,41 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// the columns' size (because the viewport height also depends on the height specified by the columns' size property),
     /// the table's size (number of items), and the rows' height.
     ///
-    /// - the virtual max x property, which gives the total number of pixels on the x-axis. Since virtualization is
-    /// disabled in this axis, the value is simply the sum of all the table's columns (to be precise, the vaòue is given by
-    /// the cache-binding, see below).
+    /// - the virtual max x property, which gives the total number of pixels on the x-axis, the sum of every column's
+    /// width. There's no binding for it here: it is bound straight to the [ColumnsLayoutCache], which **is** a
+    /// [DoubleBinding] computing exactly that sum, hence [#createVirtualMaxXBinding()] returning `null`.
     ///
-    /// **Performance Optimizations**
-    /// Disabling virtualization on a complex 2D structure like [VFXTable] is indeed dangerous. While it's safe to
-    /// assume that the number of columns is pretty much never going to be a big enough number to cause performance issues,
-    /// it's also true that: 1) we can't be sure on how many columns are actually too many; 2) since it is a 2D structure
-    /// having `n` more columns in the viewport does not mean that we will have `n` more nodes in the scene graph.
-    /// Rather, we can affirm that **at best** we will have `n` more nodes, but keep in mind that for each column
-    /// there are going to be a number of cells equal to the number of rows.
+    /// **How the x-axis is virtualized here**
     ///
-    /// I believe it's worth to optimize the helper as much as possible to mitigate the issue. So, for this reason, this
-    /// helper makes use of special cache [ColumnsLayoutCache] which aims to improve layout operations by avoiding
-    /// re-computations when they are not needed. For example, if we compute the width and the position of column,
-    /// then we don't need to re-compute it again when laying out corresponding cells, that would be a waste!
+    /// With variable widths, a column's x position is the sum of every previous column's width, a prefix sum. Prefix
+    /// sums are monotonic, therefore binary-searchable: [#columnAt(double)] finds in `O(log n)` the last column whose
+    /// position is still `<= x`. The visible span then falls out of two such probes, one at `hPos` and one at
+    /// `hPos + tableWidth`, and the shared range binding widens the result by the buffer.
     ///
-    /// The cache can compute columns' widths, their x positions and even check whether they are visible in the viewport.
-    /// I won't go into many details here on how the cache exactly works, read its docs to know more about it, just know that
-    /// after the first computation, values will be memorized. Further requests will be as fast as a simple 'getter' method.
-    /// The cache is also responsible for automatically invalidate the cached values when certain conditions change.
+    /// Those prefix sums are not recomputed per query, they are memoized by [ColumnsLayoutCache] and invalidated only
+    /// by what can genuinely move a column: a width change, a change to [VFXTable#columnsSizeProperty()], or a
+    /// structural change in [VFXTable#getColumns()]. **Scrolling invalidates nothing.** So a scroll event costs the
+    /// searches and little else, no matter how many columns there are.
     ///
-    /// For [ColumnsLayoutCache] to work properly, this helper defines a series of methods which are actually
-    /// responsible for the computations. I decided to keep such methods here rather than defining them in the cache mainly
+    /// **The layout cache**
+    ///
+    /// Virtualizing a 2D structure like [VFXTable] is worth optimizing hard, because the two axes multiply: for each
+    /// column in range there are as many cells as there are rows in the viewport, so every re-computation avoided is
+    /// paid back once per row. For this reason, this helper makes use of a special cache, [ColumnsLayoutCache], which
+    /// aims to improve layout operations by avoiding re-computations when they are not needed. For example, if we
+    /// compute the width and the position of a column, then we don't need to re-compute it again when laying out the
+    /// corresponding cells, that would be a waste!
+    ///
+    /// The cache computes columns' widths and their x positions. I won't go into many details here on how the cache
+    /// exactly works, read its docs to know more about it, just know that after the first computation, values will be
+    /// memorized. Further requests will be as fast as a simple 'getter' method. The cache is also responsible for
+    /// automatically invalidate the cached values when certain conditions change.
+    ///
+    /// For [ColumnsLayoutCache] to work properly, this helper defines the methods which are actually responsible for
+    /// the computations. I decided to keep such methods here rather than defining them in the cache mainly
     /// for two reasons: 1) I strongly believe such operations are the helper's responsibility; 2) By doing so we generalize
     /// the cache class, making it flexible to use, and suitable for more use-cases. These methods are:
-    /// [#computeColumnWidth(VFXTableColumn, boolean)], [#computeColumnPos(int, double)], [#computeVisibility(VFXTableColumn)].
+    /// [#computeColumnWidth(VFXTableColumn, boolean)] and [#computeColumnPos(int, double)].
     @SuppressWarnings("JavadocReference") // I don't know why since the method is public
     class VariableTableHelper<T> extends AbstractHelper<T> {
         private ColumnsLayoutCache<T> layoutCache;
@@ -802,6 +833,16 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             return column.snapPositionX(prevPos + layoutCache.getColumnWidth(column));
         }
 
+        /// Binary search over the columns' x positions, [ColumnsLayoutCache#getColumnPos(int)], for the **last**
+        /// column whose position is still `<= x`. This is what makes the columns range computable in `O(log n)`
+        /// rather than by walking the list, see the class docs.
+        ///
+        /// Two things worth knowing. The search spans the whole columns' list and never the current window: bounding
+        /// it by the window would let the window define its own bounds. And it probes arbitrary indexes, so it can
+        /// land on a cold cache and force [ColumnsLayoutCache#getColumnPos(int)] to fill the positions up to there;
+        /// that's a one-off cost after an invalidation, never a per-scroll one.
+        ///
+        /// @return the index of the column the given x coordinate falls into, 0 if there are no columns
         protected int columnAt(double x) {
             int lo = 0;
             int hi = columnsCount() - 1;
@@ -869,21 +910,29 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                 .get();
         }
 
-        /// Always 0.
+        /// {@inheritDoc}
+        ///
+        /// Given by `columnAt(hPos)`, clamped between 0 and the number of columns - 1. 0 if there are no columns.
         @Override
         public int firstColumn() {
             if (columnsCount() == 0) return 0;
             return NumberUtils.clamp(columnAt(container.getHPos()), 0, columnsCount() - 1);
         }
 
-        /// Always the size of [VFXTable#getColumns()].
+        /// {@inheritDoc}
+        ///
+        /// Given by `columnAt(hPos + tableWidth) - firstColumn() + 1`, so it counts the columns the viewport actually
+        /// straddles, however wide they are. 0 if there are no columns or the table's width is also 0.
         @Override
         public int visibleColumns() {
             if (columnsCount() == 0 || container.getWidth() <= 0) return 0;
             return columnAt(container.getHPos() + container.getWidth()) - firstColumn() + 1;
         }
 
-        /// Always the size of [VFXTable#getColumns()].
+        /// {@inheritDoc}
+        ///
+        /// Given by [#visibleColumns()] plus double the value of [VFXTable#columnsBufferSizeProperty()], cannot
+        /// exceed the number of columns in the table, and it's 0 if the number of visible columns is also 0.
         @Override
         public int totalColumns() {
             int visible = visibleColumns();
@@ -897,7 +946,10 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             return layoutCache.getColumnWidth(column);
         }
 
-        /// Delegates to [ColumnsLayoutCache#getColumnPos(int)].
+        /// {@inheritDoc}
+        ///
+        /// Delegates to [ColumnsLayoutCache#getColumnPos(int)]. Positions are absolute in this mode, so the index
+        /// needs no conversion at all; compare with [FixedTableHelper#getColumnPos(int, VFXTableColumn)].
         @Override
         public double getColumnPos(int columnIdx, VFXTableColumn<T, ?> column) {
             return layoutCache.getColumnPos(columnIdx);
@@ -967,7 +1019,9 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             }
         }
 
-        /// This simply calls [#autosizeColumn(VFXTableColumn)] on all the table's columns.
+        /// This simply calls [#autosizeColumn(VFXTableColumn)] on all the table's columns, whether they are in range
+        /// or not. Beware that a column outside [#columnsRange()] has no cells in the viewport to measure, so it ends
+        /// up sized to fit its header alone.
         ///
         /// @return whether **every** column was resized
         @Override

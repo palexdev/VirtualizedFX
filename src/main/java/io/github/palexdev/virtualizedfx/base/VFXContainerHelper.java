@@ -133,6 +133,12 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
             this.container = container;
         }
 
+        /// Builds and installs the four bindings this base class owns, by calling [#createVirtualMaxXBinding()],
+        /// [#createVirtualMaxYBinding()], [#createMaxVScrollBinding()] and [#createMaxHScrollBinding()].
+        /// Subclasses that add bindings of their own override this and call `super` first.
+        ///
+        /// The two virtual max factories are allowed to return `null`, in which case the property is left unbound for
+        /// the subclass to bind itself. [#invalidateVirtualSizes()] and [#dispose()] both account for that.
         protected void createBindings() {
             vmxBinding = createVirtualMaxXBinding();
             if (vmxBinding != null) virtualMaxX.bind(vmxBinding);
@@ -149,7 +155,7 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
         protected abstract DoubleBinding createVirtualMaxXBinding();
 
         /// Implementations should use this build and return the [DoubleBinding] with the appropriate dependencies
-        /// responsible for the [#virtualMaxXProperty()]'s value.
+        /// responsible for the [#virtualMaxYProperty()]'s value.
         protected abstract DoubleBinding createVirtualMaxYBinding();
 
         /// Builds and returns the binding which computes the [#maxVScrollProperty()]'s value.

@@ -39,7 +39,7 @@ import javafx.util.StringConverter;
 /// idColumn.setCellFactory(user -> new UserCell(user, User::id));
 /// nameColumn.setCellFactory(user -> new UserCell(user, User::name));
 ///// See the second parameter in the constructors? I call that function the 'extractor' which basically tells the cell
-///// which piece of data it should display from the a User object
+///// which piece of data it should display from a User object
 ///```
 ///
 /// For this API to work, we need two additional requirements:

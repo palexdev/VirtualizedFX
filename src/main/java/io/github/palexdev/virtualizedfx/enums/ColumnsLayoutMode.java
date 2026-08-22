@@ -19,6 +19,7 @@
 package io.github.palexdev.virtualizedfx.enums;
 
 import io.github.palexdev.mfxcore.utils.EnumUtils;
+import io.github.palexdev.virtualizedfx.table.ColumnsLayoutCache;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
@@ -27,14 +28,17 @@ import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper
 public enum ColumnsLayoutMode {
 
     /// In this mode, all columns will have the same width specified by [VFXTable#columnsSizeProperty()].
+    /// A column's position is then a simple multiplication by that width, which makes every layout computation cheap.
     FIXED,
 
     /// In this mode, columns are allowed to have different widths. This enables features like:
     /// columns auto-sizing ([VariableTableHelper#autosizeColumn(VFXTableColumn)]), or resizing at runtime
     /// through gestures.
     ///
-    /// A downside of such mode is that basically, virtualization along the x-axis is disabled. Which means that all columns
-    /// will be added to the viewport. Internal optimizations should make this issue less impactful on performance.
+    /// The x-axis is virtualized in this mode too, only the machinery is heavier: since the widths vary, a column's
+    /// position is the sum of every previous column's width, a prefix sum. Those sums are memoized by [ColumnsLayoutCache]
+    /// and binary-searched to find which columns fall in the viewport, so, just like in [#FIXED],
+    /// only the columns in range (buffer included) are built and laid out.
     VARIABLE,
     ;
 

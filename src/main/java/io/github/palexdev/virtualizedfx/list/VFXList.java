@@ -243,7 +243,7 @@ public class VFXList<T, C extends VFXCell<T>> extends MFXControl
     ///
     /// - the arc width and height bound to the [#clipBorderRadiusProperty()]
     ///
-    /// By default, the clip is disabled because virtualized containers are meant to be used in combination with a scoll pane
+    /// By default, the clip is disabled because virtualized containers are meant to be used in combination with a scroll pane
     /// which already clips its viewport. Fewer nodes, more performance.
     ///
     /// @param enable whether to enable or disable the clip

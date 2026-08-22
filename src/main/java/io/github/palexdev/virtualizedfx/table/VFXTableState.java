@@ -25,7 +25,7 @@ import io.github.palexdev.virtualizedfx.utils.IndexBiMap;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 
-/// Immutable object to represent the state of a [VFXTable] is a specific moment in time. In other words
+/// Immutable object to represent the state of a [VFXTable] in a specific moment in time. In other words
 /// every state is given by a unique combination of the table's properties (in terms of values).
 ///
 /// The state carries six important pieces of information:

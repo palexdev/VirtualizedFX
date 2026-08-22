@@ -87,6 +87,9 @@ public interface VFXCell<T> {
     default void beforeLayout() {}
 
     /// The system automatically calls this after the cell is laid out.
+    ///
+    /// **Both hooks run on every layout pass, including the ones that end up moving nothing.** A container may skip
+    /// the actual resize/relocate when the cell is already where it belongs, but the pair is still invoked.
     default void afterLayout() {}
 
     /// Called when a cell is created and associated with a [VFXContainer]. This method provides the cell with

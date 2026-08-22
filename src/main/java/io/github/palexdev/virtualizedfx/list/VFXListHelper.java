@@ -83,10 +83,12 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// - HORIZONTAL -> height
     double computeSize(Node node);
 
-    /// Lays out the given cell. The index parameter is necessary to identify the position of a cell compared to the others
-    /// (comes before or after).
+    /// Lays out the given cell. The index parameter is necessary to identify the position of a cell compared to the
+    /// others (comes before or after).
     ///
-    /// @param layoutIndex the absolute index of the given node/cell, see [VFXListSkin#layout()]
+    /// @param layoutIndex the cell's position **within the current range**, not its index in the items' list.
+    /// [VFXListSkin#layout()] counts it from 0 while iterating the state; the offset from the range's start to the
+    /// first visible cell is carried by [#viewportPositionProperty()] instead
     void layout(int layoutIndex, VFXCell<T> cell);
 
 
@@ -156,8 +158,8 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// (cannot exceed the number of items - 1). It may happen the number of indexes given by the range `end - start + 1` is lesser
     /// than the total number of cells we need. In such cases, the range start is corrected to be `end - needed + 1`.
     /// A typical situation for this is when the list position reaches the max scroll.
-    /// The range computation has the following dependencies: the list's height, the virtual max y, the buffer size and
-    /// the vertical position.
+    /// The range computation has the following dependencies: the list's height, the buffer size, the vertical
+    /// position, the number of items, the cell size and the spacing.
     ///
     /// - the viewport position, a computation that is at the core of virtual scrolling. The viewport, which contains the cells,
     /// is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
@@ -170,7 +172,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// (given by [IntegerRange#diff()]) is multiplied by the total cell size, this way we found the number of pixels to the
     /// first visible cell, `pixelsToFirst`. We are missing only one last information, how much do we actually see
     /// of the first visible cell? We call this amount `visibleAmountFirst` and it's given by `vPos % totalCellSize`.
-    /// Finally, the viewport's vertical position is given by `-(pixelsToFirst + visibleAmountFist`.
+    /// Finally, the viewport's vertical position is given by `-(pixelsToFirst + visibleAmountFirst)`.
     /// While it's true that the calculations are more complex and 'needy', it's important to note that this approach
     /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the top
     /// or bottom anymore.
@@ -299,7 +301,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         /// {@inheritDoc}
         ///
-        /// The x position is 0. The y position is the total cell size multiplied bu the given index. The width is
+        /// The x position is 0. The y position is the total cell size multiplied by the given index. The width is
         /// computed by [#computeSize(Node)], and the height is given by the [VFXList#cellSizeProperty()].
         @Override
         public void layout(int layoutIndex, VFXCell<T> cell) {
@@ -343,8 +345,8 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// exceed the number of items - 1. It may happen the number of indexes given by the range `end - start + 1` is lesser
     /// than the total number of cells we need, in such cases, the range start is corrected to be `end - needed + 1`.
     /// A typical situation for this is when the list position reaches the max scroll.
-    /// The range computation has the following dependencies: the list's width, the virtual max x, the buffer size and
-    /// the horizontal position.
+    /// The range computation has the following dependencies: the list's width, the buffer size, the horizontal
+    /// position, the number of items, the cell size and the spacing.
     ///
     /// - the viewport position. This computation is at the core of virtual scrolling. The viewport, which contains the cell,
     /// is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
@@ -356,8 +358,8 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// left buffer including the first cell after the buffer. The number of indexes in this newfound range, given by
     /// [IntegerRange#diff()] is multiplied by the total cell size, this way we found the number of pixels to the
     /// first visible cell, `pixelsToFirst`. We are missing only one last information, how much do we actually see
-    /// of the first visible cell? We call this amount `visibleAmountFirst` and it's given by `vPos % totalCellSize`.
-    /// Finally, the viewport's vertical position is given by `-(pixelsToFirst + visibleAmountFist`.
+    /// of the first visible cell? We call this amount `visibleAmountFirst` and it's given by `hPos % totalCellSize`.
+    /// Finally, the viewport's horizontal position is given by `-(pixelsToFirst + visibleAmountFirst)`.
     /// While it's true that the calculations are more complex and 'needy', it's important to note that this approach
     /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the left
     /// or right anymore.
@@ -486,7 +488,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         /// {@inheritDoc}
         ///
-        /// The y position is 0. The x position is the total cell size multiplied bu the given index. The height is
+        /// The y position is 0. The x position is the total cell size multiplied by the given index. The height is
         /// computed by [#computeSize(Node)], and the width is given by the [VFXList#cellSizeProperty()].
         @Override
         public void layout(int layoutIndex, VFXCell<T> cell) {

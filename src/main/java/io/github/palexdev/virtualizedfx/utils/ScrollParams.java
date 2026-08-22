@@ -55,12 +55,12 @@ public record ScrollParams(double amount, double trackMultiplier, ScrollUnits un
         return new ScrollParams(count, DEFAULT_TRACK_MULTIPLIER, ScrollUnits.CELL);
     }
 
-    /// Shortcut for `new ScrollParams(count, DEFAULT_TRACK_MULTIPLIER, ScrollUnits.PERCENTAGE)`.
+    /// Shortcut for `new ScrollParams(frac, DEFAULT_TRACK_MULTIPLIER, ScrollUnits.PERCENTAGE)`.
     public static ScrollParams percentage(double frac) {
         return new ScrollParams(frac, DEFAULT_TRACK_MULTIPLIER, ScrollUnits.PERCENTAGE);
     }
 
-    /// Shortcut for `new ScrollParams(count, DEFAULT_TRACK_MULTIPLIER, ScrollUnits.PIXELS)`.
+    /// Shortcut for `new ScrollParams(px, DEFAULT_TRACK_MULTIPLIER, ScrollUnits.PIXELS)`.
     public static ScrollParams pixels(double px) {
         return new ScrollParams(px, DEFAULT_TRACK_MULTIPLIER, ScrollUnits.PIXELS);
     }
@@ -72,7 +72,7 @@ public record ScrollParams(double amount, double trackMultiplier, ScrollUnits un
     /// Applies the scroll parameters to the given scroll pane in the specified orientation.
     ///
     /// Sets the unit and track increment as raw values, based on the calculated scroll percentage.
-    /// No bindings are used — values are evaluated once and applied directly.
+    /// No bindings are used, values are evaluated once and applied directly.
     ///
     /// The track increment is obtained by multiplying the found unit increment by the [#trackMultiplier] value.
     public void apply(VFXScrollPane vsp, Orientation orientation) {

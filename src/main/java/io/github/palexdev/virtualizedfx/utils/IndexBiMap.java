@@ -103,8 +103,8 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 /// to the same element, it does not matter which one we take, so [SequencedSet#removeFirst()] comes in handy.
 /// This is called the `byKey` map.
 ///
-/// 3) These are two to "concrete" mappings, however the second one is automatically resolved by the map like this:
-/// `[K -> Integer -> V]` which can be simplified to `[K -> V]`.
+/// Those are the two "concrete" mappings, the second one is then automatically resolved by the map like this:
+/// `[K -> Integer -> V]`, which can be simplified to `[K -> V]`.
 ///
 /// **Q:Why an [IdentityHashMap]?**
 ///
@@ -132,7 +132,7 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 ///```
 ///
 /// **Retrievals**
-/// This data structure provides to way of retrieving `V` values, either by index [#get(Integer)] or by key
+/// This data structure provides two ways of retrieving `V` values, either by index [#get(Integer)] or by key
 /// [#get(Object)].
 ///
 /// **Additions**
@@ -277,17 +277,14 @@ public class IndexBiMap<K, V> {
     ///
     /// First a `Set` of indexes is retrieved (not removed!) from the `byKey` map by the given key.
     /// If the `Set` is null or empty, `null` is returned. In the latter case, the mapping is also removed.
-    /// <br >
     ///
     /// Otherwise, one of the indexes is removed from it by using [SequencedSet#removeFirst()], and then we can
     /// remove and return the value by the retrieved index from the `byIndex` map.
-    /// <br >
     ///
     /// This method is the reason we use a [SequencedSet] to store the indexes. We can benefit from the fast operations
     /// of a `Set` while being able to poll the head of the collection just like [Deque#poll()].
-    /// <br >
     ///
-    /// <b>Note</b>
+    /// **Note**
     /// The retrieved Set contains all the positions for the given `K` object. Which means that, no matter which
     /// index we remove from the Set, it will point to the same `K` instance anyway. See [IdentityHashMap].
     public V remove(K key) {
@@ -314,7 +311,7 @@ public class IndexBiMap<K, V> {
     }
 
     /// @return whether the data structure is empty. Since it is expected for both the maps to have the same size,
-    /// this delegates to the [Map#isEmpty()] method of the `byKey` map.
+    /// this delegates to the [Map#isEmpty()] method of the `byIndex` map.
     public boolean isEmpty() {
         return byIndex.isEmpty();
     }
@@ -336,7 +333,7 @@ public class IndexBiMap<K, V> {
         byKey.clear();
     }
 
-    /// Starting from the two mappings `[Integer, V]``[K, SequencedSet<Integer>]` this method wants to resolve
+    /// Starting from the two mappings `[Integer -> V]` and `[K -> SequencedSet<Integer>]`, this method wants to resolve
     /// them to a single mapping of type `[K, V]`. The issue, however, once again is duplicates.
     ///
     /// Because the `byKey` map is designed to take duplicates into account, we would have to resolve the mappings
@@ -356,17 +353,17 @@ public class IndexBiMap<K, V> {
         return resolved;
     }
 
-    /// @return the map used to store the values by their index [Integer,V] unmodifiable!
+    /// @return the `byIndex` map, mappings of type `[Integer -> V]`, wrapped so that it cannot be modified.
     public SequencedMap<Integer, V> getByIndex() {
         return Collections.unmodifiableSequencedMap(byIndex);
     }
 
-    /// @return the map used to store the indexes by key [K,Integer] unmodifiable!
+    /// @return the `byKey` map, mappings of type `[K -> SequencedSet<Integer>]`, wrapped so that it cannot be modified.
     public Map<K, SequencedSet<Integer>> getByKey() {
         return Collections.unmodifiableMap(byKey);
     }
 
-    /// Flattens the values of the `byKey` map (which uses mappings of type `[k, SequencedSet<Integer>]` to
+    /// Flattens the values of the `byKey` map (which uses mappings of type `[K -> SequencedSet<Integer>]`) into
     /// a single [Set]. Uses [Stream#flatMap(Function)].
     protected Set<Integer> byKeysFlattened() {
         return byKey.values().stream()
@@ -413,7 +410,7 @@ public class IndexBiMap<K, V> {
     ///
     /// Used by the table rows to store their state, allowing high re-usability of cells, which translates to high performance.
     ///
-    /// **Q: Why by cells are reverse-mapped by columns?**
+    /// **Q: Why are cells reverse-mapped by columns?**
     ///
     /// **A:**`VirtualizedFX` is a complex library, not because the code is hard, rather development is. The
     /// core thing to always keep in mind is **performance**. The goal of [IndexBiMap] and its extensions is to

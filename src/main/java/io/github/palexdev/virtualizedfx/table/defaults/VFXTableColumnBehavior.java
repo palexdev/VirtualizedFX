@@ -56,7 +56,7 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Methods
     //================================================================================
 
-    /// This method is responsible for enabling/disabling the [Resizer] by using [Resizer#install()()]
+    /// This method is responsible for enabling/disabling the [Resizer] by using [Resizer#install()]
     /// or [Resizer#uninstall()].
     protected void onResizableChanged() {
         VFXTableColumn<T, C> column = getNode();

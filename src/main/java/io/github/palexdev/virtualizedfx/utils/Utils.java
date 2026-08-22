@@ -24,6 +24,7 @@ import java.util.Map;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 
+/// Miscellaneous helpers shared by the virtualized containers.
 public class Utils {
     //================================================================================
     // Static Properties
@@ -46,6 +47,10 @@ public class Utils {
     /// Finds the [IntegerRange] which is the intersection between the two given ranges.
     ///
     /// The `min` is given by `Math.max(r1Min, r2Min)`, while the `max` is given by `Math.min(r1Max, r2Max)`.
+    ///
+    /// When the two ranges do not overlap that yields `min > max`, which [IntegerRange] refuses to build. Callers rely
+    /// on this rather than on an exception, so the failure is caught and [#INVALID_RANGE] is returned instead: "no
+    /// intersection" is a normal answer here, not an error.
     public static IntegerRange intersection(IntegerRange r1, IntegerRange r2) {
         int min = Math.max(r1.getMin(), r2.getMin());
         int max = Math.min(r1.getMax(), r2.getMax());
