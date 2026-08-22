@@ -46,6 +46,12 @@ public enum ScrollUnits {
     /// relative to the container's max scroll value ([VFXContainer#maxVScrollProperty()] or [VFXContainer#maxHScrollProperty()]).
     ///
     /// Binding dependencies include the container's scroll bounds and its cell size property.
+    ///
+    /// **One caveat for [VFXTable].** On the horizontal axis the size comes from
+    /// [VFXTable#columnsSizeProperty()], which is a genuine column width only in [ColumnsLayoutMode#FIXED].
+    /// <br >
+    /// In [ColumnsLayoutMode#VARIABLE] it is just the minimum every column must have, so a step covers that width
+    /// rather than one actual column. There is no single right answer there, since the columns differ in width.
     CELL {
         @Override
         public Supplier<Double> calc(VFXScrollPane vsp, double amount, Orientation orientation) {
@@ -75,7 +81,8 @@ public enum ScrollUnits {
             switch (c) {
                 case VFXGrid<?, ?> g -> base.add(g.cellSizeProperty());
                 case VFXList<?, ?> l -> base.add(l.cellSizeProperty());
-                case VFXTable<?> t -> base.add(t.rowsHeightProperty());
+                case VFXTable<?> t when orientation == Orientation.VERTICAL -> base.add(t.rowsHeightProperty());
+                case VFXTable<?> t when orientation == Orientation.HORIZONTAL -> base.add(t.columnsSizeProperty());
                 default -> {}
             }
             return base.toArray(ObservableValue<?>[]::new);
