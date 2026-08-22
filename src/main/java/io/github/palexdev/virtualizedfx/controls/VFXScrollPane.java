@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Parisi Alessandro - alessandro.parisi406@gmail.com
+ * Copyright (C) 2026 Parisi Alessandro - alessandro.parisi406@gmail.com
  * This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX)
  *
  * VirtualizedFX is free software: you can redistribute it and/or
