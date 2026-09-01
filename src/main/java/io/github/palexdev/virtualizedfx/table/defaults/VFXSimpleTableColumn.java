@@ -22,36 +22,30 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
+import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
-import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
-import javafx.css.*;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.HPos;
 import javafx.scene.Node;
 
-/// Concrete and simple implementation of [VFXTableColumn]. Has its own skin: [VFXDefaultTableColumnSkin].
-///
-/// These are the features this default implementation offers:
-///
-/// - the [#iconAlignmentProperty()] allows you to specify the column's icon position
-/// - the [#enableOverlayProperty()] makes the column display an extra node which can be used to indicate
-/// selection or hovering. By default, the node is not visible; you'll have to define its style in CSS.
-/// This behavior is defined in the default skin.
-/// - the [#overlayOnHeaderProperty()] makes the aforementioned node cover the column's header too
-public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTableColumn<T, C> {
+public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTableColumn<T, C> {
 
     //================================================================================
     // Constructors
     //================================================================================
-    public VFXDefaultTableColumn() {}
 
-    public VFXDefaultTableColumn(String text) {
+    public VFXSimpleTableColumn() {}
+
+    public VFXSimpleTableColumn(String text) {
         super(text);
     }
 
-    public VFXDefaultTableColumn(String text, Node graphic) {
+    public VFXSimpleTableColumn(String text, Node graphic) {
         super(text, graphic);
     }
 
@@ -68,16 +62,17 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
 
     @Override
     public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
-        return () -> new VFXDefaultTableColumnSkin<>(this);
+        return () -> new VFXSimpleTableColumnSkin<>(this);
     }
 
     //================================================================================
     // Styleable Properties
     //================================================================================
-    private final StyleableObjectProperty<HPos> iconAlignment = new SimpleStyleableObjectProperty<>(
-        StyleableProperties.ICON_ALIGNMENT,
+
+    private final StyleableObjectProperty<HPos> graphicAlignment = new StyleableObjectProperty<>(
+        StyleableProperties.GRAPHIC_ALIGNMENT,
         this,
-        "iconAlignment",
+        "graphicAlignment",
         HPos.RIGHT
     );
 
@@ -95,38 +90,22 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
         false
     );
 
-    public HPos getIconAlignment() {
-        return iconAlignment.get();
+    public HPos getGraphicAlignment() {
+        return graphicAlignment.get();
     }
 
-    /// Specifies the side on which the icon will be placed.
-    ///
-    /// By setting the alignment to [HPos#CENTER] the default skin, [VFXDefaultTableColumnSkin], will hide the
-    /// text and show only the icon at the center.
-    ///
-    /// This is settable via CSS with the "-vfx-icon-alignment" property.
-    public StyleableObjectProperty<HPos> iconAlignmentProperty() {
-        return iconAlignment;
+    public StyleableObjectProperty<HPos> graphicAlignmentProperty() {
+        return graphicAlignment;
     }
 
-    public void setIconAlignment(HPos iconAlignment) {
-        this.iconAlignment.set(iconAlignment);
+    public void setGraphicAlignment(HPos graphicAlignment) {
+        this.graphicAlignment.set(graphicAlignment);
     }
 
     public boolean isEnableOverlay() {
         return enableOverlay.get();
     }
 
-    /// Specifies whether the default skin should enable the overlay.
-    ///
-    /// [VFXTable] is organized by rows. This means that by default, there is no way in the UI to display
-    /// when a column is selected or hovered by the mouse. The default skin allows to do this by adding an extra node that
-    /// extends from the column all the way down to the table's bottom. This allows doing cool tricks with CSS.
-    ///
-    /// One thing to keep in mind, though, is that if you define a background color for the overlay, make sure that it is
-    /// opaque otherwise it will end up covering the cells.
-    ///
-    /// This is also settable via CSS with the "-vfx-enable-overlay" property.
     public StyleableBooleanProperty enableOverlayProperty() {
         return enableOverlay;
     }
@@ -139,10 +118,6 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
         return overlayOnHeader.get();
     }
 
-    /// Specifies whether the overlay should also cover the header of the column,
-    /// the part where the text and the icon reside.
-    ///
-    /// This is also settable via CSS with the "-vfx-overlay-on-header" property.
     public StyleableBooleanProperty overlayOnHeaderProperty() {
         return overlayOnHeader;
     }
@@ -154,36 +129,37 @@ public class VFXDefaultTableColumn<T, C extends VFXTableCell<T>> extends VFXTabl
     //================================================================================
     // CssMetaData
     //================================================================================
+
     private static class StyleableProperties {
-        private static final StyleablePropertyFactory<VFXDefaultTableColumn<?, ?>> FACTORY = new StyleablePropertyFactory<>(VFXTableColumn.getClassCssMetaData());
+        private static final StyleablePropertyFactory<VFXSimpleTableColumn<?, ?>> FACTORY = new StyleablePropertyFactory<>(VFXTableColumn.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
-        private static final CssMetaData<VFXDefaultTableColumn<?, ?>, HPos> ICON_ALIGNMENT =
+        private static final CssMetaData<VFXSimpleTableColumn<?, ?>, HPos> GRAPHIC_ALIGNMENT =
             FACTORY.createEnumCssMetaData(
                 HPos.class,
-                "-vfx-icon-alignment",
-                VFXDefaultTableColumn::iconAlignmentProperty,
+                "-vfx-graphic-alignment",
+                VFXSimpleTableColumn::graphicAlignmentProperty,
                 HPos.RIGHT
             );
 
-        private static final CssMetaData<VFXDefaultTableColumn<?, ?>, Boolean> ENABLE_OVERLAY =
+        private static final CssMetaData<VFXSimpleTableColumn<?, ?>, Boolean> ENABLE_OVERLAY =
             FACTORY.createBooleanCssMetaData(
                 "-vfx-enable-overlay",
-                VFXDefaultTableColumn::enableOverlayProperty,
+                VFXSimpleTableColumn::enableOverlayProperty,
                 true
             );
 
-        private static final CssMetaData<VFXDefaultTableColumn<?, ?>, Boolean> OVERLAY_ON_HEADER =
+        private static final CssMetaData<VFXSimpleTableColumn<?, ?>, Boolean> OVERLAY_ON_HEADER =
             FACTORY.createBooleanCssMetaData(
                 "-vfx-overlay-on-header",
-                VFXDefaultTableColumn::overlayOnHeaderProperty,
+                VFXSimpleTableColumn::overlayOnHeaderProperty,
                 false
             );
 
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 VFXTableColumn.getClassCssMetaData(),
-                ICON_ALIGNMENT, ENABLE_OVERLAY, OVERLAY_ON_HEADER
+                GRAPHIC_ALIGNMENT, ENABLE_OVERLAY, OVERLAY_ON_HEADER
             );
         }
     }

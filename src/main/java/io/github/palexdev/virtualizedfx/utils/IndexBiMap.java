@@ -403,7 +403,13 @@ public class IndexBiMap<K, V> {
     ///
     /// Used by some `VirtualizedFX`'s containers to store the state of the viewport, allowing high usability of
     /// cells, which translates to high performance.
-    public static class StateMap<T, C extends VFXCell<T>> extends StateMapBase<T, T, C> {}
+    @SuppressWarnings("rawtypes")
+    public static class StateMap<T, C extends VFXCell<T>> extends StateMapBase<T, T, C> {
+        public static final StateMap EMPTY = new StateMap() {
+            @Override
+            public void put(Integer index, Object key, Object val) {}
+        };
+    }
 
     /// Extension of [StateMapBase] which uses mappings of type: `[Integer -> VFXCell]`, `[Column -> Collection<Integer>]`
     /// and `[Column -> Integer -> VFXCell]`.

@@ -18,102 +18,41 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
-import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
-/// A layout request is a signal to a virtualized container to tell its viewport to compute the layout.
-/// Every virtualized container has such mechanism, but most of the time the request is a simple boolean flag.
-///
-/// In the case of the table, however, the request is a class because we want to optimize the layout computation as much
-/// as possible in both [ColumnsLayoutMode].
-///
-/// We may want to do such optimizations mainly in two cases:
-///
-/// 1) In [ColumnsLayoutMode#FIXED] if the table becomes bigger than all the columns' widths summed, then we
-/// want the last column to take all the available space. In such case, we want to lay out just the last column, and all
-/// the cells related to it, no need to re-size and re-position everything.
-///
-/// 2) The same logic applies to [ColumnsLayoutMode#VARIABLE] for the last column as well as for any other column.
-/// If a column, say in the middle, changes its size, then we want to re-compute the layout only from the column that
-/// changed to the end. And this is a great optimization indeed!
-///
-/// Also, this class can also be used as a callback, because you can query the [#wasDone()] flag to check
-/// whether the request lead to layout computation or not (there may be conditions that prevent it!)
-///
-/// Instances of this class are **immutable**. An actual request is always a new instance, while the idle state
-/// (nothing pending) is represented by two special values, which also spare us from potential `NullPointerExceptions`:
-///
-/// 1) [#NULL] is the initial value, and the one the skin sets when the layout could **not** be computed
-///
-/// 2) [#DONE] is the one the skin sets when the layout was computed successfully
-///
-/// Neither of the two is a valid request, [#isValid()], so the skin ignores them; they differ only in what
-/// [#wasDone()] reports.
-///
-/// @see #isValid()
-/// @see #isPartial()
-@SuppressWarnings({"rawtypes", "unchecked"})
-public class ViewportLayoutRequest<T> {
+public record ViewportLayoutRequest(int from, int to, boolean done) {
+
     //================================================================================
     // Static Properties
     //================================================================================
-    public static final ViewportLayoutRequest NULL = new ViewportLayoutRequest<>();
-    public static final ViewportLayoutRequest DONE = new ViewportLayoutRequest<>();
 
-    //================================================================================
-    // Properties
-    //================================================================================
-    private final VFXTableColumn<T, ?> column;
+    public static final ViewportLayoutRequest NULL = new ViewportLayoutRequest(-1, -1, false);
+    public static final ViewportLayoutRequest DONE = new ViewportLayoutRequest(-1, -1, true);
+    public static final ViewportLayoutRequest Y_ONLY = new ViewportLayoutRequest(Integer.MAX_VALUE, Integer.MIN_VALUE);
 
     //================================================================================
     // Constructors
     //================================================================================
 
-    /// Builds a request for a full layout computation.
-    public ViewportLayoutRequest() {
-        this.column = null;
-    }
-
-    /// Builds a request for a partial layout computation, starting from the given column.
-    public ViewportLayoutRequest(VFXTableColumn<T, ?> column) {
-        assert column != null;
-        this.column = column;
+    public ViewportLayoutRequest(int from, int to) {
+        this(from, to, false);
     }
 
     //================================================================================
     // Methods
     //================================================================================
 
-    /// @return whether this instance is an actual request, thus neither [#NULL] nor [#DONE]
     public boolean isValid() {
-        return this != NULL && this != DONE;
-    }
-
-    /// @return whether the column instance passed to this request is not `null`.
-    public boolean isPartial() {
-        return column != null;
-    }
-
-    /// @return the column's instance that will serve as an indicator for a partial layout computation
-    public VFXTableColumn<T, ?> column() {
-        return column;
-    }
-
-    /// @return whether it was possible to fulfill the last layout request
-    public boolean wasDone() {
-        return this == DONE;
+        return from >= 0;
     }
 
     //================================================================================
     // Inner Classes
     //================================================================================
-    public static class ViewportLayoutRequestProperty<T> extends ReadOnlyObjectWrapper<ViewportLayoutRequest<T>> {
-        public ViewportLayoutRequestProperty() {
-            super(NULL);
-        }
 
-        public boolean isValid() {
-            return get().isValid();
-        }
+    //@formatter:off
+    public static class ViewportLayoutRequestProperty extends ReadOnlyObjectWrapper<ViewportLayoutRequest> {
+        public ViewportLayoutRequestProperty() {super(NULL);}
+        public boolean isValid() {return getValue().isValid();}
     }
 }

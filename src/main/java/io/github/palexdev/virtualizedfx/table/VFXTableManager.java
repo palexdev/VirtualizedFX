@@ -18,60 +18,37 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
-import java.util.HashSet;
-import java.util.SequencedMap;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
+import io.github.palexdev.mfxcore.base.Disposable;
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.behavior.MFXBehavior;
-import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
-import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
+import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.enums.GeometryChangeType;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
-import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
 import io.github.palexdev.virtualizedfx.utils.Utils;
-import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
-import javafx.beans.InvalidationListener;
-import javafx.beans.property.ListProperty;
-import javafx.collections.ListChangeListener;
 import javafx.geometry.Orientation;
 
-/// Default behavior implementation for [VFXTable]. Although, to be precise, and as the name also suggests,
-/// this can be considered more like a 'manager' than a behavior. Behaviors typically respond to user input, and then update
-/// the component's state. This behavior contains core methods to respond to various properties change in [VFXTable].
-/// All computations here will generate a new [VFXTableState], if possible, and update the table and the layout
-/// (indirectly, call to [VFXTable#requestViewportLayout()]. Beware, some changes may end up generating 'clone' states,
-/// because apparently nothing changed, see [VFXTableState], [VFXTableState#clone()], [VFXTableState#isClone()].
-///
-/// By default, manages the following changes:
-///
-/// - geometry changes (width/height changes), [#onGeometryChanged(GeometryChangeType)]
-/// - columns' width changes, [#onColumnWidthChanged(VFXTableColumn)]
-/// - columns list changes, [#onColumnsChanged(ListChangeListener.Change)]
-/// - items change, [#onItemsChanged()]
-/// - position changes, [#onPositionChanged(Orientation)]
-/// - row factory changes, [#onRowFactoryChanged()]
-/// - cell factory changes in columns, [#onCellFactoryChanged(VFXTableColumn)]
-/// - row height changes, [#onRowHeightChanged()]
-/// - columns size changes, [#onColumnsSizeChanged()] (specified by [VFXTable#columnsSizeProperty()])
-/// - layout mode changes [#onColumnsLayoutModeChanged()]
-///
-/// Last but not least, some of these computations may need to ensure the current vertical and horizontal positions are correct,
-/// so that a valid state can be produced. To achieve this, [VFXTableHelper#invalidatePos()] is called.
-/// However, invalidating the positions, also means that the [#onPositionChanged(Orientation)] method could be potentially
-/// triggered, thus generating an unwanted 'middle' state. For this reason a special flag [#invalidatingPos] is set
-/// to `true` before the invalidation, so that the other method will exit immediately. It's reset back to false
-/// after the computation or if any of the checks before the actual computation fails.
+import static io.github.palexdev.mfxcore.observables.When.onChanged;
+import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
+import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
+import static java.util.Objects.requireNonNull;
+
 public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
+
     //================================================================================
     // Properties
     //================================================================================
-    protected boolean invalidatingPos = false;
+
+    private boolean invalidatingPos = false;
+    private final List<Disposable> disposables = new ArrayList<>();
 
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXTableManager(VFXTable<T> table) {
         super(table);
     }
@@ -80,28 +57,12 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     // Methods
     //================================================================================
 
-    /// This core method is responsible for ensuring that the viewport always has the right number of columns, rows and cells.
-    /// This is called every time the table's geometry changes (width/height depending on the orientation),
-    /// which means that this is also responsible for initialization (when width/height becomes > 0.0).
-    ///
-    /// After preliminary checks done by [#tableFactorySizeCheck()] and [#rangeCheck(IntegerRange, boolean, boolean)],
-    /// (on the columns range) the computation for the new state is delegated to the
-    /// [#moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXTableState)].
-    ///
-    /// Note that to compute a valid new state, it is important to also validate the table's positions by invoking
-    /// [VFXTableHelper#invalidatePos()].
-    ///
-    /// Note that this is also responsible for the last column to always fill the table, when the table's width changes
-    /// and [VFXTableState#isLayoutNeeded()] is `false`, this will invoke [VFXTable#requestViewportLayout(VFXTableColumn)]
-    /// with the last column as parameter.
     protected void onGeometryChanged(GeometryChangeType gct) {
-        invalidatingPos = true;
         VFXTable<T> table = getNode();
-        VFXTableHelper<T> helper = table.getHelper();
-        if (!tableFactorySizeCheck()) return;
+        VFXTableHelper<T> helper = helper();
 
-        // Ensure positions are correct!
-        helper.invalidatePos();
+        invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
+        if (!tableFactorySizeCheck()) return;
 
         IntegerRange rowsRange = helper.rowsRange();
         IntegerRange columnsRange = helper.columnsRange();
@@ -109,213 +70,106 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
 
         // Compute the new state
         VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, columnsRange);
-        newState.setColumnsChanged(table.getState());
+        newState.setColumnsChanged(state());
         moveReuseCreateAlgorithm(rowsRange, columnsRange, newState);
 
+        IntegerRange interval = Utils.difference(columnsRange, state().getColumnsRange());
         if (disposeCurrent()) newState.setRowsChanged(true);
-        table.update(newState);
-        invalidatingPos = false;
-
-        if (gct == GeometryChangeType.WIDTH && !newState.isLayoutNeeded()) {
-            VFXTableColumn<T, ? extends VFXTableCell<T>> last = table.getColumns().getLast();
-            table.requestViewportLayout(last);
-        }
+        table.updateState(newState, interval);
     }
 
-    /// This is called when a column changes its width, see [VFXTableColumn#resize(double)]. It only concerns
-    /// [ColumnsLayoutMode#VARIABLE], since in the other mode every column shares one width, so it exits immediately
-    /// for [ColumnsLayoutMode#FIXED].
-    ///
-    /// The horizontal position is invalidated first: a resize changes [VFXTable#virtualMaxXProperty()] and thus the
-    /// max horizontal scroll, which may leave the current `hPos` out of bounds.
-    ///
-    /// A resize also moves every column that comes after the resized one, so the columns range may change with it.
-    /// If it did **not**, this only calls [VFXTable#requestViewportLayout(VFXTableColumn)] with the resized column,
-    /// which triggers a partial layout from that column rightwards, a nice optimization over a full one.
-    /// If it **did**, a new state is computed by [#moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXTableState)]
-    /// and the layout follows from the state itself.
-    ///
-    /// @see VFXTableSkin#partialLayout()
-    protected void onColumnWidthChanged(VFXTableColumn<T, ?> column) {
+    protected void onPositionChanged(Orientation axis) {
+        if (invalidatingPos) return;
         VFXTable<T> table = getNode();
-        if (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) return;
+        VFXTableState<T> state = state();
+        if (state == VFXTableState.INVALID) return;
 
-        invalidatingPos = true;
-        table.getHelper().invalidatePos();
+        VFXTableHelper<T> helper = helper();
+        if (axis == Orientation.HORIZONTAL) {
+            IntegerRange columnsRange = helper.columnsRange();
+            if (state.getColumnsRange().equals(columnsRange)) return;
 
-        VFXTableState<T> state = table.getState();
-        IntegerRange columnsRange = table.getHelper().columnsRange();
-        // If the range didn't change request a partial layout (resize rows at least) and bail out immediately
-        if (state.getColumnsRange().equals(columnsRange)) {
-            table.requestViewportLayout(column);
-            invalidatingPos = false;
+            VFXTableState<T> newState = new VFXTableState<>(table, state.getRowsRange(), columnsRange, state.getRows());
+            newState.setColumnsChanged(true);
+            newState.getRowsByIndex().values().forEach(r -> r.updateColumns(columnsRange, false));
+            table.updateState(newState, Utils.difference(columnsRange, state.getColumnsRange()));
             return;
         }
 
-        IntegerRange rowsRange = state.getRowsRange();
+        IntegerRange rowsRange = helper.rowsRange();
+        if (state.getRowsRange().equals(rowsRange)) return;
+
+        VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, state.getColumnsRange());
+        moveReuseCreateAlgorithm(rowsRange, newState.getColumnsRange(), newState);
+
+        if (disposeCurrent()) newState.setRowsChanged(true);
+        table.updateState(newState, INVALID_RANGE);
+    }
+
+    protected void onRowsHeightChanged() {
+        VFXTable<T> table = getNode();
+        VFXTableHelper<T> helper = helper();
+
+        invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
+        if (!tableFactorySizeCheck()) return;
+
+        IntegerRange rowsRange = helper.rowsRange();
+        IntegerRange columnsRange = state().getColumnsRange();
+        if (!rangeCheck(columnsRange, true, true)) return;
+
+        // Compute the new state with the intersection algorithm
         VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, columnsRange);
-        newState.setColumnsChanged(table.getState());
-        moveReuseCreateAlgorithm(rowsRange, columnsRange, newState);
+        intersectionAlgorithm(rowsRange, newState);
 
         if (disposeCurrent()) newState.setRowsChanged(true);
-        table.update(newState);
-        invalidatingPos = false;
+        table.updateState(newState);
     }
 
-    /// This is responsible for handling changes in [VFXTable#getColumns()] as well as initializing the
-    /// [VFXTableColumn#tableProperty()] of each column. A `null` parameter indicates that we want to just
-    /// initialize the columns, and no change occurred. Removed columns will have both the table instance and index
-    /// properties reset to `null` and -1 respectively.
-    ///
-    /// Before starting the new state computation, we must make sure that the sizes and the viewport position are valid by calling
-    /// [VFXTableHelper#invalidateVirtualSizes()] and [VFXTableHelper#invalidatePos()].
-    /// Then we get both the columns and rows ranges by using [VFXTableHelper#columnsRange()] and [VFXTableHelper#rowsRange()].
-    /// If the column range is invalid, then we set the state to [VFXTableState#INVALID], dispose the old one and exit
-    /// immediately, all of this is done by [#rangeCheck(IntegerRange, boolean, boolean)].
-    ///
-    /// At this point, we can compute the new state. If the rows range is valid, we iterate over it and for each row we
-    /// call [VFXTableRow#updateColumns(IntegerRange, boolean)] with `true` as parameter, thus we ensure
-    /// that all the cells have the right cells.
-    /// Finally, calls [VFXTable#update(VFXTableState)] to set the new state and trigger the layout computation.
-    protected void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
+    protected void onColumnsChanged(int from) {
         VFXTable<T> table = getNode();
+        VFXTableHelper<T> helper = helper();
 
-        // Init
-        if (change == null) {
-            table.getColumns().forEach(c -> c.setTable(table));
-            return;
-        }
+        // The number of columns changed, so both virtual sizes and hPos may be stale
+        helper.invalidateVirtualSizes();
+        invalidatePos();
 
-        // A setAll operation may end up adding the same columns as before (or even just some of them)
-        // Which means that both wasRemoved and wasAdded computation will run, we don't want that here.
-        // Simply handle removals after ensuring that a column that "was removed" is not still in the list
-        Set<VFXTableColumn<T, ?>> rm = new HashSet<>();
-        while (change.next()) {
-            if (change.wasRemoved()) rm.addAll(change.getRemoved());
-            if (change.wasAdded()) {
-                for (VFXTableColumn<T, ?> c : change.getAddedSubList()) {
-                    if (rm.contains(c)) {
-                        rm.remove(c);
-                        continue;
-                    }
-                    c.setTable(table);
-                }
-            }
-        }
-        // Resetting the index is no longer what makes removals safe: VFXTable.indexOf spots a detached column by
-        // itself, since it no longer sits where it claims to. This only spares that column one O(n) rescan.
-        rm.forEach(c -> {
-            c.setTable(null);
-            c.setIndex(-1);
-        });
-
-        VFXTableHelper<T> helper = table.getHelper();
-        invalidatingPos = true;
-        helper.invalidateVirtualSizes(); // The number of columns may have changed, therefore the virtual sizes must be recomputed
-        helper.invalidatePos(); // Changes to the columns' list may invalidate the hPos
-
-        // Compute the new ranges
         IntegerRange columnsRange = helper.columnsRange();
         IntegerRange rowsRange = helper.rowsRange();
-        if (!rangeCheck(columnsRange, true, true)) {
-            return; // If invalid (no columns), dispose current and set INVALID state
-        }
+        if (!rangeCheck(columnsRange, true, true)) return;
 
-        VFXTableState<T> state = table.getState();
-        VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, columnsRange, state.getRows());
+        VFXTableState<T> current = state();
+        VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, columnsRange, current.getRows());
         newState.setColumnsChanged(true);
         if (rangeCheck(rowsRange, false, false)) {
             for (Integer idx : rowsRange) {
                 VFXTableRow<T> row = newState.getRows().get(idx);
                 if (row == null) {
                     row = helper.indexToRow(idx);
+                    row.updateIndex(idx);
                     newState.addRow(idx, row);
                     newState.setRowsChanged(true);
                 }
                 row.updateColumns(columnsRange, true);
             }
         }
-        table.update(newState);
-        invalidatingPos = false;
+
+        IntegerRange diff = Utils.difference(columnsRange, current.getColumnsRange());
+        from = INVALID_RANGE.equals(diff) ? from : Math.min(from, diff.getMin());
+        table.updateState(newState, IntegerRange.of(from, Integer.MAX_VALUE));
     }
 
-    /// Before describing the operations performed by this method, it's important for the reader to understand the difference
-    /// between the two changes caught by this method. [VFXTable] makes use of a [ListProperty] to store
-    /// the items to display. The property is essentially the equivalent of this `ObjectProperty<ObservableList>`. Now,
-    /// if you are familiar with JavaFX, you probably know that there are two possible changes to listen to: one is changes
-    /// to `ObjectProperty` (if the `ObservableList` instance changes), and the other are changes in the `ObservableList`
-    /// instance itself. As you may guess, managing both these changes with a simple `ObjectProperty` is quite cumbersome,
-    /// because you need two listeners: one that catches changes in the list, and another to catch changes to the property.
-    /// In particular, the latter has the task to add the first listener to the new `ObservableList` instance.
-    ///
-    /// And here is where [ListProperty] comes in handy. By adding an [InvalidationListener] to this special
-    /// property we are able to intercept both the type of changes always, even if the `ObservableList` instance changes,
-    /// everything is handled automatically.
-    ///
-    /// Needless to say, we use a `Property` to store the items to allow the usage of bindings!
-    ///
-    /// This core method is responsible for updating the table's state when any of the two aforementioned changes happen.
-    ///
-    /// These kind of updates are the most tricky and expensive. In particular, additions and removals can occur at any
-    /// position in the list, which means that calculating the new state solely on the indexes is a no-go. It is indeed
-    /// possible by, in theory, isolating the indexes at which the changes occurred, separating the rows that need only
-    /// an index update from the ones that actually need a full update. However, such an approach requires a lot of code,
-    /// is error-prone, and a bit heavy on performance. The new approach implemented here requires changes to the state
-    /// class as well, [VFXTableState].
-    ///
-    /// The computation for the new state is similar to the [#moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXTableState)],
-    /// but the first step, which tries to identify the common cells, is quite different. You see, as I said before, additions
-    /// and removals can occur at any place in the list. Picture it with this example:
-    /// ```
-    /// In list before: 0 1 2 3 4 5
-    /// Add at index 2 these items: 99, 98
-    /// In list after: 0 1 99 98 2 3 4 5
-    /// Now let's suppose the range of displayed items is the same: [0, 5](6 items)
-    ///(I'm going now to write items with the index too, like this Index:Item)
-    /// Items before: [0:0, 1:1, 2:2, 3:3, 4:4, 5:5]
-    /// Items after: [0:0, 1:1, 2:99, 3:98, 4:2, 5:3]
-    /// See? Items 2 and 3 are still there but in a different position (index) Since we assume item updates are more
-    /// expensive than index updates, we must ensure to take those two rows and update them just by index
-    ///```
-    ///
-    /// For this reason, rows from the old state are not removed by index, but by **item**,
-    /// [VFXTableState#removeRow(Object)]. First, we retrieve the item from the list that is now at index i
-    /// (this index comes from the loop on the range), then we try to remove the row for this item from the old state.
-    /// If the row is found, we update it by index and add it to the new state. Note that the index is also excluded from the range.
-    ///
-    /// Now that 'common' rows have been properly updated, the remaining items are processed by the
-    /// [#remainingAlgorithm(ExcludingIntegerRange, VFXTableState)].
-    ///
-    /// 1) This is one of those methods that to produce a valid new state needs to validate the table's positions,
-    /// so it calls [VFXTableHelper#invalidatePos()]
-    ///
-    /// 2) Before invalidating the position, this must also request the re-computation of the container's virtual sizes
-    /// by calling [VFXTableHelper#invalidateVirtualSizes()]
-    ///
-    /// 3) To make sure the layout is always correct, at the end we always invoke [VFXTable#requestViewportLayout()].
-    /// You can guess why from the above example, items 2 and 3 are still in the viewport, but at different indexes,
-    /// which also means at different layout positions. There is no easy way to detect this, so better safe than sorry,
-    /// always update the layout.
     protected void onItemsChanged() {
-        invalidatingPos = true;
         VFXTable<T> table = getNode();
-        VFXTableHelper<T> helper = table.getHelper();
+        VFXTableHelper<T> helper = helper();
 
-        /*
-         * Force the re-computation of the container's virtual sizes which depend on the number of items.
-         * Doing this here is crucial because an automatic invalidation may trigger the onPositionChanged(...) method
-         * before this, therefore leading to an incorrect state.
-         */
+        // Ensure that both virtual sizes and position (which depends on the first) are correct
         helper.invalidateVirtualSizes();
+        invalidatePos();
 
-        // Ensure positions are correct
-        helper.invalidatePos();
-
-        // If the table is now empty, then set empty state
-        if (!tableFactorySizeCheck()) return;
+        if (!tableFactorySizeCheck()) return; // If the table is now empty, then set empty state
 
         // Compute rows ranges and new state
-        VFXTableState<T> current = table.getState();
+        VFXTableState<T> current = state();
         IntegerRange rowsRange = helper.rowsRange();
         ExcludingIntegerRange eRange = ExcludingIntegerRange.of(rowsRange);
         VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, current.getColumnsRange());
@@ -335,110 +189,83 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         remainingAlgorithm(eRange, newState);
 
         if (disposeCurrent()) newState.setRowsChanged(true);
-        table.update(newState);
-        if (!newState.haveRowsChanged()) table.requestViewportLayout();
-        invalidatingPos = false;
+        table.updateState(newState, INVALID_RANGE);
     }
 
-    /// This core method is responsible for updating the table's state when the vertical and horizontal positions change.
-    /// Since the table doesn't use any throttling technique to limit the number of events/changes,
-    /// and since scrolling can happen very fast, performance here is crucial.
-    ///
-    /// Immediately exits if: the special flag [#invalidatingPos] is true or the current state is [VFXTableState#INVALID].
-    /// Many other computations here need to validate the positions by calling [VFXTableHelper#invalidatePos()],
-    /// to ensure that the resulting state is valid.
-    /// However, invalidating the positions may trigger this method, causing two or more state computations to run at the
-    /// 'same time'; this behavior must be avoided, and that flag exists specifically for this reason.
-    ///
-    /// Before further discussing the internal mechanisms of this method, notice that this accepts a parameter of type
-    /// [Orientation]. The reason is simple. The table is virtualized on both the x-axis and y-axis, but changes
-    /// are 'atomic', meaning that only one can be processed at a time. For the scroll it's the same.
-    /// If you imagine scroll on a timeline, each event occurs after the other. Even if you scroll in both directions at the same time,
-    /// there's a difference between what you perceive and what happens under the hood. For this reason, to also
-    /// avoid code duplication, that parameter tells this method on which axis the scroll happened.
-    ///
-    /// The state computation changes depending on the [Orientation] parameter.
-    ///
-    /// **Horizontal**
-    ///
-    /// Does nothing and exits if the new columns range is the same as the old one. Both [ColumnsLayoutMode]s take
-    /// this branch: they window the columns the same way, and differ only in how the range is computed. This early
-    /// exit is what keeps horizontal scrolling cheap, since most events do not move the window at all.
-    ///
-    /// The new state is computed by simply copying all the rows from the old state and just calling
-    /// [VFXTableRow#updateColumns(IntegerRange, boolean)] on each of them. No layout is requested explicitly here:
-    /// the new state carries the 'columns changed' flag, and the skin lays out on it.
-    ///
-    /// **Vertical**
-    ///
-    /// Does nothing and exits if the new rows range is the same as the old one.
-    ///
-    /// The computation is delegated to the [#moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXTableState)]
-    /// algorithm.
-    protected void onPositionChanged(Orientation axis) {
-        if (invalidatingPos) return;
+    protected void onColumnsSizeChanged() {
         VFXTable<T> table = getNode();
-        VFXTableState<T> state = table.getState();
-        if (state == VFXTableState.INVALID) return;
+        VFXTableHelper<T> helper = helper();
 
-        VFXTableHelper<T> helper = table.getHelper();
-        IntegerRange columnsRange = helper.columnsRange();
+        invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
+        if (!tableFactorySizeCheck()) return;
 
-        // If the scroll was alongside the x-axis, then the columns range may change.
-        // Both layout modes are handled by the same code: they window the columns identically and differ only in how
-        // the range is computed (a division by the fixed width vs a binary search over the memoized prefix sums).
-        if (axis == Orientation.HORIZONTAL) {
-            // If the range didn't change, don't update
-            if (state.getColumnsRange().equals(columnsRange)) return;
-
-            // Here rather than moving the rows, we use the same map of the old state and just tell the rows to update
-            VFXTableState<T> newState = new VFXTableState<>(table, state.getRowsRange(), columnsRange, state.getRows());
-            newState.setColumnsChanged(true);
-            state.getRowsByIndex().values().forEach(r -> r.updateColumns(columnsRange, false));
-            table.update(newState);
-            return;
-        }
-
-        // If the scroll was alongside the y-axis, then we use the classic moveReuseCreate algorithm
-        // If the range didn't change, then do nothing
         IntegerRange rowsRange = helper.rowsRange();
-        if (state.getRowsRange().equals(rowsRange)) return;
+        IntegerRange columnsRange = helper.columnsRange();
+        if (!rangeCheck(columnsRange, true, true)) return;
+
+        // The columns range can move here, so common rows must update their cells too
         VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, columnsRange);
+        newState.setColumnsChanged(state());
         moveReuseCreateAlgorithm(rowsRange, columnsRange, newState);
 
         if (disposeCurrent()) newState.setRowsChanged(true);
-        table.update(newState);
-        if (!newState.haveRowsChanged()) table.requestViewportLayout();
+        table.updateState(newState);
     }
 
-    /// This method is responsible for updating the table's state when the [VFXTable#rowFactoryProperty()] changes.
-    /// Before proceeding, it checks whether a new state can be generated by using [#tableFactorySizeCheck()], if not
-    /// the rows' cache given by [VFXTable#getCache()] is cleared.
-    ///
-    /// If the old state is valid and not empty, then we can optimize the algorithm by copying each of the old rows' state
-    /// to the corresponding new ones. This is possible because ranges cannot change by simply switching the factory.
-    /// For each index in the rows range, a new row is created and its state is set to the one at the same index in the
-    /// old state by using [VFXTableRow#copyState(VFXTableRow)].
-    ///
-    /// Otherwise, if the old state has no rows from which copy the state, then it calls both [VFXTableRow#updateIndex(int)]
-    /// and [VFXTableRow#updateColumns(IntegerRange, boolean)].
-    ///
-    /// Finally, the old state is disposed, [VFXTableState#dispose()], the rows' cache is cleared (old rows cannot
-    /// be used since the factory changed), and the table updated with the new state.
-    protected void onRowFactoryChanged() {
+    protected void onColumnWidthChanged(VFXTableColumn<T, ?> column) {
         VFXTable<T> table = getNode();
-        VFXTableState<T> state = table.getState();
+        VFXTableHelper<T> helper = helper();
+        VFXTableState<T> state = state();
 
-        // First check basic properties to ensure we can generate a valid state
-        if (!tableFactorySizeCheck()) {
-            // Make sure to also invalidate the cache!
-            table.getCache().clear();
+        int first = helper.onColumnWidthChanged(column);
+        if (first < 0 || state.isEmpty()) return; // -1: no effective width change, nothing to lay out
+        invalidatePos();
+
+        IntegerRange layoutInterval = IntegerRange.of(first, Integer.MAX_VALUE);
+
+        // Range unchanged, partial layout from resized column
+        IntegerRange columnsRange = helper.columnsRange();
+        if (state.getColumnsRange().equals(columnsRange)) {
+            table.requestViewportLayout(layoutInterval);
             return;
         }
 
-        // At this point, we can generate a new state
-        VFXTableHelper<T> helper = table.getHelper();
-        CellFactory<T, VFXTableRow<T>> rf = table.rowFactoryProperty();
+        IntegerRange rowsRange = state.getRowsRange();
+        VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, columnsRange);
+        newState.setColumnsChanged(state);
+        moveReuseCreateAlgorithm(rowsRange, columnsRange, newState);
+        if (disposeCurrent()) newState.setRowsChanged(true);
+        table.updateState(newState, layoutInterval);
+    }
+
+    protected void onCellFactoryChanged(VFXTableColumn<T, ?> column) {
+        VFXTable<T> table = getNode();
+        VFXTableState<T> state = state();
+        if (state.isEmpty()) return;
+
+        for (VFXTableRow<T> row : state.getRowsByIndex().values()) row.replaceCells(column);
+        // Produce a "fake" new state, purely as a signal that something changed (uniforms to the rest)
+        VFXTableState<T> newState = new VFXTableState<>(
+            table,
+            state.getRowsRange(), state.getColumnsRange(),
+            state.getRows()
+        );
+        table.updateState(newState, INVALID_RANGE);
+    }
+
+    protected void onRowsFactoryChanged() {
+        VFXTable<T> table = getNode();
+        VFXTableState<T> state = state();
+
+        if (!tableFactorySizeCheck()) {
+            // Rows in cache are from the old factory, clear cache!
+            table.getRowsCache().clear();
+            return;
+        }
+
+        // Generate the new state
+        VFXTableHelper<T> helper = helper();
+        CellFactory<T, VFXTableRow<T>> rf = table.rowsFactoryProperty();
         IntegerRange rowsRange = helper.rowsRange();
         IntegerRange columnsRange = helper.columnsRange();
 
@@ -446,12 +273,12 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         newState.setRowsChanged(true);
 
         // Iterate over the rows range and generate a row with the new factory for each index/item.
-        // The new rows will copy the state of the previous row at the same index (except if the old state is INVALID or empty)
+        // The new rows will copy the state of the previous row at the same index (except if the current state is INVALID or empty)
         for (Integer idx : rowsRange) {
-            T item = table.getItems().get(idx);
+            T item = helper.indexToItem(idx);
             VFXTableRow<T> row = rf.create(item);
             if (state != VFXTableState.INVALID && !state.isEmpty()) {
-                row.copyState(state.getRows().get(idx));
+                row.copyStateFrom(state.getRows().get(idx));
             } else {
                 row.updateIndex(idx);
                 row.updateColumns(columnsRange, false);
@@ -460,176 +287,15 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         }
 
         disposeCurrent();
-        table.getCache().clear();
-        table.update(newState);
+        table.getRowsCache().clear();
+        table.updateState(newState, INVALID_RANGE);
     }
 
-    /// This method should be called by [VFXTableColumn]s when their cell factory changes.
-    ///
-    /// For each row in the current state, this calls [VFXTableRow#replaceCells(VFXTableColumn)] which makes
-    /// the operation as efficient as possible.
-    ///
-    /// This is one of those methods that do not really change the table's state, rather it updates the rows' state,
-    /// see [VFXTableState]. If the replacement was done, then the table's state is set to a clone of the current one.
-    protected void onCellFactoryChanged(VFXTableColumn<T, VFXTableCell<T>> column) {
-        VFXTable<T> table = getNode();
-        VFXTableState<T> state = table.getState();
-        boolean updated = false;
-        for (VFXTableRow<T> row : state.getRowsByIndex().values()) {
-            updated = row.replaceCells(column) || updated; // Order here is crucial because || operator is 'short circuit'
-        }
-        if (updated) table.update(state.clone());
-    }
+    /* CORE ALGORITHMS */
 
-    /// This method is responsible for computing a new state when the [VFXTable#rowsHeightProperty()] changes.
-    /// We could say that this is essentially equal to changing the cells' height.
-    ///
-    /// After preliminary checks done by [#tableFactorySizeCheck()], the computation for the new state
-    /// is delegated to the [#intersectionAlgorithm()].
-    ///
-    /// Note that to compute a valid new state, it is important to also validate the table's positions by invoking
-    /// [VFXTableHelper#invalidatePos()]. Also, it will request the layout computation,
-    /// [VFXTable#requestViewportLayout()], even if the cells didn't change for obvious reasons.
-    protected void onRowHeightChanged() {
-        invalidatingPos = true;
-        VFXTable<T> table = getNode();
-        VFXTableHelper<T> helper = table.getHelper();
-
-        // Ensure positions are correct
-        helper.invalidatePos();
-
-        if (!tableFactorySizeCheck()) return;
-
-        // Compute the new state with the intersection algorithm
-        VFXTableState<T> newState = intersectionAlgorithm();
-
-        if (disposeCurrent()) newState.setRowsChanged(true);
-        table.update(newState);
-        if (!newState.haveRowsChanged()) table.requestViewportLayout();
-        invalidatingPos = false;
-    }
-
-    /// This method is responsible for computing a new state when the [VFXTable#columnsSizeProperty()] changes.
-    /// Since the property specifies both the width and height of the columns, both columns and rows ranges can vary.
-    ///
-    /// First, it checks if the new columns range is valid by using [#rangeCheck(IntegerRange, boolean, boolean)].
-    /// Then it checks if the rows range changed, and if that's the case, delegates the update to [#onGeometryChanged(GeometryChangeType)].
-    ///
-    /// Otherwise, we can reuse the rows from the old state, and only if the columns range has changed, we also update them
-    /// by calling [VFXTableRow#updateColumns(IntegerRange, boolean)] on each of them.
-    ///
-    /// In any case, this will trigger a layout computation, since columns and rows may need to be resized/repositioned.
-    ///
-    /// This is one of those methods that to produce a valid new state needs to validate the table's positions,
-    /// so it calls [VFXTableHelper#invalidatePos()]
-    protected void onColumnsSizeChanged() {
-        invalidatingPos = true;
-        VFXTable<T> table = getNode();
-        VFXTableHelper<T> helper = table.getHelper();
-
-        // I believe such change could potentially mess with positions, even if ranges do not change
-        // So, just to make sure, let's invalidate them
-        helper.invalidatePos();
-
-        // Get the current state, as well as both the rows and columns ranges
-        VFXTableState<T> state = table.getState();
-        IntegerRange rowsRange = helper.rowsRange();
-        IntegerRange columnsRange = helper.columnsRange();
-
-        // Before proceeding, make sure to check the ranges are valid
-        // This essentially also checks that the current state is not INVALID
-        if (!rangeCheck(columnsRange, true, true)) return;
-
-        // Three possible cases
-        // 1) The rows range changed: delegate to geometry change
-        // 2) The columns range changed: update the rows and create a new state with the same rows map from the old one,
-        //    but the columnsChanged flag set to true
-        // 3) Neither of the two ranges changed, we still need to trigger the layout so that columns, rows and cells are
-        //    positioned and sized correctly
-        if (!rowsRange.equals(state.getRowsRange())) {
-            onGeometryChanged(GeometryChangeType.OTHER);
-            return;
-        }
-        if (!columnsRange.equals(state.getColumnsRange())) {
-            for (VFXTableRow<T> row : state.getRowsByIndex().values()) {
-                row.updateColumns(columnsRange, false);
-            }
-            VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, columnsRange, state.getRows());
-            newState.setColumnsChanged(true);
-            table.update(newState);
-            return;
-        }
-        table.requestViewportLayout();
-    }
-
-    /// This is responsible for updating the table's state when the [VFXTable#columnsLayoutModeProperty()] changes.
-    ///
-    /// The algorithm is almost the same for both cases: [FIXED->VARIABLE], [VARIABLE->FIXED].
-    /// The only thing that may change is the columns range, so, on each of the rows from the old state this calls
-    /// [VFXTableRow#updateColumns(IntegerRange, boolean)]. The new state is almost a copy of the old one except for
-    /// the columns range.
-    ///
-    /// There is one extra step when switching from VARIABLE to FIXED: the horizontal position must be validated with
-    /// [VFXTableHelper#invalidatePos()] before the rows are updated, because VARIABLE's `hPos` can exceed FIXED's max
-    /// horizontal scroll.
-    ///
-    /// Finally, a layout is **always** requested with [VFXTable#requestViewportLayout()] when
-    /// [VFXTableState#isLayoutNeeded()] returns false. That is not a precaution: the two modes compute positions
-    /// differently (slots relative to the range start against absolute prefix sums), so even an unchanged columns
-    /// range leaves every column sitting at the wrong x.
-    protected void onColumnsLayoutModeChanged() {
-        VFXTable<T> table = getNode();
-        VFXTableHelper<T> helper = table.getHelper();
-        VFXTableState<T> current = table.getState();
-
-        // Only when the mode switches from VARIABLE to FIXED, we must invalidate the hPos
-        ColumnsLayoutMode newMode = table.getColumnsLayoutMode();
-        if (newMode == ColumnsLayoutMode.FIXED) {
-            invalidatingPos = true;
-            helper.invalidatePos();
-        }
-
-        // For both cases (VARIABLE -> FIXED, FIXED -> VARIABLE) we have to do the same exact update.
-        // What may change when switching modes is having a different columns range and maybe an invalid hPos (see above).
-        // The estimated height, the rows range and the vPos are valid, which means that we can simply create a new state
-        // which uses all the rows from the current state and just update them with the new columns range.
-        IntegerRange columnsRange = helper.columnsRange();
-        VFXTableState<T> newState = new VFXTableState<>(table, current.getRowsRange(), columnsRange, current.getRows());
-        newState.getRowsByIndex().values().forEach(r -> r.updateColumns(columnsRange, false));
-        newState.setColumnsChanged(current);
-
-        table.update(newState);
-        // A layout is always needed on a mode switch, even when the columns range did not change.
-        // The two modes compute positions differently: FIXED lays out at slots relative to the range start,
-        // VARIABLE at absolute prefix sums.
-        //
-        // Before the columns range existed, switching to VARIABLE always widened the range to the whole list,
-        // so the change was implied by the state and this could be left to `isLayoutNeeded()`.
-        // Both modes now window the same way, so an unchanged range is normal and the layout has to be asked for explicitly.
-        if (!newState.isLayoutNeeded()) table.requestViewportLayout();
-        invalidatingPos = false;
-    }
-
-    //================================================================================
-    // Common
-    //================================================================================
-
-    /// Avoids code duplication. Typically used when, while iterating on the rows and columns ranges,
-    /// it's enough to move the rows from the current state to the new state. For indexes which are not found
-    /// in the current state, a new row is either taken from the old state, taken from cache or created by the row factory.
-    ///
-    /// (The last operations are delegated to the [#remainingAlgorithm(ExcludingIntegerRange, VFXTableState)]).
-    ///
-    /// Note that the columns range parameter is only needed to ensure each row is displaying the correct cells by invoking
-    /// [VFXTableRow#updateColumns(IntegerRange, boolean)]. We don't know when this is needed and when not, we simply
-    /// do it always and delegate to the method the check (if the given range is not equal to the old one then update).
-    ///
-    /// @see VFXTableHelper#indexToRow(int)
-    /// @see VFXTable#rowFactoryProperty()
     protected void moveReuseCreateAlgorithm(IntegerRange rowsRange, IntegerRange columnsRange, VFXTableState<T> newState) {
-        if (Utils.INVALID_RANGE.equals(rowsRange)) return;
-        VFXTable<T> table = getNode();
-        VFXTableState<T> current = table.getState();
+        if (INVALID_RANGE.equals(rowsRange)) return;
+        VFXTableState<T> current = state();
         ExcludingIntegerRange eRange = ExcludingIntegerRange.of(rowsRange);
         if (!current.isEmpty()) {
             for (Integer idx : rowsRange) {
@@ -643,41 +309,10 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         remainingAlgorithm(eRange, newState);
     }
 
-    /// Avoids code duplication. Typically used in situations where the previous rows range and the new one are likely to be
-    /// very close, but most importantly, that do not involve any change in the items' list.
-    /// In such cases, the computation for the new state is divided in two parts:
-    ///
-    /// 0) Prerequisites: the new rows range [min,max], the excluding range (a helper class to keep track of common rows),
-    /// the current state, and the intersection between the current rows range and the new rows range
-    ///
-    /// 1) The intersection allows us to distinguish between rows that can be moved as they are, without any update,
-    /// from the current state to the new one. For this, it's enough to check that the intersection range is valid, and then
-    /// a for loop. Common indexes are also excluded from the range!
-    ///
-    /// 2) The remaining indexes are items that are new. Which means that if there are still rows
-    /// in the current state, they need to be updated (both index, item, and maybe columns range too).
-    /// Otherwise, new ones are created by the row factory.
-    ///
-    /// - See [Utils#intersection]: used to find the intersection between two ranges
-    ///
-    /// - See [#rangeCheck(IntegerRange, boolean, boolean)]: used to validate the intersection range, both parameters
-    /// are false!
-    ///
-    /// - See [#remainingAlgorithm(ExcludingIntegerRange, VFXTableState)]: the second part of the algorithm is delegated to this
-    /// method
-    ///
-    /// @see ExcludingIntegerRange
-    protected VFXTableState<T> intersectionAlgorithm() {
-        VFXTable<T> table = getNode();
-        VFXTableHelper<T> helper = table.getHelper();
-
-        // New range
-        IntegerRange rowsRange = helper.rowsRange();
-        ExcludingIntegerRange eRange = ExcludingIntegerRange.of(rowsRange);
-
+    protected void intersectionAlgorithm(IntegerRange rowsRange, VFXTableState<T> newState) {
         // Current and new states, intersection between current and new range
-        VFXTableState<T> current = table.getState();
-        VFXTableState<T> newState = new VFXTableState<>(table, rowsRange, current.getColumnsRange());
+        VFXTableState<T> current = state();
+        ExcludingIntegerRange eRange = ExcludingIntegerRange.of(rowsRange);
         IntegerRange intersection = Utils.intersection(current.getRowsRange(), rowsRange);
 
         // If range valid, move common rows from current to new state. Also, exclude common indexes
@@ -690,32 +325,11 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
 
         // Process remaining with the "remaining' algorithm"
         remainingAlgorithm(eRange, newState);
-        return newState;
     }
 
-    /// Avoids code duplication. Typically used to process indexes not found in the current state.
-    ///
-    /// For any index in the given collection, a row is needed. Also, it needs to be updated by index, item and
-    /// maybe columns range too.
-    /// This row can come from three sources:
-    ///
-    /// 1) from the current state if it's not empty yet. Since the rows are stored in a [SequencedMap], one
-    /// is removed by calling [StateMap#pollFirst()].
-    ///
-    /// 2) from the [VFXCellsCache] if not empty (here [VFXTable#getCache()])
-    ///
-    /// 3) created by the row factory
-    ///
-    /// - See [VFXTableHelper#indexToRow(int)]: this handles the second and third cases. If a row can
-    /// be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
-    /// [VFXTable#rowFactoryProperty()] to create a new one
-    ///
-    /// After a row is retrieved from any of the three sources, this calls [VFXTableRow#updateColumns(IntegerRange, boolean)]
-    /// to ensure it is displaying the correct cells.
     protected void remainingAlgorithm(ExcludingIntegerRange eRange, VFXTableState<T> newState) {
-        VFXTable<T> table = getNode();
-        VFXTableHelper<T> helper = table.getHelper();
-        VFXTableState<T> current = table.getState();
+        VFXTableHelper<T> helper = helper();
+        VFXTableState<T> current = state();
 
         // Indexes in the given set were not found in the current state.
         // Which means item updates. Rows are retrieved either from the current state (if not empty), from the cache,
@@ -737,82 +351,57 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         }
     }
 
-    /// Avoids code duplication. This method checks for six things:
-    ///
-    /// 1) If the columns' list is empty
-    ///
-    /// 2) If the items' list is empty
-    ///
-    /// 3) If the row factory is `null`
-    ///
-    /// 4) If the rows' height is lesser or equal to 0
-    ///
-    /// 5) If the table's width is lesser or equal to 0
-    ///
-    /// 6) If the table's height is lesser or equal to 0
-    ///
-    /// If any of those checks is true: the table's state is set to [#computeInvalidState()], the
-    /// current state is disposed, the 'invalidatingPos' flag is reset, finally returns false.
-    ///
-    /// Otherwise, does nothing and returns true.
-    ///
-    /// - See [VFXTable#rowFactoryProperty()]
-    ///
-    /// - See [VFXTable#rowsHeightProperty()]
-    ///
-    /// - See [#disposeCurrent()]: for the current state disposal
-    ///
-    /// @return whether all the aforementioned checks have passed
+    /* UTILS */
+
+    protected void invalidatePos() {
+        VFXTable<T> table = getNode();
+        VFXTableHelper<T> helper = helper();
+        invalidatingPos = true;
+        helper.invalidatePos();
+        invalidatingPos = false;
+    }
+
     protected boolean tableFactorySizeCheck() {
         VFXTable<T> table = getNode();
-        if (table.getColumns().isEmpty() ||
+        if (table.columns().isEmpty() ||
             table.isEmpty() ||
-            table.rowFactoryProperty().getValue() == null ||
+            table.rowsFactoryProperty().getValue() == null ||
             table.getRowsHeight() <= 0 ||
             table.getWidth() <= 0 ||
             table.getHeight() <= 0) {
             disposeCurrent();
-            table.update(computeInvalidState());
+            table.updateState(computeInvalidState());
             invalidatingPos = false;
             return false;
         }
         return true;
     }
 
-    /// Avoids code duplication. Used to check whether the given range is valid, not equal to [Utils#INVALID_RANGE].
-    ///
-    /// When invalid, returns false, but first runs the following operations: disposes the current state (only if the
-    /// 'dispose' parameter is true), sets the table's state to [VFXTableState#INVALID] (only if the 'update'
-    /// parameter is true), resets the 'invalidatingPos' flag.
-    /// Otherwise, does nothing and returns true.
-    ///
-    /// Last but not least, this is a note for the future on why the method is structured like this. It's crucial for
-    /// the disposal operation to happen **before** the table's state is set to [VFXTableState#INVALID], otherwise
-    /// the disposal method will fail, since it will then retrieve the empty state instead of the correct one.
-    ///
-    /// - See [#disposeCurrent()]: for the current state disposal
-    ///
-    /// @param range the range to check
-    /// @param update whether to set the table's state to 'empty' if the range is not valid
-    /// @param dispose whether to dispose the current/old state if the range is not valid
-    /// @return whether the range is valid or not
     @SuppressWarnings("unchecked")
     protected boolean rangeCheck(IntegerRange range, boolean update, boolean dispose) {
         VFXTable<T> table = getNode();
-        if (Utils.INVALID_RANGE.equals(range)) {
+        if (INVALID_RANGE.equals(range)) {
             if (dispose) disposeCurrent();
-            if (update) table.update(VFXTableState.INVALID);
+            if (update) table.updateState(VFXTableState.INVALID);
             invalidatingPos = false;
             return false;
         }
         return true;
     }
 
-    /// Avoids code duplication. Responsible for disposing the current state if it is not empty.
-    ///
-    /// - See [VFXTableState#dispose()]
-    ///
-    /// @return whether the disposal was done or not
+    @SuppressWarnings("unchecked")
+    protected VFXTableState<T> computeInvalidState() {
+        VFXTable<T> table = getNode();
+        VFXTableHelper<T> helper = helper();
+        IntegerRange columnsRange = helper.columnsRange();
+        if (INVALID_RANGE.equals(columnsRange)) return VFXTableState.INVALID;
+
+        VFXTableState<T> partial = new VFXTableState<>(table, INVALID_RANGE, columnsRange);
+        partial.setColumnsChanged(state());
+        partial.setRowsChanged(!state().isEmpty());
+        return partial;
+    }
+
     protected boolean disposeCurrent() {
         VFXTableState<T> state = getNode().getState();
         if (!state.isEmpty()) {
@@ -822,26 +411,75 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         return false;
     }
 
-    /// This method is responsible for properly compute an invalid [VFXTableState] depending on certain conditions.
-    /// You see, the table is a special component also because it can technically work even if there are no items in it.
-    /// The [VFXTableState#INVALID] state is to be used only if there are no columns in the table, or in general if
-    /// [VFXTableHelper#columnsRange()] returns [Utils#INVALID_RANGE].
-    ///
-    /// Otherwise, this will return a new state with [Utils#INVALID_RANGE] as the rows range,
-    /// and [VFXTableHelper#columnsRange()] as the columns range.
-    ///
-    /// Note that this new state will have its [VFXTableState#haveRowsChanged()] and [VFXTableState#haveColumnsChanged()]
-    /// flags set depending on the old state.
-    @SuppressWarnings("unchecked")
-    protected VFXTableState<T> computeInvalidState() {
-        VFXTable<T> table = getNode();
-        VFXTableHelper<T> helper = table.getHelper();
-        IntegerRange columnsRange = helper.columnsRange();
-        if (Utils.INVALID_RANGE.equals(columnsRange)) return VFXTableState.INVALID;
+    protected VFXTableHelper<T> helper() {
+        return requireNonNull(getNode().getHelper(), "The table's manager cannot operate without a helper");
+    }
 
-        VFXTableState<T> partial = new VFXTableState<>(table, Utils.INVALID_RANGE, columnsRange);
-        partial.setColumnsChanged(table.getState());
-        partial.setRowsChanged(!table.getState().isEmpty());
-        return partial;
+    protected VFXTableState<T> state() {
+        return getNode().getState();
+    }
+
+    protected void register(When<?>... whens) {
+        for (When<?> w : whens) {
+            if (!w.isActive()) w.listen();
+            disposables.add(w);
+        }
+    }
+
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+
+    @Override
+    public void init() {
+        VFXTable<T> table = getNode();
+        register(
+            // Geometry
+            onInvalidated(table.widthProperty()).then(_ -> {
+                helper().invalidateRange(Orientation.HORIZONTAL);
+                onGeometryChanged(GeometryChangeType.WIDTH);
+            }),
+            onInvalidated(table.heightProperty()).then(_ -> {
+                helper().invalidateRange(Orientation.VERTICAL);
+                onGeometryChanged(GeometryChangeType.HEIGHT);
+            }),
+            onInvalidated(table.columnsBufferSizeProperty()).then(_ -> {
+                helper().invalidateRange(Orientation.HORIZONTAL);
+                onGeometryChanged(GeometryChangeType.OTHER);
+            }),
+            onInvalidated(table.rowsBufferSizeProperty()).then(_ -> {
+                helper().invalidateRange(Orientation.VERTICAL);
+                onGeometryChanged(GeometryChangeType.OTHER);
+            }),
+            // Position
+            onInvalidated(table.hPosProperty()).then(_ -> {
+                helper().invalidateRange(Orientation.HORIZONTAL);
+                onPositionChanged(Orientation.HORIZONTAL);
+            }),
+            onInvalidated(table.vPosProperty()).then(_ -> {
+                helper().invalidateRange(Orientation.VERTICAL);
+                onPositionChanged(Orientation.VERTICAL);
+            }),
+            // Others
+            onInvalidated(table.itemsProperty()).then(_ -> onItemsChanged()),
+            onChanged(table.columnsSizeProperty()).then((o, n) -> {
+               helper().onColumnsSizeChanged();
+               if (o.width() != n.width()) helper().invalidateRange(Orientation.HORIZONTAL);
+               if (o.height() != n.height()) helper().invalidateRange(Orientation.VERTICAL);
+               onColumnsSizeChanged();
+            }),
+            onInvalidated(table.rowsHeightProperty()).then(_ -> {
+                helper().invalidateRange(Orientation.VERTICAL);
+                onRowsHeightChanged();
+            }),
+            onInvalidated(table.rowsFactoryProperty()).then(_ -> onRowsFactoryChanged())
+        );
+    }
+
+    @Override
+    public void dispose() {
+        disposables.forEach(Disposable::dispose);
+        disposables.clear();
+        super.dispose();
     }
 }

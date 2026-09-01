@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Parisi Alessandro - alessandro.parisi406@gmail.com
+ * Copyright (C) 2026 Parisi Alessandro - alessandro.parisi406@gmail.com
  * This file is part of VirtualizedFX (https://github.com/palexdev/VirtualizedFX)
  *
  * VirtualizedFX is free software: you can redistribute it and/or
@@ -35,12 +35,15 @@ import io.github.palexdev.mfxresources.icon.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
-import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
-import io.github.palexdev.virtualizedfx.table.*;
-import io.github.palexdev.virtualizedfx.table.VFXTableHelper.FixedTableHelper;
-import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
+import io.github.palexdev.virtualizedfx.table.VFXTable;
+import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
+import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
+import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VFXDefaultTableHelper;
+import io.github.palexdev.virtualizedfx.table.VFXTableRow;
+import io.github.palexdev.virtualizedfx.table.VFXTableSkin;
+import io.github.palexdev.virtualizedfx.table.VFXTableState;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
+import io.github.palexdev.virtualizedfx.table.defaults.VFXSimpleTableColumn;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.collections.ObservableList;
@@ -51,20 +54,21 @@ import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
 import org.opentest4j.AssertionFailedError;
 import src.model.User;
-import src.utils.TestFXUtils;
 import src.utils.TestFXUtils.Counter;
 
 import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.insets;
 import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.uniform;
 import static org.junit.jupiter.api.Assertions.*;
 import static src.utils.TestFXUtils.FP_ASSERTIONS_DELTA;
-import static src.utils.TestFXUtils.counter;
 
+// TODO improve assertion messages
+// TODO improve asserts structure (feels chaotic, unorganized)
 public class TableTestUtils {
     //================================================================================
     // Static Properties
     //================================================================================
-    public static final Counter rowsCounter = new TestFXUtils.Counter();
+    public static final TableCounter cellsCounter = new TableCounter();
+    public static final Counter rowsCounter = new Counter();
 
     //================================================================================
     // Constructors
@@ -80,11 +84,10 @@ public class TableTestUtils {
         Region columnsPane = (Region) table.lookup(".columns");
         Region rowsPane = (Region) table.lookup(".rows");
 
-        assertNotNull(table.rowFactoryProperty().getOwner());
+        assertNotNull(table.rowsFactoryProperty().getOwner());
 
         if (Utils.INVALID_RANGE.equals(columnsRange)) {
             assertEquals(VFXTableState.INVALID, state);
-            // Also verify that there are no nodes in the viewport
             assertTrue(columnsPane.getChildrenUnmodifiable().isEmpty());
             assertTrue(rowsPane.getChildrenUnmodifiable().isEmpty());
             return;
@@ -92,12 +95,10 @@ public class TableTestUtils {
 
         boolean partial = cellsNum < helper.totalCells();
 
-        // Columns check
         assertEquals(helper.columnsRange(), columnsRange);
 
-        // Rows and cells checks
         if (Utils.INVALID_RANGE.equals(rowsRange)) {
-            if (table.getRowFactory() != null &&
+            if (table.getRowsFactory() != null &&
                 !(table.getRowsHeight() <= 0) &&
                 !table.isEmpty()) {
                 fail("Invalid rows range, but why");
@@ -111,8 +112,7 @@ public class TableTestUtils {
             assertEquals(cellsNum, state.cellsNum());
         }
 
-        ObservableList<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns = table.getColumns();
-        int j = 0;
+        ObservableList<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns = table.columns();
         for (Integer cIdx : columnsRange) {
             try {
                 VFXTableColumn<User, ? extends VFXTableCell<User>> column = columns.get(cIdx);
@@ -120,15 +120,11 @@ public class TableTestUtils {
                 assertNotNull(column.getTable());
                 assertNotNull(column.getCellFactory().getOwner());
                 assertEquals(cIdx, column.getIndex());
-                assertNotNull(column.getParent()); // Assert that the column is actually in the viewport before checking the position
-                // Every column in the range is in the viewport by definition now, and nothing hides
-                // columns any more, so the old isInViewport/isVisible gating was both vacuous and
-                // harmful: it let the layout assertion be skipped rather than fail
-                assertLayout(table, j, column);
+                assertNotNull(column.getParent());
+                assertLayout(table, cIdx, column);
             } catch (Exception ex) {
                 fail(ex);
             }
-            j++;
         }
 
         ObservableList<User> items = table.getItems();
@@ -146,22 +142,16 @@ public class TableTestUtils {
             }
 
             assertEquals(rIdx, row.getIndex());
-            assertEquals(columnsRange, row.getColumnsRange());
+            assertEquals(columnsRange, row.columnsRange());
             assertEquals(items.get(rIdx), row.getItem());
             assertLayout(table, i, row);
 
-            SequencedMap<Integer, VFXTableCell<User>> cells = row.getCellsByIndex();
-            // The defining property of x-axis virtualization: a row holds cells for the columns range,
-            // never one per column. Asserted here rather than per-test because the loop below only
-            // *reads* cells by index, so a row carrying extras beyond the range would go unnoticed,
-            // and carrying extras is exactly the pre-virtualization behaviour.
-            // Partial states legitimately hold fewer (null cell factories), so only the bound holds there.
+            SequencedMap<Integer, VFXTableCell<User>> cells = row.cellsByIndex();
             if (partial) {
                 assertTrue(cells.size() <= columnsRange.diff() + 1);
             } else {
                 assertEquals(columnsRange.diff() + 1, cells.size());
             }
-            j = 0;
             for (Integer cIdx : columnsRange) {
                 VFXTableCell<User> cell = null;
                 try {
@@ -179,11 +169,10 @@ public class TableTestUtils {
                     if (!(sCell instanceof EmptyCell)) {
                         assertEquals(items.get(rIdx), sCell.getItem());
                     }
-                    assertLayout(table, j, sCell);
+                    assertLayout(table, cIdx, sCell);
                 } else {
                     System.err.println("Cannot assert for cell of type: " + cell);
                 }
-                j++;
             }
             i++;
         }
@@ -191,6 +180,23 @@ public class TableTestUtils {
 
     static void assertState(VFXTable<User> table, IntegerRange rowsRange, IntegerRange columnsRange) {
         assertState(table, rowsRange, columnsRange, table.getHelper().totalCells());
+    }
+
+    static void assertCounter(int created, int layouts, int cellLayouts, int ixUpdates, int itUpdates, int deCached, int cached, int disposed) {
+        assertEquals(created, cellsCounter.created);
+        assertEquals(layouts, cellsCounter.getLayoutCnt());
+        assertEquals(cellLayouts, cellsCounter.getCellLayoutCnt());
+        assertEquals(ixUpdates, cellsCounter.getUpdIndexCnt());
+        assertEquals(itUpdates, cellsCounter.getUpdItemCnt());
+        assertEquals(deCached, cellsCounter.getFromCache());
+        assertEquals(cached, cellsCounter.getToCache());
+        assertEquals(disposed, cellsCounter.getDisposed());
+        cellsCounter.reset();
+    }
+
+    static void resetCounters() {
+        cellsCounter.reset();
+        rowsCounter.reset();
     }
 
     static void assertRowsCounter(int created, int ixUpdates, int itUpdates, int deCached, int cached, int disposed) {
@@ -203,24 +209,26 @@ public class TableTestUtils {
         rowsCounter.reset();
     }
 
-    static void assertLayout(VFXTable<User> table, int cIdx, VFXTableColumn<User, ? extends VFXTableCell<User>> column) {
-        VFXTableHelper<User> helper = table.getHelper();
+    static double columnWidth(VFXTable<User> table, int index) {
+        VFXTableColumn<User, ? extends VFXTableCell<User>> column = table.columns().get(index);
+        return Math.max(column.getUserPrefWidth(), table.getColumnsSize().width());
+    }
+
+    static double columnX(VFXTable<User> table, int index) {
+        double x = 0.0;
+        for (int i = 0; i < index; i++) x += columnWidth(table, i);
+        return x;
+    }
+
+    static void assertLayout(VFXTable<User> table, int columnIdx, VFXTableColumn<User, ? extends VFXTableCell<User>> column) {
         Bounds bounds = column.getBoundsInParent();
-        double x = 0;
-        double w = helper.getColumnWidth(column);
+        double x = columnX(table, columnIdx);
+        double w = columnWidth(table, columnIdx);
         double h = table.getColumnsSize().height();
-        if (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) {
-            x = cIdx * table.getColumnsSize().width();
-        } else {
-            for (VFXTableColumn<User, ? extends VFXTableCell<User>> c : table.getColumns()) {
-                if (c == column) break;
-                x += helper.getColumnWidth(c);
-            }
-        }
         try {
-            assertEquals(x, bounds.getMinX(), FP_ASSERTIONS_DELTA); // Fucking scaling settings may make the tests fail for no real reason
+            assertEquals(x, bounds.getMinX(), FP_ASSERTIONS_DELTA);
             assertEquals(0, bounds.getMinY());
-            assertEquals(w, bounds.getWidth(), FP_ASSERTIONS_DELTA); // Fucking scaling settings may make the tests fail for no real reason
+            assertEquals(w, bounds.getWidth(), FP_ASSERTIONS_DELTA);
             assertEquals(h, column.getLayoutBounds().getHeight()); // This would fail with `bounds` because there's the overlay node!
         } catch (AssertionFailedError err) {
             System.err.printf("Failed column layout assertion for column %s%n".formatted(column.getText()));
@@ -228,56 +236,42 @@ public class TableTestUtils {
         }
     }
 
-    static void assertLayout(VFXTable<User> table, int rIdx, VFXTableRow<User> row) {
+    static void assertLayout(VFXTable<User> table, int layoutIdx, VFXTableRow<User> row) {
         Bounds bounds = row.getBoundsInParent();
         double w = table.getVirtualMaxX();
         double h = table.getRowsHeight();
-        double y = h * rIdx;
+        double y = h * layoutIdx;
         try {
             assertEquals(0, bounds.getMinX());
             assertEquals(y, bounds.getMinY());
-            assertEquals(w, bounds.getWidth(), FP_ASSERTIONS_DELTA); // Fucking scaling settings may make the tests fail for no real reason
-            assertEquals(h, bounds.getHeight(), FP_ASSERTIONS_DELTA); // Fucking scaling settings may make the tests fail for no real reason
+            assertEquals(w, bounds.getWidth(), FP_ASSERTIONS_DELTA);
+            assertEquals(h, bounds.getHeight(), FP_ASSERTIONS_DELTA);
         } catch (AssertionFailedError err) {
-            System.err.printf("Failed layout assertion for row at index %d%n".formatted(rIdx));
+            System.err.printf("Failed layout assertion for row at index %d%n".formatted(layoutIdx));
             throw err;
         }
     }
 
-    static void assertLayout(VFXTable<User> table, int layoutIdx, VFXSimpleTableCell<User, ?> cell) {
+    static void assertLayout(VFXTable<User> table, int columnIdx, VFXSimpleTableCell<User, ?> cell) {
         if (cell == null) return;
-        VFXTableHelper<User> helper = table.getHelper();
-        int cellIdx = cell.getIndex();
-        ObservableList<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns = table.getColumns();
-        VFXTableColumn<User, ? extends VFXTableCell<User>> column = columns.get(cellIdx);
         Bounds bounds = cell.toNode().getBoundsInParent();
-
-        double x = 0;
-        double w = helper.getColumnWidth(column);
+        double x = columnX(table, columnIdx);
+        double w = columnWidth(table, columnIdx);
         double h = table.getRowsHeight();
-
-        if (table.getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) {
-            x = table.getColumnsSize().width() * layoutIdx;
-        } else {
-            for (int i = 0; i < cellIdx; i++) {
-                x += helper.getColumnWidth(columns.get(i));
-            }
-        }
-
         try {
-            assertEquals(x, bounds.getMinX(), FP_ASSERTIONS_DELTA); // Fucking scaling settings may make the tests fail for no real reason
+            assertEquals(x, bounds.getMinX(), FP_ASSERTIONS_DELTA);
             assertEquals(0, bounds.getMinY());
-            assertEquals(w, bounds.getWidth(), FP_ASSERTIONS_DELTA); // Fucking scaling settings may make the tests fail for no real reason
-            assertEquals(h, bounds.getHeight(), FP_ASSERTIONS_DELTA); // Fucking scaling settings may make the tests fail for no real reason
+            assertEquals(w, bounds.getWidth(), FP_ASSERTIONS_DELTA);
+            assertEquals(h, bounds.getHeight(), FP_ASSERTIONS_DELTA);
         } catch (AssertionError err) {
-            System.err.printf("Failed cell layout assertion for column %s%n".formatted(column.getText()));
+            System.err.printf("Failed cell layout assertion for column %s%n".formatted(table.columns().get(columnIdx).getText()));
             throw err;
         }
     }
 
     static void assertLength(VFXTable<User> table, double vLength, double hLength) {
         VFXTableHelper<User> helper = table.getHelper();
-        assertEquals(hLength, helper.getVirtualMaxX(), FP_ASSERTIONS_DELTA); // Fucking scaling settings may make the tests fail for no real reason
+        assertEquals(hLength, helper.getVirtualMaxX(), FP_ASSERTIONS_DELTA);
         assertEquals(vLength, helper.getVirtualMaxY());
     }
 
@@ -287,11 +281,11 @@ public class TableTestUtils {
     }
 
     static void setRandomColumnWidth(VFXTable<User> table, double w) {
-        setColumnWidth(table, RandomUtils.random.nextInt(0, table.getColumns().size()), w);
+        setColumnWidth(table, RandomUtils.random.nextInt(0, table.columns().size()), w);
     }
 
     static void setColumnWidth(VFXTable<User> table, int index, double w) {
-        table.getColumns().get(index).resize(w);
+        table.columns().get(index).setUserPrefWidth(w);
     }
 
     //================================================================================
@@ -318,20 +312,20 @@ public class TableTestUtils {
                 .border("#353839")
                 .borderInsets(uniform(1.25))
                 .borderWidth(0.5)
-                .select(".vfx-table > .viewport > .rows > .vfx-row > .table-cell")
+                .select(".vfx-table > .viewport > .rows > .vfx-row > .cell-base")
                 .padding(insets().horizontal(10.0))
                 .applyOn(this);
         }
 
         public Table(ObservableList<User> items) {
-            this(items, columns());
+            this(items, defaultColumns());
         }
 
         public Table(ObservableList<User> items, Collection<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns) {
             super(items, columns);
         }
 
-        static Collection<VFXTableColumn<User, ? extends VFXTableCell<User>>> columns() {
+        static Collection<VFXTableColumn<User, ? extends VFXTableCell<User>>> defaultColumns() {
             int ICON_SIZE = 18;
             Color ICON_COLOR = Color.rgb(53, 57, 53);
 
@@ -374,7 +368,7 @@ public class TableTestUtils {
             Function<User, UserCell<E>> f = u -> new UserCell<>(u, extractor);
             f = f.andThen(c -> {
                 config.accept(c);
-                counter.created();
+                cellsCounter.created();
                 return c;
             });
             return f.apply(user);
@@ -395,7 +389,7 @@ public class TableTestUtils {
         }
 
         public Table addEmptyColumns(int cnt) {
-            getColumns().addAll(emptyColumns(cnt));
+            columns().addAll(emptyColumns(cnt));
             return this;
         }
 
@@ -406,20 +400,17 @@ public class TableTestUtils {
         }
 
         @Override
-        protected Function<User, VFXTableRow<User>> defaultRowFactory() {
+        public Function<User, VFXTableRow<User>> defaultRowsFactory() {
             return TestRow::new;
         }
 
         @Override
-        protected Function<ColumnsLayoutMode, VFXTableHelper<User>> defaultHelperFactory() {
-            return mode -> mode == ColumnsLayoutMode.FIXED ? new FixedTableHelper<>(this) : new VariableTableHelper<>(this) {
+        public Supplier<VFXTableHelper<User>> defaultHelperFactory() {
+            return () -> new VFXDefaultTableHelper<>(this) {
                 @Override
-                public boolean layoutCell(int layoutIdx, VFXTableCell<User> node) {
-                    if (super.layoutCell(layoutIdx, node)) {
-                        counter.layout();
-                        return true;
-                    }
-                    return false;
+                public void layoutCell(int columnIdx, VFXTableCell<User> cell) {
+                    super.layoutCell(columnIdx, cell);
+                    cellsCounter.cellLayout();
                 }
             };
         }
@@ -428,10 +419,9 @@ public class TableTestUtils {
         public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
             return () -> new VFXTableSkin<>(this) {
                 @Override
-                protected void onLayoutCompleted(boolean done) {
-                    super.onLayoutCompleted(done);
-                    if (getColumnsLayoutMode() == ColumnsLayoutMode.VARIABLE) return;
-                    if (done && !getState().isEmpty()) counter.layout();
+                protected void layoutCompleted(boolean done) {
+                    super.layoutCompleted(done);
+                    if (done && !getState().isEmpty()) cellsCounter.layout();
                     /*
                      * Empty states should not be counted as done
                      *
@@ -442,12 +432,28 @@ public class TableTestUtils {
         }
 
         @Override
-        public VFXCellsCache<User, VFXTableRow<User>> getCache() {
-            return super.getCache();
+        public VFXCellsCache<User, VFXTableRow<User>> getRowsCache() {
+            return super.getRowsCache();
         }
     }
 
-    public static class TestColumn<E> extends VFXDefaultTableColumn<User, UserCell<E>> implements Comparable<TestColumn<E>> {
+    public static class TableCounter extends Counter {
+        private int cellLayoutCnt = 0;
+
+        public void cellLayout() {cellLayoutCnt++;}
+
+        public int getCellLayoutCnt() {
+            return cellLayoutCnt;
+        }
+
+        @Override
+        public void reset() {
+            super.reset();
+            cellLayoutCnt = 0;
+        }
+    }
+
+    public static class TestColumn<E> extends VFXSimpleTableColumn<User, UserCell<E>> implements Comparable<TestColumn<E>> {
         private final int priority;
 
         public TestColumn(String text, int priority) {
@@ -458,11 +464,6 @@ public class TableTestUtils {
         @Override
         public int compareTo(TestColumn<E> o) {
             return Integer.compare(priority, o.priority);
-        }
-
-        @Override
-        public VFXCellsCache<User, UserCell<E>> cache() {
-            return super.cache();
         }
     }
 
@@ -514,28 +515,28 @@ public class TableTestUtils {
         @Override
         public void updateIndex(int index) {
             super.updateIndex(index);
-            counter.index();
+            cellsCounter.index();
         }
 
         @Override
         public void updateItem(User item) {
             super.updateItem(item);
-            counter.item();
+            cellsCounter.item();
         }
 
         @Override
         public void onDeCache() {
-            counter.fCache();
+            cellsCounter.fCache();
         }
 
         @Override
         public void onCache() {
-            counter.tCache();
+            cellsCounter.tCache();
         }
 
         @Override
         public void dispose() {
-            counter.disposed();
+            cellsCounter.disposed();
             super.dispose();
         }
     }
@@ -544,7 +545,7 @@ public class TableTestUtils {
         {
             setCellFactory(item -> {
                 EmptyCell c = new EmptyCell(item, this);
-                counter.created();
+                cellsCounter.created();
                 return c;
             });
         }

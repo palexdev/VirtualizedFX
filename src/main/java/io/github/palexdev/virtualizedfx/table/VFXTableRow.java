@@ -18,9 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.SequencedMap;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -28,10 +27,9 @@ import io.github.palexdev.mfxcore.controls.MFXStyleable;
 import io.github.palexdev.virtualizedfx.base.VFXContext;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.RowsStateMap;
+import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMapBase;
 import io.github.palexdev.virtualizedfx.utils.Utils;
-import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -39,160 +37,124 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 
-/// Base class that defines common properties and behaviors for all rows to be used with [VFXTable].
-/// The default style class is set to '.vfx-row'.
-///
-/// This class has two peculiarities:
-///
-/// 1) Extends [Region] because each row is actually a wrapping container for the table's cells
-///
-/// 2) Implements [VFXCell] because most of the API is the same! Let's see the benefits:
-/// First and foremost this allows us to use the same cache class [VFXCellsCache] for the rows too
-/// which is super convenient. As for the [#updateIndex(int)] and [#updateItem(Object)] methods,
-/// well the row is no different from any other cell really. Each row wraps a cell for each table's column.
-/// All its cells 'operate' on the same item, they just process the object differently (generally speaking).
-/// So, a row which displays an item 'T' at index 17 in the list will have its index property set to 17, its item property
-/// as well as all of its cells' item property will be set to 'T'.
-/// As you can imagine, when we scroll in the viewport, make changes to the list (to cite only a few of the many changes types)
-/// we want to update the cells by either or both index and item. The table does so through rows
-/// (see [#updateColumns(IntegerRange, boolean)] for example).
-///
-/// There are two more properties which we need to discuss:
-///
-/// 1) Besides the index and item properties, each row also has the current range of columns the table needs to display,
-/// [#getColumnsRange()]. This piece of information is crucial for the row to build (and thus wrap) the correct type
-/// of cells. For example, let's say for a hypothetical User class I can see the 'First Name' column but not the 'Last Name'
-/// one. We want the row to ask the 'First Name' column to give us a cell for this field
-/// (it could be created or de-cached see [#getCell(int, VFXTableColumn, boolean)]).
-/// Additionally, we want to make sure that every other cell produced by columns that are not visible anymore to be removed
-/// from the children list (such cells can be disposed or cached, see [#saveCell(VFXTableColumn, VFXTableCell)]).
-/// Every time something relevant to the rows changes in the table, each row computes its new state and if cells change
-/// they call [#onCellsChanged()] to update the children list.
-///
-/// 2) What do we mean by row's state? As probably already mentioned here [VFXTable], this container is a bit special
-/// because we have two kinds of states. The global state which is a separate class [VFXTableState], but then each row
-/// has its own "mini-state". The global state specifies which and how many items/rows should be present in the viewport,
-/// but it misses one crucial detail which is covered by the rows' state, which and how many cells to show. Exactly as it
-/// would be for a traditional state object, the cells keep a map of all their cells. When changes happen, we can easily
-/// compute which cells to keep using, which ones need to be disposed and whether new ones are needed.
-/// The type of map used is [RowsStateMap].
-///
-/// Aside from those core details, rows also have much more going on: they can copy the state of other rows
-/// (for optimization reasons, see [#copyState(VFXTableRow)]), the layout is completely 'manual' and will
-/// not respond to the traditional JavaFX 'triggers' but only to [VFXTable#needsViewportLayoutProperty()].
-///
-/// **Note:** because some of the base methods are actually quite complex to implement it's not recommended to use this
-/// as a base class for extension but rather [VFXDefaultTableRow]. Either way, always take a look at how original
-/// algorithms work before customizing!
+import static io.github.palexdev.mfxcore.base.beans.range.IntegerRange.inRangeOf;
+import static java.util.Optional.ofNullable;
+
 public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXStyleable {
+
     //================================================================================
     // Properties
     //================================================================================
+
     private VFXContext<T> context;
+
     private final ReadOnlyIntegerWrapper index = new ReadOnlyIntegerWrapper(-1);
     private final ReadOnlyObjectWrapper<T> item = new ReadOnlyObjectWrapper<>();
+
     protected IntegerRange columnsRange = Utils.INVALID_RANGE;
     protected RowsStateMap<T, VFXTableCell<T>> cells;
+
+    protected int dirtyFrom = Integer.MAX_VALUE;
+    protected int dirtyTo = Integer.MIN_VALUE;
 
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXTableRow(T item) {
         cells = new RowsStateMap<>();
         updateItem(item);
-        initialize();
+        setDefaultStyleClasses();
     }
-
-    //================================================================================
-    // Abstract Methods
-    //===============================================================================
-
-    /// Implementations of this method should mainly react to two types of change in the table:
-    ///
-    /// 1) the visible columns changes, or more in general the state's columns range changes
-    ///
-    /// 2) changes in the columns' list that may not necessarily change the range. In particular, this type of change
-    /// is distinguished by the 'change' parameter set to true. In this case, the row's state should always be computed as
-    /// there is no information on how the list changed, a 'better safe than sorry' approach.
-    protected abstract void updateColumns(IntegerRange columnsRange, boolean changed);
-
-    /// This method mainly exists to react to cell factory changes. When a column changes its factory, there is no need to
-    /// re-compute each rows' state, rather we can just replace the cells for that column with new ones.
-    /// Implementations should have a proper algorithm for the sake of performance.
-    protected abstract boolean replaceCells(VFXTableColumn<T, VFXTableCell<T>> column);
-
-    /// This method should be responsible for computing the ideal width of a cell given the corresponding column so that
-    /// its content can be fully shown. This is important for the table's autosize feature to work properly!
-    protected abstract double getWidthOf(VFXTableColumn<T, ?> column);
 
     //================================================================================
     // Methods
     //================================================================================
-    private void initialize() {
-        setDefaultStyleClasses();
+
+    @SuppressWarnings("unchecked")
+    protected void updateColumns(IntegerRange columnsRange, boolean listChanged) {
+        if (!listChanged && this.columnsRange.equals(columnsRange)) return;
+
+        VFXTable<T> table = getTable();
+        RowsStateMap<T, VFXTableCell<T>> nCells = new RowsStateMap<>();
+        List<Node> added = new ArrayList<>();
+        for (Integer index : columnsRange) {
+            VFXTableColumn<T, VFXTableCell<T>> column = (VFXTableColumn<T, VFXTableCell<T>>) table.columns().get(index);
+            VFXTableCell<T> cell = cells.remove(column);
+
+            // Common columns
+            if (cell != null) {
+                // Index needs to be updated only and only if the columns' list changed
+                if (listChanged) cell.updateIndex(index);
+                nCells.put(index, column, cell);
+                continue;
+            }
+
+            // New columns
+            markDirty(index, index);
+            VFXTableCell<T> nCell = getCell(index, column);
+            if (nCell == null) continue;
+            nCells.put(index, column, nCell);
+            added.add(nCell.toNode());
+        }
+
+        // Whatever is left in the old map is not needed anymore, collect the nodes before caching clears it
+        List<Node> removed = getCellsAsNodes();
+        saveAllCells();
+        this.cells = nCells;
+        this.columnsRange = columnsRange;
+
+        if (!removed.isEmpty()) getChildren().removeAll(removed);
+        getChildren().addAll(added);
+        onUpdateChildren();
     }
 
-    /// Sets this row's state to be exactly the same as the one given as parameter. This is mainly useful when the table
-    /// changes its [VFXTable#rowFactoryProperty()] because while it's true that the old rows are to be disposed
-    /// and removed, the new ones would still have the same state of the old ones. In such occasions, it's a great
-    /// optimization to just copy the state of the old corresponding row rather than re-computing it from zero.
-    ///
-    /// To further detail what happens when this is called:
-    ///
-    /// - the index is updated to be the same as the 'other'
-    ///
-    /// - the columns range is copied over
-    ///
-    /// - the cells' map is copied over and the instance in the 'other' row is set to [RowsStateMap#EMPTY]
-    ///
-    /// - calls [VFXTableCell#updateRow(VFXTableRow)] on all the cells from the 'other' row
-    ///
-    /// - finally calls [#onCellsChanged()]
-    ///
-    /// Last but not least, note that such operation is likely going to need a layout request, but it's not the rows'
-    /// responsibility to do so.
+    protected void replaceCells(VFXTableColumn<T, ?> column) {
+        int cIdx = column.getIndex();
+        if (!inRangeOf(cIdx, columnsRange)) return;
+
+        VFXTableCell<T> oldCell = cells.remove(column);
+        if (oldCell != null) {
+            getChildren().remove(oldCell.toNode());
+            oldCell.dispose();
+        }
+
+        VFXTableCell<T> newCell = getCell(cIdx, column);
+        if (newCell == null) return;
+
+        cells.put(cIdx, column, newCell);
+        getChildren().add(newCell.toNode());
+        markDirty(cIdx, cIdx);
+    }
+
     @SuppressWarnings("unchecked")
-    protected void copyState(VFXTableRow<T> other) {
+    protected void copyStateFrom(VFXTableRow<T> other) {
         updateIndex(other.getIndex());
         this.columnsRange = other.columnsRange;
         this.cells = other.cells;
         other.cells = RowsStateMap.EMPTY;
         cells.getByIndex().values().forEach(c -> c.updateRow(this));
-        onCellsChanged();
-        // A layout request is also needed!
+        this.dirtyFrom = other.dirtyFrom;
+        this.dirtyTo = other.dirtyTo;
+        updateChildren();
     }
 
-    /// Clears the row's state without disposing it. This will cause all cells to be cached by [#saveAllCells()],
-    /// the index set to -1, the item set to `null`, the columns range set to [Utils#INVALID_RANGE] and the children
-    /// list to be cleared.
     protected void clear() {
         saveAllCells();
         setIndex(-1);
         setItem(null);
         columnsRange = Utils.INVALID_RANGE;
+        markDirty(0, Integer.MAX_VALUE);
         getChildren().clear();
     }
 
-    /// This is crucial to call when the row's cells change. All cells are 'collected' as nodes by [#getCellsAsNodes()]
-    /// and added to the row's children list.
-    protected void onCellsChanged() {
-        getChildren().setAll(getCellsAsNodes());
-    }
-
-    /// This method is responsible for creating cells given the "parent" column (from which takes the cell factory),
-    /// and its index. Before creating a new cell using the factory, this attempts to retrieve one from the column's
-    /// cells' cache, and only if there are no cached cells, a new one is built. The cache usage is optional and can be
-    /// avoided by passing false as the `useCache` parameter.
-    ///
-    /// In any case, the cell will be fully updated: [VFXTableCell#updateRow(VFXTableRow)], [VFXTableCell#updateColumn(VFXTableColumn)],
-    /// [VFXTableCell#updateItem(Object)] (if de-cached), and [VFXTableCell#updateIndex(int)].
-    protected VFXTableCell<T> getCell(int index, VFXTableColumn<T, VFXTableCell<T>> column, boolean useCache) {
+    protected VFXTableCell<T> getCell(int index, VFXTableColumn<T, ?> column) {
         T item = getItem();
         VFXTableCell<T> cell;
-        if (useCache && column.cacheSize() > 0) { // Try cache first
-            cell = column.cache().take();
+        if (column.cacheSize() > 0) {
+            cell = column.getCellsCache().take();
             cell.updateItem(item);
-        } else { // Create new otherwise
+        } else {
             cell = column.create(item);
             if (cell == null) return null; // Take into account null generators
         }
@@ -202,23 +164,12 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
         return cell;
     }
 
-    /// Asks the given column to save the given cell in its cache. Beware that this operation won't remove the cell
-    /// from the state map and the children list; therefore, you must do it before calling this
-    ///
-    /// By convention, when this is called, the cell's row and column properties are reset to `null`.
-    /// This is to clearly indicate that the cell is not in the viewport anymore.
     protected void saveCell(VFXTableColumn<T, VFXTableCell<T>> column, VFXTableCell<T> cell) {
-        column.cache().cache(cell);
+        column.getCellsCache().cache(cell);
         cell.updateRow(null);
         cell.updateColumn(null);
-        // A cell (or row) that is not in the viewport anymore should state it clearly
-        // This is the convention, therefore, set both to 'null'
     }
 
-    /// Caches all the row's cells by iterating over the state map and calling [#saveCell(VFXTableColumn, VFXTableCell)].
-    /// The difference here is that the state map is also cleared at the end.
-    ///
-    /// Beware that this will not call [#onCellsChanged()], therefore, if needed, you will have to do it afterward.
     @SuppressWarnings("unchecked")
     protected boolean saveAllCells() {
         if (cells.isEmpty()) return false;
@@ -231,33 +182,51 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
         return true;
     }
 
-    /// This core method is responsible for sizing and positioning the cells in the row.
-    /// This is done by iterating over the columns range, getting every cell and, if not `null`, delegating the
-    /// operation to [VFXTableHelper#layoutCell(int, VFXTableCell)].
-    ///
-    /// This only defines the algorithm and is not automatically called by the row. Rather, it's the default table skin
-    /// to call this on each row upon a layout request received from the [VFXTable#needsViewportLayoutProperty()].
-    ///
-    /// **Note** that this implementation allows having columns that produce `null` cells.
-    protected void layoutCells() {
-        // Some columns may not be present in the map as the cell factory could be null or produce null cells,
-        // so such cases are simply skipped. The range index is the column's absolute index, which is both how the
-        // cells are mapped and what the layout method expects, so it is passed straight through.
+    protected void updateChildren() {
+        getChildren().setAll(getCellsAsNodes());
+        onUpdateChildren();
+    }
+
+    protected void onUpdateChildren() {}
+
+    protected void markDirty(int from, int to) {
+        dirtyFrom = Math.min(dirtyFrom, from);
+        dirtyTo = Math.max(dirtyTo, to);
+    }
+
+    protected void layoutCells(int from, int to) {
         VFXTable<T> table = getTable();
-        if (table == null || !table.isNeedsViewportLayout()) return;
+        if (table == null) return;
+
+        from = Math.min(from, dirtyFrom);
+        to = Math.max(to, dirtyTo);
+        if (from > to) return; // not dirty
+
+        int lo = Math.max(columnsRange.getMin(), from);
+        int hi = Math.min(columnsRange.getMax(), to);
+
         VFXTableHelper<T> helper = table.getHelper();
-        for (Integer idx : columnsRange) {
-            VFXTableCell<T> cell = cells.get(idx);
-            if (cell != null) helper.layoutCell(idx, cell);
+        for (int i = lo; i <= hi; i++) {
+            VFXTableCell<T> cell = cells.get(i);
+            if (cell != null) helper.layoutCell(i, cell);
         }
+        dirtyFrom = Integer.MAX_VALUE;
+        dirtyTo = Integer.MIN_VALUE;
     }
 
     //================================================================================
     // Overridden Methods
     //================================================================================
+
     @Override
     public Region toNode() {
         return this;
+    }
+
+    @Override
+    public void onCreated(VFXContext<T> context) {
+        if (this.context == null)
+            this.context = context;
     }
 
     @Override
@@ -268,26 +237,12 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
     @Override
     public void updateItem(T item) {
         setItem(item);
+        cellsByIndex().values().forEach(c -> c.updateItem(item));
     }
 
     @Override
-    public void onCreated(VFXContext<T> context) {
-        if (this.context == null)
-            this.context = context;
-    }
+    protected void layoutChildren() {/*manual, no-op*/}
 
-    @Override
-    public List<String> defaultStyleClasses() {
-        return List.of("vfx-row");
-    }
-
-    /// Overridden to be a no-op. We manage the layout manually like real giga-chads.
-    @Override
-    protected void layoutChildren() {}
-
-
-    /// Automatically called by the table's system when the row is not needed anymore. Most of the operations are performed
-    /// by [#clear()]. In addition, the table's instance is set to `null`.
     @Override
     public void dispose() {
         clear();
@@ -303,16 +258,13 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
     }
 
     public VFXTable<T> getTable() {
-        return Optional.ofNullable(context())
-            .map(c -> (VFXTable<T>) c.getContainer())
-            .orElse(null);
+        return (VFXTable<T>) ofNullable(context()).map(VFXContext::getContainer).orElse(null);
     }
 
     public int getIndex() {
         return index.get();
     }
 
-    /// Specifies the index of the item displayed by the row and its cells.
     public ReadOnlyIntegerProperty indexProperty() {
         return index.getReadOnlyProperty();
     }
@@ -325,7 +277,6 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
         return item.get();
     }
 
-    /// Specifies the object displayed by the row and its cells.
     public ReadOnlyObjectProperty<T> itemProperty() {
         return item.getReadOnlyProperty();
     }
@@ -334,28 +285,19 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
         this.item.set(item);
     }
 
-    /// The range of columns visible in the viewport. This should always be the same as the current [VFXTableState],
-    /// and it's used to make the row always have the correct cells displayed (in accord to the visualized columns).
-    public IntegerRange getColumnsRange() {
+    public IntegerRange columnsRange() {
         return columnsRange;
     }
 
-    /// @return the row's cells as an unmodifiable [SequencedMap], mapped by their column's **absolute** index in
-    /// [VFXTable#getColumns()] (not by the row's own [#indexProperty()], every cell in a row shares that one)
-    public SequencedMap<Integer, VFXTableCell<T>> getCellsByIndex() {
-        return cells.getByIndex();
-    }
-
-    /// @return the row's state map, which contains the cells mapped both by their column's **absolute** index in
-    /// [VFXTable#getColumns()] and by the cell's "parent" column instance
-    protected RowsStateMap<T, VFXTableCell<T>> getCells() {
+    public StateMapBase<VFXTableColumn<T, ?>, T, VFXTableCell<T>> cells() {
         return cells;
     }
 
-    /// Converts and collects all the cells from the row's state map to JavaFX nodes by using [VFXCell#toNode()].
+    public SequencedMap<Integer, VFXTableCell<T>> cellsByIndex() {
+        return cells.getByIndex();
+    }
+
     public List<Node> getCellsAsNodes() {
-        return getCellsByIndex().values().stream()
-            .map(VFXCell::toNode)
-            .toList();
+        return cellsByIndex().values().stream().map(VFXCell::toNode).toList();
     }
 }

@@ -154,6 +154,10 @@ public class VFXCellsCache<T, C extends VFXCell<T>> {
         return queue.size();
     }
 
+    public int getCapacity() {
+        return queue.getCapacity();
+    }
+
     /// Sets the cache's capacity.
     public VFXCellsCache<T, C> setCapacity(int capacity) {
         queue.setCapacity(capacity);

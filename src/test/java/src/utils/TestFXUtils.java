@@ -24,7 +24,6 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import org.testfx.api.FxToolkit;
 
-import static interactive.table.TableTestUtils.rowsCounter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestFXUtils {
@@ -55,7 +54,6 @@ public class TestFXUtils {
 
     public static void resetCounters() {
         counter.reset();
-        rowsCounter.reset();
     }
 
     public static StackPane setupStage() {

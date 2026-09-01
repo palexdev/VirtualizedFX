@@ -25,14 +25,14 @@ import java.util.function.Supplier;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.SizeProperty;
-import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
+import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.behavior.MFXBehavior;
 import io.github.palexdev.mfxcore.controls.MFXControl;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
-import io.github.palexdev.mfxcore.observables.When;
+import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainer;
@@ -41,199 +41,47 @@ import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
-import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
-import io.github.palexdev.virtualizedfx.grid.VFXGrid;
-import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXTableStateProperty;
-import io.github.palexdev.virtualizedfx.table.VFXTableHelper.FixedTableHelper;
-import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VariableTableHelper;
-import io.github.palexdev.virtualizedfx.table.ViewportLayoutRequest.ViewportLayoutRequestProperty;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
+import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VFXDefaultTableHelper;
+import io.github.palexdev.virtualizedfx.table.ViewportLayoutRequest.ViewportLayoutRequestProperty;
+import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
-import javafx.scene.shape.Rectangle;
 
+import static io.github.palexdev.mfxcore.controls.MFXStyleable.styleClasses;
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
 
-/// Implementation of a virtualized container to show a list of items as tabular data.
-/// The default style class is: '.vfx-table'.
-///
-/// Extends [MFXControl], implements [VFXContainer], has its own skin implementation [VFXTableSkin]
-/// and behavior [VFXTableManager]. Uses cells of type [VFXTableCell].
-///
-/// This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
-/// [VFXTableState] when changing. The state determines how and which items are displayed in the container.
-///
-/// **Core features & Implementation Details**
-///
-/// - This container is a bit special because it's like a combination of both [VFXList] and [VFXGrid].
-/// We are displaying data in two dimensions, just like the grid, because we have both the items and the columns.
-/// However, each item occupies a row, just like in the list. Because of such nature, this component is also more complex
-/// to use/setup. There are three core aspects:
-///
-/// 1) The columns: to display tabular data from a single object type, we usually want to divide such objects in data fragments,
-///    where each type belongs to a specific category. This is the columns' role, and to do this, we have to introduce the second core aspect...
-/// 2) The cell factory is not a property of the container anymore, rather, each column has its cell factory.
-///    This way, every column can build a cell that is going to extract the appropriate piece of data from the object type (e.g., User Object -> Name String).
-///    The default cell implementations have specific properties to do exactly this, so you don't really need a different cell type for each column;
-///    to be precise, you just need to set the appropriate function to extract the data and display it.
-///    However, note that the container does not force you to use such defaults, in theory, you could come up with a totally different strategy if you like.
-/// 3) The cells are not positioned directly into the viewport, rather, they are grouped in rows. So, you'll also need to specify a row factory now.
-///    By default, [VFXDefaultTableRow] is used, you may want to extend such class and change the factory to implement missing features.
-///    As for the reasons, there are fundamentally two:
-///      - Selection: suppose you have a selection model, you click on a cell, and you now want the entire row to be highlighted.
-///         I won't say it's impossible, but it's definitely not practical. You would have to manage every single cell in the row,
-///         and it also makes it harder to style in CSS.
-///     - The base class [VFXTableRow] actually specifies some abstract methods that are crucial for the system to correctly manage the cells.
-///         Such methods could, in theory, be placed elsewhere, but doing it like this makes everything cleaner and easier to handle.
-///
-/// Last but not least, there is another peculiar feature worth mentioning. Virtualized containers are super efficient mainly
-/// for two reasons: every cell has a fixed size, because of this, it's easy to determine how many cells we need, which items
-/// to display, and thus we just create and render the needed number of nodes. The table, like the list and the grid, is no different.
-/// There are a bunch of properties to do what I just described which will be discussed more in depth below. The point is,
-/// usually, tables have fixed cell heights, but the width depends on the "parent" column. Also, they often offer the possibility
-/// of resizing columns to fit the "children" cells' content, or even the possibility of resizing each column with the mouse.
-/// In other words, to support such features the x-axis can't be virtualized by a simple multiplication anymore, since
-/// every column may then have a different width. For this reason, and because I strive to make things as flexible as
-/// possible for the sake of the users, I implemented two layout modes [ColumnsLayoutMode]. Both virtualize the
-/// x-axis; what differs is how a column's width and position are computed. I'll detail how it works below, just
-/// know that this is only one of the many mechanisms that regulate the columns' width.
-///
-/// - The default behavior implementation, [VFXTableManager], can be considered as the name suggests more like
-/// a 'manager' than an actual behavior. It is responsible for reacting to core changes in the functionalities defined here
-/// to produce a new state.
-/// The state can be considered as a 'picture' of the container at a certain time. Each combination of the variables that
-/// influence the way items are shown (how many, start, end, changes in the list, etc.) will produce a specific state.
-/// Because of how the table is designed, there are actually two kinds of states here.  The first one is common to all
-/// virtualized containers, and represents the overall state of the component, for the table it's the [VFXTableState]
-/// class. The other one is specific to the table, and it's actually the [VFXTableRow] class itself.
-/// The global state tells how many rows should be present in the viewport, which items from the list (rows range)
-/// and which "data fragments" (columns range) to display; but then each row has its sub-state, they keep the cells' list,
-/// the columns range, and are responsible for updating the cells when needed as well as positioning and sizing them.
-/// Of course, you are free to customize pretty much all of these mechanisms, BUT, beware, VFX components are no joke,
-/// they are complex, make sure to read the documentation before!
-///
-/// - The items' list is managed automatically (permutations, insertions, removals, updates). Compared to previous
-/// algorithms, the [VFXTableManager] adopts a much simpler strategy while still trying to keep the cell updates count
-/// as low as possible to improve performance. See [VFXTableManager#onItemsChanged()].
-///
-/// - The columns' list is also managed automatically. Now it's even more convenient as it's not needed to pass
-/// the table instance to the column object, rather the manager will automatically set the reference when they are
-/// added/removed from the table.
-///
-/// - The function used to generate the rows, called "rowFactory", can be changed anytime, even at runtime, see
-/// [VFXTableManager#onRowFactoryChanged()].
-///
-/// - Core computations such as the range of rows, the range of columns, the estimated size, the layout of cells, etc.,
-/// are delegated to a separate 'helper' class which is the [VFXTableHelper]. There are two concrete implementations
-/// for each of the [ColumnsLayoutMode]. You are allowed to change the helper through the [#helperFactoryProperty()].
-///
-/// - The vertical and horizontal positions are available through the properties [#hPosProperty()] and [#vPosProperty()]
-/// It could indeed be possible to use a single property for the position, but they are split for performance reasons.
-///
-/// - The virtual bounds of the container are given by two properties:
-///   1) the [#virtualMaxXProperty()] which specifies the total number of pixels on the x-axis
-///   2) the [#virtualMaxYProperty()] which specifies the total number of pixels on the y-axis
-///
-/// - You can access the current state through the [#stateProperty()]. The state gives crucial information about
-/// the container such as the rows range, the columns range and the visible rows (by index and by item). If you'd like to observe
-/// for changes in the displayed items, then you want to add a listener on this property. See also [VFXTableState].
-///
-/// - It is possible to force the viewport to update the layout by invoking [#requestViewportLayout()],
-/// although this should never be necessary as it is automatically handled by "system".
-///
-/// - The columns' size can be controlled through the [#columnsSizeProperty()].
-/// When using the [ColumnsLayoutMode#FIXED], every column will have the width specified by the property.
-/// Instead, when using the other mode [ColumnsLayoutMode#VARIABLE], the value is treated as the minimum width
-/// every column should have. The height is always the same for every column for obvious reasons.
-/// (Make sure to also read [VFXTableColumn] to learn how columns' width is managed)
-///
-/// The [#columnsLayoutModeProperty()] allows you to specify how to lay out and handle the columns.
-///
-/// Just like the list and the grid, the table also makes use of buffers to render a couple more rows and columns to
-/// make the scrolling smoother. There are two buffers, one for the columns [#columnsBufferSizeProperty()] and one
-/// for the rows [#rowsBufferSizeProperty()]. Both [ColumnsLayoutMode]s honor the columns' buffer: they window the
-/// columns the same way and differ only in how a column's width and position are computed.
-///
-/// Also, just like the list and the grid, the table makes use of caches to store rows and cells that are not needed
-/// anymore but could be used again in the future. One cache is here (table's class) and is responsible for storing rows
-/// (since the row factory is also here), the other is in each [VFXTableColumn] and is responsible for storing cells
-/// (since every column has its own cell factory). You can control the caches' capacity by the following properties:
-/// [#rowsCacheCapacityProperty()], [VFXTableColumn#cellsCacheCapacityProperty()].
-///
-/// _Notes:_
-/// 1) The cache needs to know how to generate rows/cells for the [VFXCellsCache#populate()] feature to
-///             work properly. This is automatically handled by the table and columns, their factory will always be
-///             "shared" with their cache instances.
-/// 2) By default both capacities are set to 10 cells. However, for the table's nature, such number is likely to be
-///             too small, but it also depends from case to case. You can play around with the values and see if there's
-///             any benefit to performance.
-///
-/// **Other features {@literal &} Details**
-///
-/// - One of the shared features between other virtualized containers is the way layout requests are handled: by having a
-/// read-only property [#needsViewportLayoutProperty()] and a way to request it [#requestViewportLayout()].
-/// However, the table handles request a bit differently. While in other containers, the property is just boolean value,
-/// here the request is a custom class: [ViewportLayoutRequest]. The reason is simple, but solves a series of
-/// inconvenient issues. First, the request can carry a column object that can be used by layout methods to optimize the process,
-/// thus computing only a portion of the layout, this mainly useful when using the [ColumnsLayoutMode#VARIABLE] mode.
-/// However, this is optional, meaning that if the column instance is `null`, then a full layout must be issued.
-/// Second, requests can also act as callbacks, through a boolean property one can know if the layout was actually computed
-/// or not. This is crucial to make the autosize feature work (see below).
-///
-/// - The table allows you to autosize all or specific columns so that the content is fully shown. You can do so by
-/// calling either: [#autosizeColumn(int,boolean)], [#autosizeColumn(VFXTableColumn,boolean)] or [#autosizeColumns(boolean)].
-/// Their behavior depends on the set [ColumnsLayoutMode].
-/// In [ColumnsLayoutMode#VARIABLE] mode, columns will be resized to make their header and all their "children" cells fit the content.
-/// In [ColumnsLayoutMode#FIXED] mode, since columns can't have different size, the algorithm chooses the greatest
-/// needed width among all the columns and then sets the [#columnsSizeProperty()].
-/// Of course, the width computation is done on the currently shown items, meaning that if you scroll and there are now
-/// items that are even bigger than the current set width, then you'll have to autosize again. The same holds on the
-/// columns axis: a column outside the current columns range has no cells in the viewport to measure, so it can only
-/// be sized to fit its header.
-///
-/// - Columns' indexes. Since columns are stored in a list, there is not a fast way to retrieve
-/// the index of a column from the instance itself, [List#indexOf(Object)] is too slow in the context of a virtualized
-/// container. So, the system tries to avoid as much as possible to use columns' indexes, BUT implements a mechanism to
-/// make it much, much faster. Every [VFXTableColumn] has a read-only property to store its index: [VFXTableColumn#indexProperty()].
-/// The system automatically updates the property at layout time (see [VFXTableSkin#updateColumnIndex(VFXTableColumn, int)]),
-/// and offers a method [#indexOf(VFXTableColumn)] to retrieve it. That method is more than a getter: it validates the
-/// cached value against the list and repairs it when it has gone stale, so always go through it rather than reading
-/// the property.
-///
-/// - **Columns re-ordering/swapping**. Since table's columns are nodes which are part of the viewport, adding duplicates
-/// to the list will generate a JavaFX exception. For this reason, any time you want to make some changes to the columns'
-/// list, that may involve having duplicates in it, it's recommended to use a temporary new list and then use 'setAll'.
-/// [VFXTableColumn] offers a utility method to swap to columns, so please use [VFXTableColumn#swapColumns(VFXTable, int, int)]
-/// or [VFXTableColumn#swapColumns(ObservableList, int, int)] instead of [Collections#swap(List, int, int)].
-///
-/// @param <T> the type of items in the table
-@SuppressWarnings({"rawtypes", "unchecked"})
 public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrollable {
+
     //================================================================================
     // Properties
     //================================================================================
+
     private final VFXContext<T> context = new VFXContext<>(this);
 
-    private final VFXCellsCache<T, VFXTableRow<T>> cache;
-    private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList()) {
+    private final ListProperty<T> items = new SimpleListProperty<>() {
         @Override
         public void set(ObservableList<T> newValue) {
             if (newValue == null) newValue = FXCollections.observableArrayList();
             super.set(newValue);
         }
     };
-    private final CellFactory<T, VFXTableRow<T>> rowFactory = new CellFactory<>(context);
+
+    private final VFXCellsCache<T, VFXTableRow<T>> rowsCache;
+    private final CellFactory<T, VFXTableRow<T>> rowsFactory = new CellFactory<>(context);
+
     private final ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = FXCollections.observableArrayList();
 
     private final ReadOnlyObjectWrapper<VFXTableHelper<T>> helper = new ReadOnlyObjectWrapper<>() {
@@ -241,14 +89,14 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         public void set(VFXTableHelper<T> newValue) {
             if (newValue == null)
                 throw new NullPointerException("Table helper cannot be null!");
-            VFXTableHelper<T> oldValue = get();
-            if (oldValue != null) oldValue.dispose();
+            VFXTableHelper<T> old = get();
+            if (old != null) old.dispose();
             super.set(newValue);
         }
     };
-    private final FunctionProperty<ColumnsLayoutMode, VFXTableHelper<T>> helperFactory = new FunctionProperty<>(defaultHelperFactory()) {
+    private final SupplierProperty<VFXTableHelper<T>> helperFactory = new SupplierProperty<>() {
         @Override
-        public void set(Function<ColumnsLayoutMode, VFXTableHelper<T>> newValue) {
+        public void set(Supplier<VFXTableHelper<T>> newValue) {
             if (newValue == null)
                 throw new NullPointerException("Helper helper factory cannot be null!");
             super.set(newValue);
@@ -256,216 +104,156 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
         @Override
         protected void invalidated() {
-            VFXTableHelper<T> helper = get().apply(getColumnsLayoutMode());
-            setHelper(helper);
+            setHelper(get().get());
         }
     };
-    private final DoubleProperty vPos = PropUtils.clampedDoubleProperty(
-        () -> 0.0,
-        this::getMaxVScroll
-    );
-    private final DoubleProperty hPos = PropUtils.clampedDoubleProperty(
-        () -> 0.0,
-        this::getMaxHScroll
-    );
 
+    private final DoubleProperty vPos = PropUtils.doubleProperty()
+        .mapper(val -> NumberUtils.clamp(val, 0.0, getMaxVScroll()))
+        .build();
+    private final DoubleProperty hPos = PropUtils.doubleProperty()
+        .mapper(val -> NumberUtils.clamp(val, 0.0, getMaxHScroll()))
+        .build();
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private final VFXTableStateProperty<T> state = new VFXTableStateProperty<>(VFXTableState.INVALID);
-    private final ViewportLayoutRequestProperty<T> needsViewportLayout = new ViewportLayoutRequestProperty<>();
+    private final ViewportLayoutRequestProperty needsViewportLayout = new ViewportLayoutRequestProperty();
 
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXTable() {
         this(FXCollections.observableArrayList());
-
     }
 
     public VFXTable(ObservableList<T> items) {
-        this(items, FXCollections.observableArrayList());
+        this(items, Collections.emptyList());
     }
 
     public VFXTable(ObservableList<T> items, Collection<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns) {
         setItems(items);
         this.columns.setAll(columns);
-        cache = createCache();
+        rowsCache = createRowsCache();
         initialize();
     }
 
     //================================================================================
+    // Static Methods
+    //================================================================================
+
+    // TODO weights
+
+    //================================================================================
     // Methods
     //================================================================================
+
     private void initialize() {
-        setDefaultStyleClasses();
-        setHelper(getHelperFactory().apply(getColumnsLayoutMode()));
-        setRowFactory(defaultRowFactory());
+        setRowsFactory(defaultRowsFactory());
+        setHelperFactory(defaultHelperFactory());
+
+        columns.forEach(c -> c.setTable(this)); // init columns
+        columns.addListener((ListChangeListener<? super VFXTableColumn<T, ? extends VFXTableCell<T>>>) this::onColumnsChanged);
     }
 
-    /// Tries to retrieve a column from the columns' list by the given index
-    /// to then delegate to [#autosizeColumn(VFXTableColumn,boolean)].
-    public void autosizeColumn(int index, boolean waitState) {
-        try {
-            VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(index);
-            if (column == null) return;
-            autosizeColumn(column, waitState);
-        } catch (Exception ignored) {}
+    protected VFXCellsCache<T, VFXTableRow<T>> createRowsCache() {
+        return new VFXCellsCache<>(rowsFactory, getRowsCacheCapacity());
     }
 
-    /// Auto-sizes a column so that its header and all its "children" cells' content is visible.
-    /// The actual resize is delegated to the helper: [VFXTableHelper#autosizeColumn(VFXTableColumn)].
-    ///
-    /// **Note:** this operation is peculiar in the sense that there are a few conditions to meet before the actual
-    /// resize is done. You see, to compute the maximum width to allow the content to fit, the table must be in a scene
-    /// (otherwise CSS is not processed and any measurement would be meaningless), its state must be valid, and the
-    /// table, the columns and the cells must have been laid out at least one time ([ViewportLayoutRequest#wasDone()]).
-    /// So, if any of these conditions is not met when calling this method, the operation is **delayed**,
-    /// and will run as soon as they all are.
-    /// To be precise, the operation could still be delayed, the other conditions are defined in the helper,
-    /// see [VFXTableHelper#autosizeColumn(VFXTableColumn)].
-    ///
-    /// @param waitState whether to also wait for the state to have rows. A state with no rows means no cells to measure,
-    /// which in turn means a column sized to fit its header only. Pass `true` when the table's items are going to be
-    /// set/loaded after this call.
-    /// **Beware:** if the table never gets any item, the operation is going to be delayed forever
-    public void autosizeColumn(VFXTableColumn<T, ?> column, boolean waitState) {
-        if (getColumnsLayoutMode() == ColumnsLayoutMode.FIXED) return;
-        When.onChanged(needsViewportLayout)
-            .condition((o, n) ->
-                getScene() != null &&
-                getState() != VFXTableState.INVALID &&
-                (!waitState || !getState().isEmpty()) &&
-                n.wasDone())
-            .then((o, n) -> getHelper().autosizeColumn(column))
-            .invalidating(sceneProperty())
-            .oneShot(true)
-            .executeNow(() ->
-                getScene() != null &&
-                getState() != VFXTableState.INVALID &&
-                (!waitState || !getState().isEmpty()) &&
-                getViewportLayoutRequest().wasDone())
-            .listen();
-    }
-
-    /// This will simply call [#autosizeColumn(VFXTableColumn,boolean)] on all the table's columns.
-    /// To be precise, the actual operation is delegated to the helper: [VFXTableHelper#autosizeColumns()].
-    ///
-    /// Just like [#autosizeColumn(VFXTableColumn,boolean)], the operation could be **delayed** until all the conditions
-    /// to fulfill it are met.
-    ///
-    /// @param waitState whether to also wait for the state to have rows. A state with no rows means no cells to measure,
-    /// which in turn means columns sized to fit their header only. Pass `true` when the table's items are going to be
-    /// set/loaded after this call.
-    /// **Beware:** if the table never gets any item, the operation is going to be delayed forever
-    public void autosizeColumns(boolean waitState) {
-        When.onChanged(needsViewportLayout)
-            .condition((o, n) ->
-                getScene() != null &&
-                getState() != VFXTableState.INVALID &&
-                (!waitState || !getState().isEmpty()) &&
-                n.wasDone())
-            .then((o, n) -> getHelper().autosizeColumns())
-            .invalidating(sceneProperty())
-            .oneShot(true)
-            .executeNow(() ->
-                getScene() != null &&
-                getState() != VFXTableState.INVALID &&
-                (!waitState || !getState().isEmpty()) &&
-                getViewportLayoutRequest().wasDone())
-            .listen();
-    }
-
-    /// Retrieves the given column's index in the table's columns' list.
-    ///
-    /// Every [VFXTableColumn] caches its own index in [VFXTableColumn#indexProperty()], which the skin refreshes at
-    /// layout time. That cache can lag, so this does not trust it: it checks that the column really sits at the index
-    /// it claims, `columns.get(idx) == column`. Columns are nodes and the list cannot hold duplicates, so that check
-    /// is exact rather than a heuristic, it cannot pass for a wrong index nor fail for a right one.
-    ///
-    /// On a hit the cost is a bounds check and a reference comparison. On a miss it falls back to
-    /// [List#indexOf(Object)], which is much slower, and **writes the result back onto the column**, so the next call
-    /// is cheap again. Being self-repairing is what makes this safe to call from anywhere, and it is why nothing in
-    /// the library reads [VFXTableColumn#indexProperty()] directly anymore.
-    ///
-    /// **Mind that this writes.** The repair sets the column's index property, and this method is reached from inside
-    /// a binding's invalidation ([ColumnsLayoutCache]'s width binding gets here through its `LayoutInfo`). That is
-    /// safe only as long as nothing listens to [VFXTableColumn#indexProperty()]; a listener there would turn this into
-    /// a re-entrant write during binding invalidation.
-    ///
-    /// @return the column's index, or -1 if the column is `null` or does not belong to this table
-    public int indexOf(VFXTableColumn<T, ?> column) {
-        if (column == null) return -1;
-        int idx = column.getIndex();
-        if (idx < 0 || idx >= columns.size() || columns.get(idx) != column) {
-            idx = columns.indexOf(column);
-            column.setIndex(idx);
-        }
-        return idx;
-    }
-
-    /// Setter for the [#stateProperty()].
-    protected void update(VFXTableState<T> state) {
-        setState(state);
-    }
-
-    /// Responsible for creating the rows' cache instance used by this container.
-    ///
-    /// @see VFXCellsCache
-    /// @see #rowsCacheCapacityProperty()
-    protected VFXCellsCache<T, VFXTableRow<T>> createCache() {
-        return new VFXCellsCache<>(rowFactory, getRowsCacheCapacity());
-    }
-
-    /// @return the default function used to build rows. Uses [VFXDefaultTableRow].
-    protected Function<T, VFXTableRow<T>> defaultRowFactory() {
+    public Function<T, VFXTableRow<T>> defaultRowsFactory() {
         return VFXDefaultTableRow::new;
     }
 
-    /// @return the default function used to build a [VFXTableHelper].
-    protected Function<ColumnsLayoutMode, VFXTableHelper<T>> defaultHelperFactory() {
-        return mode -> mode == ColumnsLayoutMode.FIXED ? new FixedTableHelper<>(this) : new VariableTableHelper<>(this);
+    public Supplier<VFXTableHelper<T>> defaultHelperFactory() {
+        return () -> new VFXDefaultTableHelper<>(this);
     }
 
-    /// Setter for the [#needsViewportLayoutProperty()].
-    /// This sets the property to a new [ViewportLayoutRequest], causing the default skin to recompute the entire layout.
+    protected void updateState(VFXTableState<T> state) {
+        setState(state);
+        requestViewportLayout();
+    }
+
+    protected void updateState(VFXTableState<T> state, IntegerRange interval) {
+        setState(state);
+        requestViewportLayout(interval);
+    }
+
+    protected void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ? extends VFXTableCell<T>>> c) {
+        getHelper().onColumnsChanged(c);
+
+        c.reset();
+        // A setAll operation may end up adding the same columns as before (or even just some of them)
+        // Which means that both wasRemoved and wasAdded computation will run, we don't want that here.
+        // Simply handle removals after ensuring that a column that "was removed" is not still in the list
+        Set<VFXTableColumn<T, ?>> rm = new HashSet<>();
+        // Find the smallest change.getFrom() index from which to invalidate the layout later
+        int from = Integer.MAX_VALUE;
+        while (c.next()) {
+            from = Math.min(from, c.getFrom());
+            if (c.wasRemoved()) rm.addAll(c.getRemoved());
+            if (c.wasAdded()) {
+                for (VFXTableColumn<T, ?> column : c.getAddedSubList()) {
+                    if (rm.contains(column)) {
+                        rm.remove(column);
+                        continue;
+                    }
+                    column.setTable(this);
+                }
+            }
+        }
+        rm.forEach(column -> column.setTable(null));
+
+        getBehavior().onColumnsChanged(from);
+    }
+
     public void requestViewportLayout() {
-        setNeedsViewportLayout(new ViewportLayoutRequest<>());
+        setNeedsViewportLayout(new ViewportLayoutRequest(0, Integer.MAX_VALUE));
     }
 
-    /// Setter for the [#needsViewportLayoutProperty()].
-    /// This sets the property to a new [ViewportLayoutRequest] with the given column, causing the default skin to
-    /// recompute only a portion of the layout.
-    protected void requestViewportLayout(VFXTableColumn<T, ?> column) {
-        setNeedsViewportLayout(new ViewportLayoutRequest<>(column));
+    protected void requestViewportLayout(IntegerRange interval) {
+        setNeedsViewportLayout(Utils.INVALID_RANGE.equals(interval) ?
+            ViewportLayoutRequest.Y_ONLY :
+            new ViewportLayoutRequest(interval.getMin(), interval.getMax()));
     }
+
+    // TODO autosize methods are removed for now to be superseded by AUTOSIZE_ONCE
 
     //================================================================================
     // Overridden Methods
     //================================================================================
 
-    /// {@inheritDoc}
-    ///
-    /// Note that this may be a costly operation due to nested loops. Since cells are inside rows we must first iterate
-    /// over the rows, then iterate on each of their cells and fire an update event on each of them.
     @Override
     public void update(int... indexes) {
+        // TODO can we optimize this?
+        // The first branch updates every row and cell, can't we fire a single event on the container and let it be
+        // delivered to every cell in the scenegraph?
+        //
+        // As for the second branch, we can't do the exactly the same, but maybe we could fire the event on each row
+        // rather than on each individual cell
         VFXTableState<T> state = getState();
         if (state.isEmpty()) return;
         if (indexes.length == 0) {
             state.getRowsByIndex().values().forEach(r ->
-                r.getCellsByIndex().values().forEach(VFXContainerEvent::update)
-            );
+                r.cellsByIndex().values().forEach(VFXContainerEvent::update));
             return;
         }
 
         for (int index : indexes) {
             VFXTableRow<T> row = state.getRowsByIndex().get(index);
             if (row == null) continue;
-            row.getCellsByIndex().values().forEach(VFXContainerEvent::update);
+            row.cellsByIndex().values().forEach(VFXContainerEvent::update);
         }
     }
 
     @Override
     public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
         return () -> new VFXTableManager<>(this);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public VFXTableManager<T> getBehavior() {
+        return (VFXTableManager<T>) super.getBehavior();
     }
 
     @Override
@@ -475,7 +263,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     @Override
     public List<String> defaultStyleClasses() {
-        return List.of("vfx-table");
+        return styleClasses("vfx-table");
     }
 
     @Override
@@ -485,41 +273,24 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         return vsp;
     }
 
-    @Override
-    public VFXTableManager<T> getBehavior() {
-        return (VFXTableManager<T>) super.getBehavior();
-    }
-
     //================================================================================
     // Delegate Methods
     //================================================================================
 
-    /// Delegate for [VFXCellsCache#populate()] (on the rows' cache).
-    ///
-    /// @see #populateCacheAll()
-    public VFXTable<T> populateCache() {
-        cache.populate();
+    public VFXTable<T> populateRowsCache() {
+        rowsCache.populate();
         return this;
     }
 
-    /// Populates the rows' cache and all the table's columns' caches.
-    ///
-    /// @see VFXCellsCache#populate()
-    public VFXTable<T> populateCacheAll() {
-        populateCache();
-        // If we want to create the cells before the table's skin is built, we must initialize the columns by passing
-        // the table's instance down to them. Otherwise, the cell factory is going to fail
-        if (getSkin() == null) getBehavior().onColumnsChanged(null);
-        columns.forEach(VFXTableColumn::populateCache);
+    public VFXTable<T> populateCellsCache() {
+        columns.forEach(VFXTableColumn::populateCellsCache);
         return this;
     }
 
-    /// Delegate for [VFXCellsCache#size()] (on the row's cache).
     public int rowsCacheSize() {
-        return cache.size();
+        return rowsCache.size();
     }
 
-    /// @return the total number of cached cells by iterating over [#getColumns()].
     public int cellsCacheSize() {
         return columns.stream()
             .mapToInt(VFXTableColumn::cacheSize)
@@ -580,52 +351,42 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         return rowsBufferSize;
     }
 
-    /// Delegate for [VFXTableHelper#scrollBy(Orientation, double)] with vertical orientation as parameter.
     public void scrollVerticalBy(double pixels) {
         getHelper().scrollBy(Orientation.VERTICAL, pixels);
     }
 
-    /// Delegate for [VFXTableHelper#scrollBy(Orientation, double)] with horizontal orientation as parameter.
     public void scrollHorizontalBy(double pixels) {
         getHelper().scrollBy(Orientation.HORIZONTAL, pixels);
     }
 
-    /// Delegate for [VFXTableHelper#scrollToPixel(Orientation, double)] with vertical orientation as parameter.
     public void scrollToPixelVertical(double pixel) {
         getHelper().scrollToPixel(Orientation.VERTICAL, pixel);
     }
 
-    /// Delegate for [VFXTableHelper#scrollToPixel(Orientation, double)] with horizontal orientation as parameter.
     public void scrollToPixelHorizontal(double pixel) {
         getHelper().scrollToPixel(Orientation.HORIZONTAL, pixel);
     }
 
-    /// Delegate for [VFXTableHelper#scrollToIndex(Orientation, int)] with vertical orientation as parameter.
     public void scrollToRow(int index) {
         getHelper().scrollToIndex(Orientation.VERTICAL, index);
     }
 
-    /// Delegate for [VFXTableHelper#scrollToIndex(Orientation, int)] with horizontal orientation as parameter.
     public void scrollToColumn(int index) {
         getHelper().scrollToIndex(Orientation.HORIZONTAL, index);
     }
 
-    /// Delegate for [#scrollToRow(int)] with 0 as parameter.
     public void scrollToFirstRow() {
         scrollToRow(0);
     }
 
-    /// Delegate for [#scrollToRow(int)] with `size() - 1` as parameter.
     public void scrollToLastRow() {
         scrollToRow(size() - 1);
     }
 
-    /// Delegate for [#scrollToColumn(int)] with 0 as parameter.
     public void scrollToFirstColumn() {
         scrollToColumn(0);
     }
 
-    /// Delegate for [#scrollToColumn(int)] with `columns.size() - 1` as parameter.
     public void scrollToLastColumn() {
         scrollToColumn(columns.size() - 1);
     }
@@ -633,6 +394,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     //================================================================================
     // Styleable Properties
     //================================================================================
+
     private final StyleableDoubleProperty rowsHeight = new StyleableDoubleProperty(
         StyleableProperties.ROWS_HEIGHT,
         this,
@@ -640,51 +402,11 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         32.0
     );
 
-    private final StyleableObjectProperty<Size> columnsSize = SizeProperty.styleableProperty(
-        StyleableProperties.COLUMNS_SIZE,
-        this,
-        "columnsSize",
-        Size.size(100.0, 32.0)
-    );
-
-    private final StyleableObjectProperty<ColumnsLayoutMode> columnsLayoutMode = new StyleableObjectProperty<>(
-        StyleableProperties.COLUMNS_LAYOUT_MODE,
-        this,
-        "columnsLayoutMode",
-        ColumnsLayoutMode.FIXED
-    ) {
-        @Override
-        protected void invalidated() {
-            setHelper(getHelperFactory().apply(get()));
-        }
-    };
-
-    private final StyleableDoubleProperty extraAutosizeWidth = new StyleableDoubleProperty(
-        StyleableProperties.EXTRA_AUTOSIZE_WIDTH,
-        this,
-        "extraAutosizeWidth",
-        0.0
-    );
-
-    private final StyleableObjectProperty<BufferSize> columnsBufferSize = new StyleableObjectProperty<>(
-        StyleableProperties.COLUMNS_BUFFER_SIZE,
-        this,
-        "columnsBufferSize",
-        BufferSize.standard()
-    );
-
     private final StyleableObjectProperty<BufferSize> rowsBufferSize = new StyleableObjectProperty<>(
         StyleableProperties.ROWS_BUFFER_SIZE,
         this,
         "rowsBufferSize",
         BufferSize.standard()
-    );
-
-    private final StyleableDoubleProperty clipBorderRadius = new StyleableDoubleProperty(
-        StyleableProperties.CLIP_BORDER_RADIUS,
-        this,
-        "clipBorderRadius",
-        0.0
     );
 
     private final StyleableIntegerProperty rowsCacheCapacity = new StyleableIntegerProperty(
@@ -695,21 +417,40 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     ) {
         @Override
         protected void invalidated() {
-            cache.setCapacity(get());
+            int capacity = get();
+            if (capacity < 0) throw new IllegalArgumentException("Cache capacity cannot be negative!");
+            rowsCache.setCapacity(capacity);
         }
     };
+
+    private final StyleableObjectProperty<Size> columnsSize = SizeProperty.styleableProperty(
+        StyleableProperties.COLUMNS_SIZE,
+        this,
+        "columnsSize",
+        Size.size(100.0, 32.0),
+        _ -> getHelper().onColumnsSizeChanged()
+    );
+
+    // TODO fill policy
+
+    private final StyleableObjectProperty<BufferSize> columnsBufferSize = new StyleableObjectProperty<>(
+        StyleableProperties.COLUMNS_BUFFER_SIZE,
+        this,
+        "columnsBufferSize",
+        BufferSize.standard()
+    );
+
+    private final StyleableDoubleProperty clipBorderRadius = new StyleableDoubleProperty(
+        StyleableProperties.CLIP_BORDER_RADIUS,
+        this,
+        "clipBorderRadius",
+        0.0
+    );
 
     public double getRowsHeight() {
         return rowsHeight.get();
     }
 
-    /// Specifies the fixed height for all the table's rows.
-    ///
-    /// Note that the default [VFXTableHelper] implementations will also set the cells' height to this value,
-    /// however you can modify such behavior if needed by providing your custom implementation through the
-    /// [#helperFactoryProperty()].
-    ///
-    /// Can be set in CSS via the property: '-vfx-rows-height'.
     public StyleableDoubleProperty rowsHeightProperty() {
         return rowsHeight;
     }
@@ -718,106 +459,10 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         this.rowsHeight.set(rowsHeight);
     }
 
-    public Size getColumnsSize() {
-        return columnsSize.get();
-    }
-
-    /// Specifies the columns' size as a [Size] object.
-    ///
-    /// Note that the width specified by this property will be used differently depending on the [ColumnsLayoutMode].
-    /// In `FIXED` mode, all columns will have the same width and height specified by the [Size] object.
-    /// In `VARIABLE` mode, the width value will be used as the **minimum** width all columns must have.
-    /// This behavior can also be modified as it is defined by the default [VFXTableHelper] implementations.
-    ///
-    /// Can be set in CSS via the property: '-vfx-columns-size'.
-    public StyleableObjectProperty<Size> columnsSizeProperty() {
-        return columnsSize;
-    }
-
-    public void setColumnsSize(Size columnsSize) {
-        this.columnsSize.set(columnsSize);
-    }
-
-    /// Convenience method to create a new [Size] object and set the [#columnsSizeProperty()].
-    public void setColumnsSize(double w, double h) {
-        setColumnsSize(Size.size(w, h));
-    }
-
-    /// Convenience method to create a new [Size] object and set the [#columnsSizeProperty()].
-    /// The old height will be kept.
-    public void setColumnsWidth(double w) {
-        setColumnsSize(Size.size(w, getColumnsSize().height()));
-    }
-
-    /// Convenience method to create a new [Size] object and set the [#columnsSizeProperty()].
-    /// The old width will be kept.
-    public void setColumnsHeight(double h) {
-        setColumnsSize(Size.size(getColumnsSize().width(), h));
-    }
-
-    public ColumnsLayoutMode getColumnsLayoutMode() {
-        return columnsLayoutMode.get();
-    }
-
-    /// Specifies the layout mode for the table's columns. See [ColumnsLayoutMode].
-    ///
-    /// Can be set in CSS via the property: '-vfx-columns-layout-mode'.
-    public StyleableObjectProperty<ColumnsLayoutMode> columnsLayoutModeProperty() {
-        return columnsLayoutMode;
-    }
-
-    public void setColumnsLayoutMode(ColumnsLayoutMode columnsLayoutMode) {
-        this.columnsLayoutMode.set(columnsLayoutMode);
-    }
-
-    /// Convenience method to switch the table's [ColumnsLayoutMode].
-    public void switchColumnsLayoutMode() {
-        this.columnsLayoutMode.set(ColumnsLayoutMode.next(getColumnsLayoutMode()));
-    }
-
-    public double getExtraAutosizeWidth() {
-        return extraAutosizeWidth.get();
-    }
-
-    /// Specifies an extra number of pixels a column will have when it is auto-sized by the [VFXTableHelper].
-    ///
-    /// In some occasions auto-sizing all the columns may result in the text of each cell being very close to each other,
-    /// which is rather unpleasant to see. This extra amount acts like a "spacing" property between the columns
-    /// when auto-sizing.
-    ///
-    /// Can be set in CSS via the property: '-vfx-extra-autosize-width'.
-    public StyleableDoubleProperty extraAutosizeWidthProperty() {
-        return extraAutosizeWidth;
-    }
-
-    public void setExtraAutosizeWidth(double extraAutosizeWidth) {
-        this.extraAutosizeWidth.set(extraAutosizeWidth);
-    }
-
-    public BufferSize getColumnsBufferSize() {
-        return columnsBufferSize.get();
-    }
-
-    /// Specifies the number of extra columns to add to the viewport to make scrolling smoother.
-    /// See also [VFXContainer#bufferSizeProperty()] and [VFXTableHelper#totalColumns()]
-    ///
-    /// Can be set in CSS via the property: '-vfx-columns-buffer-size'.
-    public StyleableObjectProperty<BufferSize> columnsBufferSizeProperty() {
-        return columnsBufferSize;
-    }
-
-    public void setColumnsBufferSize(BufferSize columnsBufferSize) {
-        this.columnsBufferSize.set(columnsBufferSize);
-    }
-
     public BufferSize getRowsBufferSize() {
         return rowsBufferSize.get();
     }
 
-    /// Specifies the number of extra rows to add to the viewport to make scrolling smoother.
-    /// See also [VFXContainer#bufferSizeProperty()] and [VFXTableHelper#totalRows()].
-    ///
-    /// Can be set in CSS via the property: '-vfx-rows-buffer-size'.
     public StyleableObjectProperty<BufferSize> rowsBufferSizeProperty() {
         return rowsBufferSize;
     }
@@ -826,35 +471,10 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         this.rowsBufferSize.set(rowsBufferSize);
     }
 
-    public double getClipBorderRadius() {
-        return clipBorderRadius.get();
-    }
-
-    /// Used by the viewport's clip to set its border radius.
-    /// This is useful when you want to make a rounded container, this prevents the content from going outside the view.
-    ///
-    /// **Side note:** the clip is a [Rectangle], now for some fucking reason, the rectangle's arcWidth and arcHeight
-    /// values used to make it round do not act like the border-radius or background-radius properties,
-    /// instead their value is usually 2 / 2.5 times the latter.
-    /// So, for a border radius of 5, you want this value to be at least 10/13.
-    ///
-    /// Can be set in CSS via the property: '-vfx-clip-border-radius'.
-    public StyleableDoubleProperty clipBorderRadiusProperty() {
-        return clipBorderRadius;
-    }
-
-    public void setClipBorderRadius(double clipBorderRadius) {
-        this.clipBorderRadius.set(clipBorderRadius);
-    }
-
     public int getRowsCacheCapacity() {
         return rowsCacheCapacity.get();
     }
 
-    /// Specifies the maximum number of rows the cache can contain at any time. Excess will not be added to the queue and
-    /// disposed immediately.
-    ///
-    /// Can be set in CSS via the property: '-vfx-rows-cache-capacity'.
     public StyleableIntegerProperty rowsCacheCapacityProperty() {
         return rowsCacheCapacity;
     }
@@ -863,9 +483,58 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         this.rowsCacheCapacity.set(rowsCacheCapacity);
     }
 
+    public Size getColumnsSize() {
+        return columnsSize.get();
+    }
+
+    public StyleableObjectProperty<Size> columnsSizeProperty() {
+        return columnsSize;
+    }
+
+    public void setColumnsSize(Size columnsSize) {
+        this.columnsSize.set(columnsSize);
+    }
+
+    public void setColumnsSize(double width, double height) {
+        this.columnsSize.set(new Size(width, height));
+    }
+
+    public void setColumnsWidth(double width) {
+        this.columnsSize.set(new Size(width, getColumnsSize().height()));
+    }
+
+    public void setColumnsHeight(double height) {
+        this.columnsSize.set(new Size(getColumnsSize().width(), height));
+    }
+
+    public BufferSize getColumnsBufferSize() {
+        return columnsBufferSize.get();
+    }
+
+    public StyleableObjectProperty<BufferSize> columnsBufferSizeProperty() {
+        return columnsBufferSize;
+    }
+
+    public void setColumnsBufferSize(BufferSize columnsBufferSize) {
+        this.columnsBufferSize.set(columnsBufferSize);
+    }
+
+    public double getClipBorderRadius() {
+        return clipBorderRadius.get();
+    }
+
+    public StyleableDoubleProperty clipBorderRadiusProperty() {
+        return clipBorderRadius;
+    }
+
+    public void setClipBorderRadius(double clipBorderRadius) {
+        this.clipBorderRadius.set(clipBorderRadius);
+    }
+
     //================================================================================
     // CssMetaData
     //================================================================================
+
     private static class StyleableProperties {
         private static final StyleablePropertyFactory<VFXTable<?>> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
@@ -877,26 +546,26 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
                 32.0
             );
 
+        private static final CssMetaData<VFXTable<?>, BufferSize> ROWS_BUFFER_SIZE =
+            FACTORY.createEnumCssMetaData(
+                BufferSize.class,
+                "-vfx-rows-buffer-size",
+                VFXTable::rowsBufferSizeProperty,
+                BufferSize.standard()
+            );
+
+        private static final CssMetaData<VFXTable<?>, Number> ROWS_CACHE_CAPACITY =
+            FACTORY.createSizeCssMetaData(
+                "-vfx-rows-cache-capacity",
+                VFXTable::rowsCacheCapacityProperty,
+                10
+            );
+
         private static final CssMetaData<VFXTable<?>, Size> COLUMNS_SIZE =
             SizeProperty.cssMetaData(
                 "-vfx-columns-size",
                 VFXTable::columnsSizeProperty,
                 Size.size(100, 32)
-            );
-
-        private static final CssMetaData<VFXTable<?>, ColumnsLayoutMode> COLUMNS_LAYOUT_MODE =
-            FACTORY.createEnumCssMetaData(
-                ColumnsLayoutMode.class,
-                "-vfx-columns-layout-mode",
-                VFXTable::columnsLayoutModeProperty,
-                ColumnsLayoutMode.FIXED
-            );
-
-        private static final CssMetaData<VFXTable<?>, Number> EXTRA_AUTOSIZE_WIDTH =
-            FACTORY.createSizeCssMetaData(
-                "-vfx-extra-autosize-width",
-                VFXTable::extraAutosizeWidthProperty,
-                0.0
             );
 
         private static final CssMetaData<VFXTable<?>, BufferSize> COLUMNS_BUFFER_SIZE =
@@ -907,14 +576,6 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
                 BufferSize.standard()
             );
 
-        private static final CssMetaData<VFXTable<?>, BufferSize> ROWS_BUFFER_SIZE =
-            FACTORY.createEnumCssMetaData(
-                BufferSize.class,
-                "-vfx-rows-buffer-size",
-                VFXTable::rowsBufferSizeProperty,
-                BufferSize.standard()
-            );
-
         private static final CssMetaData<VFXTable<?>, Number> CLIP_BORDER_RADIUS =
             FACTORY.createSizeCssMetaData(
                 "-vfx-clip-border-radius",
@@ -922,18 +583,11 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
                 0.0
             );
 
-        private static final CssMetaData<VFXTable<?>, Number> ROWS_CACHE_CAPACITY =
-            FACTORY.createSizeCssMetaData(
-                "-vfx-rows-cache-capacity",
-                VFXTable::rowsCacheCapacityProperty,
-                10
-            );
-
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 MFXControl.getClassCssMetaData(),
-                ROWS_HEIGHT, COLUMNS_SIZE, COLUMNS_LAYOUT_MODE, EXTRA_AUTOSIZE_WIDTH,
-                COLUMNS_BUFFER_SIZE, ROWS_BUFFER_SIZE, ROWS_CACHE_CAPACITY,
+                ROWS_HEIGHT, ROWS_BUFFER_SIZE, ROWS_CACHE_CAPACITY,
+                COLUMNS_SIZE, COLUMNS_BUFFER_SIZE,
                 CLIP_BORDER_RADIUS
             );
         }
@@ -952,9 +606,9 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     // Getters/Setters
     //================================================================================
 
-    /// @return the rows' cache instance used by this container
-    protected VFXCellsCache<T, VFXTableRow<T>> getCache() {
-        return cache;
+    @Override
+    public VFXContext<T> context() {
+        return context;
     }
 
     @Override
@@ -962,22 +616,23 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         return items;
     }
 
-    public Function<T, VFXTableRow<T>> getRowFactory() {
-        return rowFactory.getValue();
+    protected VFXCellsCache<T, VFXTableRow<T>> getRowsCache() {
+        return rowsCache;
     }
 
-    /// Specifies the function used to build the table's rows.
-    /// See also [#defaultRowFactory()].
-    public CellFactory<T, VFXTableRow<T>> rowFactoryProperty() {
-        return rowFactory;
+    public Function<T, VFXTableRow<T>> getRowsFactory() {
+        return rowsFactory.getValue();
     }
 
-    public void setRowFactory(Function<T, VFXTableRow<T>> rowFactory) {
-        this.rowFactory.setValue(rowFactory);
+    public CellFactory<T, VFXTableRow<T>> rowsFactoryProperty() {
+        return rowsFactory;
     }
 
-    /// This is the observable list containing all the table's columns.
-    public ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> getColumns() {
+    public void setRowsFactory(Function<T, VFXTableRow<T>> rowsFactory) {
+        this.rowsFactory.setValue(rowsFactory);
+    }
+
+    public ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns() {
         return columns;
     }
 
@@ -985,26 +640,23 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         return helper.get();
     }
 
-    /// Specifies the instance of the [VFXTableHelper] built by the [#helperFactoryProperty()].
-    public ReadOnlyObjectWrapper<VFXTableHelper<T>> helperProperty() {
-        return helper;
+    public ReadOnlyObjectProperty<VFXTableHelper<T>> helperProperty() {
+        return helper.getReadOnlyProperty();
     }
 
     public void setHelper(VFXTableHelper<T> helper) {
         this.helper.set(helper);
     }
 
-    public Function<ColumnsLayoutMode, VFXTableHelper<T>> getHelperFactory() {
+    public Supplier<VFXTableHelper<T>> getHelperFactory() {
         return helperFactory.get();
     }
 
-    /// Specifies the function used to build a [VFXTableHelper] instance.
-    /// See also [#defaultHelperFactory()].
-    public FunctionProperty<ColumnsLayoutMode, VFXTableHelper<T>> helperFactoryProperty() {
+    public SupplierProperty<VFXTableHelper<T>> helperFactoryProperty() {
         return helperFactory;
     }
 
-    public void setHelperFactory(Function<ColumnsLayoutMode, VFXTableHelper<T>> helperFactory) {
+    public void setHelperFactory(Supplier<VFXTableHelper<T>> helperFactory) {
         this.helperFactory.set(helperFactory);
     }
 
@@ -1022,8 +674,6 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         return state.get();
     }
 
-    /// Specifies the container's current state. The state carries useful information such as the range of rows and columns
-    /// and the rows ordered by index, or by item (not ordered).
     public ReadOnlyObjectProperty<VFXTableState<T>> stateProperty() {
         return state.getReadOnlyProperty();
     }
@@ -1032,28 +682,19 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         this.state.set(state);
     }
 
-    /// Delegate for [ViewportLayoutRequest#isValid()].
     public boolean isNeedsViewportLayout() {
         return needsViewportLayout.isValid();
     }
 
-    public ViewportLayoutRequest<T> getViewportLayoutRequest() {
+    public ViewportLayoutRequest getViewportLayoutRequest() {
         return needsViewportLayout.get();
     }
 
-    /// Specifies whether the viewport needs to compute the layout of its content.
-    ///
-    /// Since this is read-only, layout requests must be sent by using [#requestViewportLayout()].
-    public ReadOnlyObjectProperty<ViewportLayoutRequest<T>> needsViewportLayoutProperty() {
+    public ReadOnlyObjectProperty<ViewportLayoutRequest> needsViewportLayoutProperty() {
         return needsViewportLayout.getReadOnlyProperty();
     }
 
     protected void setNeedsViewportLayout(ViewportLayoutRequest needsViewportLayout) {
         this.needsViewportLayout.set(needsViewportLayout);
-    }
-
-    @Override
-    public VFXContext<T> context() {
-        return context;
     }
 }
