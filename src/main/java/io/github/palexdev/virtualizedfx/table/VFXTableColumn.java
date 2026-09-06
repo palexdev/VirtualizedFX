@@ -128,7 +128,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
     protected void onColumnWidthChanged() {
         VFXTable<T> table = getTable();
         if (table == null) return;
-        requireNonNull(table.getBehavior(), "Table's manager cannot be null").onColumnWidthChanged(VFXTableColumn.this);
+        requireNonNull(table.getBehavior(), "Table's manager cannot be null").onColumnResized(VFXTableColumn.this);
     }
 
     //================================================================================

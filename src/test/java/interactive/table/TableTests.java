@@ -97,10 +97,9 @@ public class TableTests {
      * subsystem's algorithms
      */
 
-    // TODO incomplete: only the geometry, position, items and columns list handlers exist, so this is a partial port
-    //  of v1's suite.
-    //  Blocked on the manager: row/cell factories, rowsHeight, columnsSize handlers.
-    //  Blocked on VFXTableColumn.onColumnWidthChanged reaching the manager: testLastColumnResize.
+    // TODO incomplete: the handler set is complete, but two features are not.
+    //  Blocked on autosize (VFXTable AUTOSIZE_ONCE, getWidthOf on the row): testAutosizeFixed/Variable/Empty/AllEmpty.
+    //  testLastColumnResize covers the LAST fill policy, not the resize path.
 
     @Start
     void start(Stage stage) {
@@ -1965,5 +1964,42 @@ public class TableTests {
             .getAnimation();
         robot.interact(a3::play);
         sleep(550);
+    }
+
+    @Test
+    void testLastColumnResize(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> pane.getChildren().add(table));
+
+        // Assert init
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertLength(table, 50 * 32, 1260);
+
+        // Expand
+        robot.interact(() -> setWindowSize(pane, 1600, -1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 16, 0, 0, 0, 0, 0);
+        assertLength(table, 50 * 32, 1600);
+
+        // Shrink a bit
+        robot.interact(() -> setWindowSize(pane, 1300, -1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 16, 0, 0, 0, 0, 0);
+        assertLength(table, 50 * 32, 1300);
+
+        // Shrink to the right size
+        robot.interact(() -> setWindowSize(pane, 1260, -1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 16, 0, 0, 0, 0, 0);
+        assertLength(table, 50 * 32, 1260);
+
+        // Shrink again a no layouts should occur
+        robot.interact(() -> setWindowSize(pane, 800, -1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 0, 0, 0, 0, 0, 0);
+        assertLength(table, 50 * 32, 1260);
     }
 }

@@ -40,6 +40,8 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     private double[] positions;
     private int validUpTo;
 
+    private double slack;
+
     //================================================================================
     // Constructors
     //================================================================================
@@ -66,10 +68,17 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         sumOverrides = 0.0;
         positions = new double[size + 1];
         validUpTo = 0;
+        slack = Double.NaN;
+    }
+
+    private double naturalTotal() {
+        return baseline * (size - overrides) + sumOverrides;
     }
 
     public double widthAt(int index) {
-        return Math.max(widths[index], baseline);
+        double w = Math.max(widths[index], baseline);
+        if (index != size - 1) return w;
+        return w + Math.max(0.0, table.getWidth() - naturalTotal());
     }
 
     public double posAt(int index) {
@@ -80,7 +89,26 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         return positions[index];
     }
 
-    protected int onColumnWidthChanged(VFXTableColumn<T, ?> column) {
+    protected void onColumnsSizeChanged() {
+        // assume not-null
+        double newBaseline = table.getColumnsSize().width();
+        if (newBaseline == baseline) return;
+
+        baseline = newBaseline;
+        overrides = 0;
+        sumOverrides = 0.0;
+        for (int i = 0; i < size; i++) {
+            double pref = widths[i];
+            if (pref > newBaseline) {
+                overrides++;
+                sumOverrides += pref;
+            }
+        }
+        validUpTo = 0;
+        invalidate();
+    }
+
+    protected int onColumnResized(VFXTableColumn<T, ?> column) {
         int index = column.getIndex();
         double old = widths[index];
         double pref = column.getUserPrefWidth();
@@ -101,23 +129,15 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         return index;
     }
 
-    protected void onColumnsSizeChanged() {
-        // assume not-null
-        double newBaseline = table.getColumnsSize().width();
-        if (newBaseline == baseline) return;
+    protected int onWeightsChanged() {
+        // TODO could be optimized for LAST policy, low priority
+        double newSlack = Math.max(0.0, table.getWidth() - naturalTotal());
+        if (newSlack == slack) return -1;
 
-        baseline = newBaseline;
-        overrides = 0;
-        sumOverrides = 0.0;
-        for (int i = 0; i < size; i++) {
-            double pref = widths[i];
-            if (pref > newBaseline) {
-                overrides++;
-                sumOverrides += pref;
-            }
-        }
+        slack = newSlack;
         validUpTo = 0;
         invalidate();
+        return size - 1;
     }
 
     protected void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
@@ -140,7 +160,8 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 
     @Override
     protected double computeValue() {
-        return baseline * (size - overrides) + sumOverrides;
+        if (size == 0) return 0.0;
+        return Math.max(naturalTotal(), table.getWidth());
     }
 
     @Override

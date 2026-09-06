@@ -209,14 +209,22 @@ public class TableTestUtils {
         rowsCounter.reset();
     }
 
-    static double columnWidth(VFXTable<User> table, int index) {
+    static double naturalColumnWidth(VFXTable<User> table, int index) {
         VFXTableColumn<User, ? extends VFXTableCell<User>> column = table.columns().get(index);
         return Math.max(column.getUserPrefWidth(), table.getColumnsSize().width());
     }
 
+    static double columnWidth(VFXTable<User> table, int index) {
+        double w = naturalColumnWidth(table, index);
+        if (index != table.columns().size() - 1) return w;
+        double natural = 0.0;
+        for (int i = 0; i < table.columns().size(); i++) natural += naturalColumnWidth(table, i);
+        return w + Math.max(0.0, table.getWidth() - natural);
+    }
+
     static double columnX(VFXTable<User> table, int index) {
         double x = 0.0;
-        for (int i = 0; i < index; i++) x += columnWidth(table, i);
+        for (int i = 0; i < index; i++) x += naturalColumnWidth(table, i);
         return x;
     }
 

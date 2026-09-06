@@ -41,6 +41,7 @@ import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXTableStateProperty;
@@ -60,8 +61,10 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
 import static io.github.palexdev.mfxcore.controls.MFXStyleable.styleClasses;
+import static io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy.*;
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
+import static java.util.Optional.ofNullable;
 
 public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrollable {
 
@@ -142,7 +145,19 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     // Static Methods
     //================================================================================
 
-    // TODO weights
+    public static <T> int getWeight(VFXTableColumn<T, ?> column) {
+        return (int) ofNullable(column.getProperties().get(WEIGHT_KEY)).orElse(DEFAULT_WEIGHT);
+    }
+
+    public static <T> void setWeight(VFXTableColumn<T, ?> column, int weight) {
+        int curr = getWeight(column);
+        if (curr == weight) return;
+
+        column.getProperties().put(WEIGHT_KEY, weight);
+        ofNullable(column.getTable())
+            .map(VFXTable::getBehavior)
+            .ifPresent(VFXTableManager::onWeightsChanged);
+    }
 
     //================================================================================
     // Methods
@@ -428,10 +443,16 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         this,
         "columnsSize",
         Size.size(100.0, 32.0),
+        // FIXME this should be moved in the manager, but MFXCore architecture present issues that prevent that
         _ -> getHelper().onColumnsSizeChanged()
     );
 
-    // TODO fill policy
+    private final StyleableObjectProperty<ColumnsFillPolicy> columnsFillPolicy = new StyleableObjectProperty<>(
+        StyleableProperties.COLUMNS_FILL_POLICY,
+        this,
+        "columnsFillPolicy",
+        DEFAULT_POLICY
+    );
 
     private final StyleableObjectProperty<BufferSize> columnsBufferSize = new StyleableObjectProperty<>(
         StyleableProperties.COLUMNS_BUFFER_SIZE,
@@ -507,6 +528,18 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         this.columnsSize.set(new Size(getColumnsSize().width(), height));
     }
 
+    public ColumnsFillPolicy getColumnsFillPolicy() {
+        return columnsFillPolicy.get();
+    }
+
+    public StyleableObjectProperty<ColumnsFillPolicy> columnsFillPolicyProperty() {
+        return columnsFillPolicy;
+    }
+
+    public void setColumnsFillPolicy(ColumnsFillPolicy columnsFillPolicy) {
+        this.columnsFillPolicy.set(columnsFillPolicy);
+    }
+
     public BufferSize getColumnsBufferSize() {
         return columnsBufferSize.get();
     }
@@ -568,6 +601,14 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
                 Size.size(100, 32)
             );
 
+        private static final CssMetaData<VFXTable<?>, ColumnsFillPolicy> COLUMNS_FILL_POLICY =
+            FACTORY.createEnumCssMetaData(
+                ColumnsFillPolicy.class,
+                "-vfx-columns-fill-policy",
+                VFXTable::columnsFillPolicyProperty,
+                DEFAULT_POLICY
+            );
+
         private static final CssMetaData<VFXTable<?>, BufferSize> COLUMNS_BUFFER_SIZE =
             FACTORY.createEnumCssMetaData(
                 BufferSize.class,
@@ -587,7 +628,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 MFXControl.getClassCssMetaData(),
                 ROWS_HEIGHT, ROWS_BUFFER_SIZE, ROWS_CACHE_CAPACITY,
-                COLUMNS_SIZE, COLUMNS_BUFFER_SIZE,
+                COLUMNS_SIZE, COLUMNS_FILL_POLICY, COLUMNS_BUFFER_SIZE,
                 CLIP_BORDER_RADIUS
             );
         }

@@ -61,6 +61,7 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
 
+        int fillFrom = gct == GeometryChangeType.WIDTH ? helper.onWeightsChanged() : -1; // redistribute blank space
         invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
         if (!tableFactorySizeCheck()) return;
 
@@ -74,6 +75,10 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         moveReuseCreateAlgorithm(rowsRange, columnsRange, newState);
 
         IntegerRange interval = Utils.difference(columnsRange, state().getColumnsRange());
+        if (fillFrom >= 0) interval = INVALID_RANGE.equals(interval) ?
+            IntegerRange.of(fillFrom, Integer.MAX_VALUE) :
+            IntegerRange.of(Math.min(interval.getMin(), fillFrom), Integer.MAX_VALUE);
+
         if (disposeCurrent()) newState.setRowsChanged(true);
         table.updateState(newState, interval);
     }
@@ -212,12 +217,12 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         table.updateState(newState);
     }
 
-    protected void onColumnWidthChanged(VFXTableColumn<T, ?> column) {
+    protected void onColumnResized(VFXTableColumn<T, ?> column) {
         VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
         VFXTableState<T> state = state();
 
-        int first = helper.onColumnWidthChanged(column);
+        int first = helper.onColumnResized(column);
         if (first < 0 || state.isEmpty()) return; // -1: no effective width change, nothing to lay out
         invalidatePos();
 
@@ -236,6 +241,10 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         moveReuseCreateAlgorithm(rowsRange, columnsRange, newState);
         if (disposeCurrent()) newState.setRowsChanged(true);
         table.updateState(newState, layoutInterval);
+    }
+
+    protected void onWeightsChanged() {
+        onColumnsSizeChanged();
     }
 
     protected void onCellFactoryChanged(VFXTableColumn<T, ?> column) {
@@ -463,10 +472,15 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
             // Others
             onInvalidated(table.itemsProperty()).then(_ -> onItemsChanged()),
             onChanged(table.columnsSizeProperty()).then((o, n) -> {
-               helper().onColumnsSizeChanged();
+               // TODO helper().onColumnsSizeChanged(); see VFXTable
                if (o.width() != n.width()) helper().invalidateRange(Orientation.HORIZONTAL);
                if (o.height() != n.height()) helper().invalidateRange(Orientation.VERTICAL);
                onColumnsSizeChanged();
+            }),
+            onInvalidated(table.columnsFillPolicyProperty()).then(_ -> {
+                helper().onWeightsChanged();
+                helper().invalidateRange(Orientation.HORIZONTAL);
+                onWeightsChanged();
             }),
             onInvalidated(table.rowsHeightProperty()).then(_ -> {
                 helper().invalidateRange(Orientation.VERTICAL);

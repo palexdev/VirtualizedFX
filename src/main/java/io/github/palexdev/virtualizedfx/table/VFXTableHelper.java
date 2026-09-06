@@ -59,9 +59,11 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         return columnsRangeProperty().getValue();
     }
 
-    int onColumnWidthChanged(VFXTableColumn<T, ?> column);
-
     void onColumnsSizeChanged();
+
+    int onColumnResized(VFXTableColumn<T, ?> column);
+
+    int onWeightsChanged();
 
     void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change);
 
@@ -293,13 +295,18 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         }
 
         @Override
-        public int onColumnWidthChanged(VFXTableColumn<T, ?> column) {
-            return layoutCache.onColumnWidthChanged(column);
+        public void onColumnsSizeChanged() {
+            layoutCache.onColumnsSizeChanged();
         }
 
         @Override
-        public void onColumnsSizeChanged() {
-            layoutCache.onColumnsSizeChanged();
+        public int onColumnResized(VFXTableColumn<T, ?> column) {
+            return layoutCache.onColumnResized(column);
+        }
+
+        @Override
+        public int onWeightsChanged() {
+            return layoutCache.onWeightsChanged();
         }
 
         @Override
