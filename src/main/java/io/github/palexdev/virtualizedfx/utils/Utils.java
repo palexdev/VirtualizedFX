@@ -60,12 +60,12 @@ public class Utils {
     /// The indexes which are in `range` but not in `other`.
     ///
     /// ```
-    /// difference([1, 7],   [0, 6])  -> [7, 7]     // shifted right by one, only 7 is new
-    /// difference([0, 6],   [4, 10]) -> [0, 3]     // shifted left
-    /// difference([10, 16], [2, 8])  -> [10, 16]   // no overlap, everything is new
-    /// difference([3, 5],   [0, 10]) -> INVALID    // nothing is new
-    /// difference([0, 10],  [3, 5])  -> [0, 10]    // grew at both ends, see below
-    /// ```
+    /// difference([1, 7],[0, 6])  -> [7, 7]// shifted right by one, only 7 is new
+    /// difference([0, 6],[4, 10]) -> [0, 3]// shifted left
+    /// difference([10, 16],[2, 8])  -> [10, 16]// no overlap, everything is new
+    /// difference([3, 5],[0, 10]) -> INVALID    // nothing is new
+    /// difference([0, 10],[3, 5])  -> [0, 10]// grew at both ends, see below
+    ///```
     ///
     /// The answer is a single range, so it is exact only when `other` overlaps `range` at one end, or not at all.
     /// When `other` sits strictly inside `range` the difference is two separate blocks, and the whole `range` is

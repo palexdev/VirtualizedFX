@@ -63,6 +63,7 @@ public class VFXContext<T> {
     //================================================================================
     // Methods
     //================================================================================
+
     /// Registers a service under the given class key, replacing any previous one.
     ///
     /// @throws IllegalStateException if the key was registered with [#setLocked(Class, Object)]

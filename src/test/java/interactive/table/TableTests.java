@@ -1451,6 +1451,7 @@ public class TableTests {
         assertCounter(0, 0, 0, 0, 0, 0, 0, 0);
         assertRowsCounter(0, 0, 0, 0, 0, 0);
     }
+
     @Test
     void testChangeColumnsSizeTopLeft(FxRobot robot) {
         StackPane pane = setupStage();
@@ -1690,6 +1691,7 @@ public class TableTests {
         assertLength(table, 50.0 * 32, 15 * 100 + 150);
         assertEquals(150.0, table.columns().get(2).getBoundsInParent().getWidth(), FP_ASSERTIONS_DELTA);
     }
+
     @Test
     void testChangeColumnWidth(FxRobot robot) {
         StackPane pane = setupStage();
@@ -1739,6 +1741,7 @@ public class TableTests {
         assertRowsCounter(0, 0, 0, 0, 0, 0);
         assertLength(table, 50 * 32, (6 * 180) + inc1 + 180 + 180 + 200);
     }
+
     @Test
     void testScrollNonUniformColumns(FxRobot robot) {
         StackPane pane = setupStage();

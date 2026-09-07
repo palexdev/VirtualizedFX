@@ -316,7 +316,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
                 return false;
             }
 
-            deps = new Observable[] {table.columns()};
+            deps = new Observable[]{table.columns()};
             bind(deps);
             invalidate();
             return true;

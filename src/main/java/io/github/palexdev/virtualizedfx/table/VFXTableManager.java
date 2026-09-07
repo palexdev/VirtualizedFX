@@ -472,10 +472,10 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
             // Others
             onInvalidated(table.itemsProperty()).then(_ -> onItemsChanged()),
             onChanged(table.columnsSizeProperty()).then((o, n) -> {
-               // TODO helper().onColumnsSizeChanged(); see VFXTable
-               if (o.width() != n.width()) helper().invalidateRange(Orientation.HORIZONTAL);
-               if (o.height() != n.height()) helper().invalidateRange(Orientation.VERTICAL);
-               onColumnsSizeChanged();
+                // TODO helper().onColumnsSizeChanged(); see VFXTable
+                if (o.width() != n.width()) helper().invalidateRange(Orientation.HORIZONTAL);
+                if (o.height() != n.height()) helper().invalidateRange(Orientation.VERTICAL);
+                onColumnsSizeChanged();
             }),
             onInvalidated(table.columnsFillPolicyProperty()).then(_ -> {
                 helper().onWeightsChanged();
