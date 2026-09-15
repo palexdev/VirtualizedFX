@@ -18,8 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
-import java.beans.EventHandler;
-
 import io.github.palexdev.mfxcore.controls.Label;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.input.WhenEvent;
@@ -47,10 +45,10 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 ///
 /// 2) when an event of type [VFXContainerEvent#UPDATE] reaches the cell
 ///
-/// You can modify [#addListeners()] to change such behavior. For example, rather than using an [InvalidationListener]
+/// You can modify [#install()] to change such behavior. For example, rather than using an [InvalidationListener]
 /// you could use a [ChangeListener] instead, add your own logic, etc. (useful when you want to optimize update performance).
 ///
-/// (It's recommended to use [#listeners(When\[\])], [#events(WhenEvent\[\])] and in general [When] constructs.
+/// (It's recommended to use [#listen(When\[\])], [#onInput(WhenEvent\[\])] and in general [When] constructs.
 /// Simply because they make your life easier, also disposal would be automatic this way).
 ///
 /// Last but not least, the label's text is updated by the [#update()] method.
@@ -72,30 +70,12 @@ public class VFXLabeledCellSkin<T> extends MFXSkinBase<VFXCellBase<T>> {
         label.graphicProperty().bind(cell.graphicProperty());
 
         // Finalize init
-        addListeners();
         getChildren().setAll(label);
     }
 
     //================================================================================
     // Methods
     //================================================================================
-
-    /// Adds an [InvalidationListener] on the [VFXCellBase#itemProperty()] to call [#update()] when it changes,
-    /// and an [EventHandler] to support "manual" updates through events of type [VFXContainerEvent#UPDATE].
-    ///
-    /// (Uses [When] and [WhenEvent] constructs).
-    ///
-    /// @see #listeners(When[])
-    /// @see #events(WhenEvent[])
-    protected void addListeners() {
-        VFXCellBase<T> cell = getSkinnable();
-        listeners(
-            onInvalidated(cell.itemProperty())
-                .then(t -> update())
-                .executeNow()
-        );
-        consumeMouseEvents(false); // JavaFX bullshit
-    }
 
     /// This is responsible for updating the label's text using the value specified by the [VFXCellBase#itemProperty()].
     ///
@@ -114,16 +94,25 @@ public class VFXLabeledCellSkin<T> extends MFXSkinBase<VFXCellBase<T>> {
     // Overridden Methods
     //================================================================================
     @Override
-    protected void registerBehavior() {
-        super.registerBehavior();
+    public void install() {
         VFXCellBase<T> cell = getSkinnable();
-        events(
+
+        // Listeners
+        listen(
+            onInvalidated(cell.itemProperty())
+                .then(t -> update())
+                .executeNow()
+        );
+
+        // Input
+        onInput(
             intercept(cell, VFXContainerEvent.UPDATE)
                 .handle(e -> {
                     update();
                     e.consume();
                 })
         );
+        consumeMouseEvents(false); // JavaFX bullshit
     }
 
     @Override

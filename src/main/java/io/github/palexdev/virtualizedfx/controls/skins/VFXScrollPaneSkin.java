@@ -129,98 +129,12 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         hBar.setManaged(false);
 
         // Finalize init
-        addListeners();
         getChildren().setAll(viewport, vBar, hBar);
     }
 
     //================================================================================
     // Methods
     //================================================================================
-
-    /// Binds all the delegate properties declared in [VFXScrollPane] to the corresponding [VFXScrollBar].
-    ///
-    /// Additionally binds the scroll bars' visibility to a custom property implementation: [BarsVisibilityProperty].
-    ///
-    /// Adds the following listeners:
-    ///
-    /// - A listener to update the layout to the following properties:
-    /// [VFXScrollPane#fitToWidthProperty()], [VFXScrollPane#fitToHeightProperty()],
-    /// [VFXScrollPane#vBarPosProperty()], [VFXScrollPane#hBarPosProperty()],
-    /// [VFXScrollPane#barsInsetsProperty()], [VFXScrollPane#barsAlignmentProperty()]
-    ///
-    /// - A listener on the [VFXScrollPane#contentProperty()] to update the viewport and call [#updateScrollBindings(Node, Node)]
-    ///
-    /// - A listener on the [VFXScrollPane#hoverProperty()] to hide/show the scroll bars according to the [VFXScrollPane#autoHideBarsProperty()]
-    /// and a bunch of other conditions, see [#showBars(boolean)]
-    ///
-    /// - A listener on [VFXScrollPane#minBarsOpacityProperty()] and [VFXScrollPane#maxBarsOpacityProperty()]
-    /// to call [#buildBarsAnimations()]
-    private void addListeners() {
-        VFXScrollPane pane = getSkinnable();
-
-        // Bindings
-        ((ObjectProperty<Size>) pane.contentBoundsProperty()).bind(contentBounds);
-        bvp = new BarsVisibilityProperty();
-
-        vBar.visibleProperty().bind(bvp.map(arr -> arr[0]));
-        vBar.behaviorFactoryProperty().bind(pane.vBarBehaviorProperty().map(f -> () -> f.apply(vBar)));
-        vBar.minProperty().bind(pane.vMinProperty());
-        vBar.valueProperty().bindBidirectional(pane.vValueProperty());
-        vBar.maxProperty().bind(pane.vMaxProperty());
-        vBar.showButtonsProperty().bind(pane.showButtonsProperty());
-        vBar.buttonsGapProperty().bind(pane.buttonsGapProperty());
-        vBar.trackIncrementProperty().bind(pane.vTrackIncrementProperty());
-        vBar.unitIncrementProperty().bind(pane.vUnitIncrementProperty());
-        vBar.smoothScrollProperty().bind(pane.smoothScrollProperty());
-        vBar.trackSmoothScrollProperty().bind(pane.trackSmoothScrollProperty());
-        ((DoubleProperty) pane.verticalVisibleAmountProperty()).bind(vBar.visibleAmountProperty());
-
-        hBar.visibleProperty().bind(bvp.map(arr -> arr[1]));
-        hBar.behaviorFactoryProperty().bind(pane.hBarBehaviorProperty().map(f -> () -> f.apply(hBar)));
-        hBar.minProperty().bind(pane.hMinProperty());
-        hBar.valueProperty().bindBidirectional(pane.hValueProperty());
-        hBar.maxProperty().bind(pane.hMaxProperty());
-        hBar.showButtonsProperty().bind(pane.showButtonsProperty());
-        hBar.buttonsGapProperty().bind(pane.buttonsGapProperty());
-        hBar.trackIncrementProperty().bind(pane.hTrackIncrementProperty());
-        hBar.unitIncrementProperty().bind(pane.hUnitIncrementProperty());
-        hBar.smoothScrollProperty().bind(pane.smoothScrollProperty());
-        hBar.trackSmoothScrollProperty().bind(pane.trackSmoothScrollProperty());
-        ((DoubleProperty) pane.horizontalVisibleAmountProperty()).bind(hBar.visibleAmountProperty());
-
-        // Listeners
-        listeners(
-            // Base
-            onChanged(pane.contentProperty())
-                .then((oc, nc) -> {
-                    if (nc != null) {
-                        viewport.getChildren().setAll(nc);
-                    } else {
-                        viewport.getChildren().clear();
-                    }
-                    updateScrollBindings(oc, nc);
-                })
-                .executeNow(() -> pane.getContent() != null),
-
-            // Layout
-            observe(
-                pane::requestLayout,
-                pane.fitToWidthProperty(), pane.fitToHeightProperty(),
-                pane.barsInsetsProperty(), pane.barsAlignmentProperty(), pane.vBarPosProperty(), pane.hBarPosProperty()
-            ),
-            // Animations
-            onInvalidated(pane.minBarsOpacityProperty())
-                .then(v -> buildBarsAnimations())
-                .invalidating(pane.maxBarsOpacityProperty()),
-            onInvalidated(pane.hoverProperty())
-                .condition(h -> !(vBar.isPressed() || vBar.isPressed()))
-                .then(this::showBars)
-                .invalidating(pane.autoHideBarsProperty())
-                .invalidating(vBar.pressedProperty())
-                .invalidating(hBar.pressedProperty())
-                .executeNow()
-        );
-    }
 
     /// This core method is responsible for laying out the scroll pane's content in the viewport.
     ///
@@ -468,36 +382,108 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     // Overridden Methods
     //================================================================================
 
-    /// Initializes the behavior by calling [VFXScrollPaneBehavior#init()] and by registering the following handlers:
+    /// Registers the following listeners and event handlers:
     ///
+    /// - Binds all the delegate properties declared in [VFXScrollPane] to the corresponding [VFXScrollBar].
+    ///   Additionally, binds the scroll bars' visibility to a custom property implementation: [BarsVisibilityProperty].
+    /// <br >
+    /// - A listener to update the layout to the following properties:
+    /// [VFXScrollPane#fitToWidthProperty()], [VFXScrollPane#fitToHeightProperty()],
+    /// [VFXScrollPane#vBarPosProperty()], [VFXScrollPane#hBarPosProperty()],
+    /// [VFXScrollPane#barsInsetsProperty()], [VFXScrollPane#barsAlignmentProperty()]
+    /// - A listener on the [VFXScrollPane#contentProperty()] to update the viewport and call [#updateScrollBindings(Node, Node)]
+    /// - A listener on the [VFXScrollPane#hoverProperty()] to hide/show the scroll bars according to the [VFXScrollPane#autoHideBarsProperty()]
+    /// and a bunch of other conditions, see [#showBars(boolean)]
+    /// - A listener on [VFXScrollPane#minBarsOpacityProperty()] and [VFXScrollPane#maxBarsOpacityProperty()]
+    /// to call [#buildBarsAnimations()]
+    /// <br >
     /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] to call [VFXScrollBarBehavior#mousePressed(MouseEvent)]
-    ///
     /// - intercepts events of type [MouseEvent#MOUSE_DRAGGED] to call [VFXScrollBarBehavior#mouseDragged(MouseEvent)]
-    ///
     /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] to call [VFXScrollBarBehavior#mouseReleased(MouseEvent)]
-    ///
     /// - intercepts events of type [ScrollEvent#SCROLL] to call [#onScrollEvent(ScrollEvent)]
-    ///
     /// - intercepts events of type [KeyEvent#KEY_PRESSED] to call [VFXScrollBarBehavior#keyPressed(KeyEvent)]
     @Override
-    protected void registerBehavior() {
-        super.registerBehavior();
+    public void install() {
         VFXScrollPane pane = getSkinnable();
-        VFXScrollPaneBehavior behavior = getBehavior();
-        events(
+
+        // Bindings
+        ((ObjectProperty<Size>) pane.contentBoundsProperty()).bind(contentBounds);
+        bvp = new BarsVisibilityProperty();
+
+        vBar.visibleProperty().bind(bvp.map(arr -> arr[0]));
+        vBar.behaviorFactoryProperty().bind(pane.vBarBehaviorProperty().map(f -> () -> f.apply(vBar)));
+        vBar.minProperty().bind(pane.vMinProperty());
+        vBar.valueProperty().bindBidirectional(pane.vValueProperty());
+        vBar.maxProperty().bind(pane.vMaxProperty());
+        vBar.showButtonsProperty().bind(pane.showButtonsProperty());
+        vBar.buttonsGapProperty().bind(pane.buttonsGapProperty());
+        vBar.trackIncrementProperty().bind(pane.vTrackIncrementProperty());
+        vBar.unitIncrementProperty().bind(pane.vUnitIncrementProperty());
+        vBar.smoothScrollProperty().bind(pane.smoothScrollProperty());
+        vBar.trackSmoothScrollProperty().bind(pane.trackSmoothScrollProperty());
+        ((DoubleProperty) pane.verticalVisibleAmountProperty()).bind(vBar.visibleAmountProperty());
+
+        hBar.visibleProperty().bind(bvp.map(arr -> arr[1]));
+        hBar.behaviorFactoryProperty().bind(pane.hBarBehaviorProperty().map(f -> () -> f.apply(hBar)));
+        hBar.minProperty().bind(pane.hMinProperty());
+        hBar.valueProperty().bindBidirectional(pane.hValueProperty());
+        hBar.maxProperty().bind(pane.hMaxProperty());
+        hBar.showButtonsProperty().bind(pane.showButtonsProperty());
+        hBar.buttonsGapProperty().bind(pane.buttonsGapProperty());
+        hBar.trackIncrementProperty().bind(pane.hTrackIncrementProperty());
+        hBar.unitIncrementProperty().bind(pane.hUnitIncrementProperty());
+        hBar.smoothScrollProperty().bind(pane.smoothScrollProperty());
+        hBar.trackSmoothScrollProperty().bind(pane.trackSmoothScrollProperty());
+        ((DoubleProperty) pane.horizontalVisibleAmountProperty()).bind(hBar.visibleAmountProperty());
+
+        // Listeners
+        listen(
+            // Base
+            onChanged(pane.contentProperty())
+                .then((oc, nc) -> {
+                    if (nc != null) {
+                        viewport.getChildren().setAll(nc);
+                    } else {
+                        viewport.getChildren().clear();
+                    }
+                    updateScrollBindings(oc, nc);
+                })
+                .executeNow(() -> pane.getContent() != null),
+
+            // Layout
+            observe(
+                pane::requestLayout,
+                pane.fitToWidthProperty(), pane.fitToHeightProperty(),
+                pane.barsInsetsProperty(), pane.barsAlignmentProperty(), pane.vBarPosProperty(), pane.hBarPosProperty()
+            ),
+            // Animations
+            onInvalidated(pane.minBarsOpacityProperty())
+                .then(v -> buildBarsAnimations())
+                .invalidating(pane.maxBarsOpacityProperty()),
+            onInvalidated(pane.hoverProperty())
+                .condition(h -> !(vBar.isPressed() || vBar.isPressed()))
+                .then(this::showBars)
+                .invalidating(pane.autoHideBarsProperty())
+                .invalidating(vBar.pressedProperty())
+                .invalidating(hBar.pressedProperty())
+                .executeNow()
+        );
+        
+        // Input
+        onInput(
             intercept(viewport, MouseEvent.MOUSE_PRESSED)
                 .asFilter()
-                .handle(behavior::mousePressed),
+                .handle(e -> behavior().mousePressed(e)),
             intercept(viewport, MouseEvent.MOUSE_DRAGGED)
                 .asFilter()
-                .handle(behavior::mouseDragged),
+                .handle(e -> behavior().mouseDragged(e)),
             intercept(viewport, MouseEvent.MOUSE_RELEASED)
                 .asFilter()
-                .handle(behavior::mouseReleased),
+                .handle(e -> behavior().mouseReleased(e)),
             intercept(viewport, ScrollEvent.SCROLL)
-                .handle(e -> behavior.scroll(e, () -> onScrollEvent(e))),
+                .handle(e -> behavior().scroll(e, () -> onScrollEvent(e))),
             intercept(pane, KeyEvent.KEY_PRESSED)
-                .handle(behavior::keyPressed)
+                .handle(e -> behavior().keyPressed(e))
         );
     }
 
@@ -564,8 +550,8 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
     }
 
     @Override
-    protected VFXScrollPaneBehavior getBehavior() {
-        return (VFXScrollPaneBehavior) super.getBehavior();
+    protected VFXScrollPaneBehavior behavior() {
+        return (VFXScrollPaneBehavior) super.behavior();
     }
 
     //================================================================================
@@ -616,7 +602,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
         @Override
         protected void invalidated() {
             // layout is not needed because the bars always "float" on top of the content
-            Optional.ofNullable(getBehavior()).ifPresent(b -> {
+            Optional.ofNullable(behavior()).ifPresent(b -> {
                 b.setCanVScroll(get()[0]);
                 b.setCanHScroll(get()[1]);
             });

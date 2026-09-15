@@ -94,31 +94,12 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         rClip.translateYProperty().bind(rContainer.translateYProperty().multiply(-1));
         rContainer.setClip(rClip);
 
-        // Finalize
-        addListeners();
         getChildren().setAll(viewport);
     }
 
     //================================================================================
     // Methods
     //================================================================================
-
-    protected void addListeners() {
-        VFXTable<T> table = getSkinnable();
-        listeners(
-            onInvalidated(table.stateProperty())
-                .then(this::updateChildren),
-            onInvalidated(table.needsViewportLayoutProperty())
-                .condition(ViewportLayoutRequest::isValid)
-                .then(_ -> layoutViewport()),
-            onInvalidated(table.helperProperty())
-                .then(h -> {
-                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::x));
-                    rContainer.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
-                })
-                .executeNow()
-        );
-    }
 
     protected void updateChildren(VFXTableState<T> state) {
         VFXTable<T> table = getSkinnable();
@@ -191,6 +172,25 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     // Overridden Methods
     //================================================================================
 
+
+    @Override
+    public void install() {
+        VFXTable<T> table = getSkinnable();
+        listen(
+            onInvalidated(table.stateProperty())
+                .then(this::updateChildren),
+            onInvalidated(table.needsViewportLayoutProperty())
+                .condition(ViewportLayoutRequest::isValid)
+                .then(_ -> layoutViewport()),
+            onInvalidated(table.helperProperty())
+                .then(h -> {
+                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::x));
+                    rContainer.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
+                })
+                .executeNow()
+        );
+    }
+
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         return leftInset + DEFAULT_SIZE + rightInset;
@@ -199,10 +199,5 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     @Override
     protected double computeMinHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
         return topInset + DEFAULT_SIZE + bottomInset;
-    }
-
-    @Override
-    protected VFXTableManager<T> getBehavior() {
-        return getSkinnable().getBehavior();
     }
 }

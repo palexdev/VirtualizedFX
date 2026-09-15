@@ -18,7 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 
 /// Base, empty behavior for cells of type [VFXCellBase], extends [MFXBehavior].
 ///

@@ -18,14 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.table;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import io.github.palexdev.mfxcore.base.Disposable;
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
-import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.enums.GeometryChangeType;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.Utils;
@@ -36,32 +30,73 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static java.util.Objects.requireNonNull;
 
-public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
+public class VFXTableManager<T> {
 
     //================================================================================
     // Properties
     //================================================================================
 
+    private final VFXTable<T> table;
     private boolean invalidatingPos = false;
-    private final List<Disposable> disposables = new ArrayList<>();
 
     //================================================================================
     // Constructors
     //================================================================================
 
     public VFXTableManager(VFXTable<T> table) {
-        super(table);
+        this.table = table;
     }
 
     //================================================================================
     // Methods
     //================================================================================
 
+    protected void install() {
+        // Geometry
+        onInvalidated(table.widthProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.HORIZONTAL);
+            onGeometryChanged(GeometryChangeType.WIDTH);
+        }).listen();
+        onInvalidated(table.heightProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.VERTICAL);
+            onGeometryChanged(GeometryChangeType.HEIGHT);
+        }).listen();
+        onInvalidated(table.columnsBufferSizeProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.HORIZONTAL);
+            onGeometryChanged(GeometryChangeType.OTHER);
+        }).listen();
+        onInvalidated(table.rowsBufferSizeProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.VERTICAL);
+            onGeometryChanged(GeometryChangeType.OTHER);
+        }).listen();
+        // Position
+        onInvalidated(table.hPosProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.HORIZONTAL);
+            onPositionChanged(Orientation.HORIZONTAL);
+        }).listen();
+        onInvalidated(table.vPosProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.VERTICAL);
+            onPositionChanged(Orientation.VERTICAL);
+        }).listen();
+        // Others
+        onInvalidated(table.itemsProperty()).then(_ -> onItemsChanged()).listen();
+        onChanged(table.columnsSizeProperty()).then((o, n) -> {
+            helper().onColumnsSizeChanged();
+            if (o.width() != n.width()) helper().invalidateRange(Orientation.HORIZONTAL);
+            if (o.height() != n.height()) helper().invalidateRange(Orientation.VERTICAL);
+            onColumnsSizeChanged();
+        }).listen();
+        onInvalidated(table.rowsHeightProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.VERTICAL);
+            onRowsHeightChanged();
+        }).listen();
+        onInvalidated(table.rowsFactoryProperty()).then(_ -> onRowsFactoryChanged()).listen();
+    }
+
     protected void onGeometryChanged(GeometryChangeType gct) {
-        VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
 
-        int fillFrom = gct == GeometryChangeType.WIDTH ? helper.onWeightsChanged() : -1; // redistribute blank space
+        int fillFrom = gct == GeometryChangeType.WIDTH ? helper.onWeightsChanged() : -1; // redistribute leftover width
         invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
         if (!tableFactorySizeCheck()) return;
 
@@ -85,7 +120,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
 
     protected void onPositionChanged(Orientation axis) {
         if (invalidatingPos) return;
-        VFXTable<T> table = getNode();
         VFXTableState<T> state = state();
         if (state == VFXTableState.INVALID) return;
 
@@ -112,7 +146,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected void onRowsHeightChanged() {
-        VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
 
         invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
@@ -131,7 +164,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected void onColumnsChanged(int from) {
-        VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
 
         // The number of columns changed, so both virtual sizes and hPos may be stale
@@ -164,7 +196,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected void onItemsChanged() {
-        VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
 
         // Ensure that both virtual sizes and position (which depends on the first) are correct
@@ -198,7 +229,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected void onColumnsSizeChanged() {
-        VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
 
         invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
@@ -218,7 +248,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected void onColumnResized(VFXTableColumn<T, ?> column) {
-        VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
         VFXTableState<T> state = state();
 
@@ -248,7 +277,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected void onCellFactoryChanged(VFXTableColumn<T, ?> column) {
-        VFXTable<T> table = getNode();
         VFXTableState<T> state = state();
         if (state.isEmpty()) return;
 
@@ -263,7 +291,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected void onRowsFactoryChanged() {
-        VFXTable<T> table = getNode();
         VFXTableState<T> state = state();
 
         if (!tableFactorySizeCheck()) {
@@ -363,7 +390,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     /* UTILS */
 
     protected void invalidatePos() {
-        VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
         invalidatingPos = true;
         helper.invalidatePos();
@@ -371,7 +397,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected boolean tableFactorySizeCheck() {
-        VFXTable<T> table = getNode();
         if (table.columns().isEmpty() ||
             table.isEmpty() ||
             table.rowsFactoryProperty().getValue() == null ||
@@ -388,7 +413,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
 
     @SuppressWarnings("unchecked")
     protected boolean rangeCheck(IntegerRange range, boolean update, boolean dispose) {
-        VFXTable<T> table = getNode();
         if (INVALID_RANGE.equals(range)) {
             if (dispose) disposeCurrent();
             if (update) table.updateState(VFXTableState.INVALID);
@@ -400,7 +424,6 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
 
     @SuppressWarnings("unchecked")
     protected VFXTableState<T> computeInvalidState() {
-        VFXTable<T> table = getNode();
         VFXTableHelper<T> helper = helper();
         IntegerRange columnsRange = helper.columnsRange();
         if (INVALID_RANGE.equals(columnsRange)) return VFXTableState.INVALID;
@@ -412,7 +435,7 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
     }
 
     protected boolean disposeCurrent() {
-        VFXTableState<T> state = getNode().getState();
+        VFXTableState<T> state = state();
         if (!state.isEmpty()) {
             state.dispose();
             return true;
@@ -420,80 +443,19 @@ public class VFXTableManager<T> extends MFXBehavior<VFXTable<T>> {
         return false;
     }
 
-    protected VFXTableHelper<T> helper() {
-        return requireNonNull(getNode().getHelper(), "The table's manager cannot operate without a helper");
-    }
-
-    protected VFXTableState<T> state() {
-        return getNode().getState();
-    }
-
-    protected void register(When<?>... whens) {
-        for (When<?> w : whens) {
-            if (!w.isActive()) w.listen();
-            disposables.add(w);
-        }
-    }
-
     //================================================================================
-    // Overridden Methods
+    // Getters
     //================================================================================
 
-    @Override
-    public void init() {
-        VFXTable<T> table = getNode();
-        register(
-            // Geometry
-            onInvalidated(table.widthProperty()).then(_ -> {
-                helper().invalidateRange(Orientation.HORIZONTAL);
-                onGeometryChanged(GeometryChangeType.WIDTH);
-            }),
-            onInvalidated(table.heightProperty()).then(_ -> {
-                helper().invalidateRange(Orientation.VERTICAL);
-                onGeometryChanged(GeometryChangeType.HEIGHT);
-            }),
-            onInvalidated(table.columnsBufferSizeProperty()).then(_ -> {
-                helper().invalidateRange(Orientation.HORIZONTAL);
-                onGeometryChanged(GeometryChangeType.OTHER);
-            }),
-            onInvalidated(table.rowsBufferSizeProperty()).then(_ -> {
-                helper().invalidateRange(Orientation.VERTICAL);
-                onGeometryChanged(GeometryChangeType.OTHER);
-            }),
-            // Position
-            onInvalidated(table.hPosProperty()).then(_ -> {
-                helper().invalidateRange(Orientation.HORIZONTAL);
-                onPositionChanged(Orientation.HORIZONTAL);
-            }),
-            onInvalidated(table.vPosProperty()).then(_ -> {
-                helper().invalidateRange(Orientation.VERTICAL);
-                onPositionChanged(Orientation.VERTICAL);
-            }),
-            // Others
-            onInvalidated(table.itemsProperty()).then(_ -> onItemsChanged()),
-            onChanged(table.columnsSizeProperty()).then((o, n) -> {
-                // TODO helper().onColumnsSizeChanged(); see VFXTable
-                if (o.width() != n.width()) helper().invalidateRange(Orientation.HORIZONTAL);
-                if (o.height() != n.height()) helper().invalidateRange(Orientation.VERTICAL);
-                onColumnsSizeChanged();
-            }),
-            onInvalidated(table.columnsFillPolicyProperty()).then(_ -> {
-                helper().onWeightsChanged();
-                helper().invalidateRange(Orientation.HORIZONTAL);
-                onWeightsChanged();
-            }),
-            onInvalidated(table.rowsHeightProperty()).then(_ -> {
-                helper().invalidateRange(Orientation.VERTICAL);
-                onRowsHeightChanged();
-            }),
-            onInvalidated(table.rowsFactoryProperty()).then(_ -> onRowsFactoryChanged())
-        );
+    public VFXTable<T> table() {
+        return table;
     }
 
-    @Override
-    public void dispose() {
-        disposables.forEach(Disposable::dispose);
-        disposables.clear();
-        super.dispose();
+    public VFXTableHelper<T> helper() {
+        return requireNonNull(table.getHelper(), "The table's manager cannot operate without a helper");
+    }
+
+    public VFXTableState<T> state() {
+        return table.getState();
     }
 }

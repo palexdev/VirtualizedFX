@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.controls.MFXControl;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContext;
@@ -62,24 +62,27 @@ import javafx.scene.Node;
 /// [#indexProperty()] and [#itemProperty()]. This means that your operations will run only and only if the
 /// property fires an invalidation/change event. In this base class the [#updateIndex(int)] and [#updateItem(Object)]
 /// methods are implemented naively, because we work on generic items, we don't know the model, which means that they
-/// update the respective properties without any check.
+/// hand the new value straight to the respective property.
 ///
-/// - For the [#indexProperty()] it's tricky: the JVM caches Integers
-/// between -128 and 127, which means that the '==' operator only works in that range; for larger datasets, you may want to
-/// override the [#updateIndex(int)] method to actually check for equality.
+/// - The [#indexProperty()] asks nothing of you. It's an [IntegerProperty], and JavaFX's setter compares the primitives
+/// and skips the invalidation when they are equal, so a redundant [#updateIndex(int)] costs a call and an int
+/// comparison and fires nothing.
 ///
-/// For the [#itemProperty()] it's the same concept. If you know the model, you may want to perform some equality
-/// check in the [#updateItem(Object)] method to avoid useless updates. For example, if in your dataset there are two
+/// For the [#itemProperty()] the setter skips redundant sets too, but its check is reference equality, which is not
+/// necessarily the equality you care about. If you know the model, you may want to perform some equality check in the
+/// [#updateItem(Object)] method to avoid useless updates. For example, if in your dataset there are two
 /// `Person` objects with the same attributes but different references you may want to update the property (so that the
-/// reference is correct) but not perform any operation that strictly depends on the attributes (if a label displays the attributes,
-/// there's no need to re-compute the text)
+/// reference is correct) but not perform any operation that strictly depends on the attributes
+/// (if a label displays the attributes, there's no need to re-compute the text)
 ///
 /// @see #alignmentProperty()
 /// @see VFXCell
 public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
+
     //================================================================================
     // Properties
     //================================================================================
+
     private VFXContext<T> context;
     private final IntegerProperty index = new SimpleIntegerProperty(-1);
     private final ObjectProperty<T> item = new SimpleObjectProperty<>();
@@ -88,21 +91,15 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
     //================================================================================
     // Constructors
     //================================================================================
-    public VFXCellBase(T item) {
-        initialize();
-        updateItem(item);
-    }
 
-    //================================================================================
-    // Methods
-    //================================================================================
-    private void initialize() {
-        setDefaultStyleClasses();
+    public VFXCellBase(T item) {
+        updateItem(item);
     }
 
     //================================================================================
     // Overridden Methods
     //================================================================================
+
     @Override
     public List<String> defaultStyleClasses() {
         return List.of("cell-base");
@@ -151,6 +148,7 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
     //================================================================================
     // Styleable Properties
     //================================================================================
+
     private final StyleableObjectProperty<Pos> alignment = new StyleableObjectProperty<>(
         StyleableProperties.ALIGNMENT,
         this,

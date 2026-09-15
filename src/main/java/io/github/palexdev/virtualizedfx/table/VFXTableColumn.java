@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 import io.github.palexdev.mfxcore.base.properties.base.ExtendedProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.controls.MFXLabeled;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
@@ -47,7 +47,6 @@ import javafx.css.StyleablePropertyFactory;
 import javafx.scene.Node;
 
 import static io.github.palexdev.mfxcore.controls.MFXStyleable.styleClasses;
-import static java.util.Objects.requireNonNull;
 
 public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLabeled implements WithCellFactory<T, C> {
 
@@ -122,13 +121,13 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
         VFXTable<T> table = getTable();
         if (table == null) return;
         cellsCache.clear(); // make sure to clear the cache first!
-        requireNonNull(table.getBehavior(), "Table's manager cannot be null").onCellFactoryChanged(this);
+        table.getManager().onCellFactoryChanged(this);
     }
 
     protected void onColumnWidthChanged() {
         VFXTable<T> table = getTable();
         if (table == null) return;
-        requireNonNull(table.getBehavior(), "Table's manager cannot be null").onColumnResized(VFXTableColumn.this);
+        table.getManager().onColumnResized(VFXTableColumn.this);
     }
 
     //================================================================================

@@ -113,14 +113,14 @@ public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T
     ///
     /// - Listener on [VFXPaginatedList#maxPageProperty()], will invoke [VFXPaginatedListManager#onMaxPageChanged()]
     @Override
-    protected void addListeners() {
+    public void install() {
         VFXPaginatedList<T, C> list = getList();
-        super.addListeners();
-        listeners(
+        super.install();
+        listen(
             When.onInvalidated(list.cellsPerPageProperty())
-                .then(cpp -> getBehavior().onCellsPerPageChanged()),
+                .then(_ -> behavior().onCellsPerPageChanged()),
             When.onInvalidated(list.maxPageProperty())
-                .then(mp -> getBehavior().onMaxPageChanged())
+                .then(_ -> behavior().onMaxPageChanged())
         );
     }
 
@@ -139,8 +139,8 @@ public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T
     /// [VFXListManager], but that would result in exceptions being thrown and invalid states.
     /// Long story short: don't do it!
     @Override
-    protected VFXPaginatedListManager<T, C> getBehavior() {
-        return (VFXPaginatedListManager<T, C>) super.getBehavior();
+    protected VFXPaginatedListManager<T, C> behavior() {
+        return (VFXPaginatedListManager<T, C>) super.behavior();
     }
 
     @Override

@@ -18,7 +18,7 @@
 
 package io.github.palexdev.virtualizedfx.table.defaults;
 
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.enums.Zone;
 import io.github.palexdev.mfxcore.utils.fx.resize.Resizer;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
@@ -47,7 +47,6 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     //================================================================================
 
     protected Resizer<VFXTableColumn<T, C>> createResizer() {
-        // TODO for debug purposes
         VFXTableColumn<T, C> column = getNode();
         if (column.getTable() == null) throw new NullPointerException("Table is null, resizer won't work properly!");
 
@@ -67,7 +66,8 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     //================================================================================
 
     @Override
-    public void init() {
+    public void install() {
+        // FIXME does not look right (e.g. does not handle table changes)
         if ((resizer = createResizer()) != null) resizer.install();
     }
 

@@ -75,27 +75,53 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
 
         // Finalize init
         updateChildren();
-        addListeners();
     }
 
     //================================================================================
     // Methods
     //================================================================================
 
-    /// Adds the following listeners:
+    /// This is responsible for updating the children list according to the [VFXScrollBar#showButtonsProperty()].
+    protected void updateChildren() {
+        VFXScrollBar bar = getSkinnable();
+        if (bar.isShowButtons()) {
+            getChildren().setAll(track, thumb, decIcon, incIcon);
+        } else {
+            getChildren().setAll(track, thumb);
+        }
+    }
+
+    //================================================================================
+    // Overridden Methods
+    //================================================================================
+
+    /// Registers the following listeners and event handlers:
     ///
     /// - A listener to update the layout when these properties change:
     /// [VFXScrollBar#buttonsGapProperty()], [VFXScrollBar#visibleAmountProperty()]
-    ///
     /// - A listener on the [VFXScrollBar#showButtonsProperty()] to call [#updateChildren()] and update the layout
-    ///
     /// - A listener on the [VFXScrollBar#orientationProperty()] update the layout, bind the correct translation
     /// property for the thumb and rotate the buttons for the icon to face the right direction
-    protected void addListeners() {
+    /// <br >
+    /// - intercepts events of type [ScrollEvent#SCROLL] to call [VFXScrollBarBehavior#scroll(ScrollEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the thumb to call [VFXScrollBarBehavior#thumbPressed(MouseEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_DRAGGED] on the thumb to call [VFXScrollBarBehavior#thumbDragged(MouseEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the thumb to call [VFXScrollBarBehavior#thumbReleased(MouseEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the track to call [VFXScrollBarBehavior#trackPressed(MouseEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the track to call [VFXScrollBarBehavior#trackReleased(MouseEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the decrease icon to call [VFXScrollBarBehavior#buttonPressed(MouseEvent, int)]
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the decrease icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_EXITED] on the decrease icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the increase icon to call [VFXScrollBarBehavior#buttonPressed(MouseEvent, int)]
+    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the increase icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
+    /// - intercepts events of type [MouseEvent#MOUSE_EXITED] on the increase icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
+    @Override
+    public void install() {
         VFXScrollBar bar = getSkinnable();
-        InvalidationListener ll = i -> bar.requestLayout();
 
-        listeners(
+        // Listeners
+        InvalidationListener ll = _ -> bar.requestLayout();
+        listen(
             withListener(bar.buttonsGapProperty(), ll),
             withListener(bar.visibleAmountProperty(), ll),
             onInvalidated(bar.showButtonsProperty())
@@ -116,72 +142,28 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
                 })
                 .executeNow()
         );
-    }
 
-    /// This is responsible for updating the children list according to the [VFXScrollBar#showButtonsProperty()].
-    protected void updateChildren() {
-        VFXScrollBar bar = getSkinnable();
-        if (bar.isShowButtons()) {
-            getChildren().setAll(track, thumb, decIcon, incIcon);
-        } else {
-            getChildren().setAll(track, thumb);
-        }
-    }
-
-    //================================================================================
-    // Overridden Methods
-    //================================================================================
-
-    /// Initializes the behavior by calling [VFXScrollBarBehavior#init()] and by registering the following handlers:
-    ///
-    /// - intercepts events of type [ScrollEvent#SCROLL] to call [VFXScrollBarBehavior#scroll(ScrollEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the thumb to call [VFXScrollBarBehavior#thumbPressed(MouseEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_DRAGGED] on the thumb to call [VFXScrollBarBehavior#thumbDragged(MouseEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the thumb to call [VFXScrollBarBehavior#thumbReleased(MouseEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the track to call [VFXScrollBarBehavior#trackPressed(MouseEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the track to call [VFXScrollBarBehavior#trackReleased(MouseEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the decrease icon to call [VFXScrollBarBehavior#buttonPressed(MouseEvent, int)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the decrease icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_EXITED] on the decrease icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_PRESSED] on the increase icon to call [VFXScrollBarBehavior#buttonPressed(MouseEvent, int)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_RELEASED] on the increase icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
-    ///
-    /// - intercepts events of type [MouseEvent#MOUSE_EXITED] on the increase icon to call [VFXScrollBarBehavior#buttonReleased(MouseEvent)]
-    @Override
-    protected void registerBehavior() {
-        super.registerBehavior();
-        VFXScrollBar bar = getSkinnable();
-        VFXScrollBarBehavior behavior = getBehavior();
-        events(
+        // Input
+        onInput(
             // Scroll Bar
-            intercept(bar, ScrollEvent.SCROLL).handle(behavior::scroll),
+            intercept(bar, ScrollEvent.SCROLL).handle(e -> behavior().scroll(e)),
 
             // Thumb
-            intercept(thumb, MouseEvent.MOUSE_PRESSED).handle(behavior::thumbPressed),
-            intercept(thumb, MouseEvent.MOUSE_DRAGGED).handle(behavior::thumbDragged),
-            intercept(thumb, MouseEvent.MOUSE_RELEASED).handle(behavior::thumbReleased),
+            intercept(thumb, MouseEvent.MOUSE_PRESSED).handle(e -> behavior().thumbPressed(e)),
+            intercept(thumb, MouseEvent.MOUSE_DRAGGED).handle(e -> behavior().thumbDragged(e)),
+            intercept(thumb, MouseEvent.MOUSE_RELEASED).handle(e -> behavior().thumbReleased(e)),
 
             // Track
-            intercept(track, MouseEvent.MOUSE_PRESSED).handle(behavior::trackPressed),
-            intercept(track, MouseEvent.MOUSE_RELEASED).handle(behavior::trackReleased),
+            intercept(track, MouseEvent.MOUSE_PRESSED).handle(e -> behavior().trackPressed(e)),
+            intercept(track, MouseEvent.MOUSE_RELEASED).handle(e -> behavior().trackReleased(e)),
 
             // Buttons
-            intercept(decIcon, MouseEvent.MOUSE_PRESSED).handle(me -> behavior.buttonPressed(me, -1)),
-            intercept(decIcon, MouseEvent.MOUSE_RELEASED).handle(behavior::buttonReleased),
-            intercept(decIcon, MouseEvent.MOUSE_EXITED).handle(behavior::buttonReleased),
-            intercept(incIcon, MouseEvent.MOUSE_PRESSED).handle(me -> behavior.buttonPressed(me, 1)),
-            intercept(incIcon, MouseEvent.MOUSE_RELEASED).handle(behavior::buttonReleased),
-            intercept(incIcon, MouseEvent.MOUSE_EXITED).handle(behavior::buttonReleased)
+            intercept(decIcon, MouseEvent.MOUSE_PRESSED).handle(e -> behavior().buttonPressed(e, -1)),
+            intercept(decIcon, MouseEvent.MOUSE_RELEASED).handle(e -> behavior().buttonReleased(e)),
+            intercept(decIcon, MouseEvent.MOUSE_EXITED).handle(e -> behavior().buttonReleased(e)),
+            intercept(incIcon, MouseEvent.MOUSE_PRESSED).handle(e -> behavior().buttonPressed(e, 1)),
+            intercept(incIcon, MouseEvent.MOUSE_RELEASED).handle(e -> behavior().buttonReleased(e)),
+            intercept(incIcon, MouseEvent.MOUSE_EXITED).handle(e -> behavior().buttonReleased(e))
         );
     }
 
@@ -222,8 +204,8 @@ public class VFXScrollBarSkin extends MFXSkinBase<VFXScrollBar> {
     }
 
     @Override
-    protected VFXScrollBarBehavior getBehavior() {
-        return (VFXScrollBarBehavior) super.getBehavior();
+    protected VFXScrollBarBehavior behavior() {
+        return (VFXScrollBarBehavior) super.behavior();
     }
 
     //================================================================================

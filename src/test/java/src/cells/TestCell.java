@@ -67,8 +67,8 @@ public class TestCell<T> extends VFXSimpleCell<T> {
             }
 
             @Override
-            protected void addListeners() {
-                listeners(
+            public void install() {
+                listen(
                     onInvalidated(indexProperty())
                         .then(v -> {
                             counter.index();

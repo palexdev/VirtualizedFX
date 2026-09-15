@@ -22,7 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxcore.utils.fx.ScrollUtils.ScrollDirection;
 import io.github.palexdev.mfxeffects.animations.Animations;

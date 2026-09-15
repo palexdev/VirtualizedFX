@@ -69,21 +69,12 @@ public class VFXSimpleTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXS
 
         // Finalize
         updateChildren();
-        addListeners();
         consumeMouseEvents(false); // JavaFX bullshit
     }
 
     //================================================================================
     // Methods
     //================================================================================
-
-    private void addListeners() {
-        VFXSimpleTableColumn<T, C> column = getSkinnable();
-        listeners(
-            observe(this::updateChildren, column.graphicProperty(), column.enableOverlayProperty()),
-            observe(column::requestLayout, column.graphicAlignmentProperty(), column.overlayOnHeaderProperty())
-        );
-    }
 
     protected void updateChildren() {
         VFXSimpleTableColumn<T, C> column = getSkinnable();
@@ -97,6 +88,15 @@ public class VFXSimpleTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXS
     //================================================================================
     // Overridden Methods
     //================================================================================
+
+    @Override
+    public void install() {
+        VFXSimpleTableColumn<T, C> column = getSkinnable();
+        listen(
+            observe(this::updateChildren, column.graphicProperty(), column.enableOverlayProperty()),
+            observe(column::requestLayout, column.graphicAlignmentProperty(), column.overlayOnHeaderProperty())
+        );
+    }
 
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {

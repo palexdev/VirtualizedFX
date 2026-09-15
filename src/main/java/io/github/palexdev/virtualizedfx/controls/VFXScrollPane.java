@@ -28,7 +28,7 @@ import io.github.palexdev.mfxcore.base.properties.functional.FunctionProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.controls.MFXControl;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.controls.MFXStyleable;
@@ -154,8 +154,8 @@ public class VFXScrollPane extends MFXControl {
     //================================================================================
     // Methods
     //================================================================================
+
     private void init() {
-        setDefaultStyleClasses();
         getStylesheets().add(VFXResources.loadResource("VFXScrollPane.css"));
 
         setVMin(0.0);
@@ -182,6 +182,7 @@ public class VFXScrollPane extends MFXControl {
     //================================================================================
     // Overridden Methods
     //================================================================================
+
     @Override
     public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXScrollPaneSkin(this);

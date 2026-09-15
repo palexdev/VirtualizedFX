@@ -33,6 +33,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.util.StringConverter;
 
+import static io.github.palexdev.mfxcore.input.WhenEvent.intercept;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /// Extension of [VFXSimpleTableCell] which is intended to be used with models that make use of JavaFX properties.
@@ -112,7 +113,7 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
     /// to customize.
     ///
     /// The [#update()] method is overridden and functions quite differently, make sure to carefully read the documentation.
-    /// The [#addListeners()] method has also been modified to call [#onItemChanged()] rather than [#update()]
+    /// The [#install()] method has also been modified to call [#onItemChanged()] rather than [#update()]
     /// directly when the [VFXCellBase#itemProperty()] changes.
     public class VFXObservingTableCellSkin extends VFXLabeledCellSkin<T> {
         //================================================================================
@@ -158,14 +159,26 @@ public class VFXObservingTableCell<T, E> extends VFXSimpleTableCell<T, Observabl
         ///
         /// (Uses [When] and [WhenEvent] constructs).
         ///
-        /// @see #listeners(When[])
-        /// @see #events(WhenEvent[])
+        /// @see #listen(When[])
+        /// @see #onInput(WhenEvent[])
         @Override
-        protected void addListeners() {
-            listeners(
+        public void install() {
+            VFXCellBase<T> cell = getSkinnable();
+
+            // Listeners
+            listen(
                 onInvalidated(itemProperty())
-                    .then(t -> onItemChanged())
+                    .then(_ -> onItemChanged())
                     .executeNow()
+            );
+
+            // Input
+            onInput(
+                intercept(cell, VFXContainerEvent.UPDATE)
+                    .handle(e -> {
+                        update();
+                        e.consume();
+                    })
             );
             consumeMouseEvents(false); // JavaFX bullshit
         }

@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.controls.MFXControl;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.controls.MFXStyleable;
@@ -110,8 +110,8 @@ public class VFXScrollBar extends MFXControl {
     //================================================================================
     // Methods
     //================================================================================
-    private void init() {
-        setDefaultStyleClasses();
+
+    protected void init() {
         getStylesheets().add(VFXResources.loadResource("VFXScrollBar.css"));
 
         setMin(0.0);
@@ -121,6 +121,7 @@ public class VFXScrollBar extends MFXControl {
     //================================================================================
     // Overridden Methods
     //================================================================================
+
     @Override
     public Supplier<MFXSkinBase<? extends Node>> defaultSkinFactory() {
         return () -> new VFXScrollBarSkin(this);

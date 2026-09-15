@@ -29,7 +29,7 @@ import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.controls.MFXControl;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
@@ -45,9 +45,9 @@ import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXTableStateProperty;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VFXDefaultTableHelper;
 import io.github.palexdev.virtualizedfx.table.ViewportLayoutRequest.ViewportLayoutRequestProperty;
+import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.*;
@@ -64,6 +64,7 @@ import static io.github.palexdev.mfxcore.controls.MFXStyleable.styleClasses;
 import static io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy.*;
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrollable {
@@ -87,6 +88,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     private final ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = FXCollections.observableArrayList();
 
+    private VFXTableManager<T> manager;
     private final ReadOnlyObjectWrapper<VFXTableHelper<T>> helper = new ReadOnlyObjectWrapper<>() {
         @Override
         public void set(VFXTableHelper<T> newValue) {
@@ -138,7 +140,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         setItems(items);
         this.columns.setAll(columns);
         rowsCache = createRowsCache();
-        initialize();
+        init();
     }
 
     //================================================================================
@@ -155,7 +157,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
         column.getProperties().put(WEIGHT_KEY, weight);
         ofNullable(column.getTable())
-            .map(VFXTable::getBehavior)
+            .map(VFXTable::getManager)
             .ifPresent(VFXTableManager::onWeightsChanged);
     }
 
@@ -163,24 +165,31 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     // Methods
     //================================================================================
 
-    private void initialize() {
+    private void init() {
         setRowsFactory(defaultRowsFactory());
         setHelperFactory(defaultHelperFactory());
+
+        manager = requireNonNull(createManager(), "Table's manager cannot be null!");
+        manager.install();
 
         columns.forEach(c -> c.setTable(this)); // init columns
         columns.addListener((ListChangeListener<? super VFXTableColumn<T, ? extends VFXTableCell<T>>>) this::onColumnsChanged);
     }
 
-    protected VFXCellsCache<T, VFXTableRow<T>> createRowsCache() {
-        return new VFXCellsCache<>(rowsFactory, getRowsCacheCapacity());
+    public Supplier<VFXTableHelper<T>> defaultHelperFactory() {
+        return () -> new VFXDefaultTableHelper<>(this);
+    }
+
+    protected VFXTableManager<T> createManager() {
+        return new VFXTableManager<>(this);
     }
 
     public Function<T, VFXTableRow<T>> defaultRowsFactory() {
         return VFXDefaultTableRow::new;
     }
 
-    public Supplier<VFXTableHelper<T>> defaultHelperFactory() {
-        return () -> new VFXDefaultTableHelper<>(this);
+    protected VFXCellsCache<T, VFXTableRow<T>> createRowsCache() {
+        return new VFXCellsCache<>(rowsFactory, getRowsCacheCapacity());
     }
 
     protected void updateState(VFXTableState<T> state) {
@@ -218,7 +227,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         }
         rm.forEach(column -> column.setTable(null));
 
-        getBehavior().onColumnsChanged(from);
+        manager.onColumnsChanged(from);
     }
 
     public void requestViewportLayout() {
@@ -262,13 +271,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     @Override
     public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
-        return () -> new VFXTableManager<>(this);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public VFXTableManager<T> getBehavior() {
-        return (VFXTableManager<T>) super.getBehavior();
+        return () -> new MFXBehavior<>(this) {};
     }
 
     @Override
@@ -442,9 +445,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         StyleableProperties.COLUMNS_SIZE,
         this,
         "columnsSize",
-        Size.size(100.0, 32.0),
-        // FIXME this should be moved in the manager, but MFXCore architecture present issues that prevent that
-        _ -> getHelper().onColumnsSizeChanged()
+        Size.size(100.0, 32.0)
     );
 
     private final StyleableObjectProperty<ColumnsFillPolicy> columnsFillPolicy = new StyleableObjectProperty<>(
@@ -699,6 +700,10 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     public void setHelperFactory(Supplier<VFXTableHelper<T>> helperFactory) {
         this.helperFactory.set(helperFactory);
+    }
+
+    protected VFXTableManager<T> getManager() {
+        return manager;
     }
 
     @Override

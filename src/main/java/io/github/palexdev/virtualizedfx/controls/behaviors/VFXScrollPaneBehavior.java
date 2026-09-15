@@ -22,7 +22,7 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.DoubleRange;
 import io.github.palexdev.mfxcore.base.properties.PositionProperty;
-import io.github.palexdev.mfxcore.behavior.MFXBehavior;
+import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.mfxeffects.animations.MomentumTransition;
 import io.github.palexdev.mfxeffects.animations.base.Curve;

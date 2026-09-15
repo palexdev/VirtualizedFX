@@ -73,107 +73,12 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
         };
         viewport.getStyleClass().add("viewport");
 
-        // End initialization
-        addListeners();
         getChildren().setAll(viewport);
     }
 
     //================================================================================
     // Methods
     //================================================================================
-
-    /// Adds listeners on the component's properties which need to produce a new [VFXGridState] upon changing.
-    ///
-    /// Here's the list:
-    ///
-    /// - Listener on [VFXGrid#stateProperty()], this is crucial to update the viewport's children and
-    /// invoke [VFXGrid#requestViewportLayout()] if [VFXGridState#haveCellsChanged()] is `true`
-    ///
-    /// - Listener on [VFXGrid#needsViewportLayoutProperty()], this is crucial because invokes [#layout()]
-    ///
-    /// - Listener on [VFXGrid#helperProperty()], this is crucial because it's responsible for binding the
-    /// viewport's translate properties to the [VFXGridHelper#viewportPositionProperty()]
-    /// By translating the viewport, we give the illusion of scrolling (virtual scrolling)
-    ///
-    /// - Listener on [VFXGrid#widthProperty()], will invoke [VFXGridManager#onGeometryChanged()]
-    ///
-    /// - Listener on [VFXGrid#helperProperty()], will invoke [VFXGridManager#onGeometryChanged()]
-    ///
-    /// - Listener on [VFXGrid#bufferSizeProperty()], will invoke [VFXGridManager#onGeometryChanged()].
-    /// Yes, it is enough to threat this change as a geometry change to avoid code duplication
-    ///
-    /// -Listener on [VFXGrid#vPosProperty()], will invoke [VFXGridManager#onPositionChanged(Orientation)]
-    /// with [Orientation#VERTICAL] as parameter
-    ///
-    /// -Listener on [VFXGrid#hPosProperty()], will invoke [VFXGridManager#onPositionChanged(Orientation)]
-    /// with [Orientation#HORIZONTAL] as parameter
-    ///
-    /// - Listener on [VFXGrid#columnsNumProperty()], will invoke [VFXGridManager#onColumnsNumChanged()]
-    ///
-    /// - Listener on [VFXGrid#getCellFactory()], will invoke [VFXGridManager#onCellFactoryChanged()]
-    ///
-    /// - Listener on [VFXGrid#cellSizeProperty()], will invoke [VFXGridManager#onCellSizeChanged()]
-    ///
-    /// - Listener on [VFXGrid#vSpacingProperty()], will invoke [VFXGridManager#onSpacingChanged()]
-    ///
-    /// - Listener on [VFXGrid#hSpacingProperty()], will invoke [VFXGridManager#onSpacingChanged()]
-    ///
-    /// - Listener on [VFXGrid#itemsProperty()], will invoke [VFXGridManager#onItemsChanged()]
-    ///
-    /// - Listener on [VFXGrid#alignmentProperty()], will invoke [Parent#requestLayout()]
-    protected void addListeners() {
-        VFXGrid<T, C> grid = getSkinnable();
-
-        InvalidationListener gcl = i -> getBehavior().onGeometryChanged();
-        listeners(
-            // Core changes
-            onInvalidated(grid.stateProperty())
-                .then(s -> {
-                    if (s == VFXGridState.INVALID) {
-                        viewport.getChildren().clear();
-                    } else if (s.haveCellsChanged()) {
-                        viewport.getChildren().setAll(s.getNodes());
-                        grid.requestViewportLayout();
-                    }
-                }),
-            onInvalidated(grid.needsViewportLayoutProperty())
-                .condition(v -> v)
-                .then(v -> layout()),
-            onInvalidated(grid.helperProperty())
-                .then(h -> {
-                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::x));
-                    viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
-                })
-                .executeNow(),
-
-            // Geometry changes
-            withListener(grid.widthProperty(), gcl),
-            withListener(grid.heightProperty(), gcl),
-            withListener(grid.bufferSizeProperty(), gcl),
-
-            // Position changes
-            onInvalidated(grid.vPosProperty())
-                .then(v -> getBehavior().onPositionChanged(Orientation.VERTICAL)),
-            onInvalidated(grid.hPosProperty())
-                .then(h -> getBehavior().onPositionChanged(Orientation.HORIZONTAL)),
-
-            // Others
-            onInvalidated(grid.columnsNumProperty())
-                .then(n -> getBehavior().onColumnsNumChanged()),
-            onInvalidated(grid.getCellFactory())
-                .then(f -> getBehavior().onCellFactoryChanged()),
-            onInvalidated(grid.cellSizeProperty())
-                .then(s -> getBehavior().onCellSizeChanged()),
-            onInvalidated(grid.hSpacingProperty())
-                .then(s -> getBehavior().onSpacingChanged()),
-            onInvalidated(grid.vSpacingProperty())
-                .then(s -> getBehavior().onSpacingChanged()),
-            onInvalidated(grid.itemsProperty())
-                .then(it -> getBehavior().onItemsChanged()),
-            onInvalidated(grid.alignmentProperty())
-                .then(a -> grid.requestLayout())
-        );
-    }
 
     /// Core method responsible for resizing and positioning cells in the viewport.
     /// This method will not execute if the layout was not requested, [VFXGrid#needsViewportLayoutProperty()]
@@ -241,6 +146,100 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
     // Overridden Methods
     //================================================================================
 
+    /// Adds listeners on the component's properties which need to produce a new [VFXGridState] upon changing.
+    ///
+    /// Here's the list:
+    ///
+    /// - Listener on [VFXGrid#stateProperty()], this is crucial to update the viewport's children and
+    /// invoke [VFXGrid#requestViewportLayout()] if [VFXGridState#haveCellsChanged()] is `true`
+    ///
+    /// - Listener on [VFXGrid#needsViewportLayoutProperty()], this is crucial because invokes [#layout()]
+    ///
+    /// - Listener on [VFXGrid#helperProperty()], this is crucial because it's responsible for binding the
+    /// viewport's translate properties to the [VFXGridHelper#viewportPositionProperty()]
+    /// By translating the viewport, we give the illusion of scrolling (virtual scrolling)
+    ///
+    /// - Listener on [VFXGrid#widthProperty()], will invoke [VFXGridManager#onGeometryChanged()]
+    ///
+    /// - Listener on [VFXGrid#helperProperty()], will invoke [VFXGridManager#onGeometryChanged()]
+    ///
+    /// - Listener on [VFXGrid#bufferSizeProperty()], will invoke [VFXGridManager#onGeometryChanged()].
+    /// Yes, it is enough to threat this change as a geometry change to avoid code duplication
+    ///
+    /// -Listener on [VFXGrid#vPosProperty()], will invoke [VFXGridManager#onPositionChanged(Orientation)]
+    /// with [Orientation#VERTICAL] as parameter
+    ///
+    /// -Listener on [VFXGrid#hPosProperty()], will invoke [VFXGridManager#onPositionChanged(Orientation)]
+    /// with [Orientation#HORIZONTAL] as parameter
+    ///
+    /// - Listener on [VFXGrid#columnsNumProperty()], will invoke [VFXGridManager#onColumnsNumChanged()]
+    ///
+    /// - Listener on [VFXGrid#getCellFactory()], will invoke [VFXGridManager#onCellFactoryChanged()]
+    ///
+    /// - Listener on [VFXGrid#cellSizeProperty()], will invoke [VFXGridManager#onCellSizeChanged()]
+    ///
+    /// - Listener on [VFXGrid#vSpacingProperty()], will invoke [VFXGridManager#onSpacingChanged()]
+    ///
+    /// - Listener on [VFXGrid#hSpacingProperty()], will invoke [VFXGridManager#onSpacingChanged()]
+    ///
+    /// - Listener on [VFXGrid#itemsProperty()], will invoke [VFXGridManager#onItemsChanged()]
+    ///
+    /// - Listener on [VFXGrid#alignmentProperty()], will invoke [Parent#requestLayout()]
+    @Override
+    public void install() {
+        VFXGrid<T, C> grid = getSkinnable();
+
+        InvalidationListener gcl = i -> behavior().onGeometryChanged();
+        listen(
+            // Core changes
+            onInvalidated(grid.stateProperty())
+                .then(s -> {
+                    if (s == VFXGridState.INVALID) {
+                        viewport.getChildren().clear();
+                    } else if (s.haveCellsChanged()) {
+                        viewport.getChildren().setAll(s.getNodes());
+                        grid.requestViewportLayout();
+                    }
+                }),
+            onInvalidated(grid.needsViewportLayoutProperty())
+                .condition(v -> v)
+                .then(v -> layout()),
+            onInvalidated(grid.helperProperty())
+                .then(h -> {
+                    viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::x));
+                    viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
+                })
+                .executeNow(),
+
+            // Geometry changes
+            withListener(grid.widthProperty(), gcl),
+            withListener(grid.heightProperty(), gcl),
+            withListener(grid.bufferSizeProperty(), gcl),
+
+            // Position changes
+            onInvalidated(grid.vPosProperty())
+                .then(v -> behavior().onPositionChanged(Orientation.VERTICAL)),
+            onInvalidated(grid.hPosProperty())
+                .then(h -> behavior().onPositionChanged(Orientation.HORIZONTAL)),
+
+            // Others
+            onInvalidated(grid.columnsNumProperty())
+                .then(n -> behavior().onColumnsNumChanged()),
+            onInvalidated(grid.getCellFactory())
+                .then(f -> behavior().onCellFactoryChanged()),
+            onInvalidated(grid.cellSizeProperty())
+                .then(s -> behavior().onCellSizeChanged()),
+            onInvalidated(grid.hSpacingProperty())
+                .then(s -> behavior().onSpacingChanged()),
+            onInvalidated(grid.vSpacingProperty())
+                .then(s -> behavior().onSpacingChanged()),
+            onInvalidated(grid.itemsProperty())
+                .then(it -> behavior().onItemsChanged()),
+            onInvalidated(grid.alignmentProperty())
+                .then(a -> grid.requestLayout())
+        );
+    }
+
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         return leftInset + DEFAULT_SIZE + rightInset;
@@ -286,7 +285,7 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
 
     @SuppressWarnings("unchecked")
     @Override
-    protected VFXGridManager<T, C> getBehavior() {
-        return (VFXGridManager<T, C>) super.getBehavior();
+    protected VFXGridManager<T, C> behavior() {
+        return (VFXGridManager<T, C>) super.behavior();
     }
 }
