@@ -348,6 +348,16 @@ public class TableTestUtils {
         releaseColumn(robot);
     }
 
+    static void clickColumn(FxRobot robot, VFXTableColumn<User, ?> column) {
+        robot.moveTo(columnEdge(column), Motion.DIRECT);
+        robot.clickOn(MouseButton.PRIMARY);
+    }
+
+    static void doubleClickColumn(FxRobot robot, VFXTableColumn<User, ?> column) {
+        robot.moveTo(columnEdge(column), Motion.DIRECT);
+        robot.doubleClickOn(MouseButton.PRIMARY);
+    }
+
     static void pressEscape(FxRobot robot) {
         robot.press(KeyCode.ESCAPE);
         robot.release(KeyCode.ESCAPE);

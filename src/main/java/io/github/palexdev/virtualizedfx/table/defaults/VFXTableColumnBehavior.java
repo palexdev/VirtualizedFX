@@ -25,6 +25,7 @@ import io.github.palexdev.mfxcore.utils.fx.resize.targets.RegionTarget;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
 import static io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy.DEFAULT_WEIGHT;
@@ -98,12 +99,17 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
             column.setUserPrefWidth(width);
         }
 
-        // TODO add excel-like autosize gesture
         @Override
         protected void onMousePressed(MouseEvent me) {
             super.onMousePressed(me);
             if (!isResizing()) return;
+
             VFXTableColumn<?, ?> column = column();
+            if (me.getButton() == MouseButton.PRIMARY && me.getClickCount() % 2 == 0) {
+                column.sizeToContent();
+                return;
+            }
+
             prefAtPress = column.getUserPrefWidth();
             weightAtPress = getWeight(column);
         }

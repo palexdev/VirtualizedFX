@@ -2667,4 +2667,62 @@ public class TableTests {
         awaitPulse(shown);
         assertAutosized(robot, shown, column);
     }
+
+    @Test
+    void testDoubleClickAutosize(FxRobot robot) {
+        StackPane pane = setupStage();
+        ObservableList<User> items = sameUsers(50, "Ann", "Lee");
+        items.get(3).setFirstName("Bartholomew Maximilian Featherstonehaugh-Worthington");
+        Table table = new Table(items);
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            pane.getChildren().add(table);
+        });
+
+        VFXTableColumn<User, ?> column = table.columns().getFirst();
+        doubleClickColumn(robot, column);
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+        assertTrue(column.getUserPrefWidth() > prefWidth(robot, column));
+    }
+
+    @Test
+    void testSingleClickDoesNotAutosize(FxRobot robot) {
+        StackPane pane = setupStage();
+        ObservableList<User> items = sameUsers(50, "Ann", "Lee");
+        items.get(3).setFirstName("Bartholomew Maximilian Featherstonehaugh-Worthington");
+        Table table = new Table(items);
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            pane.getChildren().add(table);
+        });
+
+        VFXTableColumn<User, ?> column = table.columns().getFirst();
+        clickColumn(robot, column);
+        awaitPulse(table);
+        assertFalse(column.isMarkedForAutosize());
+        assertEquals(-1, column.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 160);
+    }
+
+    @Test
+    void testDoubleClickKeepsWeight(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(sameUsers(50, "Ann", "Lee"));
+        VFXTableColumn<User, ?> column = table.columns().get(1);
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(column, 1);
+            pane.getChildren().add(table);
+        });
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        doubleClickColumn(robot, column);
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+        assertTrue(column.getUserPrefWidth() < 160);
+        assertEquals(1, VFXTable.getWeight(column));
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+    }
 }
