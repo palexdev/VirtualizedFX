@@ -29,6 +29,7 @@ import io.github.palexdev.mfxcore.base.properties.functional.SupplierProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableDoubleProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
+import io.github.palexdev.mfxcore.collections.ObservableArrayList;
 import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.controls.MFXControl;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
@@ -83,10 +84,9 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         }
     };
 
+    private final ColumnsList<T> columns = new ColumnsList<>();
     private final VFXCellsCache<T, VFXTableRow<T>> rowsCache;
     private final CellFactory<T, VFXTableRow<T>> rowsFactory = new CellFactory<>(context);
-
-    private final ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns = FXCollections.observableArrayList();
 
     private VFXTableManager<T> manager;
     private final ReadOnlyObjectWrapper<VFXTableHelper<T>> helper = new ReadOnlyObjectWrapper<>() {
@@ -677,7 +677,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         this.rowsFactory.setValue(rowsFactory);
     }
 
-    public ObservableList<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns() {
+    public ColumnsList<T> columns() {
         return columns;
     }
 
@@ -745,5 +745,58 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     protected void setNeedsViewportLayout(ViewportLayoutRequest needsViewportLayout) {
         this.needsViewportLayout.set(needsViewportLayout);
+    }
+
+    //================================================================================
+    // Inner Classes
+    //================================================================================
+
+    public static class ColumnsList<T> extends ObservableArrayList<VFXTableColumn<T, ? extends VFXTableCell<T>>> {
+
+        public void swap(int i, int j) {
+            Objects.checkIndex(i, size());
+            Objects.checkIndex(j, size());
+            if (i == j) return;
+
+            int lo = Math.min(i, j);
+            int hi = Math.max(i, j);
+            int[] perm = new int[hi - lo + 1];
+            for (int k = 0; k < perm.length; k++) perm[k] = lo + k;
+            perm[0] = hi;
+            perm[perm.length - 1] = lo;
+
+            beginChange();
+            try {
+                Collections.swap(delegate, lo, hi);
+                nextPermutation(lo, hi + 1, perm);
+            } finally {
+                endChange();
+            }
+        }
+
+        public void move(int from, int to) {
+            Objects.checkIndex(from, size());
+            Objects.checkIndex(to, size());
+            if (from == to) return;
+
+            int lo = Math.min(from, to);
+            int hi = Math.max(from, to);
+            int[] perm = new int[hi - lo + 1];
+            if (from < to) {
+                perm[0] = to;
+                for (int k = 1; k < perm.length; k++) perm[k] = lo + k - 1;
+            } else {
+                for (int k = 0; k < perm.length - 1; k++) perm[k] = lo + k + 1;
+                perm[perm.length - 1] = to;
+            }
+
+            beginChange();
+            try {
+                delegate.add(to, delegate.remove(from));
+                nextPermutation(lo, hi + 1, perm);
+            } finally {
+                endChange();
+            }
+        }
     }
 }

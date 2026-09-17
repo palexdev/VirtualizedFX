@@ -18,8 +18,10 @@
 
 package interactive.table;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
@@ -68,6 +70,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static src.model.FXUser.fxusers;
 import static src.model.User.faker;
@@ -109,7 +112,6 @@ public class TableTests {
         resetCounters();
     }
 
-    // TODO worth re-adding the comments from v1 too, even if wrong I'll correct them later with the right numbers or remove if unnecessary anymore
     @Test
     void testInitAndGeometry(FxRobot robot) {
         StackPane pane = setupStage();
@@ -496,7 +498,7 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Permutation change
-        robot.interact(() -> FXCollections.sort(table.columns(), Collections.reverseOrder()));
+        robot.interact(() -> table.columns().sort(Collections.reverseOrder()));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
         assertCounter(112, 1, 112, 112, 112, 0, 112, 42);
     }
@@ -517,7 +519,7 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // Permutation change
-        robot.interact(() -> FXCollections.sort(table.columns(), Collections.reverseOrder()));
+        robot.interact(() -> table.columns().sort(Collections.reverseOrder()));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(3, 9));
         assertCounter(48, 1, 112, 112, 48, 0, 48, 18);
     }
@@ -2725,4 +2727,154 @@ public class TableTests {
         assertEquals(1, VFXTable.getWeight(column));
         assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
     }
+    @Test
+    void testSwapColumns(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20))
+            .addEmptyColumns(9);
+        robot.interact(() -> pane.getChildren().add(table));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+
+        VFXTableColumn<User, ?> first = table.columns().getFirst();
+        VFXTableColumn<User, ?> third = table.columns().get(2);
+        robot.interact(() -> table.columns().swap(2, 0));
+
+        assertSame(third, table.columns().getFirst());
+        assertSame(first, table.columns().get(2));
+        assertSame(table, first.getTable());
+        assertSame(table, third.getTable());
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
+    void testSwapColumnsOutOfRange(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20))
+            .addEmptyColumns(9);
+        robot.interact(() -> pane.getChildren().add(table));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+
+        VFXTableColumn<User, ?> tenth = table.columns().get(10);
+        VFXTableColumn<User, ?> twelfth = table.columns().get(12);
+        robot.interact(() -> table.columns().swap(10, 12));
+
+        assertSame(twelfth, table.columns().get(10));
+        assertSame(tenth, table.columns().get(12));
+        assertEquals(10, twelfth.getIndex());
+        assertEquals(12, tenth.getIndex());
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
+    void testSwapColumnsKeepsWidths(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.columns().getFirst().setUserPrefWidth(120);
+            pane.getChildren().add(table);
+        });
+        assertColumnWidths(table, 120, 40, 40, 40, 40, 40, 80);
+
+        VFXTableColumn<User, ?> wide = table.columns().getFirst();
+        robot.interact(() -> table.columns().swap(0, 3));
+
+        assertSame(wide, table.columns().get(3));
+        assertEquals(120, wide.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+        assertColumnWidths(table, 40, 40, 40, 120, 40, 40, 80);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
+    void testMoveColumnForward(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20))
+            .addEmptyColumns(9);
+        robot.interact(() -> pane.getChildren().add(table));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+
+        List<VFXTableColumn<User, ? extends VFXTableCell<User>>> before = new ArrayList<>(table.columns());
+        robot.interact(() -> table.columns().move(1, 4));
+
+        assertSame(before.get(1), table.columns().get(4));
+        assertSame(before.get(2), table.columns().get(1));
+        assertSame(before.get(3), table.columns().get(2));
+        assertSame(before.get(4), table.columns().get(3));
+        assertSame(before.getFirst(), table.columns().getFirst());
+        assertSame(before.get(5), table.columns().get(5));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
+    void testMoveColumnBackward(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20))
+            .addEmptyColumns(9);
+        robot.interact(() -> pane.getChildren().add(table));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+
+        List<VFXTableColumn<User, ? extends VFXTableCell<User>>> before = new ArrayList<>(table.columns());
+        robot.interact(() -> table.columns().move(4, 1));
+
+        assertSame(before.get(4), table.columns().get(1));
+        assertSame(before.get(1), table.columns().get(2));
+        assertSame(before.get(2), table.columns().get(3));
+        assertSame(before.get(3), table.columns().get(4));
+        assertSame(before.getFirst(), table.columns().getFirst());
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
+    void testMoveColumnOutOfRange(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20))
+            .addEmptyColumns(9);
+        robot.interact(() -> pane.getChildren().add(table));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+
+        VFXTableColumn<User, ?> moved = table.columns().getFirst();
+        robot.interact(() -> table.columns().move(0, 15));
+
+        assertSame(moved, table.columns().getLast());
+        assertEquals(15, moved.getIndex());
+        assertSame(table, moved.getTable());
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
+    void testMoveColumnIntoRange(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20))
+            .addEmptyColumns(9);
+        robot.interact(() -> pane.getChildren().add(table));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+
+        VFXTableColumn<User, ?> moved = table.columns().getLast();
+        robot.interact(() -> table.columns().move(15, 0));
+
+        assertSame(moved, table.columns().getFirst());
+        assertEquals(0, moved.getIndex());
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
+    void testMoveColumnNoOp(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(20))
+            .addEmptyColumns(9);
+        robot.interact(() -> pane.getChildren().add(table));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        resetCounters();
+
+        List<VFXTableColumn<User, ? extends VFXTableCell<User>>> before = new ArrayList<>(table.columns());
+        robot.interact(() -> {
+            table.columns().move(3, 3);
+            table.columns().swap(3, 3);
+        });
+
+        assertEquals(before, table.columns());
+        assertCounter(0, 0, 0, 0, 0, 0, 0, 0);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
 }

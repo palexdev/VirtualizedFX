@@ -106,8 +106,6 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
         setCellFactory(defaultCellFactory());
     }
 
-    // TODO swap methods should be moved to the table
-
     //================================================================================
     // Methods
     //================================================================================
