@@ -182,7 +182,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
         return true;
     }
 
-    protected void updateChildren() {
+    protected final void updateChildren() {
         getChildren().setAll(getCellsAsNodes());
         onUpdateChildren();
     }
