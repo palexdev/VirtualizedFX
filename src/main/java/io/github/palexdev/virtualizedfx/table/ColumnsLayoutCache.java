@@ -238,7 +238,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
     }
 
     protected void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
-        // TODO can be optimized
+        // TODO can be optimized, but it's not worth it right now
         rebuild();
         invalidate();
     }
