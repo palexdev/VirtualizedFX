@@ -159,12 +159,14 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
 
         double w = viewport.getWidth();
         double h = viewport.getHeight();
-        Size cs = computeContentBounds();
+        Size cs;
 
         if (content instanceof VFXContainer<?>) {
             // Virtualized containers always take up all the space and thus ignore the alignment too
             layoutInArea(content, 0, 0, w, h, 0, viewport.getPadding(), HPos.LEFT, VPos.TOP);
+            cs = computeContentBounds();
         } else {
+            cs = computeContentBounds();
             Pos alignment = pane.getAlignment();
             VPos vAlign = alignment.getVpos();
             HPos hAlign = alignment.getHpos();
