@@ -172,7 +172,11 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         manager = requireNonNull(createManager(), "Table's manager cannot be null!");
         manager.install();
 
-        columns.forEach(c -> c.setTable(this)); // init columns
+        for (int i = 0; i < columns.size(); i++) { // init columns
+            VFXTableColumn<T, ? extends VFXTableCell<T>> column = columns.get(i);
+            column.setTable(this);
+            column.hintIndex(i);
+        }
         columns.addListener((ListChangeListener<? super VFXTableColumn<T, ? extends VFXTableCell<T>>>) this::onColumnsChanged);
     }
 
@@ -226,6 +230,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
             }
         }
         rm.forEach(column -> column.setTable(null));
+        for (int i = from; i < columns.size(); i++) columns.get(i).hintIndex(i);
 
         manager.onColumnsChanged(from);
     }

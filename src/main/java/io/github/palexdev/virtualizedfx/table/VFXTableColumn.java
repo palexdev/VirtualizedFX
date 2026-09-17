@@ -61,11 +61,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
     private final ReadOnlyObjectWrapper<VFXTable<T>> table = new ReadOnlyObjectWrapper<>() {
         @Override
         protected void invalidated() {
-            if (index.rebind()) {
-                VFXTable<T> table = get();
-                if (getUserPrefWidth() > table.getColumnsSize().width())
-                    onColumnWidthChanged();
-            }
+            index.rebind();
         }
     };
     private final IndexBinding index = new IndexBinding();
@@ -117,6 +113,10 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
 
     public boolean isMarkedForAutosize() {
         return hasProperties() && getProperties().containsKey(AUTOSIZE_KEY);
+    }
+
+    void hintIndex(int index) { // pkg-private, only table should run this
+        this.index.hint(index);
     }
 
     protected void markForAutosize() {
@@ -271,7 +271,6 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
         return index.get();
     }
 
-    // TODO document that it's O(n) if not cached yet, and that it's self healing
     public ObservableValue<Number> indexProperty() {
         return index;
     }
@@ -326,18 +325,22 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
             return current;
         }
 
-        public boolean rebind() {
+        public void hint(int index) {
+            current = index;
+        }
+
+        public void rebind() {
             unbind(deps);
+            current = -1;
             VFXTable<T> table = getTable();
             if (table == null) {
                 invalidate();
-                return false;
+                return;
             }
 
             deps = new Observable[]{table.columns()};
             bind(deps);
             invalidate();
-            return true;
         }
     }
 }
