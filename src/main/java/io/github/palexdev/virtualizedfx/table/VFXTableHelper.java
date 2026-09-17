@@ -241,7 +241,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                     if (!Utils.INVALID_RANGE.equals(columnsRange)) {
                         x = -container.getHPos();
                     }
-                    return position(x, y);
+                    return position(container.snapPositionX(x), container.snapPositionY(y));
                 })
                 .addSources(container.layoutBoundsProperty())
                 .addSources(container.vPosProperty(), container.hPosProperty())

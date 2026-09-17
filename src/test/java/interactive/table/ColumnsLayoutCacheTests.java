@@ -591,6 +591,68 @@ public class ColumnsLayoutCacheTests {
     }
 
     //================================================================================
+    // Virtual width
+    //================================================================================
+
+    @Test
+    void testFillWidthExactNarrowNatural(FxRobot robot) {
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(10);
+            table.columns().getFirst().setUserPrefWidth(10.1);
+            table.resize(400.2, 400);
+        });
+        TestCache cache = new TestCache(table);
+
+        assertEquals(400.2, cache.get());
+        assertEquals(0.0, Math.max(0, cache.get() - table.getWidth()));
+    }
+
+    @Test
+    void testFillWidthExactNarrowNaturalWeighted(FxRobot robot) {
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(10);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(3), 1);
+            table.columns().getFirst().setUserPrefWidth(10.1);
+            table.resize(400.2, 400);
+        });
+        TestCache cache = new TestCache(table);
+
+        assertEquals(400.2, cache.get());
+        assertEquals(0.0, Math.max(0, cache.get() - table.getWidth()));
+    }
+
+    @Test
+    void testFillWidthExactWideNatural(FxRobot robot) {
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(10);
+            table.columns().getFirst().setUserPrefWidth(210.1);
+            table.resize(400.2, 400);
+        });
+        TestCache cache = new TestCache(table);
+
+        assertEquals(400.2, cache.get());
+        assertEquals(0.0, Math.max(0, cache.get() - table.getWidth()));
+    }
+
+    @Test
+    void testFillWidthExactIntegerTableWidth(FxRobot robot) {
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(10);
+            table.columns().getFirst().setUserPrefWidth(10.1);
+            table.resize(400, 400);
+        });
+        TestCache cache = new TestCache(table);
+
+        assertEquals(400.0, cache.get());
+        assertEquals(0.0, Math.max(0, cache.get() - table.getWidth()));
+    }
+
+    //================================================================================
     // Misc
     //================================================================================
 

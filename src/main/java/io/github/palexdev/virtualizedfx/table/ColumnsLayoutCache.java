@@ -135,19 +135,7 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
         return firstAbsorber;
     }
 
-    public double widthAt(int index) {
-        double natural = naturalWidthAt(index);
-        double leftover = leftoverWidth();
-        if (leftover == 0.0) return natural;
-
-        int total = totalWeight();
-        if (total == 0) return natural;
-
-        int weight = cumulativeWeights[index + 1] - cumulativeWeights[index];
-        return (weight == 0) ? natural : natural + leftover * weight / total;
-    }
-
-    public double posAt(int index) {
+    private double rawPosAt(int index) {
         if (index > posValidUpTo) {
             for (int i = posValidUpTo + 1; i <= index; i++)
                 naturalPositions[i] = naturalPositions[i - 1] + naturalWidthAt(i - 1);
@@ -160,6 +148,14 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 
         int total = totalWeight();
         return (total == 0) ? natural : natural + leftover * cumulativeWeights[index] / total;
+    }
+
+    public double widthAt(int index) {
+        return table.snapPositionX(rawPosAt(index + 1)) - table.snapPositionX(rawPosAt(index));
+    }
+
+    public double posAt(int index) {
+        return table.snapPositionX(rawPosAt(index));
     }
 
     protected void onColumnsSizeChanged() {
@@ -255,9 +251,9 @@ public class ColumnsLayoutCache<T> extends DoubleBinding {
 
     @Override
     protected double computeValue() {
-        double natural = totalNaturalWidth();
         double leftover = leftoverWidth();
-        return (leftover == 0.0 || totalWeight() == 0) ? natural : natural + leftover;
+        boolean fills = leftover != 0.0 && totalWeight() != 0;
+        return fills ? table.getWidth() : table.snapPositionX(totalNaturalWidth());
     }
 
     @Override

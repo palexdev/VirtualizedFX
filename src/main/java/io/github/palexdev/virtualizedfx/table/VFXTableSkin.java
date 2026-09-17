@@ -138,7 +138,6 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     }
 
     protected void layoutViewport() {
-        // TODO we probably want to snap
         VFXTable<T> table = getSkinnable();
         double w = table.getWidth() - snappedLeftInset() - snappedRightInset();
         double virtualW = table.getVirtualMaxX();

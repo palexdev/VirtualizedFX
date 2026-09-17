@@ -256,12 +256,6 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
 
     @Override
     public void update(int... indexes) {
-        // TODO can we optimize this?
-        // The first branch updates every row and cell, can't we fire a single event on the container and let it be
-        // delivered to every cell in the scenegraph?
-        //
-        // As for the second branch, we can't do the exactly the same, but maybe we could fire the event on each row
-        // rather than on each individual cell
         VFXTableState<T> state = getState();
         if (state.isEmpty()) return;
         if (indexes.length == 0) {
