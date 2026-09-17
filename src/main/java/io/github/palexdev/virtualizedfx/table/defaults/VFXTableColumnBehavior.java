@@ -21,10 +21,16 @@ package io.github.palexdev.virtualizedfx.table.defaults;
 import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.enums.Zone;
 import io.github.palexdev.mfxcore.utils.fx.resize.Resizer;
+import io.github.palexdev.mfxcore.utils.fx.resize.targets.RegionTarget;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
+import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
+import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
+import javafx.scene.input.MouseEvent;
 
-import static io.github.palexdev.mfxcore.utils.fx.resize.Resizer.resizer;
+import static io.github.palexdev.virtualizedfx.table.VFXTable.getWeight;
+import static io.github.palexdev.virtualizedfx.table.VFXTable.setWeight;
+import static java.util.Optional.ofNullable;
 
 public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBehavior<VFXTableColumn<T, C>> {
 
@@ -32,7 +38,7 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Properties
     //================================================================================
 
-    private Resizer<VFXTableColumn<T, C>> resizer;
+    private Resizer<VFXTableColumn<?, ?>> resizer;
 
     //================================================================================
     // Constructors
@@ -46,18 +52,11 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Methods
     //================================================================================
 
-    protected Resizer<VFXTableColumn<T, C>> createResizer() {
-        VFXTableColumn<T, C> column = getNode();
-        if (column.getTable() == null) throw new NullPointerException("Table is null, resizer won't work properly!");
-
-        return resizer(column)
-            .hitSource(column.getTable())
-            .condition((_, _) -> column.isGestureResizable())
-            .allowedZones(Zone.CENTER_RIGHT)
-            .resizeHandler((c, _, _, w, _) -> c.setUserPrefWidth(w));
+    protected Resizer<VFXTableColumn<?, ?>> createResizer() {
+        return new ColumnResizer(getNode());
     }
 
-    public Resizer<VFXTableColumn<T, C>> getResizer() {
+    public Resizer<VFXTableColumn<?, ?>> getResizer() {
         return resizer;
     }
 
@@ -67,13 +66,60 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
 
     @Override
     public void install() {
-        // FIXME does not look right (e.g. does not handle table changes)
-        if ((resizer = createResizer()) != null) resizer.install();
+        if ((resizer = createResizer()) != null)
+            resizer.install();
     }
 
     @Override
     public void dispose() {
         if (resizer != null) resizer.dispose();
         super.dispose();
+    }
+
+    //================================================================================
+    // Inner Classes
+    //================================================================================
+
+    protected static class ColumnResizer extends Resizer<VFXTableColumn<?, ?>> {
+        private double prefAtPress;
+        private int weightAtPress = ColumnsFillPolicy.DEFAULT_WEIGHT;
+
+        public ColumnResizer(VFXTableColumn<?, ?> column) {
+            super(new RegionTarget<>(column));
+            hitSourceProperty().bind(column.tableProperty());
+            condition((_, _) -> column().isGestureResizable());
+            allowedZones(Zone.CENTER_RIGHT);
+            resizeHandler((c, _, _, w, _) -> onResize(c, w));
+        }
+
+        protected <T> void onResize(VFXTableColumn<T, ?> column, double width) {
+            VFXTableHelper<T> helper = column.getTable().getHelper();
+            if (helper.isSharedAbsorber(column)) setWeight(column, 0);
+            column.setUserPrefWidth(width);
+        }
+
+        @Override
+        protected void onMousePressed(MouseEvent me) {
+            super.onMousePressed(me);
+            if (!isResizing()) return;
+            VFXTableColumn<?, ?> column = column();
+            prefAtPress = column.getUserPrefWidth();
+            weightAtPress = getWeight(column);
+        }
+
+        @Override
+        public boolean cancel() {
+            if (!isResizing()) return false;
+            VFXTableColumn<?, ?> column = column();
+            setWeight(column, weightAtPress);
+            column.setUserPrefWidth(prefAtPress);
+            ofNullable(onCancelled()).ifPresent(Runnable::run);
+            resetState();
+            return true;
+        }
+
+        public VFXTableColumn<?, ?> column() {
+            return target().target();
+        }
     }
 }

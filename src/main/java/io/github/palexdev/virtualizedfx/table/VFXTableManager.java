@@ -86,6 +86,11 @@ public class VFXTableManager<T> {
             if (o.height() != n.height()) helper().invalidateRange(Orientation.VERTICAL);
             onColumnsSizeChanged();
         }).listen();
+        onInvalidated(table.columnsFillPolicyProperty()).then(_ -> {
+            helper().onFillPolicyChanged();
+            helper().invalidateRange(Orientation.HORIZONTAL);
+            onFillPolicyChanged();
+        }).listen();
         onInvalidated(table.rowsHeightProperty()).then(_ -> {
             helper().invalidateRange(Orientation.VERTICAL);
             onRowsHeightChanged();
@@ -96,7 +101,7 @@ public class VFXTableManager<T> {
     protected void onGeometryChanged(GeometryChangeType gct) {
         VFXTableHelper<T> helper = helper();
 
-        int fillFrom = gct == GeometryChangeType.WIDTH ? helper.onWeightsChanged() : -1; // redistribute leftover width
+        int fillFrom = gct == GeometryChangeType.WIDTH ? helper.onTableWidthChanged() : -1; // redistribute leftover width
         invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
         if (!tableFactorySizeCheck()) return;
 
@@ -248,10 +253,17 @@ public class VFXTableManager<T> {
     }
 
     protected void onColumnResized(VFXTableColumn<T, ?> column) {
+        layoutColumnsFrom(helper().onColumnResized(column));
+    }
+
+    protected void onColumnWeightChanged(VFXTableColumn<T, ?> column) {
+        layoutColumnsFrom(helper().onColumnWeightChanged(column));
+    }
+
+    protected void layoutColumnsFrom(int first) {
         VFXTableHelper<T> helper = helper();
         VFXTableState<T> state = state();
 
-        int first = helper.onColumnResized(column);
         if (first < 0 || state.isEmpty()) return; // -1: no effective width change, nothing to lay out
         invalidatePos();
 
@@ -272,7 +284,7 @@ public class VFXTableManager<T> {
         table.updateState(newState, layoutInterval);
     }
 
-    protected void onWeightsChanged() {
+    protected void onFillPolicyChanged() {
         onColumnsSizeChanged();
     }
 

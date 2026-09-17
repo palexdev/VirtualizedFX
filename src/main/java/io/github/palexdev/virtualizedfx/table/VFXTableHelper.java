@@ -63,9 +63,15 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
     int onColumnResized(VFXTableColumn<T, ?> column);
 
-    int onWeightsChanged();
+    int onTableWidthChanged();
+
+    void onFillPolicyChanged();
+
+    int onColumnWeightChanged(VFXTableColumn<T, ?> column);
 
     void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change);
+
+    boolean isSharedAbsorber(VFXTableColumn<T, ?> column);
 
     void layoutColumn(int columnIdx, VFXTableColumn<T, ?> column);
 
@@ -305,13 +311,28 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         }
 
         @Override
-        public int onWeightsChanged() {
-            return layoutCache.onWeightsChanged();
+        public int onTableWidthChanged() {
+            return layoutCache.onTableWidthChanged();
+        }
+
+        @Override
+        public void onFillPolicyChanged() {
+            layoutCache.onFillPolicyChanged();
+        }
+
+        @Override
+        public int onColumnWeightChanged(VFXTableColumn<T, ?> column) {
+            return layoutCache.onColumnWeightChanged(column);
         }
 
         @Override
         public void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
             layoutCache.onColumnsChanged(change);
+        }
+
+        @Override
+        public boolean isSharedAbsorber(VFXTableColumn<T, ?> column) {
+            return layoutCache.isSharedAbsorber(column.getIndex());
         }
 
         @Override

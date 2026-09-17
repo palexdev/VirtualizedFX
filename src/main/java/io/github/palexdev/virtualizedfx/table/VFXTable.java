@@ -158,7 +158,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         column.getProperties().put(WEIGHT_KEY, weight);
         ofNullable(column.getTable())
             .map(VFXTable::getManager)
-            .ifPresent(VFXTableManager::onWeightsChanged);
+            .ifPresent(m -> m.onColumnWeightChanged(column));
     }
 
     //================================================================================
