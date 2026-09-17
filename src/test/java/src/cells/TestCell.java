@@ -68,6 +68,7 @@ public class TestCell<T> extends VFXSimpleCell<T> {
 
             @Override
             public void install() {
+                super.install();
                 listen(
                     onInvalidated(indexProperty())
                         .then(v -> {
