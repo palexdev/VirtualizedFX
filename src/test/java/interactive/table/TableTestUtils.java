@@ -35,6 +35,7 @@ import io.github.palexdev.mfxresources.icon.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
@@ -48,11 +49,16 @@ import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
 import org.opentest4j.AssertionFailedError;
+import org.testfx.api.FxRobot;
+import org.testfx.robot.Motion;
 import src.model.User;
 import src.utils.TestFXUtils.Counter;
 
@@ -214,17 +220,43 @@ public class TableTestUtils {
         return Math.max(column.getUserPrefWidth(), table.getColumnsSize().width());
     }
 
+    static int effectiveWeight(VFXTable<User> table, int index) {
+        if (table.getColumnsFillPolicy() == ColumnsFillPolicy.LAST)
+            return index == table.columns().size() - 1 ? 1 : 0;
+        return Math.max(0, VFXTable.getWeight(table.columns().get(index)));
+    }
+
+    static int totalWeight(VFXTable<User> table) {
+        int total = 0;
+        for (int i = 0; i < table.columns().size(); i++) total += effectiveWeight(table, i);
+        return total;
+    }
+
+    static double sumNatural(VFXTable<User> table) {
+        double sum = 0.0;
+        for (int i = 0; i < table.columns().size(); i++) sum += naturalColumnWidth(table, i);
+        return sum;
+    }
+
+    static double leftoverWidth(VFXTable<User> table) {
+        return Math.max(0.0, table.getWidth() - sumNatural(table));
+    }
+
     static double columnWidth(VFXTable<User> table, int index) {
-        double w = naturalColumnWidth(table, index);
-        if (index != table.columns().size() - 1) return w;
-        double natural = 0.0;
-        for (int i = 0; i < table.columns().size(); i++) natural += naturalColumnWidth(table, i);
-        return w + Math.max(0.0, table.getWidth() - natural);
+        double natural = naturalColumnWidth(table, index);
+        int weight = effectiveWeight(table, index);
+        int total = totalWeight(table);
+        if (weight == 0 || total == 0) return natural;
+        return natural + leftoverWidth(table) * weight / total;
+    }
+
+    static double columnsWidth(VFXTable<User> table) {
+        return columnX(table, table.columns().size());
     }
 
     static double columnX(VFXTable<User> table, int index) {
         double x = 0.0;
-        for (int i = 0; i < index; i++) x += naturalColumnWidth(table, i);
+        for (int i = 0; i < index; i++) x += columnWidth(table, i);
         return x;
     }
 
@@ -275,6 +307,44 @@ public class TableTestUtils {
             System.err.printf("Failed cell layout assertion for column %s%n".formatted(table.columns().get(columnIdx).getText()));
             throw err;
         }
+    }
+
+    static void assertColumnWidths(VFXTable<User> table, double... widths) {
+        assertEquals(widths.length, table.columns().size());
+        for (int i = 0; i < widths.length; i++) {
+            VFXTableColumn<User, ? extends VFXTableCell<User>> column = table.columns().get(i);
+            try {
+                assertEquals(widths[i], column.getBoundsInParent().getWidth(), FP_ASSERTIONS_DELTA);
+            } catch (AssertionFailedError err) {
+                System.err.printf("Failed width assertion for column %s at index %d%n".formatted(column.getText(), i));
+                throw err;
+            }
+        }
+    }
+
+    static Point2D columnEdge(VFXTableColumn<User, ?> column) {
+        return column.localToScreen(column.getWidth() - 2.0, column.getHeight() / 2.0);
+    }
+
+    static void pressAndDragColumn(FxRobot robot, VFXTableColumn<User, ?> column, double dx) {
+        Point2D edge = columnEdge(column);
+        robot.moveTo(edge, Motion.DIRECT);
+        robot.press(MouseButton.PRIMARY);
+        robot.moveTo(edge.add(dx, 0.0), Motion.DIRECT);
+    }
+
+    static void releaseColumn(FxRobot robot) {
+        robot.release(MouseButton.PRIMARY);
+    }
+
+    static void dragColumn(FxRobot robot, VFXTableColumn<User, ?> column, double dx) {
+        pressAndDragColumn(robot, column, dx);
+        releaseColumn(robot);
+    }
+
+    static void pressEscape(FxRobot robot) {
+        robot.press(KeyCode.ESCAPE);
+        robot.release(KeyCode.ESCAPE);
     }
 
     static void assertLength(VFXTable<User> table, double vLength, double hLength) {

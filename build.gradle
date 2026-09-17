@@ -23,6 +23,7 @@ dependencies {
     testImplementation platform("org.junit:junit-bom:$junit")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation "org.hamcrest:hamcrest:$hamcrest"
     testImplementation "org.testfx:testfx-core:$testfx"
     testImplementation "org.testfx:testfx-junit5:$testfx"
     testImplementation "io.github.palexdev:mfxresources:$mfxresources"
@@ -48,8 +49,15 @@ test {
     jvmArgs += [
             '--add-opens', 'javafx.graphics/com.sun.javafx.application=ALL-UNNAMED'
     ]
-    filter {
-        excludeTestsMatching "JMH*"
+    systemProperty 'javafx.robot.screenshotMethod', 'gtk'
+    // JMH benchmarks are excluded from normal test runs, unless one is explicitly requested (e.g. IntelliJ's gutter icon).
+    // Checked at execution time because IntelliJ adds its test pattern to the filter after the build script is evaluated.
+    // Not compatible with the configuration cache, since it changes the filter while the task runs
+    doFirst {
+        def requested = filter.includePatterns + filter.commandLineIncludePatterns
+        if (!requested.any { it.toLowerCase().contains('jmh') }) {
+            filter.excludeTestsMatching "JMH*"
+        }
     }
 }
 

@@ -36,6 +36,7 @@ import io.github.palexdev.mfxresources.icon.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cells.VFXObservingTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.enums.BufferSize;
+import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
@@ -2004,5 +2005,469 @@ public class TableTests {
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
         assertCounter(0, 1, 0, 0, 0, 0, 0, 0);
         assertLength(table, 50 * 32, 1260);
+    }
+    @Test
+    void testWeightedNoFillWithoutWeights(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            pane.getChildren().add(table);
+        });
+
+        // Assert init: LAST is the default, the last column absorbs the leftover width
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 160);
+        assertLength(table, 50 * 32, 400);
+        assertScrollable(table, 50 * 32 - 368, 0);
+
+        // WEIGHTED with nothing declared: no column absorbs, the viewport stays unfilled
+        robot.interact(() -> table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 112, 0, 0, 0, 0, 0);
+        assertRowsCounter(0, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 280);
+        assertScrollable(table, 50 * 32 - 368, 0);
+    }
+
+    @Test
+    void testWeightedSingleAbsorber(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 280);
+
+        // One absorber takes all 120 of the leftover width
+        robot.interact(() -> VFXTable.setWeight(table.columns().get(1), 1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertRowsCounter(0, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+        assertScrollable(table, 50 * 32 - 368, 0);
+
+        // The same weight again changes nothing
+        robot.interact(() -> VFXTable.setWeight(table.columns().get(1), 1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 0, 0, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+
+        // Clearing the only weight empties the vector: nothing absorbs, the viewport is unfilled again
+        robot.interact(() -> VFXTable.setWeight(table.columns().get(1), 0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 280);
+        assertScrollable(table, 50 * 32 - 368, 0);
+    }
+
+    @Test
+    void testWeightedMultipleAbsorbers(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+
+        // Two equal weights split the leftover width evenly
+        robot.interact(() -> VFXTable.setWeight(table.columns().get(3), 1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 100, 40, 100, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+
+        // Unequal weights split it in proportion: 1/4 and 3/4 of 120
+        robot.interact(() -> VFXTable.setWeight(table.columns().get(3), 3));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 70, 40, 130, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+    }
+
+    @Test
+    void testWeightedNegativeWeightIsIgnored(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+
+        // A sentinel is reserved space, never a share: read as 0, so nothing absorbs and nothing fills
+        robot.interact(() -> VFXTable.setWeight(table.columns().getFirst(), ColumnsFillPolicy.AUTOSIZE));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 0, 0, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 280);
+
+        // The one positive weight takes everything, the sentinel column stays natural
+        robot.interact(() -> VFXTable.setWeight(table.columns().get(1), 1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+    }
+
+    @Test
+    void testWeightedSoleAbsorberClamp(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        // Shrinking a sole absorber below its fill width does nothing: the natural rises, the leftover width
+        // falls by the same amount
+        robot.interact(() -> table.columns().get(1).setUserPrefWidth(100.0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+        assertScrollable(table, 50 * 32 - 368, 0);
+
+        // Growing past it works, and tips the table into the overflow regime
+        robot.interact(() -> table.columns().get(1).setUserPrefWidth(250.0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 250, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 490);
+        assertScrollable(table, 50 * 32 - 368, 90);
+
+        // Back to no override: the clamp puts it exactly where it started
+        robot.interact(() -> table.columns().get(1).setUserPrefWidth(-1.0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+        assertScrollable(table, 50 * 32 - 368, 0);
+    }
+
+    @Test
+    void testWeightedRegimeTransition(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        // A column that is not the absorber pushes the natural total past the viewport: weights go
+        // inert, every column falls back to its natural width, and horizontal scrolling appears
+        robot.interact(() -> table.columns().get(3).setUserPrefWidth(300.0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 300, 40, 40, 40);
+        assertLength(table, 50 * 32, 540);
+        assertScrollable(table, 50 * 32 - 368, 140);
+
+        // Crossing back: the absorber picks the leftover width up again
+        robot.interact(() -> table.columns().get(3).setUserPrefWidth(-1.0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+        assertScrollable(table, 50 * 32 - 368, 0);
+    }
+
+    @Test
+    void testWeightedTableResize(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        // Widening the table moves only the leftover width: the layout starts at the first absorber
+        robot.interact(() -> setWindowSize(pane, 600, -1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 360, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 600);
+        assertScrollable(table, 50 * 32 - 368, 0);
+
+        // Narrowing past the natural total exhausts the leftover width and starts overflow
+        robot.interact(() -> setWindowSize(pane, 260, -1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 280);
+        assertScrollable(table, 50 * 32 - 368, 20);
+    }
+
+    @Test
+    void testWeightedColumnsChanged(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        // Removing the only absorber leaves nothing to fill with. Counters are deliberately not
+        // asserted on the list-change steps, testRemoveColumnsAt* and testAddColumnsAtEnd pin those
+        robot.interact(() -> table.columns().remove(1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 5));
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 240);
+        assertScrollable(table, 50 * 32 - 368, 0);
+
+        // A newly added column carrying a weight absorbs from the moment it joins
+        robot.interact(() -> {
+            EmptyColumn added = new EmptyColumn("Absorber", 999);
+            VFXTable.setWeight(added, 1);
+            table.columns().add(added);
+        });
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 160);
+        assertLength(table, 50 * 32, 400);
+        assertScrollable(table, 50 * 32 - 368, 0);
+    }
+
+    @Test
+    void testSwitchFillPolicy(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 160);
+
+        // LAST synthesizes its own vector, so a declared weight changes nothing while it is active
+        robot.interact(() -> VFXTable.setWeight(table.columns().get(1), 1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 0, 0, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 160);
+        assertLength(table, 50 * 32, 400);
+
+        // Switching hands the leftover width to the declared absorber
+        robot.interact(() -> table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 112, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertLength(table, 50 * 32, 400);
+
+        // And switching back ignores it again
+        robot.interact(() -> table.setColumnsFillPolicy(ColumnsFillPolicy.LAST));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 112, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 160);
+        assertLength(table, 50 * 32, 400);
+    }
+    @Test
+    void testWeightedSetWeightWhileOverflowing(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            pane.getChildren().add(table);
+        });
+
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(112, 1, 112, 112, 112, 0, 0, 0);
+        assertRowsCounter(16, 16, 16, 0, 0, 0);
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        // Overflow: the natural total passes the viewport, there is no leftover width
+        robot.interact(() -> table.columns().get(3).setUserPrefWidth(300.0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 300, 40, 40, 40);
+        assertLength(table, 50 * 32, 540);
+        assertScrollable(table, 50 * 32 - 368, 140);
+
+        // With nothing to distribute a weight cannot change any width, so no layout
+        robot.interact(() -> VFXTable.setWeight(table.columns().get(5), 1));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 0, 0, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 40, 40, 300, 40, 40, 40);
+        assertLength(table, 50 * 32, 540);
+
+        // But it was stored: when the leftover width returns, both absorbers split it
+        robot.interact(() -> table.columns().get(3).setUserPrefWidth(-1.0));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertCounter(0, 1, 96, 0, 0, 0, 0, 0);
+        assertColumnWidths(table, 40, 100, 40, 40, 40, 100, 40);
+        assertLength(table, 50 * 32, 400);
+        assertScrollable(table, 50 * 32 - 368, 0);
+    }
+
+    @Test
+    void testDragSharedAbsorber(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            VFXTable.setWeight(table.columns().get(3), 1);
+            pane.getChildren().add(table);
+        });
+        assertColumnWidths(table, 40, 100, 40, 100, 40, 40, 40);
+
+        VFXTableColumn<User, ?> column = table.columns().get(1);
+        dragColumn(robot, column, 20);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertColumnWidths(table, 40, 120, 40, 80, 40, 40, 40);
+        assertEquals(0, VFXTable.getWeight(column));
+        assertEquals(1, VFXTable.getWeight(table.columns().get(3)));
+        assertEquals(120, column.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+        assertLength(table, 50 * 32, 400);
+    }
+
+    @Test
+    void testDragSoleAbsorberNarrower(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            pane.getChildren().add(table);
+        });
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        VFXTableColumn<User, ?> column = table.columns().get(1);
+        dragColumn(robot, column, -60);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+        assertEquals(1, VFXTable.getWeight(column));
+        assertEquals(100, column.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+        assertLength(table, 50 * 32, 400);
+    }
+
+    @Test
+    void testDragSoleAbsorberWider(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            pane.getChildren().add(table);
+        });
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        VFXTableColumn<User, ?> column = table.columns().get(1);
+        dragColumn(robot, column, 40);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertColumnWidths(table, 40, 200, 40, 40, 40, 40, 40);
+        assertEquals(1, VFXTable.getWeight(column));
+        assertEquals(200, column.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+        assertLength(table, 50 * 32, 440);
+        assertScrollable(table, 50 * 32 - 368, 40);
+    }
+
+    @Test
+    void testDragUnderLast(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            VFXTable.setWeight(table.columns().get(2), 1);
+            pane.getChildren().add(table);
+        });
+        assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 160);
+
+        VFXTableColumn<User, ?> column = table.columns().get(2);
+        dragColumn(robot, column, 20);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertColumnWidths(table, 40, 40, 60, 40, 40, 40, 140);
+        assertEquals(1, VFXTable.getWeight(column));
+        assertEquals(60, column.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+        assertLength(table, 50 * 32, 400);
+    }
+
+    @Test
+    void testDragCancelled(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(table.columns().get(1), 1);
+            VFXTable.setWeight(table.columns().get(3), 1);
+            pane.getChildren().add(table);
+        });
+        assertColumnWidths(table, 40, 100, 40, 100, 40, 40, 40);
+
+        VFXTableColumn<User, ?> column = table.columns().get(1);
+        pressAndDragColumn(robot, column, 20);
+        assertColumnWidths(table, 40, 120, 40, 80, 40, 40, 40);
+        assertEquals(0, VFXTable.getWeight(column));
+
+        pressEscape(robot);
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+        assertColumnWidths(table, 40, 100, 40, 100, 40, 40, 40);
+        assertEquals(1, VFXTable.getWeight(column));
+        assertEquals(-1, column.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+
+        releaseColumn(robot);
+        assertColumnWidths(table, 40, 100, 40, 100, 40, 40, 40);
+        assertEquals(1, VFXTable.getWeight(column));
+        assertLength(table, 50 * 32, 400);
     }
 }

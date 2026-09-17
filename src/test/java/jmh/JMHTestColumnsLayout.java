@@ -26,11 +26,11 @@ import java.util.concurrent.TimeUnit;
 
 import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
-import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
+import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
 import io.github.palexdev.virtualizedfx.table.ColumnsLayoutCache;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
+import io.github.palexdev.virtualizedfx.table.defaults.VFXSimpleTableColumn;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -42,20 +42,24 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-/// Columns-axis layout math for [ColumnsLayoutMode#VARIABLE], as a function of the column count.
+/// Columns-axis layout math, as a function of the column count. Columns carry varied
+/// `userPrefWidth` values, so the prefix sums are non-uniform and the binary search is doing real
+/// work; that is the whole point of the file and it is easy to break, see the setup comment.
+///
+/// **The scroll-path group**, which is what the columns range cost:
 ///
 /// - [#legacyFullScan(Blackhole)] reconstructs the pre-range behaviour: every column queried on every
 ///   scroll event, visibility cache cleared first. None of that code exists any more, so it is
-///   reproduced locally.
+///   reproduced locally. A lower bound on the old cost, not a faithful replay.
 /// - [#currentRangeScan(Blackhole)] is the shipped algorithm: binary search the prefix sums for the
 ///   range, then query only what is inside it.
 /// - [#currentFastDraw(Blackhole)] adds the early exit taken when the range has not moved.
 /// - [#coldPositionFillAscending(Blackhole)] and [#coldPositionFillDeep(Blackhole)] isolate
-///   [ColumnsLayoutCache#getColumnPos(int)]'s cold fill under the two access patterns that matter.
+///   [ColumnsLayoutCache#posAt(int)]'s cold fill under the two access patterns that matter.
 ///
 /// This drives its own [ColumnsLayoutCache] over a detached [VFXTable] instead of going through the
-/// helper, so the mirrors below are hand-copied from `VariableTableHelper` and `AbstractHelper` and
-/// nothing enforces that they stay in sync.
+/// helper, so the range mirrors below are hand-copied from `VFXDefaultTableHelper` and nothing
+/// enforces that they stay in sync.
 ///
 /// **It cannot measure the thing that matters most.** A real range means not creating a cell per
 /// column per row, and that is scene-graph cost. Read these numbers as "the math got cheaper", never
@@ -77,6 +81,8 @@ public class JMHTestColumnsLayout {
     /// Small enough that consecutive steps usually land in the same range, which is what makes the
     /// fast-draw exit worth measuring.
     private static final double SCROLL_STEP = 13.0;
+    private static final double FILL_EXTRA_W = 400.0;
+    private static final int WEIGHTS_BURST = 5;
 
     @Param({"10", "50", "200", "500"})
     public int nColumns;
@@ -86,6 +92,11 @@ public class JMHTestColumnsLayout {
     private ObservableList<VFXTableColumn<Integer, ? extends VFXTableCell<Integer>>> columns;
     /// Read from the table, not hardcoded, so it follows the real default if that changes.
     private int buffer;
+
+    private VFXTable<Integer> fillTable;
+    private ObservableList<VFXTableColumn<Integer, ? extends VFXTableCell<Integer>>> fillColumns;
+    private double fillWidth;
+    private boolean toggle;
 
     private double[] offsets;
     private int cursor;
@@ -115,28 +126,32 @@ public class JMHTestColumnsLayout {
             // Already running
         }
 
-        Random random = new Random(SEED);
-        List<VFXTableColumn<Integer, ? extends VFXTableCell<Integer>>> cols = new ArrayList<>(nColumns);
-        for (int i = 0; i < nColumns; i++) {
-            VFXDefaultTableColumn<Integer, VFXTableCell<Integer>> column = new VFXDefaultTableColumn<>("C" + i);
-            // Not resize(double): that routes through the table's behavior, and there is none without a skin
-            column.setPrefWidth(MIN_W + random.nextDouble() * (MAX_W - MIN_W));
-            cols.add(column);
-        }
-
-        table = new VFXTable<>(FXCollections.observableArrayList(), cols);
+        table = new VFXTable<>(FXCollections.observableArrayList(), buildColumns());
         table.setColumnsWidth(MIN_W);
         table.resize(TABLE_W, TABLE_H);
-        columns = table.getColumns();
+        columns = table.columns();
         buffer = table.getColumnsBufferSize().val();
 
         cache = new BenchCache(table);
         legacyVisibility = new boolean[nColumns];
 
+        fillTable = new VFXTable<>(FXCollections.observableArrayList(), buildColumns());
+        fillTable.setColumnsWidth(MIN_W);
+        fillColumns = fillTable.columns();
+        double naturalTotal = 0.0;
+        for (VFXTableColumn<Integer, ? extends VFXTableCell<Integer>> column : fillColumns)
+            naturalTotal += Math.max(column.getUserPrefWidth(), MIN_W);
+        fillWidth = naturalTotal + FILL_EXTRA_W;
+        fillTable.resize(fillWidth, TABLE_H);
+        fillTable.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+        for (int i = 0; i < nColumns; i += 4) VFXTable.setWeight(fillColumns.get(i), 1);
+        fillTable.getHelper().getVirtualMaxX();
+        fillTable.getHelper().columnsRange();
+
         // The position warm-up must ascend; a single call at the last index would recurse once per
         // column, which is what coldPositionFillDeep measures separately
         double totalW = cache.get();
-        for (int i = 0; i < nColumns; i++) cache.getColumnPos(i);
+        for (int i = 0; i < nColumns; i++) cache.posAt(i);
 
         double maxScroll = Math.max(0.0, totalW - TABLE_W);
         offsets = new double[OFFSETS];
@@ -149,12 +164,28 @@ public class JMHTestColumnsLayout {
         cursor = 0;
     }
 
+    private List<VFXTableColumn<Integer, ? extends VFXTableCell<Integer>>> buildColumns() {
+        Random random = new Random(SEED);
+        List<VFXTableColumn<Integer, ? extends VFXTableCell<Integer>>> cols = new ArrayList<>(nColumns);
+        for (int i = 0; i < nColumns; i++) {
+            VFXSimpleTableColumn<Integer, VFXTableCell<Integer>> column = new VFXSimpleTableColumn<>("C" + i);
+            // setUserPrefWidth, not setPrefWidth: the cache reads the former. v1's naturalWidth used
+            // prefWidth(-1), so the port silently left every column at the baseline, making the whole
+            // benchmark uniform
+            column.setUserPrefWidth(MIN_W + random.nextDouble() * (MAX_W - MIN_W));
+            cols.add(column);
+        }
+        return cols;
+    }
+
     @TearDown(Level.Trial)
     public void tearDown() {
         cache.dispose();
         cache = null;
         table = null;
         columns = null;
+        fillTable = null;
+        fillColumns = null;
         legacyVisibility = null;
         Platform.exit();
     }
@@ -174,7 +205,7 @@ public class JMHTestColumnsLayout {
         int res = 0;
         while (lo <= hi) {
             int mid = (lo + hi) >>> 1;
-            if (cache.getColumnPos(mid) <= x) {
+            if (cache.posAt(mid) <= x) {
                 res = mid;
                 lo = mid + 1;
             } else {
@@ -220,8 +251,8 @@ public class JMHTestColumnsLayout {
 
     /// Reconstruction of the deleted `computeVisibility`, minus the scene guards, using [#scrollX].
     private boolean legacyIsInViewport(int index, VFXTableColumn<Integer, ?> column) {
-        double columnX = cache.getColumnPos(index);
-        double columnW = cache.getColumnWidth(column);
+        double columnX = cache.posAt(index);
+        double columnW = cache.widthAt(column.getIndex());
         return (columnX + columnW >= scrollX) && (columnX <= scrollX + TABLE_W);
     }
 
@@ -239,8 +270,8 @@ public class JMHTestColumnsLayout {
             VFXTableColumn<Integer, ? extends VFXTableCell<Integer>> column = columns.get(i);
             legacyVisibility[i] = legacyIsInViewport(i, column);
             if (!legacyVisibility[i]) continue;
-            bh.consume(cache.getColumnPos(i));
-            bh.consume(cache.getColumnWidth(column));
+            bh.consume(cache.posAt(i));
+            bh.consume(cache.widthAt(column.getIndex()));
         }
     }
 
@@ -251,8 +282,8 @@ public class JMHTestColumnsLayout {
         scrollX = nextOffset();
         if (!computeColumnsRange()) return;
         for (int i = rangeMin; i <= rangeMax; i++) {
-            bh.consume(cache.getColumnPos(i));
-            bh.consume(cache.getColumnWidth(columns.get(i)));
+            bh.consume(cache.posAt(i));
+            bh.consume(cache.widthAt(columns.get(i).getIndex()));
         }
     }
 
@@ -269,8 +300,8 @@ public class JMHTestColumnsLayout {
         lastMin = rangeMin;
         lastMax = rangeMax;
         for (int i = rangeMin; i <= rangeMax; i++) {
-            bh.consume(cache.getColumnPos(i));
-            bh.consume(cache.getColumnWidth(columns.get(i)));
+            bh.consume(cache.posAt(i));
+            bh.consume(cache.widthAt(columns.get(i).getIndex()));
         }
     }
 
@@ -278,8 +309,8 @@ public class JMHTestColumnsLayout {
     @Benchmark
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public void coldPositionFillAscending(Blackhole bh) {
-        cache.clearPositions();
-        for (int i = 0; i < nColumns; i++) bh.consume(cache.getColumnPos(i));
+        cache.reset();
+        for (int i = 0; i < nColumns; i++) bh.consume(cache.posAt(i));
     }
 
     /// A single high probe, which is what binary search does: same entries filled, `nColumns` frames
@@ -288,8 +319,84 @@ public class JMHTestColumnsLayout {
     @Benchmark
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public void coldPositionFillDeep(Blackhole bh) {
-        cache.clearPositions();
-        bh.consume(cache.getColumnPos(nColumns - 1));
+        cache.reset();
+        bh.consume(cache.posAt(nColumns - 1));
+    }
+
+    /// Walks the current range reading positions.
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void posScan(Blackhole bh) {
+        scrollX = nextOffset();
+        if (!computeColumnsRange()) return;
+        for (int i = rangeMin; i <= rangeMax; i++) {
+            bh.consume(cache.posAt(i));
+            bh.consume(cache.widthAt(i));
+        }
+    }
+
+    /// Two binary searches per pulse, the pattern [#visibleColumns()] uses.
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void columnAtSearch(Blackhole bh) {
+        scrollX = nextOffset();
+        bh.consume(columnAt(scrollX));
+        bh.consume(columnAt(scrollX + TABLE_W));
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void rebuildOnColumnsChanged(Blackhole bh) {
+        cache.reset();
+        bh.consume(cache.get());
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void columnsSizeChanged(Blackhole bh) {
+        table.setColumnsWidth((toggle = !toggle) ? MIN_W + 20.0 : MIN_W);
+        bh.consume(table.getHelper().getVirtualMaxX());
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void fillPolicyChanged(Blackhole bh) {
+        fillTable.setColumnsFillPolicy((toggle = !toggle) ? ColumnsFillPolicy.LAST : ColumnsFillPolicy.WEIGHTED);
+        bh.consume(fillTable.getHelper().getVirtualMaxX());
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void columnWeightChanged(Blackhole bh) {
+        VFXTable.setWeight(fillColumns.get(1), (toggle = !toggle) ? 1 : 0);
+        bh.consume(fillTable.getHelper().getVirtualMaxX());
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void columnWeightBurst(Blackhole bh) {
+        int weight = (toggle = !toggle) ? 1 : 0;
+        for (int i = 0, set = 0; i < nColumns && set < WEIGHTS_BURST; i++) {
+            if (i % 4 == 0) continue;
+            VFXTable.setWeight(fillColumns.get(i), weight);
+            set++;
+        }
+        bh.consume(fillTable.getHelper().getVirtualMaxX());
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void tableWidthChanged(Blackhole bh) {
+        fillTable.resize((toggle = !toggle) ? fillWidth + 50.0 : fillWidth, TABLE_H);
+        bh.consume(fillTable.getHelper().getVirtualMaxX());
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
+    public void columnResized(Blackhole bh) {
+        fillColumns.get(nColumns / 2).setUserPrefWidth((toggle = !toggle) ? MAX_W + 10.0 : MAX_W);
+        bh.consume(fillTable.getHelper().getVirtualMaxX());
+        bh.consume(fillTable.getHelper().columnsRange());
     }
 
     //================================================================================
@@ -318,34 +425,18 @@ public class JMHTestColumnsLayout {
     // Internal Classes
     //================================================================================
 
-    /// The real [ColumnsLayoutCache], wired with functions mirroring `VariableTableHelper` minus the
-    /// scene-graph guards, plus the position reset the cold-fill benchmarks need.
-    private class BenchCache extends ColumnsLayoutCache<Integer> {
+    /// The real [ColumnsLayoutCache] over a detached table.
+    private static class BenchCache extends ColumnsLayoutCache<Integer> {
 
         public BenchCache(VFXTable<Integer> table) {
             super(table);
-            setWidthFunction(this::computeColumnWidth);
-            setPositionFunction(this::computeColumnPos);
-            init();
+            reset();
         }
 
-        private double computeColumnWidth(VFXTableColumn<Integer, ?> column, boolean isLast) {
-            VFXTable<Integer> table = getTable();
-            double minW = table.getColumnsSize().width();
-            double prefW = Math.max(column.prefWidth(-1), minW);
-            if (table.getColumns().size() == 1) return Math.max(prefW, table.getWidth());
-            if (!isLast) return column.snapSizeX(prefW);
-            double partialW = getPartialWidth();
-            return column.snapSizeX(Math.max(prefW, table.getWidth() - partialW));
-        }
-
-        private double computeColumnPos(int index, double prevPos) {
-            VFXTableColumn<Integer, ? extends VFXTableCell<Integer>> column = getTable().getColumns().get(index);
-            return column.snapPositionX(prevPos + getColumnWidth(column));
-        }
-
-        void clearPositions() {
-            ((LayoutInfoCache) getCacheMap()).clearPositionCache();
+        /// The production "everything changed" path: rebuilds and re-reads every pref. The argument
+        /// is unused by the implementation.
+        void reset() {
+            onColumnsChanged(null);
         }
     }
 }
