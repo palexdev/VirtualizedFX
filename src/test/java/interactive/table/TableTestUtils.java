@@ -21,6 +21,9 @@ package interactive.table;
 import java.util.Collection;
 import java.util.List;
 import java.util.SequencedMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -31,6 +34,7 @@ import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
+import io.github.palexdev.mfxcore.utils.fx.FXCollectors;
 import io.github.palexdev.mfxresources.icon.MFXFontIcon;
 import io.github.palexdev.virtualizedfx.cells.VFXSimpleTableCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
@@ -47,10 +51,12 @@ import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableRow;
 import io.github.palexdev.virtualizedfx.table.defaults.VFXSimpleTableColumn;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
@@ -345,6 +351,58 @@ public class TableTestUtils {
     static void pressEscape(FxRobot robot) {
         robot.press(KeyCode.ESCAPE);
         robot.release(KeyCode.ESCAPE);
+    }
+
+    static void awaitPulse(Node node) {
+        CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            Scene scene = node.getScene();
+            Runnable listener = new Runnable() {
+                @Override
+                public void run() {
+                    scene.removePostLayoutPulseListener(this);
+                    latch.countDown();
+                }
+            };
+            scene.addPostLayoutPulseListener(listener);
+            Platform.requestNextPulse();
+        });
+        try {
+            assertTrue(latch.await(5, TimeUnit.SECONDS), "No pulse within 5 seconds");
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    static double prefWidth(FxRobot robot, Node node) {
+        AtomicReference<Double> width = new AtomicReference<>();
+        robot.interact(() -> width.set(node.prefWidth(-1)));
+        return width.get();
+    }
+
+    static double contentWidth(FxRobot robot, VFXTable<User> table, VFXTableColumn<User, ?> column) {
+        AtomicReference<Double> width = new AtomicReference<>();
+        robot.interact(() -> {
+            double max = column.prefWidth(-1);
+            for (VFXTableRow<User> row : table.getState().getRowsByIndex().values()) {
+                for (VFXTableCell<User> cell : row.cells().get(column)) {
+                    max = Math.max(max, cell.toNode().prefWidth(-1));
+                }
+            }
+            width.set(max);
+        });
+        return width.get();
+    }
+
+    static void assertAutosized(FxRobot robot, VFXTable<User> table, VFXTableColumn<User, ?> column) {
+        assertFalse(column.isMarkedForAutosize(), "Column %s is still marked".formatted(column.getText()));
+        assertEquals(contentWidth(robot, table, column), column.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+    }
+
+    static ObservableList<User> sameUsers(int cnt, String firstName, String lastName) {
+        return IntStream.range(0, cnt)
+            .mapToObj(_ -> new User(firstName, lastName, 1990))
+            .collect(FXCollectors.toList());
     }
 
     static void assertLength(VFXTable<User> table, double vLength, double hLength) {

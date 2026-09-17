@@ -240,7 +240,10 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
             new ViewportLayoutRequest(interval.getMin(), interval.getMax()));
     }
 
-    // TODO autosize methods are removed for now to be superseded by AUTOSIZE_ONCE
+    public void autosizeColumns() {
+        columns.forEach(VFXTableColumn::markForAutosize);
+        requestLayout();
+    }
 
     //================================================================================
     // Overridden Methods

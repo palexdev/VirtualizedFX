@@ -25,6 +25,4 @@ public enum ColumnsFillPolicy {
     public static final String WEIGHT_KEY = "COLUMN_FILL_WEIGHT";
     public static final int DEFAULT_WEIGHT = 0;
     public static final ColumnsFillPolicy DEFAULT_POLICY = LAST;
-    public static final int AUTOSIZE = -1;
-    public static final int AUTOSIZE_ONCE = -2;
 }

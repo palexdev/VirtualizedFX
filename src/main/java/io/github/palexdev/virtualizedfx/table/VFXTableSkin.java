@@ -21,6 +21,7 @@ package io.github.palexdev.virtualizedfx.table;
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
+import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
@@ -123,6 +124,19 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         }
     }
 
+    protected void autosize(VFXTableColumn<T, ?> column) {
+        VFXTable<T> table = getSkinnable();
+        double header = column.prefWidth(-1);
+        double cellsMax = table.getState().getRowsByIndex().values().stream()
+            .flatMap(r -> r.cells().get(column).stream())
+            .map(VFXCell::toNode)
+            .mapToDouble(n -> n.prefWidth(-1))
+            .max()
+            .orElseGet(() -> table.getColumnsSize().width());
+        column.unmarkForAutosize();
+        column.setUserPrefWidth(Math.max(header, cellsMax));
+    }
+
     protected void layoutViewport() {
         // TODO we probably want to snap
         VFXTable<T> table = getSkinnable();
@@ -199,5 +213,24 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     @Override
     protected double computeMinHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
         return topInset + DEFAULT_SIZE + bottomInset;
+    }
+
+    @Override
+    protected void layoutChildren(double x, double y, double w, double h) {
+        super.layoutChildren(x, y, w, h);
+
+        // Autosize marked columns
+        VFXTable<T> table = getSkinnable();
+        VFXTableState<T> state = table.getState();
+        if (state.isEmpty()) return;
+
+        var toAutosize = state.getColumnsRange().stream()
+            .map(table.columns()::get)
+            .filter(VFXTableColumn::isMarkedForAutosize)
+            .toList();
+        if (toAutosize.isEmpty()) return;
+
+        table.applyCss(); // We can't avoid this, we must ensure that size computation will give a correct result
+        toAutosize.forEach(this::autosize);
     }
 }

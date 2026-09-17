@@ -23,11 +23,11 @@ import io.github.palexdev.mfxcore.enums.Zone;
 import io.github.palexdev.mfxcore.utils.fx.resize.Resizer;
 import io.github.palexdev.mfxcore.utils.fx.resize.targets.RegionTarget;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
-import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
 import javafx.scene.input.MouseEvent;
 
+import static io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy.DEFAULT_WEIGHT;
 import static io.github.palexdev.virtualizedfx.table.VFXTable.getWeight;
 import static io.github.palexdev.virtualizedfx.table.VFXTable.setWeight;
 import static java.util.Optional.ofNullable;
@@ -82,7 +82,7 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
 
     protected static class ColumnResizer extends Resizer<VFXTableColumn<?, ?>> {
         private double prefAtPress;
-        private int weightAtPress = ColumnsFillPolicy.DEFAULT_WEIGHT;
+        private int weightAtPress = DEFAULT_WEIGHT;
 
         public ColumnResizer(VFXTableColumn<?, ?> column) {
             super(new RegionTarget<>(column));
@@ -94,10 +94,11 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
 
         protected <T> void onResize(VFXTableColumn<T, ?> column, double width) {
             VFXTableHelper<T> helper = column.getTable().getHelper();
-            if (helper.isSharedAbsorber(column)) setWeight(column, 0);
+            if (helper.isSharedAbsorber(column)) setWeight(column, DEFAULT_WEIGHT);
             column.setUserPrefWidth(width);
         }
 
+        // TODO add excel-like autosize gesture
         @Override
         protected void onMousePressed(MouseEvent me) {
             super.onMousePressed(me);

@@ -45,14 +45,18 @@ import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 
 import static io.github.palexdev.mfxcore.controls.MFXStyleable.styleClasses;
+import static java.util.Optional.ofNullable;
 
 public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLabeled implements WithCellFactory<T, C> {
 
     //================================================================================
     // Properties
     //================================================================================
+
+    public static final String AUTOSIZE_KEY = "AUTOSIZE";
 
     private final ReadOnlyObjectWrapper<VFXTable<T>> table = new ReadOnlyObjectWrapper<>() {
         @Override
@@ -107,6 +111,23 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
     //================================================================================
     // Methods
     //================================================================================
+
+    public void sizeToContent() {
+        markForAutosize();
+        ofNullable(getTable()).ifPresent(Parent::requestLayout);
+    }
+
+    public boolean isMarkedForAutosize() {
+        return hasProperties() && getProperties().containsKey(AUTOSIZE_KEY);
+    }
+
+    protected void markForAutosize() {
+        getProperties().put(AUTOSIZE_KEY, null);
+    }
+
+    protected void unmarkForAutosize() {
+        getProperties().remove(AUTOSIZE_KEY);
+    }
 
     protected VFXCellsCache<T, C> createCellsCache() {
         return new VFXCellsCache<>(cellFactory, getCellsCacheCapacity());

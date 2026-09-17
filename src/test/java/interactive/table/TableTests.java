@@ -65,6 +65,7 @@ import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.insets;
 import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.uniform;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -97,10 +98,6 @@ public class TableTests {
      * So, the counters used by these tests will keep track of the "issued" updates to verify the correctness of the
      * subsystem's algorithms
      */
-
-    // TODO incomplete: the handler set is complete, but two features are not.
-    //  Blocked on autosize (VFXTable AUTOSIZE_ONCE, getWidthOf on the row): testAutosizeFixed/Variable/Empty/AllEmpty.
-    //  testLastColumnResize covers the LAST fill policy, not the resize path.
 
     @Start
     void start(Stage stage) {
@@ -2121,7 +2118,7 @@ public class TableTests {
         assertRowsCounter(16, 16, 16, 0, 0, 0);
 
         // A sentinel is reserved space, never a share: read as 0, so nothing absorbs and nothing fills
-        robot.interact(() -> VFXTable.setWeight(table.columns().getFirst(), ColumnsFillPolicy.AUTOSIZE));
+        robot.interact(() -> VFXTable.setWeight(table.columns().getFirst(), -1));
         assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
         assertCounter(0, 0, 0, 0, 0, 0, 0, 0);
         assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 40);
@@ -2469,5 +2466,205 @@ public class TableTests {
         assertColumnWidths(table, 40, 100, 40, 100, 40, 40, 40);
         assertEquals(1, VFXTable.getWeight(column));
         assertLength(table, 50 * 32, 400);
+    }
+
+    @Test
+    void testAutosizeBeforeShowing(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.autosizeColumns();
+        });
+        table.columns().forEach(c -> assertTrue(c.isMarkedForAutosize()));
+
+        robot.interact(() -> pane.getChildren().add(table));
+        awaitPulse(table);
+        table.columns().forEach(c -> assertFalse(c.isMarkedForAutosize()));
+        IntegerRange range = table.getState().getColumnsRange();
+        for (int i = range.getMin(); i <= range.getMax(); i++) {
+            assertAutosized(robot, table, table.columns().get(i));
+        }
+    }
+
+    @Test
+    void testAutosizeCellWiderThanHeader(FxRobot robot) {
+        StackPane pane = setupStage();
+        ObservableList<User> items = sameUsers(50, "Ann", "Lee");
+        items.get(3).setFirstName("Bartholomew Maximilian Featherstonehaugh-Worthington");
+        Table table = new Table(items);
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            pane.getChildren().add(table);
+        });
+
+        VFXTableColumn<User, ?> column = table.columns().getFirst();
+        robot.interact(column::sizeToContent);
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+        assertTrue(column.getUserPrefWidth() > prefWidth(robot, column));
+    }
+
+    @Test
+    void testAutosizeHeaderWiderThanCells(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(sameUsers(50, "Al", "Li"));
+        VFXTableColumn<User, ?> column = table.columns().getFirst();
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            column.setText("A header much wider than any of its cells");
+            pane.getChildren().add(table);
+        });
+
+        robot.interact(column::sizeToContent);
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+        assertEquals(prefWidth(robot, column), column.getUserPrefWidth(), FP_ASSERTIONS_DELTA);
+    }
+
+    @Test
+    void testAutosizeShrinks(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(sameUsers(50, "Ann", "Lee"));
+        VFXTableColumn<User, ?> column = table.columns().getFirst();
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            column.setUserPrefWidth(300);
+            pane.getChildren().add(table);
+        });
+
+        robot.interact(column::sizeToContent);
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+        assertTrue(column.getUserPrefWidth() < 300);
+    }
+
+    @Test
+    void testAutosizeKeepsWeight(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(sameUsers(50, "Ann", "Lee"));
+        VFXTableColumn<User, ?> column = table.columns().get(1);
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
+            VFXTable.setWeight(column, 1);
+            pane.getChildren().add(table);
+        });
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+
+        robot.interact(column::sizeToContent);
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+        assertTrue(column.getUserPrefWidth() < 160);
+        assertEquals(1, VFXTable.getWeight(column));
+        assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
+    }
+
+    @Test
+    void testAutosizeOutOfRange(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.addEmptyColumns(10);
+            pane.getChildren().add(table);
+        });
+
+        VFXTableColumn<User, ?> column = table.columns().getLast();
+        assertTrue(column.getIndex() > table.getState().getColumnsRange().getMax());
+        robot.interact(column::sizeToContent);
+        awaitPulse(table);
+        assertTrue(column.isMarkedForAutosize());
+
+        robot.interact(() -> table.setHPos(table.getMaxHScroll()));
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+    }
+
+    @Test
+    void testAutosizeColumnsOnlyInRange(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.addEmptyColumns(10);
+            pane.getChildren().add(table);
+        });
+
+        IntegerRange range = table.getState().getColumnsRange();
+        robot.interact(table::autosizeColumns);
+        awaitPulse(table);
+        for (int i = 0; i < table.columns().size(); i++) {
+            VFXTableColumn<User, ?> column = table.columns().get(i);
+            if (IntegerRange.inRangeOf(i, range)) {
+                assertFalse(column.isMarkedForAutosize());
+            } else {
+                assertTrue(column.isMarkedForAutosize());
+            }
+        }
+
+        VFXTableColumn<User, ?> last = table.columns().getLast();
+        robot.interact(() -> table.setHPos(table.getMaxHScroll()));
+        awaitPulse(table);
+        assertAutosized(robot, table, last);
+    }
+
+    @Test
+    void testAutosizeEmptyTable(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(FXCollections.observableArrayList());
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            pane.getChildren().add(table);
+        });
+
+        VFXTableColumn<User, ?> column = table.columns().getFirst();
+        robot.interact(column::sizeToContent);
+        awaitPulse(table);
+        assertTrue(column.isMarkedForAutosize());
+
+        robot.interact(() -> table.setItems(sameUsers(50, "Bartholomew Maximilian", "Lee")));
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+        assertTrue(column.getUserPrefWidth() > prefWidth(robot, column));
+    }
+
+    @Test
+    void testAutosizeColumnWithoutTable(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> {
+            table.setColumnsWidth(40);
+            pane.getChildren().add(table);
+        });
+
+        TestColumn<String> column = new TestColumn<>("Extra", Table.priority());
+        robot.interact(() -> {
+            column.setCellFactory(u -> Table.factory(u, User::firstName));
+            column.sizeToContent();
+        });
+        assertTrue(column.isMarkedForAutosize());
+
+        robot.interact(() -> table.columns().add(column));
+        awaitPulse(table);
+        assertAutosized(robot, table, column);
+    }
+
+    @Test
+    void testAutosizeColumnMovedToAnotherTable(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table shown = new Table(users(50));
+        Table hidden = new Table(users(50));
+        robot.interact(() -> {
+            shown.setColumnsWidth(40);
+            pane.getChildren().add(shown);
+        });
+
+        VFXTableColumn<User, ?> column = hidden.columns().getLast();
+        robot.interact(() -> {
+            column.sizeToContent();
+            hidden.columns().remove(column);
+            shown.columns().add(column);
+        });
+        awaitPulse(shown);
+        assertAutosized(robot, shown, column);
     }
 }

@@ -363,7 +363,7 @@ public class ColumnsLayoutCacheTests {
         robot.interact(() -> {
             table.setColumnsWidth(40);
             table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
-            VFXTable.setWeight(table.columns().getFirst(), ColumnsFillPolicy.AUTOSIZE);
+            VFXTable.setWeight(table.columns().getFirst(), -1);
             VFXTable.setWeight(table.columns().get(2), 1);
             table.resize(400, 400);
         });
@@ -432,7 +432,7 @@ public class ColumnsLayoutCacheTests {
         assertEquals(-1, cache.columnWeightChanged(table.columns().get(5)));
         assertCache(cache, table);
 
-        robot.interact(() -> VFXTable.setWeight(table.columns().getFirst(), ColumnsFillPolicy.AUTOSIZE));
+        robot.interact(() -> VFXTable.setWeight(table.columns().getFirst(), -1));
         assertEquals(-1, cache.columnWeightChanged(table.columns().getFirst()));
         assertCache(cache, table);
 
@@ -514,7 +514,7 @@ public class ColumnsLayoutCacheTests {
         robot.interact(() -> {
             table.setColumnsWidth(40);
             table.setColumnsFillPolicy(ColumnsFillPolicy.WEIGHTED);
-            VFXTable.setWeight(table.columns().getFirst(), ColumnsFillPolicy.AUTOSIZE);
+            VFXTable.setWeight(table.columns().getFirst(), -1);
             VFXTable.setWeight(table.columns().get(1), 1);
             VFXTable.setWeight(table.columns().get(3), 2);
             table.resize(400, 400);
