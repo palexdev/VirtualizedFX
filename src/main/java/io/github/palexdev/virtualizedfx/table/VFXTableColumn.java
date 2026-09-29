@@ -138,15 +138,13 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
 
     protected void onCellFactoryChanged(Function<T, C> newFactory) {
         VFXTable<T> table = getTable();
-        if (table == null) return;
         cellsCache.clear(); // make sure to clear the cache first!
-        table.getManager().onCellFactoryChanged(this);
+        if (table != null) table.getManager().onCellFactoryChanged(this);
     }
 
     protected void onColumnWidthChanged() {
         VFXTable<T> table = getTable();
-        if (table == null) return;
-        table.getManager().onColumnResized(VFXTableColumn.this);
+        if (table != null) table.getManager().onColumnResized(VFXTableColumn.this);
     }
 
     //================================================================================
@@ -310,7 +308,6 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
 
     protected class IndexBinding extends IntegerBinding {
         private int current = -1;
-
         private Observable[] deps = {};
 
         @Override
@@ -331,15 +328,14 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
 
         public void rebind() {
             unbind(deps);
+            deps = new Observable[0];
             current = -1;
-            VFXTable<T> table = getTable();
-            if (table == null) {
-                invalidate();
-                return;
-            }
 
-            deps = new Observable[]{table.columns()};
-            bind(deps);
+            VFXTable<T> table = getTable();
+            if (table != null) {
+                deps = new Observable[]{table.columns()};
+                bind(deps);
+            }
             invalidate();
         }
     }

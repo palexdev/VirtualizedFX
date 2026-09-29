@@ -106,7 +106,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
 
         if (!removed.isEmpty()) getChildren().removeAll(removed);
         getChildren().addAll(added);
-        onUpdateChildren();
+        onUpdateChildren(false);
     }
 
     protected void replaceCells(VFXTableColumn<T, ?> column) {
@@ -125,6 +125,7 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
         cells.put(cIdx, column, newCell);
         getChildren().add(newCell.toNode());
         markDirty(cIdx, cIdx);
+        onUpdateChildren(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -184,10 +185,10 @@ public abstract class VFXTableRow<T> extends Region implements VFXCell<T>, MFXSt
 
     protected final void updateChildren() {
         getChildren().setAll(getCellsAsNodes());
-        onUpdateChildren();
+        onUpdateChildren(true);
     }
 
-    protected void onUpdateChildren() {}
+    protected void onUpdateChildren(boolean cleared) {}
 
     protected void markDirty(int from, int to) {
         dirtyFrom = Math.min(dirtyFrom, from);

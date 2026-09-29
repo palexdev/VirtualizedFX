@@ -207,7 +207,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(container.columns(), container.columnsSizeProperty())
+                .addSources(container.columns())
                 .addSources(layoutCache)
                 .get();
             rowsRange = ObjectBindingBuilder.<IntegerRange>build()
@@ -222,7 +222,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                     return IntegerRange.of(start, end);
                 })
                 .addSources(container.sizeProperty())
-                .addSources(container.columnsSizeProperty())
                 .get();
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
@@ -399,8 +398,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         public void scrollToIndex(Orientation orientation, int index) {
             if (orientation == Orientation.HORIZONTAL) {
-                if (index < 0 || index >= columnsCount()) return;
-                container.setHPos(layoutCache.posAt(index));
+                container.setHPos(layoutCache.posAt(NumberUtils.clamp(index, 0, columnsCount())));
             } else {
                 container.setVPos(container.getRowsHeight() * index);
             }
