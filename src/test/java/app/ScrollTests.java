@@ -30,8 +30,7 @@ import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
-import io.github.palexdev.virtualizedfx.enums.ColumnsLayoutMode;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXDefaultTableColumn;
+import io.github.palexdev.virtualizedfx.table.defaults.VFXSimpleTableColumn;
 import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import javafx.application.Application;
 import javafx.geometry.HPos;
@@ -48,7 +47,6 @@ import javafx.stage.Stage;
 
 import static src.model.User.users;
 import static src.utils.Utils.debugView;
-import static src.utils.Utils.items;
 
 public class ScrollTests extends Application {
     private static final String LOREM;
@@ -75,14 +73,13 @@ public class ScrollTests extends Application {
 
         TableTestUtils.Table vc = new TableTestUtils.Table(users(15));
         vc.setColumnsWidth(50.0);
-        vc.setColumnsLayoutMode(ColumnsLayoutMode.VARIABLE);
-        vc.autosizeColumns(true);
+        vc.autosizeColumns();
 
         vc.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
             if (e.getButton() != MouseButton.SECONDARY) return;
-            vc.getColumns().forEach(c -> {
-                HPos next = EnumUtils.next(HPos.class, ((VFXDefaultTableColumn) c).getIconAlignment());
-                ((VFXDefaultTableColumn) c).setIconAlignment(next);
+            vc.columns().forEach(c -> {
+                HPos next = EnumUtils.next(HPos.class, ((VFXSimpleTableColumn) c).getGraphicAlignment());
+                ((VFXSimpleTableColumn) c).setGraphicAlignment(next);
             });
         });
 
@@ -127,6 +124,7 @@ public class ScrollTests extends Application {
             }
             
             .vfx-column {
+              -fx-background-color: transparent;
               -vfx-enable-overlay: true;
               -vfx-overlay-on-header: true;
             }

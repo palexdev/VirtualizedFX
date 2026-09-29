@@ -24,7 +24,9 @@ public class Launcher {
 
     public static void main(String[] args) {
         System.setProperty("prism.verbose", "true");
+        //System.setProperty("javafx.pulseLogger", "true");
+        //System.setProperty("javafx.pulseLogger.threshold", "17");
         //Application.launch(GridVisualizer.class, args);
-        Application.launch(Playground.class, args);
+        Application.launch(ScrollTests.class, args);
     }
 }
