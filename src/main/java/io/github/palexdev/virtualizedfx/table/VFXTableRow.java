@@ -62,7 +62,7 @@ import static java.util.Optional.ofNullable;
 /// viewport and for which items. It misses one crucial detail, which and how many cells each row shows, and that is
 /// the row's own 'mini-state': the range of columns it covers, [#columnsRange()], and a map of its cells, [#cells()].
 ///
-    /// The range is what lets the row build the right cells. Say that for a hypothetical `User` class I can see the
+/// The range is what lets the row build the right cells. Say that for a hypothetical `User` class I can see the
 /// 'First Name' column but not the 'Last Name' one. We want the row to ask the 'First Name' column for a cell
 /// (created or taken from its cache, see [#getCell(int,VFXTableColumn)]), and every cell produced by a column that
 /// is not shown anymore to leave the children list and go back to its column's cache,

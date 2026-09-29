@@ -50,8 +50,8 @@ import javafx.collections.ObservableList;
 ///
 /// ```
 /// leftover = max(0, tableWidth - sum(natural widths))
-/// width(i) = natural(i) + leftover * weight(i) / totalWeight
-/// ```
+/// width(i) = natural(i) + leftover * weight(i)/ totalWeight
+///```
 ///
 /// If the total weight is 0, which can only happen with `WEIGHTED` and no positive weight, nothing absorbs the leftover
 /// width and the columns simply do not fill the table.
@@ -68,7 +68,7 @@ import javafx.collections.ObservableList;
 /// - the cumulative effective weights, rebuilt as a whole when stale.
 ///
 /// A column's position is its natural position plus the leftover width absorbed by the columns before it,
-/// `naturalPos(i) + leftover * cumulativeWeight(i) / totalWeight`. The sum of the natural widths, the leftover width
+/// `naturalPos(i) + leftover * cumulativeWeight(i)/ totalWeight`. The sum of the natural widths, the leftover width
 /// and the total weight are cached aggregates, so none of them requires iterating over the columns.
 ///
 /// ## Snapping

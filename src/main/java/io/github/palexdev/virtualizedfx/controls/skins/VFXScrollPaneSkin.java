@@ -470,7 +470,7 @@ public class VFXScrollPaneSkin extends MFXSkinBase<VFXScrollPane> {
                 .invalidating(hBar.pressedProperty())
                 .executeNow()
         );
-        
+
         // Input
         onInput(
             intercept(viewport, MouseEvent.MOUSE_PRESSED)

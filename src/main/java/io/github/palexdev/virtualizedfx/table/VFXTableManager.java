@@ -316,12 +316,12 @@ public class VFXTableManager<T> {
     /// Add at index 2 these items: 99, 98
     /// In list after: 0 1 99 98 2 3 4 5
     /// Now let's suppose the range of displayed items is the same: [0, 5](6 items)
-    /// (I'm going now to write items with the index too, like this Index:Item)
+    ///(I'm going now to write items with the index too, like this Index:Item)
     /// Items before: [0:0, 1:1, 2:2, 3:3, 4:4, 5:5]
     /// Items after: [0:0, 1:1, 2:99, 3:98, 4:2, 5:3]
     /// See? Items 2 and 3 are still there but in a different position (index). Since we assume item updates are more
     /// expensive than index updates, we must ensure to take those two rows and update them just by index
-    /// ```
+    ///```
     ///
     /// For this reason rows are not taken from the old state by index but by **item**,
     /// [VFXTableState#removeRow(Object)]. For each index in the new rows range we get the item that is now there, and
@@ -551,7 +551,7 @@ public class VFXTableManager<T> {
     /// What remains is delegated to [#remainingAlgorithm(ExcludingIntegerRange,VFXTableState)]: those indexes show
     /// items that are not in the viewport yet.
     ///
-    /// @see Utils#intersection(IntegerRange,IntegerRange)
+    /// @see Utils#intersection(IntegerRange, IntegerRange)
     /// @see ExcludingIntegerRange
     protected void intersectionAlgorithm(IntegerRange rowsRange, VFXTableState<T> newState) {
         // Current and new states, intersection between current and new range

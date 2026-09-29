@@ -132,14 +132,14 @@ public class VFXTableState<T> {
 
     /// Delegates to [#addRow(int,Object,VFXTableRow)] by retrieving the `T` item from the items' list at the given index.
     ///
-    /// @see StateMap#put(Integer,Object,Object)
+    /// @see StateMap#put(Integer, Object, Object)
     protected void addRow(int index, VFXTableRow<T> row) {
         addRow(index, table.getItems().get(index), row);
     }
 
     /// Adds the given row to the [StateMap] of this state object.
     ///
-    /// @see StateMap#put(Integer,Object,Object)
+    /// @see StateMap#put(Integer, Object, Object)
     protected void addRow(int index, T item, VFXTableRow<T> row) {
         rows.put(index, item, row);
     }
