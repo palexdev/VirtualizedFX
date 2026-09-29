@@ -47,11 +47,10 @@ public enum ScrollUnits {
     ///
     /// Binding dependencies include the container's scroll bounds and its cell size property.
     ///
-    /// **One caveat for [VFXTable].** On the horizontal axis the size comes from
-    /// [VFXTable#columnsSizeProperty()], which is a genuine column width only in [ColumnsLayoutMode#FIXED].
-    /// <br >
-    /// In [ColumnsLayoutMode#VARIABLE] it is just the minimum every column must have, so a step covers that width
-    /// rather than one actual column. There is no single right answer there, since the columns differ in width.
+    /// **One caveat for [VFXTable].** On the horizontal axis the size comes from the width specified by
+    /// [VFXTable#columnsSizeProperty()], which is the minimum every column must have. Columns can be wider than that,
+    /// so a step covers that width rather than one actual column. There is no single right answer here, since the
+    /// columns can differ in width.
     CELL {
         @Override
         public Supplier<Double> calc(VFXScrollPane vsp, double amount, Orientation orientation) {
@@ -158,8 +157,8 @@ public enum ScrollUnits {
 
     /// Calculates the scroll amount as a percentage value in `[0.0, 1.0]`, based on the given unit type.
     ///
-    /// The `orientation` parameters specifies the axis on which select the properties.
-    /// E.g: VERTICAL -> height, HORIZONTAL -> width
+    /// The `orientation` tells which axis the amount is for, and therefore which sizes are used to convert it: heights
+    /// for [Orientation#VERTICAL], widths for [Orientation#HORIZONTAL].
     public abstract Supplier<Double> calc(VFXScrollPane vsp, double amount, Orientation orientation);
 
     /// Lists observable properties that should be watched when using this unit in a binding context.

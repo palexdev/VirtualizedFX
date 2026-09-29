@@ -23,8 +23,11 @@ import io.github.palexdev.mfxcore.enums.Zone;
 import io.github.palexdev.mfxcore.utils.fx.resize.Resizer;
 import io.github.palexdev.mfxcore.utils.fx.resize.targets.RegionTarget;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
+import io.github.palexdev.virtualizedfx.table.ColumnsLayoutCache;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
+import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
@@ -33,6 +36,24 @@ import static io.github.palexdev.virtualizedfx.table.VFXTable.getWeight;
 import static io.github.palexdev.virtualizedfx.table.VFXTable.setWeight;
 import static java.util.Optional.ofNullable;
 
+/// This is the default behavior implementation for [VFXTableColumn]. It instantiates a [Resizer], a [ColumnResizer] to
+/// be precise, which allows you to resize the column with the mouse cursor at runtime by dragging its right edge.
+///
+/// ## Resizing with the mouse
+///
+/// The gesture is available only if the [VFXTableColumn#gestureResizableProperty()] is `true`, and it sets the column's
+/// [VFXTableColumn#userPrefWidthProperty()]. Pressing [KeyCode#ESCAPE] during the gesture cancels it, restoring the
+/// column as it was before, see [ColumnResizer#cancel()].
+///
+/// When the table has leftover width (see [ColumnsFillPolicy]), resizing a column that absorbs part of it clears its
+/// weight, so the column keeps the width you give it, and the other absorbers take the difference. The only exception
+/// is a column that absorbs all the leftover width. See [ColumnResizer#onResize(VFXTableColumn,double)] for the whole rule.
+///
+/// Beware that when all the absorbers are on the left of the column you resize, the gesture looks inverted, see [ColumnsFillPolicy]
+///
+/// ## Autosize
+///
+/// Double-clicking the right edge sizes the column to fit its content, [VFXTableColumn#sizeToContent()].
 public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBehavior<VFXTableColumn<T, C>> {
 
     //================================================================================
@@ -53,10 +74,13 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Methods
     //================================================================================
 
+    /// Creates the [Resizer] used by this behavior, a [ColumnResizer] by default. Override this to customize the
+    /// gesture, or return `null` to disable it altogether.
     protected Resizer<VFXTableColumn<?, ?>> createResizer() {
         return new ColumnResizer(getNode());
     }
 
+    /// @return the [Resizer] created by [#createResizer()], `null` before [#install()] or if none was created
     public Resizer<VFXTableColumn<?, ?>> getResizer() {
         return resizer;
     }
@@ -65,12 +89,18 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Overridden Methods
     //================================================================================
 
+    /// {@inheritDoc}
+    ///
+    /// Creates the [Resizer], [#createResizer()], and installs it, if any.
     @Override
     public void install() {
         if ((resizer = createResizer()) != null)
             resizer.install();
     }
 
+    /// {@inheritDoc}
+    ///
+    /// Also disposes the [Resizer], if any.
     @Override
     public void dispose() {
         if (resizer != null) resizer.dispose();
@@ -81,6 +111,12 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
     // Inner Classes
     //================================================================================
 
+    /// The [Resizer] used by default by [VFXTableColumnBehavior]. It holds the whole default gesture: when it's allowed,
+    /// what it does on the column's width and weight, the double-click autosize, and how it's canceled.
+    ///
+    /// The handlers are registered on the column's table, and follow it if the column moves to another one, see
+    /// [Resizer#hitSourceProperty()]. Only the right edge can be grabbed, [Zone#CENTER_RIGHT], and only if
+    /// [VFXTableColumn#gestureResizableProperty()] is `true`.
     protected static class ColumnResizer extends Resizer<VFXTableColumn<?, ?>> {
         private double prefAtPress;
         private int weightAtPress = DEFAULT_WEIGHT;
@@ -93,12 +129,48 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
             resizeHandler((c, _, _, w, _) -> onResize(c, w));
         }
 
+        /// The resize handler, called on every drag event of the gesture. Sets the column's
+        /// [VFXTableColumn#userPrefWidthProperty()] to the given width, but first it may clear the column's weight.
+        ///
+        /// While the table has leftover width, a column's width is its [natural width][ColumnsLayoutCache] plus its share of the leftover,
+        /// see [ColumnsFillPolicy]. Setting the pref of an absorber would not give it the width you drag to, its share
+        /// would come on top. So:
+        ///
+        /// | the dragged column | its weight | the result |
+        /// |---|---|---|
+        /// | absorbs part of the leftover width, with other columns | cleared | the column takes the dragged width, the other absorbers keep the table filled |
+        /// | absorbs all of the leftover width | kept | see below |
+        /// | absorbs nothing | untouched | the column takes the dragged width |
+        ///
+        /// The check is [VFXTableHelper#isSharedAbsorber(VFXTableColumn)], so it's done on the effective weights. With
+        /// [ColumnsFillPolicy#LAST] no column is a shared absorber, and the weights declared on the other columns are not
+        /// cleared, they still apply if the policy is switched to [ColumnsFillPolicy#WEIGHTED].
+        ///
+        /// #### Why the sole absorber keeps its weight
+        ///
+        /// Clearing it would leave the leftover width to nobody, and the table would not be filled anymore. Keeping it
+        /// needs no special handling either. The column's width is `natural + max(0, tableWidth - allNaturals)`, which is
+        /// the same as `max(natural, tableWidth - othersNaturals)`. The second term is the width at which the table is
+        /// exactly filled, so the column cannot be shrunk below it, the edge simply stops following the cursor there.
+        /// Widening it past that works, the leftover width goes to 0 and the table starts to scroll horizontally.
+        ///
+        /// A click on the edge does not clear anything, since this runs only on drag events. Once the weight is cleared,
+        /// the next events skip the check, the column is not an absorber anymore. The width the gesture computes starts
+        /// from the column's bounds at press, which include the absorbed width, so the edge does not jump.
         protected <T> void onResize(VFXTableColumn<T, ?> column, double width) {
             VFXTableHelper<T> helper = column.getTable().getHelper();
             if (helper.isSharedAbsorber(column)) setWeight(column, DEFAULT_WEIGHT);
             column.setUserPrefWidth(width);
         }
 
+        /// {@inheritDoc}
+        ///
+        /// If the press starts a gesture, it's a primary button press and the click count is even (a double click), the
+        /// column is autosized with [VFXTableColumn#sizeToContent()], which keeps the weight, and the method returns
+        /// before saving anything. The gesture stays active until the release.
+        ///
+        /// Otherwise, if the press starts a gesture, the column's [VFXTableColumn#userPrefWidthProperty()] and weight are
+        /// saved, so that [#cancel()] can restore them.
         @Override
         protected void onMousePressed(MouseEvent me) {
             super.onMousePressed(me);
@@ -114,6 +186,13 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
             weightAtPress = getWeight(column);
         }
 
+        /// Restores the column's [VFXTableColumn#userPrefWidthProperty()] and weight saved at press, then runs the
+        /// [Resizer#onCancelled(Runnable)] action and resets the gesture's state.
+        ///
+        /// It does not call the super method, because that one replays the width at press through the resize handler.
+        /// Here, it would clear the weight right after restoring it, and turn a pref that was never set (-1) into a number.
+        ///
+        /// @return whether there was anything to cancel
         @Override
         public boolean cancel() {
             if (!isResizing()) return false;
@@ -125,6 +204,7 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
             return true;
         }
 
+        /// @return the column this resizer works on
         public VFXTableColumn<?, ?> column() {
             return target().target();
         }

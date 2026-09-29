@@ -39,7 +39,7 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 ///
 /// As all skins typically do, this is also responsible for catching any change in the component's properties.
 /// The computation that leads to a new state is delegated to the controller/behavior, which is the [VFXListManager].
-/// Read this [#addListeners()] to check which changes are handled.
+/// Read this [#install()] to check which changes are handled.
 ///
 /// Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
 /// by overriding the [#DEFAULT_SIZE] variable.

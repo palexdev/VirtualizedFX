@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.controls.Label;
+import io.github.palexdev.mfxcore.utils.RandomUtils;
 import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
@@ -66,12 +66,7 @@ import static io.github.palexdev.mfxcore.base.beans.Size.size;
 import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.insets;
 import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.uniform;
 import static io.github.palexdev.virtualizedfx.utils.Utils.INVALID_RANGE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static src.model.FXUser.fxusers;
 import static src.model.User.faker;
 import static src.model.User.users;
@@ -2005,6 +2000,7 @@ public class TableTests {
         assertCounter(0, 1, 0, 0, 0, 0, 0, 0);
         assertLength(table, 50 * 32, 1260);
     }
+
     @Test
     void testWeightedNoFillWithoutWeights(FxRobot robot) {
         StackPane pane = setupStage();
@@ -2314,6 +2310,7 @@ public class TableTests {
         assertColumnWidths(table, 40, 40, 40, 40, 40, 40, 160);
         assertLength(table, 50 * 32, 400);
     }
+
     @Test
     void testWeightedSetWeightWhileOverflowing(FxRobot robot) {
         StackPane pane = setupStage();
@@ -2727,6 +2724,7 @@ public class TableTests {
         assertEquals(1, VFXTable.getWeight(column));
         assertColumnWidths(table, 40, 160, 40, 40, 40, 40, 40);
     }
+
     @Test
     void testSwapColumns(FxRobot robot) {
         StackPane pane = setupStage();

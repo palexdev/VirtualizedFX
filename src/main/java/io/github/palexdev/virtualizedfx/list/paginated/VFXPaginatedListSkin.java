@@ -35,7 +35,7 @@ import javafx.scene.control.SkinBase;
 ///
 /// First of all, the list position is bound to the current page specified by [VFXPaginatedList#pageProperty()].
 /// Only the position that is the same as the current orientation is bound. When the orientation changes, the binding is
-/// swapped by [#swapPositionBinding()]. Also, there are a couple of extra listeners, [#addListeners()].
+/// swapped by [#swapPositionBinding()]. Also, there are a couple of extra listeners, [#install()].
 ///
 /// As for the layout, the only thing that changes is that the container's size will adapt to the cell size and the number
 /// of cells per page, the exact computation is described and done by [#getLength()].

@@ -20,10 +20,15 @@ package io.github.palexdev.virtualizedfx.table.defaults;
 
 import java.util.List;
 
+import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableRow;
 
 import static io.github.palexdev.mfxcore.controls.MFXStyleable.styleClasses;
 
+/// Concrete and simple implementation of [VFXTableRow], and the one used by default by [VFXTable]. The base class
+/// already implements all the algorithms, the only thing this adds is the default style class: '.vfx-row'.
+///
+/// This is also the class to extend to customize the rows, see [VFXTableRow].
 public class VFXDefaultTableRow<T> extends VFXTableRow<T> {
 
     //================================================================================

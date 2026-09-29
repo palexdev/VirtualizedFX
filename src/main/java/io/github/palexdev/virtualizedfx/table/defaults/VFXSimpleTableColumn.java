@@ -26,6 +26,7 @@ import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectPrope
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
+import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
@@ -33,6 +34,13 @@ import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.HPos;
 import javafx.scene.Node;
 
+/// Concrete and simple implementation of [VFXTableColumn]. Has its own skin: [VFXSimpleTableColumnSkin].
+///
+/// These are the features this implementation offers:
+///
+/// - the [#graphicAlignmentProperty()] allows you to specify on which side of the text the column's graphic goes
+/// - the [#enableOverlayProperty()] makes the column display an extra node which can be used to indicate selection or hovering
+/// - the [#overlayOnHeaderProperty()] makes the aforementioned node cover the column's header too
 public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTableColumn<T, C> {
 
     //================================================================================
@@ -94,6 +102,12 @@ public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTable
         return graphicAlignment.get();
     }
 
+    /// Specifies the side on which the graphic is placed, with respect to the text.
+    ///
+    /// By setting the alignment to [HPos#CENTER] the default skin, [VFXSimpleTableColumnSkin], hides the text and
+    /// shows only the graphic at the center.
+    ///
+    /// Can be set in CSS via the property: '-vfx-graphic-alignment'.
     public StyleableObjectProperty<HPos> graphicAlignmentProperty() {
         return graphicAlignment;
     }
@@ -106,6 +120,17 @@ public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTable
         return enableOverlay.get();
     }
 
+    /// Specifies whether the default skin, [VFXSimpleTableColumnSkin], should show the overlay.
+    ///
+    /// [VFXTable] is organized by rows. This means that by default, there is no way in the UI to display when a column
+    /// is selected or hovered by the mouse. The default skin allows to do this by adding an extra node that extends from
+    /// the column all the way down to the table's bottom. This allows doing cool tricks with CSS. The node has no style
+    /// by default, so it's not visible until you define one, it can be selected in CSS as '.overlay'.
+    ///
+    /// One thing to keep in mind, though, is that the overlay sits above the rows. So, if you define a background color
+    /// for it, make sure that it is translucent, otherwise it will end up covering the cells.
+    ///
+    /// Can be set in CSS via the property: '-vfx-enable-overlay'.
     public StyleableBooleanProperty enableOverlayProperty() {
         return enableOverlay;
     }
@@ -118,6 +143,10 @@ public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTable
         return overlayOnHeader.get();
     }
 
+    /// Specifies whether the overlay should also cover the header of the column, the part where the text and the graphic
+    /// reside. See [#enableOverlayProperty()].
+    ///
+    /// Can be set in CSS via the property: '-vfx-overlay-on-header'.
     public StyleableBooleanProperty overlayOnHeaderProperty() {
         return overlayOnHeader;
     }

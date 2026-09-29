@@ -22,11 +22,48 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
+import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
+/// Default skin implementation for [VFXTable], extends [MFXSkinBase].
+///
+/// The table is organized in columns, rows and cells. This architecture leads to more complex layout compared to other
+/// containers because it comprises many more nodes. The 'viewport' node wraps two [Pane]s:
+///
+/// 1) one contains the table's columns, can be selected in CSS as '.columns'
+///
+/// 2) the other contains the rows, can be selected in CSS as '.rows'
+///
+/// The table's height and the viewport height are different here. The latter is given by the table's height minus
+/// the columns pane height, specified by [VFXTable#columnsSizeProperty()]. The rows are given by the
+/// [VFXTable#stateProperty()] and depend on the viewport's height. Each column **in the current columns range**
+/// produces one cell per row.
+///
+/// Q: Why so many nodes?
+///
+/// A: scrolling in a table is a bit peculiar because: vertical scrolling should affect only the rows, while horizontal
+/// scrolling should affect both rows and columns. So, the whole viewport is translated on the x-axis, while only the
+/// rows container is translated on the y-axis, see [VFXTableHelper#viewportPositionProperty()].
+///
+/// ## Clips
+///
+/// The viewport is clipped by a rectangle as big as the table, rounded by [VFXTable#clipBorderRadiusProperty()]. It
+/// defines the table's visible shape, and it's counter-translated on the x-axis so that it stays still while the
+/// viewport scrolls. Clipping the viewport rather than the table preserves any background or effect drawn on the
+/// table itself.
+///
+/// The rows container has a clip of its own, which keeps the rows from going over the columns on vertical scroll.
+/// It's counter-translated on the y-axis, and it's as wide as the rows container, cutting on the x-axis is left to the
+/// viewport's clip.
+///
+/// ## What the skin does
+///
+/// The skin reacts to changes in the table, see [#install()]. A new state updates the containers' children,
+/// [#updateChildren(VFXTableState)], and a layout request lays out the viewport, [#layoutViewport()]. It also
+/// processes the columns marked for autosize, see [#layoutChildren(double,double,double,double)].
 public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
 
     //================================================================================
@@ -102,6 +139,18 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     // Methods
     //================================================================================
 
+    /// Updates the containers' children to reflect the given state. Changing a children list is costly
+    /// (JavaFX processes CSS again for every node that enters it), so it's done only when needed:
+    ///
+    /// - if the state is [VFXTableState#INVALID], both containers are emptied
+    ///
+    /// - if the state has no rows, [VFXTableState#isEmpty()], the rows container is emptied. Otherwise, it's filled with
+    ///   the state's rows only if [VFXTableState#haveRowsChanged()]
+    ///
+    /// - the columns container is filled with the columns in the state's range only if
+    ///   [VFXTableState#haveColumnsChanged()]
+    ///
+    /// Nothing is laid out here, that's up to the layout request the manager issues along with the state.
     protected void updateChildren(VFXTableState<T> state) {
         VFXTable<T> table = getSkinnable();
         if (state == VFXTableState.INVALID) {
@@ -124,6 +173,21 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         }
     }
 
+    /// Sizes the given column to fit its content. Called by [#layoutChildren(double,double,double,double)] for each column
+    /// marked with [VFXTableColumn#sizeToContent()].
+    ///
+    /// The width is the maximum between the header's pref width (the column itself) and the pref width of the column's
+    /// cells in the current state's rows. If no row has a cell for the column, the minimum width given by
+    /// [VFXTable#columnsSizeProperty()] takes the cells' place. The mark is removed, and the result is set as the column's
+    /// [VFXTableColumn#userPrefWidthProperty()], just like a resize by the user would do.
+    ///
+    /// The result is exact, the column can grow as well as shrink. The column's weight is not touched, so if it absorbs
+    /// the leftover width, it keeps doing so on top of the new width, see [VFXTable#setWeight(VFXTableColumn,int)].
+    ///
+    /// The state is read on each call, since setting the width produces a new one right away.
+    ///
+    /// **Beware:** only the cells in the viewport, buffer included, can be measured. The rows are virtualized, and a cell
+    /// that was never built has no width to give. So, the result is the widest content among the rows shown at the time.
     protected void autosize(VFXTableColumn<T, ?> column) {
         VFXTable<T> table = getSkinnable();
         double header = column.prefWidth(-1);
@@ -137,6 +201,32 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         column.setUserPrefWidth(Math.max(header, cellsMax));
     }
 
+    /// This core method is responsible for the viewport's layout. It's called by the listener on
+    /// [VFXTable#needsViewportLayoutProperty()], right away, every time the table issues a valid request. The layout is
+    /// completely manual, the containers' `layoutChildren()` are no-ops, and so is the rows' one.
+    ///
+    /// First, the two containers and the two clips are sized, in any case. The columns container is as wide as
+    /// [VFXTable#virtualMaxXProperty()] and as tall as the columns. The rows container is as wide too, and takes what is
+    /// left of the table's height below the columns. The viewport's clip takes the table's size minus the insets, the
+    /// rows' clip takes the rows container's size.
+    ///
+    /// If the state is [VFXTableState#INVALID] the method ends here, calling [#layoutCompleted(boolean)] with `false`.
+    ///
+    /// Otherwise, the request tells which columns need to be laid out, as an interval of indexes, see [ViewportLayoutRequest]:
+    ///
+    /// - the columns that are both in the interval and in the state's columns range are laid out by
+    ///   [VFXTableHelper#layoutColumn(int,VFXTableColumn)]
+    ///
+    /// - every row in the state is laid out by [VFXTableHelper#layoutRow(int,VFXTableRow)], with a layout index that
+    ///   starts at 0. A row's geometry does not depend on the columns, and laying it out again with the same values
+    ///   costs little, so rows are always processed
+    ///
+    /// - each row then lays out its cells, [VFXTableRow#layoutCells(int,int)], given the same interval. The row also
+    ///   covers the cells it never positioned, which is why a request with an empty interval, [ViewportLayoutRequest#Y_ONLY],
+    ///   still does something
+    ///
+    /// Finally, calls [#layoutCompleted(boolean)] with whether the request was valid, which it always is when coming from
+    /// the listener.
     protected void layoutViewport() {
         VFXTable<T> table = getSkinnable();
         double w = table.getWidth() - snappedLeftInset() - snappedRightInset();
@@ -177,6 +267,9 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         layoutCompleted(request.isValid());
     }
 
+    /// Brings the [VFXTable#needsViewportLayoutProperty()] back to the idle state once a request has been processed:
+    /// [ViewportLayoutRequest#DONE] if the layout was computed, [ViewportLayoutRequest#NULL] otherwise. Neither is a
+    /// valid request, so this does not trigger another layout.
     protected void layoutCompleted(boolean done) {
         getSkinnable().setNeedsViewportLayout(done ? ViewportLayoutRequest.DONE : ViewportLayoutRequest.NULL);
     }
@@ -185,7 +278,20 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
     // Overridden Methods
     //================================================================================
 
-
+    /// Registers the skin's listeners:
+    ///
+    /// - on [VFXTable#stateProperty()], calls [#updateChildren(VFXTableState)]
+    ///
+    /// - on [VFXTable#needsViewportLayoutProperty()], calls [#layoutViewport()], only for valid requests, see
+    ///   [ViewportLayoutRequest#isValid()]
+    ///
+    /// - on [VFXTable#helperProperty()], binds the viewport's `translateX` and the rows container's `translateY` to the
+    ///   helper's [VFXTableHelper#viewportPositionProperty()]. By translating these nodes, we give the illusion of
+    ///   scrolling (virtual scrolling). This one also runs immediately, since the table always has a helper
+    ///
+    /// **Note:** a state that already exists when the skin is installed is not rendered, the skin waits for the next one.
+    /// The table produces its first state when it's sized for the first time, which normally happens once the skin is there.
+    /// So, sizing a table before its skin exists (e.g., by calling `resize(...)` on it) is not supported.
     @Override
     public void install() {
         VFXTable<T> table = getSkinnable();
@@ -204,16 +310,37 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
         );
     }
 
+    /// @return the left and right insets plus [#DEFAULT_SIZE]
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         return leftInset + DEFAULT_SIZE + rightInset;
     }
 
+    /// @return the top and bottom insets plus [#DEFAULT_SIZE]
     @Override
     protected double computeMinHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
         return topInset + DEFAULT_SIZE + bottomInset;
     }
 
+    /// {@inheritDoc}
+    ///
+    /// Also processes the columns marked for autosize, see [VFXTableColumn#sizeToContent()]. JavaFX lays out the table
+    /// every time the containers' children change, which happens on most state changes, scrolling included. So this
+    /// runs often, and costs only a scan of the columns range when there is nothing to do.
+    ///
+    /// Only the marked columns in the state's columns range are processed, and only if the state has rows, since there
+    /// must be something to measure. Other marks stay, and are processed by the first layout after their column
+    /// becomes measurable, for example when it's scrolled into view or when the table gets items. No listener is needed
+    /// for that, such changes lay out the table anyway.
+    ///
+    /// When there is something to process, [Node#applyCss()] is called on the table before measuring. The table's nodes
+    /// are created during the layout pass, after JavaFX processed CSS for the current pulse, so without it new cells
+    /// would have no style and no skin, and would report a wrong width. It processes CSS for the whole table, which is
+    /// why it's done only when needed. Each column is then measured by [#autosize(VFXTableColumn)].
+    ///
+    /// **Known limitation:** a layout requested while the table is being laid out is lost, that's how JavaFX works.
+    /// So, if processing the marks brings other marked columns in range (e.g., by making columns narrower), those wait
+    /// for the next layout of the table.
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
         super.layoutChildren(x, y, w, h);

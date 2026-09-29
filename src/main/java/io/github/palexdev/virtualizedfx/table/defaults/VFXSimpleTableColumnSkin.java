@@ -27,6 +27,7 @@ import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.mfxcore.utils.fx.TextMeasurementCache;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
+import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.geometry.HPos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
@@ -34,6 +35,23 @@ import javafx.scene.layout.Region;
 
 import static io.github.palexdev.mfxcore.observables.When.observe;
 
+/// Default skin implementation for [VFXSimpleTableColumn], extends [MFXSkinBase].
+///
+/// The layout is simple, there are at max three nodes:
+///
+/// - a [BoundLabel] to show the column's text
+/// - a generic [Node] specified by the column's [VFXTableColumn#graphicProperty()]
+/// - a [Region] called 'overlay' which can be used to indicate selection, hovering or other states for the column.
+///   This region can be selected in CSS by the selector '.overlay'. See [VFXSimpleTableColumn#enableOverlayProperty()]
+///   and [VFXSimpleTableColumn#overlayOnHeaderProperty()]
+///
+/// There are three ways to arrange the text and the graphic, as specified by the
+/// [VFXSimpleTableColumn#graphicAlignmentProperty()]. For [HPos#LEFT] and [HPos#RIGHT], the graphic is going to be
+/// placed to the left and right respectively of the label. For [HPos#CENTER] only the graphic will be visible at the
+/// center of the area, the label will be hidden.
+///
+/// Mouse events are not consumed by the skin, so that they reach the column's behavior and the table, where the
+/// resize handlers of the default behavior are, see [VFXTableColumnBehavior].
 public class VFXSimpleTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXSkinBase<VFXSimpleTableColumn<T, C>> {
 
     //================================================================================
@@ -80,8 +98,8 @@ public class VFXSimpleTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXS
         VFXSimpleTableColumn<T, C> column = getSkinnable();
         List<Node> children = new ArrayList<>();
         if (column.isEnableOverlay()) children.add(overlay);
-        if (column.getGraphic() != null) children.add(column.getGraphic());
         children.add(label);
+        if (column.getGraphic() != null) children.add(column.getGraphic());
         getChildren().setAll(children);
     }
 
@@ -89,6 +107,13 @@ public class VFXSimpleTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXS
     // Overridden Methods
     //================================================================================
 
+    /// Registers the skin's listeners:
+    ///
+    /// - on [VFXTableColumn#graphicProperty()] and [VFXSimpleTableColumn#enableOverlayProperty()], calls
+    ///   [#updateChildren()]
+    ///
+    /// - on [VFXSimpleTableColumn#graphicAlignmentProperty()] and [VFXSimpleTableColumn#overlayOnHeaderProperty()],
+    ///   requests a layout of the column
     @Override
     public void install() {
         VFXSimpleTableColumn<T, C> column = getSkinnable();
@@ -98,6 +123,8 @@ public class VFXSimpleTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXS
         );
     }
 
+    /// @return the insets plus the graphic's width and the gap, if there is a graphic. The text is not included, it can
+    /// be truncated
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         VFXSimpleTableColumn<T, C> column = getSkinnable();
@@ -107,6 +134,9 @@ public class VFXSimpleTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXS
                rightInset;
     }
 
+    /// @return the insets, the graphic's width and the gap (if there is a graphic), plus the text's width, measured by a
+    /// [TextMeasurementCache]. This is also what [VFXTable]'s default skin measures for the header when autosizing the
+    /// column, see [VFXTableColumn#sizeToContent()]
     @Override
     protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         VFXSimpleTableColumn<T, C> column = getSkinnable();
@@ -117,6 +147,14 @@ public class VFXSimpleTableColumnSkin<T, C extends VFXTableCell<T>> extends MFXS
                rightInset;
     }
 
+    /// {@inheritDoc}
+    ///
+    /// The graphic is aligned in the whole area as specified by the [VFXSimpleTableColumn#graphicAlignmentProperty()].
+    /// The label takes the remaining width, after the graphic with [HPos#LEFT], before it with [HPos#RIGHT], and is
+    /// hidden with [HPos#CENTER].
+    ///
+    /// The overlay is laid out only if the column is in a table. It's as wide as the column, and goes from the column's
+    /// top (or bottom, if [VFXSimpleTableColumn#overlayOnHeaderProperty()] is `false`) to the table's bottom.
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
         VFXSimpleTableColumn<T, C> column = getSkinnable();
