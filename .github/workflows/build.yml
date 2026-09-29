@@ -24,6 +24,12 @@ jobs:
       - name: Give permissions to Gradle
         run: chmod +x gradlew
 
-        # Do not test in headless mode as it is not stable enough
       - name: Build with Gradle
-        run: ./gradlew build -x test
+        run: ./gradlew build -Pheadless
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/test

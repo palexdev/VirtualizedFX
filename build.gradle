@@ -50,6 +50,11 @@ test {
             '--add-opens', 'javafx.graphics/com.sun.javafx.application=ALL-UNNAMED'
     ]
     systemProperty 'javafx.robot.screenshotMethod', 'gtk'
+    // Opt-in headless mode
+    if (project.hasProperty('headless')) {
+        systemProperty 'glass.platform', 'headless'
+        systemProperty 'prism.order', 'sw'
+    }
     // JMH benchmarks are excluded from normal test runs, unless one is explicitly requested (e.g. IntelliJ's gutter icon).
     // Checked at execution time because IntelliJ adds its test pattern to the filter after the build script is evaluated.
     // Not compatible with the configuration cache, since it changes the filter while the task runs
