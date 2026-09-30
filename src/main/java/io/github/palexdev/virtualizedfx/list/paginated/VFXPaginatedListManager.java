@@ -18,10 +18,15 @@
 
 package io.github.palexdev.virtualizedfx.list.paginated;
 
+import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
+import javafx.beans.binding.DoubleBinding;
+import javafx.geometry.Orientation;
 import javafx.scene.Parent;
+
+import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /// Default behavior implementation for [VFXPaginatedList], extends [VFXListManager].
 ///
@@ -33,6 +38,10 @@ import javafx.scene.Parent;
 /// It also modifies some of the behaviors already defined in [VFXListManager] because the paginated variant should
 /// respond differently in some cases, and also to optimize performance as much as possible.
 public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListManager<T, C> {
+    //================================================================================
+    // Properties
+    //================================================================================
+    private DoubleBinding posBinding;
 
     //================================================================================
     // Constructors
@@ -45,6 +54,28 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     // Methods
     //================================================================================
 
+    protected void installPagination() {
+        VFXPaginatedList<T, C> list = getList();
+        posBinding = DoubleBindingBuilder.build()
+            .setMapper(() -> list.getPage() * list.getCellsPerPage() * (list.getCellSize() + list.getSpacing()))
+            .addSources(list.pageProperty(), list.cellsPerPageProperty(), list.cellSizeProperty(), list.spacingProperty())
+            .get();
+        swapPositionBinding();
+        onInvalidated(list.cellsPerPageProperty()).then(_ -> onCellsPerPageChanged()).listen();
+        onInvalidated(list.maxPageProperty()).then(_ -> onMaxPageChanged()).listen();
+    }
+
+    protected void swapPositionBinding() {
+        VFXPaginatedList<T, C> list = getList();
+        if (list.getOrientation() == Orientation.VERTICAL) {
+            list.hPosProperty().unbind();
+            list.vPosProperty().bind(posBinding);
+        } else {
+            list.vPosProperty().unbind();
+            list.hPosProperty().bind(posBinding);
+        }
+    }
+
     /// A paginated container's size strictly depends on how many cells/rows/items is set to display per page, and this
     /// is enforced by the default skin [VFXPaginatedListSkin], see [VFXPaginatedListSkin#getLength()].
     ///
@@ -54,8 +85,8 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     ///
     /// This way, computations that also rely on the container size become invalid too, thus leading to correct values.
     protected void onCellsPerPageChanged() {
-        VFXList<T, C> list = getNode();
-        list.requestLayout();
+        helper().invalidateRange();
+        getList().requestLayout();
     }
 
     /// This core method ensures that the paginated container is always at a valid page/position when the
@@ -81,7 +112,7 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     ///
     /// If you want to make a skin that doesn't follow this logic, then you probably want to change this method too.
     protected void onMaxPageChanged() {
-        VFXPaginatedList<T, C> list = getNode();
+        VFXPaginatedList<T, C> list = getList();
         int page = list.getPage();
         int max = list.getMaxPage();
         if (page > max) {
@@ -101,8 +132,7 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     /// the skin, is to adapt the container's size to the size of each cell as well as the number of cells per page.
     @Override
     protected void onCellSizeChanged() {
-        VFXList<T, C> list = getNode();
-        list.requestViewportLayout();
+        getList().requestViewportLayout();
     }
 
     /// As also described in the super method ([VFXListManager#onOrientationChanged()]), when the orientation changes
@@ -111,16 +141,17 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     /// requires setting the page to 0.
     @Override
     protected void onOrientationChanged() {
-        VFXPaginatedList<T, C> list = getNode();
+        VFXPaginatedList<T, C> list = getList();
         list.vPosProperty().unbind();
         list.hPosProperty().unbind();
         list.setPage(0);
         super.onOrientationChanged();
+        swapPositionBinding();
     }
 
     /// Overridden to cast to [VFXPaginatedList] since this behavior only allows that type.
     @Override
-    public VFXPaginatedList<T, C> getNode() {
-        return (VFXPaginatedList<T, C>) super.getNode();
+    protected VFXPaginatedList<T, C> getList() {
+        return (VFXPaginatedList<T, C>) super.getList();
     }
 }

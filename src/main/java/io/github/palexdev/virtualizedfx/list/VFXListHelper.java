@@ -18,12 +18,8 @@
 
 package io.github.palexdev.virtualizedfx.list;
 
-import java.util.Optional;
-
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
-import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.utils.NumberUtils;
@@ -33,7 +29,8 @@ import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
@@ -68,13 +65,15 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
     /// Specifies the range of items present in the list. This also takes into account buffer items, see [#visibleNum()]
     /// and [#totalNum()]
-    ReadOnlyObjectProperty<NumberRange<Integer>> rangeProperty();
+    ObservableValue<IntegerRange> rangeProperty();
 
     /// @return the range of items present in the list. This also takes into account buffer items, see [#visibleNum()]
     /// and [#totalNum()]
     default IntegerRange range() {
-        return (IntegerRange) rangeProperty().get();
+        return rangeProperty().getValue();
     }
+
+    void invalidateRange();
 
     /// Computes the width or height of the cell depending on the container's orientation.
     ///
@@ -111,9 +110,13 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// is updated with the given item, or a totally new one created by the [VFXList#getCellFactory()].
     default C itemToCell(T item) {
         VFXCellsCache<T, C> cache = getContainer().getCache();
-        Optional<C> opt = cache.tryTake();
-        opt.ifPresent(c -> c.updateItem(item));
-        return opt.orElseGet(() -> getContainer().create(item));
+        C cell;
+        if ((cell = cache.take()) != null) {
+            cell.updateItem(item);
+        } else {
+            cell = getContainer().create(item);
+        }
+        return cell;
     }
 
     /// Implementing the [VFXList#spacingProperty()] has been incredibly easy. It is enough to think at the
@@ -132,7 +135,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     ///
     /// - the total number of cells in the viewport
     abstract class AbstractHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXList<T, C>> implements VFXListHelper<T, C> {
-        protected final IntegerRangeProperty range = new IntegerRangeProperty();
+        protected ObjectBinding<IntegerRange> range;
 
         public AbstractHelper(VFXList<T, C> list) {
             super(list);
@@ -145,8 +148,13 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         }
 
         @Override
-        public IntegerRangeProperty rangeProperty() {
+        public ObservableValue<IntegerRange> rangeProperty() {
             return range;
+        }
+
+        @Override
+        public void invalidateRange() {
+            range.invalidate();
         }
     }
 
@@ -187,7 +195,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         @Override
         protected void createBindings() {
-            range.bind(ObjectBindingBuilder.<IntegerRange>build()
+            range = ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
                     if (container.getHeight() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalNum();
@@ -198,12 +206,8 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(container.heightProperty())
-                .addSources(container.bufferSizeProperty())
-                .addSources(container.vPosProperty())
-                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.spacingProperty())
-                .get()
-            );
+                .addSources(container.sizeProperty())
+                .get();
 
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
@@ -218,9 +222,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
                     double x = -NumberUtils.clamp(container.getHPos(), 0.0, getMaxHScroll());
                     double y = -(pixelsToFirst + visibleAmountFirst);
-                    return position(x, y);
+                    return position(container.snapPositionX(x), container.snapPositionY(y));
                 })
-                .addSources(container.layoutBoundsProperty())
+                .addSources(container.layoutBoundsProperty(), range)
                 .addSources(container.hPosProperty(), container.vPosProperty())
                 .addSources(container.cellSizeProperty(), container.spacingProperty())
                 .get()
@@ -331,7 +335,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         @Override
         public void dispose() {
-            range.unbind();
+            range.dispose();
             viewportPosition.unbind();
             super.dispose();
         }
@@ -374,7 +378,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         @Override
         protected void createBindings() {
-            range.bind(ObjectBindingBuilder.<IntegerRange>build()
+            range = ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
                     if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalNum();
@@ -385,12 +389,8 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(container.widthProperty())
-                .addSources(container.bufferSizeProperty())
-                .addSources(container.hPosProperty())
-                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.spacingProperty())
-                .get()
-            );
+                .addSources(container.sizeProperty())
+                .get();
 
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
@@ -405,9 +405,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
                     double x = -(pixelsToFirst + visibleAmountFirst);
                     double y = -NumberUtils.clamp(container.getVPos(), 0.0, getMaxVScroll());
-                    return position(x, y);
+                    return position(container.snapPositionX(x), container.snapPositionY(y));
                 })
-                .addSources(container.layoutBoundsProperty())
+                .addSources(container.layoutBoundsProperty(), range)
                 .addSources(container.hPosProperty(), container.vPosProperty())
                 .addSources(container.cellSizeProperty(), container.spacingProperty())
                 .get()
@@ -518,7 +518,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         @Override
         public void dispose() {
-            range.unbind();
+            range.dispose();
             viewportPosition.unbind();
             super.dispose();
         }

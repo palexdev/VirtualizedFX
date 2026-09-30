@@ -855,7 +855,7 @@ public class ListTests {
 
         // Assert init
         assertState(list, IntegerRange.of(0, 16));
-        assertCounter(17, 2, 17, 17, 0, 0, 0);
+        assertCounter(17, 1, 17, 17, 0, 0, 0);
 
         // Change factory
         robot.interact(() -> list.setCellFactory(i -> new TestCell<>(i) {

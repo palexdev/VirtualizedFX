@@ -60,6 +60,7 @@ import javafx.scene.shape.Rectangle;
 
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.pixels;
+import static java.util.Objects.requireNonNull;
 
 /// Implementation of a virtualized container to show a list of items either vertically or horizontally.
 /// The default style class is: '.vfx-list'.
@@ -148,6 +149,7 @@ public class VFXList<T, C extends VFXCell<T>> extends MFXControl
         }
     };
     private final CellFactory<T, C> cellFactory = new CellFactory<>(context);
+    private VFXListManager<T, C> manager;
     private final ReadOnlyObjectWrapper<VFXListHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
         @Override
         public void set(VFXListHelper<T, C> newValue) {
@@ -209,6 +211,12 @@ public class VFXList<T, C extends VFXCell<T>> extends MFXControl
     //================================================================================
     private void initialize() {
         setDefaultStyleClasses();
+        manager = requireNonNull(createManager(), "List's manager cannot be null!");
+        manager.install();
+    }
+
+    protected VFXListManager<T, C> createManager() {
+        return new VFXListManager<>(this);
     }
 
     /// Responsible for creating the cache instance used by this container.
@@ -283,7 +291,7 @@ public class VFXList<T, C extends VFXCell<T>> extends MFXControl
 
     @Override
     public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
-        return () -> new VFXListManager<>(this);
+        return () -> new MFXBehavior<>(this) {};
     }
 
     @Override
@@ -656,6 +664,10 @@ public class VFXList<T, C extends VFXCell<T>> extends MFXControl
     @Override
     public CellFactory<T, C> getCellFactory() {
         return cellFactory;
+    }
+
+    protected VFXListManager<T, C> getManager() {
+        return manager;
     }
 
     public VFXListHelper<T, C> getHelper() {

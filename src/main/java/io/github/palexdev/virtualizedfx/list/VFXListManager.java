@@ -25,7 +25,6 @@ import java.util.SequencedMap;
 
 import io.github.palexdev.mfxcore.base.beans.range.ExcludingIntegerRange;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.utils.IndexBiMap.StateMap;
@@ -33,6 +32,11 @@ import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
+import javafx.beans.value.ObservableDoubleValue;
+import javafx.geometry.Orientation;
+
+import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
+import static java.util.Objects.requireNonNull;
 
 /// Default behavior implementation for [VFXList]. Although, to be precise, and as the name also suggests,
 /// this can be considered more like a 'manager' than a behavior. Behaviors typically respond to user input, and then update
@@ -57,22 +61,71 @@ import javafx.beans.property.ListProperty;
 /// triggered, thus generating an unwanted 'middle' state. For this reason a special flag [#invalidatingPos] is set
 /// to `true` before the invalidation, so that the other method will exit immediately. It's reset back to false
 /// after the computation or if any of the checks before the actual computation fails.
-public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList<T, C>> {
+public class VFXListManager<T, C extends VFXCell<T>> {
     //================================================================================
     // Properties
     //================================================================================
+    private final VFXList<T, C> list;
     protected boolean invalidatingPos = false;
+
+    private final InvalidationListener positionListener = o -> {
+        ((ObservableDoubleValue) o).get(); // Read it, or the property fires nothing on the next set
+        helper().invalidateRange();
+        onPositionChanged();
+    };
 
     //================================================================================
     // Constructors
     //================================================================================
     public VFXListManager(VFXList<T, C> list) {
-        super(list);
+        this.list = list;
     }
 
     //================================================================================
     // Methods
     //================================================================================
+
+    protected void install() {
+        // Geometry
+        onInvalidated(list.widthProperty()).then(_ -> {
+            if (list.getOrientation() == Orientation.HORIZONTAL) {
+                helper().invalidateRange();
+                onGeometryChanged();
+            } else {
+                list.requestViewportLayout();
+            }
+        }).listen();
+        onInvalidated(list.heightProperty()).then(_ -> {
+            if (list.getOrientation() == Orientation.VERTICAL) {
+                helper().invalidateRange();
+                onGeometryChanged();
+            } else {
+                list.requestViewportLayout();
+            }
+        }).listen();
+        onInvalidated(list.bufferSizeProperty()).then(_ -> {
+            helper().invalidateRange();
+            onGeometryChanged();
+        }).listen();
+        // Position
+        swapPositionListener();
+        // Others
+        onInvalidated(list.orientationProperty()).then(_ -> {
+            swapPositionListener();
+            onOrientationChanged();
+        }).listen();
+        onInvalidated(list.itemsProperty()).then(_ -> onItemsChanged()).listen();
+        onInvalidated(list.getCellFactory()).then(_ -> onCellFactoryChanged()).listen();
+        onInvalidated(list.fitToViewportProperty()).then(_ -> onFitToViewportChanged()).listen();
+        onInvalidated(list.cellSizeProperty()).then(_ -> {
+            helper().invalidateRange();
+            onCellSizeChanged();
+        }).listen();
+        onInvalidated(list.spacingProperty()).then(_ -> {
+            helper().invalidateRange();
+            onSpacingChanged();
+        }).listen();
+    }
 
     /// This core method is responsible for ensuring that the viewport always has the right number of cells.
     /// This is called every time the list's geometry changes (width/height depending on the orientation),
@@ -85,7 +138,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// [VFXListHelper#invalidatePos()].
     protected void onGeometryChanged() {
         invalidatingPos = true;
-        VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
         if (!listFactorySizeCheck()) return;
 
@@ -146,7 +198,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// in other words, this will never be called.
     protected void onPositionChanged() {
         if (invalidatingPos) return;
-        VFXList<T, C> list = getNode();
         VFXListState<T, C> state = list.getState();
         if (state == VFXListState.INVALID) return;
 
@@ -199,7 +250,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// The new state's [VFXListState#haveCellsChanged()] flag will always be `true` of course.
     /// The great thing about the factory change is that there is no need to invalidate the position.
     protected void onCellFactoryChanged() {
-        VFXList<T, C> list = getNode();
 
         // Dispose current state, cells if any (not INVALID) are now in cache
         // Purge cache too, cells are from old factory
@@ -277,7 +327,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// always update the layout.
     protected void onItemsChanged() {
         invalidatingPos = true;
-        VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
 
         /*
@@ -329,7 +378,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// The easiest of all changes. It's enough to request a viewport layout, [VFXList#requestViewportLayout()],
     /// and to make sure that the horizontal position is valid, [VFXListHelper#invalidatePos()].
     protected void onFitToViewportChanged() {
-        VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
         list.requestViewportLayout();
         helper.invalidatePos(); // Not necessary to set invalidatingPos flag
@@ -347,7 +395,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// didn't change for obvious reasons.
     protected void onCellSizeChanged() {
         invalidatingPos = true;
-        VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
 
         // Ensure positions are correct
@@ -374,7 +421,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// This will also request the layout computation, [VFXList#requestViewportLayout()], even if the cells didn't change.
     protected void onOrientationChanged() {
         invalidatingPos = true;
-        VFXList<T, C> list = getNode();
         if (!listFactorySizeCheck()) return;
 
         // When the orientation changes, it's a better behavior to just reset the positions
@@ -400,7 +446,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// [VFXList#requestViewportLayout()], even if the cells didn't change.
     protected void onSpacingChanged() {
         invalidatingPos = true;
-        VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
 
         // Ensure positions are correct
@@ -433,7 +478,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// @see VFXListHelper#indexToCell(int)
     /// @see VFXList#getCellFactory()
     protected void moveReuseCreateAlgorithm(IntegerRange range, VFXListState<T, C> newState) {
-        VFXList<T, C> list = getNode();
         VFXListState<T, C> current = list.getState();
         ExcludingIntegerRange eRange = ExcludingIntegerRange.of(range);
         if (!current.isEmpty()) {
@@ -472,7 +516,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// @see ExcludingIntegerRange
     @SuppressWarnings("unchecked")
     protected VFXListState<T, C> intersectionAlgorithm() {
-        VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
 
         // New range
@@ -513,7 +556,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
     /// [VFXList#getCellFactory()] to create a new one
     protected void remainingAlgorithm(ExcludingIntegerRange eRange, VFXListState<T, C> newState) {
-        VFXList<T, C> list = getNode();
         VFXListHelper<T, C> helper = list.getHelper();
         VFXListState<T, C> current = list.getState();
 
@@ -556,7 +598,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// @return whether all the aforementioned checks have passed
     @SuppressWarnings("unchecked")
     protected boolean listFactorySizeCheck() {
-        VFXList<T, C> list = getNode();
         if (list.isEmpty() || !list.getCellFactory().canCreate() || list.getCellSize() <= 0) {
             disposeCurrent();
             list.update(VFXListState.INVALID);
@@ -585,7 +626,6 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     /// @return whether the range is valid or not
     @SuppressWarnings("unchecked")
     protected boolean rangeCheck(IntegerRange range, boolean update, boolean dispose) {
-        VFXList<T, C> list = getNode();
         if (Utils.INVALID_RANGE.equals(range)) {
             if (dispose) disposeCurrent();
             if (update) list.update(VFXListState.INVALID);
@@ -601,11 +641,33 @@ public class VFXListManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXList
     ///
     /// @return whether the disposal was done or not
     protected boolean disposeCurrent() {
-        VFXListState<T, C> state = getNode().getState();
+        VFXListState<T, C> state = list.getState();
         if (!state.isEmpty()) {
             state.dispose();
             return true;
         }
         return false;
+    }
+
+    protected void swapPositionListener() {
+        if (list.getOrientation() == Orientation.VERTICAL) {
+            list.hPosProperty().removeListener(positionListener);
+            list.vPosProperty().addListener(positionListener);
+        } else {
+            list.vPosProperty().removeListener(positionListener);
+            list.hPosProperty().addListener(positionListener);
+        }
+    }
+
+    //================================================================================
+    // Getters
+    //================================================================================
+
+    protected VFXList<T, C> getList() {
+        return list;
+    }
+
+    protected VFXListHelper<T, C> helper() {
+        return requireNonNull(list.getHelper(), "The list's manager cannot operate without a helper");
     }
 }

@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableIntegerProperty;
 import io.github.palexdev.mfxcore.builders.bindings.IntegerBindingBuilder;
-import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.EnumUtils;
 import io.github.palexdev.mfxcore.utils.fx.PropUtils;
@@ -124,6 +123,7 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
             .addSources(sizeProperty(), cellsPerPageProperty())
             .get()
         );
+        getManager().installPagination();
     }
 
     /// Computes the range of visible items for the current page. The computation is done by using the
@@ -175,8 +175,13 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     }
 
     @Override
-    public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
-        return () -> new VFXPaginatedListManager<>(this);
+    protected VFXPaginatedListManager<T, C> createManager() {
+        return new VFXPaginatedListManager<>(this);
+    }
+
+    @Override
+    protected VFXPaginatedListManager<T, C> getManager() {
+        return (VFXPaginatedListManager<T, C>) super.getManager();
     }
 
     @Override

@@ -24,7 +24,6 @@ import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-import javafx.beans.InvalidationListener;
 import javafx.geometry.Orientation;
 import javafx.scene.layout.Pane;
 
@@ -50,10 +49,6 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
     protected final Pane viewport;
     protected double DEFAULT_SIZE = 100.0;
 
-    // To maximize performance, one listener is used to update on scroll, but it's added only on
-    // one of the two position properties, depending on the orientation
-    protected InvalidationListener pl = o -> behavior().onPositionChanged();
-
     //================================================================================
     // Constructors
     //================================================================================
@@ -70,7 +65,6 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
         viewport.getStyleClass().add("viewport");
 
         // End initialization
-        swapPositionListener();
         getChildren().setAll(viewport);
     }
 
@@ -125,27 +119,6 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
     protected void onLayoutCompleted(boolean done) {
         VFXList<T, C> list = getSkinnable();
         list.setNeedsViewportLayout(false);
-    }
-
-    /// You can scroll along two directions: vertically and horizontally. However, only the direction which coincides with
-    /// the orientation ([VFXList#orientationProperty()]) will generate a new [VFXListState],
-    /// in other words needs the invocation of [VFXListManager#onPositionChanged()].
-    ///
-    /// For this reason, there is one and only listener for the position change. When the orientation is [Orientation#VERTICAL],
-    /// the listener is added to the [VFXList#vPosProperty()], otherwise it's added on the [VFXList#hPosProperty()].
-    ///
-    /// Note: this listener is not added through [#listen(When\[\])], which means that its disposal is not automatic,
-    /// and it's done in the overridden [#dispose()].
-    protected void swapPositionListener() {
-        VFXList<T, C> list = getSkinnable();
-        Orientation orientation = list.getOrientation();
-        if (orientation == Orientation.VERTICAL) {
-            list.hPosProperty().removeListener(pl);
-            list.vPosProperty().addListener(pl);
-        } else {
-            list.vPosProperty().removeListener(pl);
-            list.hPosProperty().addListener(pl);
-        }
     }
 
     //================================================================================
@@ -203,43 +176,12 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
             onInvalidated(list.needsViewportLayoutProperty())
                 .condition(v -> v)
                 .then(v -> layout()),
-            onInvalidated(list.orientationProperty())
-                .then(o -> {
-                    behavior().onOrientationChanged();
-                    swapPositionListener();
-                }),
             onInvalidated(list.helperProperty())
                 .then(h -> {
                     viewport.translateXProperty().bind(h.viewportPositionProperty().map(Position::x));
                     viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
                 })
-                .executeNow(),
-
-            // Geometry changes
-            onInvalidated(list.widthProperty())
-                .condition(w -> list.getOrientation() == Orientation.HORIZONTAL)
-                .then(w -> behavior().onGeometryChanged())
-                .otherwise((l, w) -> list.requestViewportLayout()),
-            onInvalidated(list.heightProperty())
-                .condition(h -> list.getOrientation() == Orientation.VERTICAL)
-                .then(h -> behavior().onGeometryChanged())
-                .otherwise((l, h) -> list.requestViewportLayout()),
-            onInvalidated(list.bufferSizeProperty())
-                .then(b -> behavior().onGeometryChanged()),
-
-            // Others
-            onInvalidated(list.itemsProperty())
-                .then(it -> behavior().onItemsChanged()),
-            // DUDE! One thing cool in JavaFX, wow, I'm impressed. This invalidation listener will trigger when changes
-            // occur in the list, or the list itself is changed, impressive!
-            onInvalidated(list.getCellFactory())
-                .then(f -> behavior().onCellFactoryChanged()),
-            onInvalidated(list.fitToViewportProperty())
-                .then(b -> behavior().onFitToViewportChanged()),
-            onInvalidated(list.cellSizeProperty())
-                .then(s -> behavior().onCellSizeChanged()),
-            onInvalidated(list.spacingProperty())
-                .then(s -> behavior().onSpacingChanged())
+                .executeNow()
         );
     }
 
@@ -257,16 +199,7 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
     @Override
     public void dispose() {
         VFXList<T, C> list = getSkinnable();
-        list.vPosProperty().removeListener(pl);
-        list.hPosProperty().removeListener(pl);
-        pl = null;
         list.update(VFXListState.INVALID);
         super.dispose();
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    protected VFXListManager<T, C> behavior() {
-        return (VFXListManager<T, C>) super.behavior();
     }
 }

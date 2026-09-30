@@ -18,13 +18,9 @@
 
 package io.github.palexdev.virtualizedfx.list.paginated;
 
-import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
-import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
-import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import io.github.palexdev.virtualizedfx.list.VFXListSkin;
-import javafx.beans.binding.DoubleBinding;
 import javafx.geometry.Orientation;
 import javafx.scene.control.SkinBase;
 
@@ -41,42 +37,15 @@ import javafx.scene.control.SkinBase;
 /// of cells per page, the exact computation is described and done by [#getLength()].
 public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T, C> {
     //================================================================================
-    // Properties
-    //================================================================================
-    protected DoubleBinding posBinding;
-
-    //================================================================================
     // Constructors
     //================================================================================
     public VFXPaginatedListSkin(VFXPaginatedList<T, C> list) {
         super(list);
-
-        // Init pos binding
-        posBinding = DoubleBindingBuilder.build()
-            .setMapper(() -> list.getPage() * list.getCellsPerPage() * (list.getCellSize() + list.getSpacing()))
-            .addSources(list.pageProperty(), list.cellsPerPageProperty(), list.cellSizeProperty(), list.spacingProperty())
-            .get();
-        swapPositionBinding();
     }
 
     //================================================================================
     // Methods
     //================================================================================
-
-    /// Responsible for swapping the position's binding when the orientation changes. Since the base skin uses a similar
-    /// mechanism for the scroll, this is called in the [#swapPositionListener()] method.
-    protected void swapPositionBinding() {
-        if (posBinding == null) return;
-        VFXList<T, C> list = getSkinnable();
-        Orientation o = list.getOrientation();
-        if (o == Orientation.VERTICAL) {
-            list.hPosProperty().unbind();
-            list.vPosProperty().bind(posBinding);
-        } else {
-            list.vPosProperty().unbind();
-            list.hPosProperty().bind(posBinding);
-        }
-    }
 
     /// Computes the length the container should have, according to the following three properties:
     ///
@@ -104,44 +73,6 @@ public class VFXPaginatedListSkin<T, C extends VFXCell<T>> extends VFXListSkin<T
     //================================================================================
     // Overridden Methods
     //================================================================================
-
-    /// {@inheritDoc}
-    ///
-    /// For the paginated variant there are the following additional listeners:
-    ///
-    /// - Listener on [VFXPaginatedList#cellsPerPageProperty()], will invoke [VFXPaginatedListManager#onCellsPerPageChanged()]
-    ///
-    /// - Listener on [VFXPaginatedList#maxPageProperty()], will invoke [VFXPaginatedListManager#onMaxPageChanged()]
-    @Override
-    public void install() {
-        VFXPaginatedList<T, C> list = getList();
-        super.install();
-        listen(
-            When.onInvalidated(list.cellsPerPageProperty())
-                .then(_ -> behavior().onCellsPerPageChanged()),
-            When.onInvalidated(list.maxPageProperty())
-                .then(_ -> behavior().onMaxPageChanged())
-        );
-    }
-
-    /// {@inheritDoc}
-    ///
-    /// Overridden to also call [#swapPositionBinding()].
-    @Override
-    protected void swapPositionListener() {
-        super.swapPositionListener();
-        swapPositionBinding();
-    }
-
-    /// Overridden to cast the behavior to [VFXPaginatedListManager].
-    ///
-    /// Since [VFXPaginatedList] extends [VFXList] nothing prevents the user from using behaviors of type
-    /// [VFXListManager], but that would result in exceptions being thrown and invalid states.
-    /// Long story short: don't do it!
-    @Override
-    protected VFXPaginatedListManager<T, C> behavior() {
-        return (VFXPaginatedListManager<T, C>) super.behavior();
-    }
 
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {

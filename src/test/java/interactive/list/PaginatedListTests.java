@@ -884,7 +884,7 @@ public class PaginatedListTests {
 
         // Assert init
         assertState(list, IntegerRange.of(0, 13));
-        assertCounter(14, 2, 14, 14, 0, 0, 0);
+        assertCounter(14, 1, 14, 14, 0, 0, 0);
 
         // Change factory
         robot.interact(() -> list.setCellFactory(i -> new TestCell<>(i) {
