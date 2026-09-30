@@ -38,13 +38,12 @@ import javafx.geometry.Orientation;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static java.util.Objects.requireNonNull;
 
-/// Default behavior implementation for [VFXList]. Although, to be precise, and as the name also suggests,
-/// this can be considered more like a 'manager' than a behavior. Behaviors typically respond to user input, and then update
-/// the component's state. This behavior contains core methods to respond to various properties change in [VFXList].
-/// All computations here will generate a new [VFXListState], if possible, and update the list and the
-/// layout (indirectly, call to [VFXList#requestViewportLayout()]).
+/// The list's 'manager', the piece that reacts to changes in [VFXList] and produces a new [VFXListState] for each of
+/// them, if possible, updating the list and the layout (indirectly, call to [VFXList#requestViewportLayout()]).
+/// It's created by [VFXList#createManager()] when the list is built, [#install()] registers the listeners it needs,
+/// and it lives as long as the list does.
 ///
-/// By default, manages the following changes:
+/// ## What it reacts to
 ///
 /// - geometry changes (width/height changes), [#onGeometryChanged()]
 /// - position changes, [#onPositionChanged()]
@@ -53,18 +52,22 @@ import static java.util.Objects.requireNonNull;
 /// - fit to viewport flag changes, [#onFitToViewportChanged()]
 /// - cell size changes, [#onCellSizeChanged()]
 /// - orientation changes, [#onOrientationChanged()]
-/// - spacing changes [#onSpacingChanged()]
+/// - spacing changes, [#onSpacingChanged()]
 ///
-/// Last but not least, some of these computations may need to ensure the current vertical and horizontal positions are correct,
+/// ## Positions, and the flag that guards them
+///
+/// Some of these computations may need to ensure the current vertical and horizontal positions are correct,
 /// so that a valid state can be produced. To achieve this, [VFXListHelper#invalidatePos()] is called.
 /// However, invalidating the positions, also means that the [#onPositionChanged()] method could be potentially
 /// triggered, thus generating an unwanted 'middle' state. For this reason a special flag [#invalidatingPos] is set
 /// to `true` before the invalidation, so that the other method will exit immediately. It's reset back to false
 /// after the computation or if any of the checks before the actual computation fails.
 public class VFXListManager<T, C extends VFXCell<T>> {
+
     //================================================================================
     // Properties
     //================================================================================
+
     private final VFXList<T, C> list;
     protected boolean invalidatingPos = false;
 
@@ -77,6 +80,7 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXListManager(VFXList<T, C> list) {
         this.list = list;
     }
@@ -85,6 +89,17 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     // Methods
     //================================================================================
 
+    /// Registers all the listeners on the list's properties. Called once, when the list builds this manager with
+    /// [VFXList#createManager()].
+    ///
+    /// When a change also affects the range, the helper is told to invalidate it, [VFXListHelper#invalidateRange()],
+    /// before the handler runs, so that the computation reads a fresh range, see [VFXListHelper].
+    ///
+    /// The width and the height are handled depending on the orientation. The one along the orientation is a geometry
+    /// change, the other one only needs the viewport to be laid out again.
+    ///
+    /// Only the position along the orientation produces new states, so a single listener is used for it, see
+    /// [#swapPositionListener()].
     protected void install() {
         // Geometry
         onInvalidated(list.widthProperty()).then(_ -> {
@@ -161,11 +176,13 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// orientation, hPos for HORIZONTAL orientation). Since the list doesn't use any throttling technique to limit the number of events/changes,
     /// and since scrolling can happen very fast, performance here is crucial.
     ///
-    /// Immediately exists if: the special flag [#invalidatingPos] is true or the current state is [VFXListState#INVALID].
+    /// It's run by the single position listener, see [#swapPositionListener()].
+    ///
+    /// Immediately exits if: the special flag [#invalidatingPos] is true or the current state is [VFXListState#INVALID].
     /// Many other computations here need to validate the positions by calling [VFXListHelper#invalidatePos()], so that
     /// the resulting state is valid.
     /// However, invalidating the positions may trigger this method, causing two or more state computations to run at the
-    /// 'same time'; this behavior must be avoided, and that flag exists specifically for this reason.
+    /// 'same time'. This must be avoided, and that flag exists specifically for this reason.
     ///
     /// For the sake of performance, this method tries to update only the cells which need it. The computation is divided
     /// in two steps:
@@ -416,7 +433,7 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// After preliminary checks done by [#listFactorySizeCheck()], the computation for the new state is delegated to
     /// the [#intersectionAlgorithm()].
     ///
-    /// Note that the default behavior resets both the positions to 0.0, as maintaining them doesn't make too much sense.
+    /// Note that this resets both the positions to 0.0, as maintaining them doesn't make too much sense.
     /// Note that to compute a valid new state, it is important to also validate the list's positions by invoking
     /// This will also request the layout computation, [VFXList#requestViewportLayout()], even if the cells didn't change.
     protected void onOrientationChanged() {
@@ -649,6 +666,16 @@ public class VFXListManager<T, C extends VFXCell<T>> {
         return false;
     }
 
+    /// Scrolling along the list's orientation is what produces new states. The position on the other axis only moves the
+    /// viewport, see [VFXListHelper#viewportPositionProperty()]. For this reason, there is one and only one listener for
+    /// the position change: this adds it to the [VFXList#vPosProperty()] for [Orientation#VERTICAL], to the
+    /// [VFXList#hPosProperty()] otherwise, and removes it from the other one.
+    ///
+    /// The listener invalidates the range, [VFXListHelper#invalidateRange()], then calls [#onPositionChanged()]. The
+    /// invalidation happens in the listener rather than in that method, because other computations change the positions
+    /// while [#invalidatingPos] makes it exit immediately, and the range must be invalidated all the same.
+    ///
+    /// Called by [#install()], and every time the orientation changes, before [#onOrientationChanged()].
     protected void swapPositionListener() {
         if (list.getOrientation() == Orientation.VERTICAL) {
             list.hPosProperty().removeListener(positionListener);
@@ -663,10 +690,12 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     // Getters
     //================================================================================
 
+    /// @return the [VFXList] this manager works for
     protected VFXList<T, C> getList() {
         return list;
     }
 
+    /// @return the list's [VFXListHelper], which cannot be `null`
     protected VFXListHelper<T, C> helper() {
         return requireNonNull(list.getHelper(), "The list's manager cannot operate without a helper");
     }

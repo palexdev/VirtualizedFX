@@ -22,36 +22,32 @@ import java.util.TreeMap;
 
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
-import io.github.palexdev.mfxcore.observables.When;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-import javafx.geometry.Orientation;
 import javafx.scene.layout.Pane;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
-/// Default skin implementation for [VFXList], extends [MFXSkinBase] and expects behaviors of type
-/// [VFXListManager].
+/// Default skin implementation for [VFXList], extends [MFXSkinBase].
 ///
 /// The layout is quite simple: there is just one node, called the 'viewport', that is the `Pane` responsible for
 /// containing and laying out the cells. Needless to say, the layout strategy is custom, and it's defined in the
 /// [#layout()] method.
 ///
-/// As all skins typically do, this is also responsible for catching any change in the component's properties.
-/// The computation that leads to a new state is delegated to the controller/behavior, which is the [VFXListManager].
-/// Read this [#install()] to check which changes are handled.
-///
-/// Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
-/// by overriding the [#DEFAULT_SIZE] variable.
+/// The skin reacts to changes in the list, see [#install()]. A new state updates the viewport's children, and a layout
+/// request lays out the cells, [#layout()].
 public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T, C>> {
+
     //================================================================================
     // Properties
     //================================================================================
+
     protected final Pane viewport;
     protected double DEFAULT_SIZE = 100.0;
 
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXListSkin(VFXList<T, C> list) {
         super(list);
 
@@ -125,40 +121,17 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
     // Overridden Methods
     //================================================================================
 
-    /// Adds listeners to the following component's properties which need to produce a new [VFXListState] upon changing.
+    /// Registers the skin's listeners:
     ///
-    /// Here's the list:
+    /// - on [VFXList#stateProperty()], updates the viewport's children. They are cleared if the state is
+    ///   [VFXListState#INVALID], otherwise they are set to the state's cells and a layout is requested, only if
+    ///   [VFXListState#haveCellsChanged()]
     ///
-    /// - Listener on [VFXList#stateProperty()], this is crucial to update the viewport's children and
-    /// invoke [VFXList#requestViewportLayout()] if [VFXListState#haveCellsChanged()] is true
+    /// - on [VFXList#needsViewportLayoutProperty()], calls [#layout()] when a layout is requested
     ///
-    /// - Listener on [VFXList#needsViewportLayoutProperty()], this is crucial because invokes [#layout()]
-    ///
-    /// - Listener on [VFXList#orientationProperty()], this is crucial because invokes [#swapPositionListener()]
-    ///
-    /// - Listener on [VFXList#helperProperty()], this is crucial because it's responsible for invoking
-    /// [VFXListManager#onOrientationChanged()], as well as binding the viewport's translate properties to the
-    /// [VFXListHelper#viewportPositionProperty()]. By translating the viewport, we give the illusion of scrolling
-    /// (virtual scrolling)
-    ///
-    /// - Listener on [VFXList#widthProperty()], will invoke [VFXListManager#onGeometryChanged()]
-    /// if the current orientation is [Orientation#HORIZONTAL], otherwise will just call [VFXList#requestViewportLayout()]
-    ///
-    /// - Listener on [VFXList#helperProperty()], will invoke [VFXListManager#onGeometryChanged()]
-    /// if the current orientation is [Orientation#VERTICAL], otherwise will just call [VFXList#requestViewportLayout()]
-    ///
-    /// - Listener on [VFXList#bufferSizeProperty()], will invoke [VFXListManager#onGeometryChanged()].
-    /// Yes, it is enough to threat this change as a geometry change to avoid code duplication
-    ///
-    /// - Listener on [VFXList#itemsProperty()], will invoke [VFXListManager#onItemsChanged()]
-    ///
-    /// - Listener on [VFXList#getCellFactory()], will invoke [VFXListManager#onCellFactoryChanged()]
-    ///
-    /// - Listener on [VFXList#fitToViewportProperty()], will invoke [VFXListManager#onFitToViewportChanged()]
-    ///
-    /// - Listener on [VFXList#cellSizeProperty()], will invoke [VFXListManager#onCellSizeChanged()]
-    ///
-    /// - Listener on [VFXList#spacingProperty()], will invoke [VFXListManager#onSpacingChanged()]
+    /// - on [VFXList#helperProperty()], binds the viewport's translate properties to the helper's
+    ///   [VFXListHelper#viewportPositionProperty()]. By translating the viewport, we give the illusion of scrolling
+    ///   (virtual scrolling). This one also runs immediately, since the list always has a helper
     @Override
     public void install() {
         VFXList<T, C> list = getSkinnable();
@@ -185,16 +158,21 @@ public class VFXListSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXList<T,
         );
     }
 
+    /// @return the left and right insets plus [#DEFAULT_SIZE]
     @Override
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         return leftInset + DEFAULT_SIZE + rightInset;
     }
 
+    /// @return the top and bottom insets plus [#DEFAULT_SIZE]
     @Override
     protected double computeMinHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
         return topInset + DEFAULT_SIZE + bottomInset;
     }
 
+    /// {@inheritDoc}
+    ///
+    /// Also sets the list's state to [VFXListState#INVALID].
     @SuppressWarnings("unchecked")
     @Override
     public void dispose() {

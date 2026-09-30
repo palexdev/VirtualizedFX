@@ -58,13 +58,14 @@ import javafx.scene.Node;
 /// Simple and naive implementation of a paginated variant of [VFXList].
 /// The default style class is extended to: '.vfx-list.paginated'.
 ///
-/// Extends [VFXList], implements [VFXPaginated], has its own skin [VFXPaginatedListSkin] and behavior
-/// [VFXPaginatedListSkin].
+/// Extends [VFXList], implements [VFXPaginated], has its own skin [VFXPaginatedListSkin] and a 'manager'
+/// [VFXPaginatedListManager].
 ///
-/// A: What do you mean by naive?
+/// Q: What do you mean by naive?
 ///
-/// Q: Since this extends [VFXList], it uses its infrastructure as much as possible. After all, the only major
-/// difference between the two is that this can't scroll freely because the position depends on the page index.
+/// A: Since this extends [VFXList], it uses its infrastructure as much as possible. After all, the only major
+/// difference between the two is that this can't scroll freely because the position depends on the page index, see
+/// [VFXPaginatedListManager#installPagination()].
 /// Although there is **a lot** going on in the background (range computation, viewport translation, spacing, etc...)
 /// this solution works surprisingly well. Sure, there are some caveats and special cases to handle, but there is no
 /// performance degradation, and this is a huge win.
@@ -87,9 +88,11 @@ import javafx.scene.Node;
 /// [#helperFactoryProperty()] that produces helpers of type [VFXListHelper], don't do that!
 /// You may end up with invalid states, thus a broken component.
 public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> implements VFXPaginated<T> {
+
     //================================================================================
     // Properties
     //================================================================================
+
     private final IntegerProperty page = PropUtils.clampedIntProperty(
         () -> 0,
         this::getMaxPage
@@ -99,6 +102,7 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXPaginatedList() {
         super();
         initialize();
@@ -117,6 +121,10 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     //================================================================================
     // Methods
     //================================================================================
+
+    /// Binds the [#maxPageProperty()], then completes the manager's installation, see
+    /// [VFXPaginatedListManager#installPagination()]. That part cannot happen earlier: the manager is installed during
+    /// [VFXList]'s construction, when this class' properties do not exist yet.
     private void initialize() {
         maxPage.bind(IntegerBindingBuilder.build()
             .setMapper(this::computeMaxPage)
@@ -174,11 +182,15 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
             new HorizontalHelper<>(this);
     }
 
+    /// {@inheritDoc}
+    ///
+    /// For this variant, the manager must be a [VFXPaginatedListManager].
     @Override
     protected VFXPaginatedListManager<T, C> createManager() {
         return new VFXPaginatedListManager<>(this);
     }
 
+    /// Overridden to cast the manager to [VFXPaginatedListManager], which [#createManager()] guarantees.
     @Override
     protected VFXPaginatedListManager<T, C> getManager() {
         return (VFXPaginatedListManager<T, C>) super.getManager();
@@ -244,6 +256,7 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     //================================================================================
     // Styleable Properties
     //================================================================================
+
     private final StyleableIntegerProperty cellsPerPage = new StyleableIntegerProperty(
         StyleableProperties.CELLS_PER_PAGE,
         this,
@@ -262,6 +275,7 @@ public class VFXPaginatedList<T, C extends VFXCell<T>> extends VFXList<T, C> imp
     //================================================================================
     // CssMetaData
     //================================================================================
+
     private static class StyleableProperties {
         private static final StyleablePropertyFactory<VFXPaginatedList<?, ?>> FACTORY = new StyleablePropertyFactory<>(VFXList.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;

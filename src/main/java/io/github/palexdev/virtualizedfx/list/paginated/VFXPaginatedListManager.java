@@ -21,6 +21,7 @@ package io.github.palexdev.virtualizedfx.list.paginated;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
+import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import javafx.beans.binding.DoubleBinding;
 import javafx.geometry.Orientation;
@@ -28,24 +29,29 @@ import javafx.scene.Parent;
 
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
-/// Default behavior implementation for [VFXPaginatedList], extends [VFXListManager].
+/// The manager of [VFXPaginatedList], extends [VFXListManager].
 ///
 /// This is necessary to respond to the following property changes introduced by the paginated variant:
 ///
 /// - cells per page changes, [#onCellsPerPageChanged()]
 /// - max page changes, [#onMaxPageChanged()]
 ///
-/// It also modifies some of the behaviors already defined in [VFXListManager] because the paginated variant should
+/// It also ties the list's position to the page, see [#installPagination()].
+///
+/// Finally, it modifies some of the computations already defined in [VFXListManager] because the paginated variant should
 /// respond differently in some cases, and also to optimize performance as much as possible.
 public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListManager<T, C> {
+
     //================================================================================
     // Properties
     //================================================================================
+
     private DoubleBinding posBinding;
 
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXPaginatedListManager(VFXPaginatedList<T, C> list) {
         super(list);
     }
@@ -54,6 +60,13 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     // Methods
     //================================================================================
 
+    /// Completes the installation for the paginated variant, [#install()] handles the properties of [VFXList]. Called
+    /// once by [VFXPaginatedList] at the end of its construction: [#install()] runs during [VFXList]'s construction,
+    /// when the paginated list's own properties do not exist yet.
+    ///
+    /// Builds the binding that ties the list's position to the page, `page * cellsPerPage * (cellSize + spacing)`,
+    /// binds the position along the orientation to it, [#swapPositionBinding()], and registers the listeners on the
+    /// [VFXPaginatedList#cellsPerPageProperty()] and the [VFXPaginatedList#maxPageProperty()].
     protected void installPagination() {
         VFXPaginatedList<T, C> list = getList();
         posBinding = DoubleBindingBuilder.build()
@@ -65,6 +78,9 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
         onInvalidated(list.maxPageProperty()).then(_ -> onMaxPageChanged()).listen();
     }
 
+    /// Only the position along the list's orientation is bound to the page. This binds it, and unbinds the other one.
+    ///
+    /// Called by [#installPagination()], and at the end of [#onOrientationChanged()].
     protected void swapPositionBinding() {
         VFXPaginatedList<T, C> list = getList();
         if (list.getOrientation() == Orientation.VERTICAL) {
@@ -84,6 +100,9 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     /// [Parent#requestLayout()].
     ///
     /// This way, computations that also rely on the container size become invalid too, thus leading to correct values.
+    ///
+    /// The range is invalidated too, [VFXListHelper#invalidateRange()], since the number of cells per page is the
+    /// number of visible cells, see [VFXPaginatedListHelper].
     protected void onCellsPerPageChanged() {
         helper().invalidateRange();
         getList().requestLayout();
@@ -105,7 +124,7 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     ///
     /// 2) the cells per page changes
     ///
-    /// **BUT...** in the first case, we have a change in the list which is handled by [#onItemsChanged()];
+    /// **BUT...** in the first case, we have a change in the list which is handled by [#onItemsChanged()],
     /// and the second case is handled by [#onGeometryChanged()]. This last case is very peculiar, because it will work
     /// only if the container's skin is implemented to adapt to the number of items per page. It's the skin's implementation
     /// to trigger the geometry change, and this should be the intended default behavior.
@@ -128,8 +147,8 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
 
     /// Overridden to just call [VFXList#requestViewportLayout()].
     ///
-    /// For the paginated variant, the cells' size is irrelevant for its state. The default behavior, also dependent on
-    /// the skin, is to adapt the container's size to the size of each cell as well as the number of cells per page.
+    /// For the paginated variant, the cells' size is irrelevant for its state. The default skin adapts the container's
+    /// size to the size of each cell as well as the number of cells per page.
     @Override
     protected void onCellSizeChanged() {
         getList().requestViewportLayout();
@@ -137,8 +156,9 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
 
     /// As also described in the super method ([VFXListManager#onOrientationChanged()]), when the orientation changes
     /// the most reasonable behavior is to reset both the positions to 0.0. For the paginated variant this requires extra
-    /// steps because, according to the previous orientation, the vPos or hPos properties are bound. Also, the reset also
-    /// requires setting the page to 0.
+    /// steps because, according to the previous orientation, the vPos or hPos properties are bound. The reset also
+    /// requires setting the page to 0. Finally, the position along the new orientation is bound to the page,
+    /// [#swapPositionBinding()].
     @Override
     protected void onOrientationChanged() {
         VFXPaginatedList<T, C> list = getList();
@@ -149,7 +169,7 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
         swapPositionBinding();
     }
 
-    /// Overridden to cast to [VFXPaginatedList] since this behavior only allows that type.
+    /// Overridden to cast to [VFXPaginatedList] since this manager only works with that type.
     @Override
     protected VFXPaginatedList<T, C> getList() {
         return (VFXPaginatedList<T, C>) super.getList();

@@ -40,7 +40,13 @@ import static io.github.palexdev.mfxcore.base.beans.Position.position;
 /// orientation, [VFXList#orientationProperty()]. There are two concrete implementations: [VerticalHelper]
 /// and [HorizontalHelper]
 ///
-/// A little **note** on the virtual max X/Y properties.
+/// ## Range
+///
+/// The range of items to display, [#rangeProperty()], is an observable value, but it's not required to observe
+/// everything it depends on. The list's manager calls [#invalidateRange()] whenever a property that affects it changes
+/// (the position, the list's size, the buffer, the cell size...), before it reads the range to compute the new state.
+///
+/// ## The virtual max X/Y properties
 ///
 /// The axis property which is the opposite of the current container's orientation ([VFXList#orientationProperty()]),
 /// specifies the biggest cell size (width/height) so that if [VFXList#fitToViewportProperty()] is set to false we
@@ -73,6 +79,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         return rangeProperty().getValue();
     }
 
+    /// Invalidates the [#rangeProperty()], so that the next read recomputes it.
+    ///
+    /// Called by the list's manager when a property that affects the range changes, see the class docs.
     void invalidateRange();
 
     /// Computes the width or height of the cell depending on the container's orientation.
@@ -86,7 +95,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// others (comes before or after).
     ///
     /// @param layoutIndex the cell's position **within the current range**, not its index in the items' list.
-    /// [VFXListSkin#layout()] counts it from 0 while iterating the state; the offset from the range's start to the
+    /// [VFXListSkin#layout()] counts it from 0 while iterating the state. The offset from the range's start to the
     /// first visible cell is carried by [#viewportPositionProperty()] instead
     void layout(int layoutIndex, VFXCell<T> cell);
 
@@ -131,7 +140,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// Defines common properties and operations for the two concrete implementations [VerticalHelper] and
     /// [HorizontalHelper], such as:
     ///
-    /// - the range of items to display as a [IntegerRangeProperty]
+    /// - the range of items to display, a binding that only observes the number of items, see [VFXListHelper]
     ///
     /// - the total number of cells in the viewport
     abstract class AbstractHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXList<T, C>> implements VFXListHelper<T, C> {
@@ -167,7 +176,8 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// than the total number of cells we need. In such cases, the range start is corrected to be `end - needed + 1`.
     /// A typical situation for this is when the list position reaches the max scroll.
     /// The range computation has the following dependencies: the list's height, the buffer size, the vertical
-    /// position, the number of items, the cell size and the spacing.
+    /// position, the number of items, the cell size and the spacing. Only the number of items is observed by the
+    /// binding, the list's manager invalidates the range for the others, see [#invalidateRange()].
     ///
     /// - the viewport position, a computation that is at the core of virtual scrolling. The viewport, which contains the cells,
     /// is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
@@ -182,10 +192,10 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// of the first visible cell? We call this amount `visibleAmountFirst` and it's given by `vPos % totalCellSize`.
     /// Finally, the viewport's vertical position is given by `-(pixelsToFirst + visibleAmountFirst)`.
     /// While it's true that the calculations are more complex and 'needy', it's important to note that this approach
-    /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the top
-    /// or bottom anymore.
+    /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No special offsets are needed at the top
+    /// or bottom.
     /// The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
-    /// the cell size and the spacing
+    /// the cell size, the spacing and the range. Both values are snapped to whole pixels
     class VerticalHelper<T, C extends VFXCell<T>> extends AbstractHelper<T, C> {
 
         public VerticalHelper(VFXList<T, C> list) {
@@ -333,6 +343,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             scrollToPixel(getTotalCellSize() * index);
         }
 
+        /// {@inheritDoc}
+        ///
+        /// Also disposes the range binding and unbinds the viewport's position.
         @Override
         public void dispose() {
             range.dispose();
@@ -345,12 +358,13 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// display and the viewport position are defined as follows:
     ///
     /// - the range is given by the [#firstVisible()] element minus the buffer size ([VFXList#bufferSizeProperty()]),
-    /// cannot be negative; and the sum between this start index and the total number of needed cells given by [#totalNum()], cannot
+    /// cannot be negative, and the sum between this start index and the total number of needed cells given by [#totalNum()], cannot
     /// exceed the number of items - 1. It may happen the number of indexes given by the range `end - start + 1` is lesser
     /// than the total number of cells we need, in such cases, the range start is corrected to be `end - needed + 1`.
     /// A typical situation for this is when the list position reaches the max scroll.
     /// The range computation has the following dependencies: the list's width, the buffer size, the horizontal
-    /// position, the number of items, the cell size and the spacing.
+    /// position, the number of items, the cell size and the spacing. Only the number of items is observed by the
+    /// binding, the list's manager invalidates the range for the others, see [#invalidateRange()].
     ///
     /// - the viewport position. This computation is at the core of virtual scrolling. The viewport, which contains the cell,
     /// is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
@@ -365,10 +379,10 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// of the first visible cell? We call this amount `visibleAmountFirst` and it's given by `hPos % totalCellSize`.
     /// Finally, the viewport's horizontal position is given by `-(pixelsToFirst + visibleAmountFirst)`.
     /// While it's true that the calculations are more complex and 'needy', it's important to note that this approach
-    /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the left
-    /// or right anymore.
+    /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No special offsets are needed at the left
+    /// or right.
     /// The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
-    /// the cell size and the spacing
+    /// the cell size, the spacing and the range. Both values are snapped to whole pixels
     class HorizontalHelper<T, C extends VFXCell<T>> extends AbstractHelper<T, C> {
 
         public HorizontalHelper(VFXList<T, C> list) {
@@ -516,6 +530,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             scrollToPixel(getTotalCellSize() * index);
         }
 
+        /// {@inheritDoc}
+        ///
+        /// Also disposes the range binding and unbinds the viewport's position.
         @Override
         public void dispose() {
             range.dispose();
