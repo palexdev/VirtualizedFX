@@ -47,6 +47,7 @@ import io.github.palexdev.virtualizedfx.enums.BufferSize;
 import io.github.palexdev.virtualizedfx.events.VFXContainerEvent;
 import io.github.palexdev.virtualizedfx.properties.CellFactory;
 import io.github.palexdev.virtualizedfx.properties.VFXGridStateProperty;
+import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -65,84 +66,85 @@ import static java.util.Objects.requireNonNull;
 /// The default style class is: '.vfx-grid'.
 ///
 /// Extends [MFXControl], implements [VFXContainer], has its own skin implementation [VFXGridSkin]
-/// and behavior [VFXGridManager]. Uses cells of type [VFXCell].
+/// and a 'manager' [VFXGridManager]. Uses cells of type [VFXCell].
 ///
 /// This is a stateful component, meaning that every meaningful variable (position, size, cell size, etc.) will produce a new
 /// [VFXGridState] when changing. The state determines how and which items are displayed in the container.
 ///
-/// **Features & Implementation Details**
+/// ## From a list to a grid
 ///
-/// - First and foremost, it's important to describe how the grid works and why it's made as it is. The grid arranges
-/// the contents of a simple 1D data structure (a list) in a 2D way. **(History time)** The previous implementation used a 2D data structure
-/// instead which indeed made some algorithms easier to implement, but made its usage very inconvenient for one simple reason:
-/// the data structure was not flexible enough. To add a row/column, they needed to have the same size of the data structure,
-/// so in practice, if you had, for example, a half-full row/column to add, you had to fill it with `null` elements.
-/// The same issue occurred for the data structure creation, the source list/array had to be exactly the size given by
-/// 'nRows \* nColumns'. **(End of history time)** So the question is, if we now use a simple 1D structure now
-/// (which is more flexible and easier to use for the end-user), how can the grid arrange the contents in a 2D way? Well,
-/// the answer is pretty straightforward; we need a value that the big dumb-dumb me of the past didn't think about:
-/// the [#columnsNumProperty()]. Given the desired number of columns, we can easily get the number of rows as follows:
-/// `Math.ceil(nItems / nColumns)`. However, note that for performance reason, the property acts as a 'maximum number of columns',
-/// which means that the actual number of columns in the viewport depends on these other factors: the container width,
-/// the cell size, the horizontal spacing and the buffer size.
+/// First and foremost, it's important to describe how the grid works and why it's made as it is. The grid arranges
+/// the contents of a simple 1D data structure (a list) in a 2D way. A list is flexible and easy to use: rows and columns
+/// do not need to be complete, and the source can have any size. So the question is, how can the grid arrange the
+/// contents in a 2D way? Well, the answer is pretty straightforward, we need one more value: the [#columnsNumProperty()].
+/// Given the desired number of columns, we can easily get the number of rows as follows: `Math.ceil(nItems / nColumns)`.
+/// However, note that for performance reasons, the property acts as a 'maximum number of columns', which means that the
+/// actual number of columns in the viewport depends on these other factors: the container width, the cell size, the
+/// horizontal spacing and the buffer size.
 ///
-/// - The default behavior implementation, [VFXGridManager], can be considered as the name suggests more like
-/// a 'manager' than an actual behavior. It is responsible for reacting to core changes in the functionalities defined here
-/// to produce a new state.
+/// ## State, manager and helper
+///
+/// The [VFXGridManager] is responsible for reacting to core changes in the functionalities defined here to produce a
+/// new state. It is built by [#createManager()] along with the grid, and lives as long as the grid does.
+///
 /// The state can be considered like a 'picture' of the container at a certain time. Each combination of the variables
 /// that influence the way items are shown (how many, start, end, changes in the list, etc.) will produce a specific state.
-/// This is an important concept as some of the features I'm going to mention below are due to the combination of default
-/// skin + default behavior. You are allowed to change/customize the skin and behavior as you please. BUT, beware, VFX
+/// You can access the current state through the [#stateProperty()]. The state gives crucial information about
+/// the container such as the rows range, the columns range and the visible cells (by index and by item). If you'd like
+/// to observe for changes in the displayed items, then you want to add a listener on this property. Make sure to also
+/// read the [VFXGridState] documentation, as it also contains important information on the grid's mechanics.
+///
+/// Core computations such as the range of rows, the range of columns, the estimated size, the layout of nodes etc.,
+/// are delegated to a separate 'helper' class which is the [VFXGridHelper]. You are allowed to change the helper
+/// through the [#helperFactoryProperty()].
+///
+/// You are allowed to change/customize the skin, the manager and the helper as you please. BUT, beware, VFX
 /// components are no joke, they are complex, make sure to read the documentation before!
 ///
-/// - The [#alignmentProperty()] is a unique feature of the grid that allows to set the position of the viewport,
-/// more information can be found in the skin, [VFXGridSkin].
+/// ## Items and cells
 ///
-/// - The items list is managed automatically (permutations, insertions, removals, updates). Compared to previous
-/// algorithms, the [VFXGridManager] adopts a much simpler strategy while still trying to keep the cell updates count
-/// as low as possible to improve performance. See [VFXGridManager#onItemsChanged()].
-///
+/// - The items list is managed automatically (permutations, insertions, removals, updates). The [VFXGridManager]
+///   adopts a simple strategy while still trying to keep the cell updates count as low as possible to improve
+///   performance. See [VFXGridManager#onItemsChanged()].
 /// - The function used to generate the cells, called "cellFactory", can be changed anytime, even at runtime, see
-/// [VFXGridManager#onCellFactoryChanged()].
-///
-/// - The core aspect for virtualization is to have a fixed cell size for all cells, this parameter can be controlled through
-/// the [#cellSizeProperty()], and can also be changed anytime, see [VFXGridManager#onCellSizeChanged()].
-///
+///   [VFXGridManager#onCellFactoryChanged()].
+/// - The core aspect for virtualization is to have a fixed cell size for all cells, this parameter can be controlled
+///   through the [#cellSizeProperty()], and can also be changed anytime, see [VFXGridManager#onCellSizeChanged()].
 /// - Similar to the JavaFX's `GridPane`, this container allows you to evenly space the cells in the viewport by
-/// setting the properties [#hSpacingProperty()] and [#vSpacingProperty()]. See [VFXGridManager#onSpacingChanged()].
+///   setting the properties [#hSpacingProperty()] and [#vSpacingProperty()]. See [VFXGridManager#onSpacingChanged()].
 ///
-/// - Even though the grid doesn't have the orientation property (compared to the VFXList), core computations such as
-/// the range of rows, the range of columns, the estimated size, the layout of nodes etc., are delegated to separate 'helper'
-/// class which is the [VFXGridHelper]. You are allowed to change the helper through the [#helperFactoryProperty()].
+/// ## Alignment
+///
+/// The [#alignmentProperty()] is a unique feature of the grid that allows to set the position of the viewport, more
+/// information can be found in the skin, [VFXGridSkin].
+///
+/// ## Scrolling
 ///
 /// - The vertical and horizontal positions are available through the properties [#hPosProperty()] and [#vPosProperty()].
-/// It could indeed be possible to use a single property for the position, but they are split for performance reasons.
+///   It could indeed be possible to use a single property for the position, but they are split for performance reasons.
+/// - The virtual bounds of the container are given by the [#virtualMaxXProperty()] and the [#virtualMaxYProperty()],
+///   the total number of pixels on the x-axis and on the y-axis.
 ///
-/// - The virtual bounds of the container are given by two properties:
+/// ## Layout
 ///
-/// a) the [#virtualMaxXProperty()] which specifies the total number of pixels on the x-axis
+/// It is possible to force the viewport to update the layout by invoking [#requestViewportLayout()], although this
+/// should never be necessary as it is handled automatically when the state changes.
 ///
-/// b) the [#virtualMaxYProperty()] which specifies the total number of pixels on the y-axis
+/// ## Cache
 ///
-/// - You can access the current state through the [#stateProperty()]. The state gives crucial information about
-/// the container such as the rows range, the columns range and the visible cells (by index and by item). If you'd like to observe
-/// for changes in the displayed items, then you want to add a listener on this property. Make sure to also read the
-/// [VFXGridState] documentation, as it also contains important information on the grid's mechanics.
+/// This container makes use of a simple cache implementation, [VFXCellsCache], which avoids creating new cells when
+/// needed if some are already present in it. The most crucial aspect for this kind of virtualization is to avoid
+/// creating nodes, as this is the most expensive operation. Not only nodes need to be created but also added to the
+/// container and then laid out. Instead, it's much more likely that the [VFXCell#updateItem(Object)] will be simple
+/// and thus faster.
 ///
-/// - It is possible to force the viewport to update the layout by invoking [#requestViewportLayout()],
-/// although this should never be necessary as it is automatically handled by "system".
+/// The cache does not depend on the container but on the cell factory, which makes it usable in more cases. Since it
+/// can also populate itself with "empty" cells, it must know how to create them. The cache's cell factory is
+/// automatically synchronized with the container's one.
 ///
-/// - Additionally, this container makes use of a simple cache implementation, [VFXCellsCache], which
-/// avoids creating new cells when needed if some are already present in it. The most crucial aspect for this kind of
-/// virtualization is to avoid creating nodes, as this is the most expensive operation. Not only nodes need
-/// to be created but also added to the container and then laid out.
-/// Instead, it's much more likely that the [VFXCell#updateItem(Object)] will be simple and thus faster.
-/// **Note 1:** to make the cache more generic, thus allowing its usage in more cases, a recent refactor,
-/// removed the dependency on the container itself and replaced it with the cell factory. Since the cache can also populate
-/// itself with "empty" cells, it must know how to create them. The cache's cell factory is automatically synchronized with
-/// the container's one.
-/// **Note 2:** by default, the capacity is set to 10 cells. However, for the grid's nature, such number is likely to be
-/// too small, but it also depends from case to case. You can play around with the values and see if there's any benefit to performance.
+/// **Note:** by default, the capacity is set to 10 cells. However, for the grid's nature, such number is likely to be
+/// too small, but it also depends from case to case. You can play around with the values and see if there's any
+/// benefit to performance.
 ///
 /// @param <T> the type of items in the grid
 /// @param <C> the type of cells used by the container to visualize the items
@@ -221,6 +223,8 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     // Methods
     //================================================================================
 
+    /// Initializes the grid: sets the default style classes and the helper, then builds and installs the
+    /// [VFXGridManager], see [#createManager()].
     private void initialize() {
         setDefaultStyleClasses();
         setHelper(getHelperFactory().get());
@@ -228,6 +232,11 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
         manager.install();
     }
 
+    /// Responsible for creating the grid's [VFXGridManager]. Called only once, when the grid is built, and the result
+    /// cannot be `null`.
+    ///
+    /// Override this to use a custom manager. Beware, it runs during the grid's construction, so it must not depend on
+    /// state initialized in a subclass' constructor.
     protected VFXGridManager<T, C> createManager() {
         return new VFXGridManager<>(this);
     }
@@ -338,6 +347,9 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
         return List.of("vfx-grid");
     }
 
+    /// {@inheritDoc}
+    ///
+    /// The scroll speed is bound to one cell per unit on both axes. See [ScrollParams].
     @Override
     public VFXScrollPane makeScrollable() {
         VFXScrollPane vsp = new VFXScrollPane(this);
@@ -760,6 +772,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
         return cellFactory;
     }
 
+    /// @return the grid's [VFXGridManager], see [#createManager()]
     protected VFXGridManager<T, C> getManager() {
         return manager;
     }

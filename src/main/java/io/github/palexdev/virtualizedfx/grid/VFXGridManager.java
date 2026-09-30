@@ -38,13 +38,13 @@ import javafx.geometry.Orientation;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 import static java.util.Objects.requireNonNull;
 
-/// Default behavior implementation for[VFXGrid]. Although, to be precise, and as the name also suggests,
-/// this can be considered more like a 'manager' than a behavior. Behaviors typically respond to user input, and then
-/// update the component's state. This behavior contains core methods to respond to various properties change
-/// in [VFXGrid]. All computations here will generate a new [VFXGridState], if possible, and update the grid
-/// and the layout (indirect, call to [VFXGrid#requestViewportLayout()]).
+/// The grid's 'manager', the piece that reacts to changes in [VFXGrid] and produces a new [VFXGridState] for each of
+/// them, if possible, updating the grid and the layout (indirectly, call to [VFXGrid#requestViewportLayout()]).
+/// It's created by [VFXGrid#createManager()] when the grid is built, [#install()] registers the listeners it needs,
+/// and it lives as long as the grid does.
 ///
-/// By default, manages the following changes:
+/// ## What it reacts to
+///
 /// - geometry changes (width/height changes), [#onGeometryChanged()]
 /// - position changes, [#onPositionChanged(Orientation)]
 /// - number of columns changes, [#onColumnsNumChanged()]
@@ -53,7 +53,9 @@ import static java.util.Objects.requireNonNull;
 /// - spacing changes, [#onSpacingChanged()]
 /// - items changes, [#onItemsChanged()]
 ///
-/// Last but not least, some of these computations may need to ensure the current vertical and horizontal positions are correct,
+/// ## Positions, and the flag that guards them
+///
+/// Some of these computations may need to ensure the current vertical and horizontal positions are correct,
 /// so that a valid new state can be produced. To achieve this, [VFXGridHelper#invalidatePos()] is called when necessary.
 /// However, invalidating the positions, also means that the [#onPositionChanged(Orientation)] method could be potentially
 /// triggered, thus generating an unwanted 'middle' state. For this reason a special flag [#invalidatingPos] is set
@@ -80,6 +82,18 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     // Methods
     //================================================================================
 
+    /// Registers all the listeners on the grid's properties. Called once, when the grid builds this manager with
+    /// [VFXGrid#createManager()].
+    ///
+    /// When a change also affects a range, the helper is told to invalidate it,
+    /// [VFXGridHelper#invalidateRange(Orientation)], before the handler runs, so that the computation reads a fresh
+    /// range, see [VFXGridHelper]. Only the affected axis is invalidated: the width, the horizontal position and the
+    /// horizontal spacing affect the columns, the height, the vertical position and the vertical spacing affect the rows.
+    /// The buffer size, the number of columns and the cell size affect both, see [#invalidateRanges()].
+    ///
+    /// For the positions, the invalidation happens in the listener rather than in [#onPositionChanged(Orientation)],
+    /// because other computations change the positions while [#invalidatingPos] makes that method exit immediately,
+    /// and the range must be invalidated all the same.
     protected void install() {
         // Geometry
         onInvalidated(grid.widthProperty()).then(_ -> {
@@ -162,7 +176,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// Many other computations here need to validate the positions by calling [VFXGridHelper#invalidatePos()],
     /// to ensure that the resulting state is valid.
     /// However, invalidating the positions may trigger this method, causing two or more state computations to run at the
-    /// 'same time'; this behavior must be avoided, and that flag exists specifically for this reason.
+    /// 'same time'. This must be avoided, and that flag exists specifically for this reason.
     ///
     /// Before further discussing the internal mechanisms of this method, notice that this accepts a parameter of type
     /// [Orientation]. The reason is simple. The grid is virtualized on both the x-axis and y-axis, but changes
@@ -605,6 +619,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
         return false;
     }
 
+    /// Convenience method to invalidate both ranges, see [VFXGridHelper#invalidateRange(Orientation)].
     protected void invalidateRanges() {
         VFXGridHelper<T, C> helper = helper();
         helper.invalidateRange(Orientation.HORIZONTAL);
@@ -615,10 +630,12 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     // Getters
     //================================================================================
 
+    /// @return the [VFXGrid] this manager works for
     protected VFXGrid<T, C> getGrid() {
         return grid;
     }
 
+    /// @return the grid's [VFXGridHelper], which cannot be `null`
     protected VFXGridHelper<T, C> helper() {
         return requireNonNull(grid.getHelper(), "The grid's manager cannot operate without a helper");
     }

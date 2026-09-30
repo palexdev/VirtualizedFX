@@ -45,6 +45,13 @@ import static io.github.palexdev.mfxcore.base.beans.Size.size;
 /// (some VFXList values depend on the orientation, for example),
 /// it's still a nice way to adhere to the encapsulation and separation of concerns principles.
 /// Has one concrete implementation: [DefaultHelper].
+///
+/// ## Ranges
+///
+/// The two ranges, [#columnsRangeProperty()] and [#rowsRangeProperty()], are observable values, but they are not
+/// required to observe everything they depend on. The grid's manager calls [#invalidateRange(Orientation)] whenever a
+/// property that affects a range changes (the positions, the grid's size, the buffer, the number of columns...),
+/// before it reads the range to compute the new state.
 public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelper<T, VFXGrid<T, C>> {
 
     /// @return the maximum number of columns the grid can have. This value is essentially the same as
@@ -102,6 +109,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         return rowsRangeProperty().getValue();
     }
 
+    /// Invalidates the range of the given axis, [#columnsRangeProperty()] for [Orientation#HORIZONTAL],
+    /// [#rowsRangeProperty()] for [Orientation#VERTICAL].
+    ///
+    /// Called by the grid's manager when a property that affects the range changes, see the class docs.
     void invalidateRange(Orientation axis);
 
     /// Lays out the given cell.
@@ -195,7 +206,9 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// start is corrected to be `end - needed + 1`. A typical situation for this is when the grid's horizontal position
     /// reaches the max scroll.
     /// The range computation has the following dependencies: the number of columns, the grid's width, horizontal position,
-    /// the buffer size, the number of items, the cell size and the horizontal spacing.
+    /// the buffer size, the number of items, the cell size and the horizontal spacing. Only the number of items is
+    /// observed by the binding, the grid's manager invalidates the range for the others, see
+    /// [#invalidateRange(Orientation)].
     ///
     /// - the rows range is given by the [#firstRow()] element minus the buffer size [VFXGrid#bufferSizeProperty()],
     /// (cannot be negative) and the sum between this start index and the total number of needed rows given by [#totalRows()]
@@ -204,7 +217,9 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// start is corrected to be `end - needed + 1`. A typical situation for this is when the grid's vertical position
     /// reaches the max scroll.
     /// The range computation has the following dependencies: the number of columns, the grid's height, vertical position,
-    /// the buffer size, the number of items, the cell size and the vertical spacing.
+    /// the buffer size, the number of items, the cell size and the vertical spacing. Only the number of items is
+    /// observed by the binding, the grid's manager invalidates the range for the others, see
+    /// [#invalidateRange(Orientation)].
     ///
     /// - the viewport position, a computation that is at the core of virtual scrolling. The viewport, which contains the cells,
     /// is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
@@ -220,10 +235,11 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// Finally, the viewport's position is given by this formula `-(pixelsToFirst + visibleAmountFirst)`
     /// (for both hPos and vPos of course).
     /// While it's true that the calculations are more complex and 'needy', it's important to note that this approach
-    /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No need for special offsets at the top
-    /// or bottom anymore.
+    /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No special offsets are needed at the top
+    /// or bottom.
     /// The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
-    /// the cell size and both the vertical and horizontal spacing.
+    /// the cell size, both the vertical and horizontal spacing, and both ranges. Both values are snapped to whole
+    /// pixels.
     ///
     /// - the virtual max x and y properties, which give the total number of pixels on the x-axis and y-axis. Virtual
     /// means that it's not the actual size of the container, rather the size it would have if it was not virtualized.
@@ -493,6 +509,9 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             return totalCellSize.get();
         }
 
+        /// {@inheritDoc}
+        ///
+        /// Also disposes the two range bindings, and unbinds the viewport's position and the total cell size.
         @Override
         public void dispose() {
             columnsRange.dispose();
