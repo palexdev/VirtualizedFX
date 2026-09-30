@@ -25,13 +25,11 @@ import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.mfxcore.utils.fx.LayoutUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
-import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
 
-import static io.github.palexdev.mfxcore.observables.OnInvalidated.withListener;
 import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 
 /// Default skin implementation for [VFXGrid], extends [MFXSkinBase] and expects behaviors of type
@@ -52,15 +50,18 @@ import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
 /// Last but not least, by design, this skin makes the component always be at least 100px tall and wide. You can change this
 /// by overriding the [#DEFAULT_SIZE] variable.
 public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T, C>> {
+
     //================================================================================
     // Properties
     //================================================================================
+
     protected final Pane viewport;
     protected double DEFAULT_SIZE = 100.0;
 
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXGridSkin(VFXGrid<T, C> grid) {
         super(grid);
 
@@ -188,8 +189,6 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
     @Override
     public void install() {
         VFXGrid<T, C> grid = getSkinnable();
-
-        InvalidationListener gcl = i -> behavior().onGeometryChanged();
         listen(
             // Core changes
             onInvalidated(grid.stateProperty())
@@ -210,31 +209,6 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
                     viewport.translateYProperty().bind(h.viewportPositionProperty().map(Position::y));
                 })
                 .executeNow(),
-
-            // Geometry changes
-            withListener(grid.widthProperty(), gcl),
-            withListener(grid.heightProperty(), gcl),
-            withListener(grid.bufferSizeProperty(), gcl),
-
-            // Position changes
-            onInvalidated(grid.vPosProperty())
-                .then(v -> behavior().onPositionChanged(Orientation.VERTICAL)),
-            onInvalidated(grid.hPosProperty())
-                .then(h -> behavior().onPositionChanged(Orientation.HORIZONTAL)),
-
-            // Others
-            onInvalidated(grid.columnsNumProperty())
-                .then(n -> behavior().onColumnsNumChanged()),
-            onInvalidated(grid.getCellFactory())
-                .then(f -> behavior().onCellFactoryChanged()),
-            onInvalidated(grid.cellSizeProperty())
-                .then(s -> behavior().onCellSizeChanged()),
-            onInvalidated(grid.hSpacingProperty())
-                .then(s -> behavior().onSpacingChanged()),
-            onInvalidated(grid.vSpacingProperty())
-                .then(s -> behavior().onSpacingChanged()),
-            onInvalidated(grid.itemsProperty())
-                .then(it -> behavior().onItemsChanged()),
             onInvalidated(grid.alignmentProperty())
                 .then(a -> grid.requestLayout())
         );
@@ -281,11 +255,5 @@ public class VFXGridSkin<T, C extends VFXCell<T>> extends MFXSkinBase<VFXGrid<T,
         VFXGrid<T, C> grid = getSkinnable();
         grid.update(VFXGridState.INVALID);
         super.dispose();
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    protected VFXGridManager<T, C> behavior() {
-        return (VFXGridManager<T, C>) super.behavior();
     }
 }

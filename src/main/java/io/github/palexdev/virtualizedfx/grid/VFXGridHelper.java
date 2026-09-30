@@ -18,14 +18,10 @@
 
 package io.github.palexdev.virtualizedfx.grid;
 
-import java.util.Optional;
-
 import io.github.palexdev.mfxcore.base.beans.Position;
 import io.github.palexdev.mfxcore.base.beans.Size;
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.base.beans.range.NumberRange;
 import io.github.palexdev.mfxcore.base.properties.SizeProperty;
-import io.github.palexdev.mfxcore.base.properties.range.IntegerRangeProperty;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.mfxcore.builders.bindings.ObjectBindingBuilder;
 import io.github.palexdev.mfxcore.utils.GridUtils;
@@ -35,8 +31,11 @@ import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.binding.DoubleBinding;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.value.ObservableValue;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
 import static io.github.palexdev.mfxcore.base.beans.Position.position;
@@ -68,12 +67,12 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
     /// Specifies the range of columns that should be present in the viewport. This also takes into account buffer columns,
     /// see [#visibleColumns()] and [#totalColumns()].
-    ReadOnlyObjectProperty<NumberRange<Integer>> columnsRangeProperty();
+    ObservableValue<IntegerRange> columnsRangeProperty();
 
     /// @return the range of columns that should be present in the viewport. This also takes into account buffer columns,
     /// see [#visibleColumns()] and [#totalColumns()]
     default IntegerRange columnsRange() {
-        return (IntegerRange) columnsRangeProperty().get();
+        return columnsRangeProperty().getValue();
     }
 
     /// @return the maximum number of rows the grid can have. This value depends on the number of items and the number of
@@ -95,13 +94,15 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
     /// Specifies the range of rows that should be present in the viewport. This also takes into account buffer rows,
     /// see [#visibleRows()] and [#totalRows()].
-    ReadOnlyObjectProperty<NumberRange<Integer>> rowsRangeProperty();
+    ObservableValue<IntegerRange> rowsRangeProperty();
 
     /// @return the range of rows that should be present in the viewport. This also takes into account buffer rows,
     /// see [#visibleRows()] and [#totalRows()].
     default IntegerRange rowsRange() {
-        return (IntegerRange) rowsRangeProperty().get();
+        return rowsRangeProperty().getValue();
     }
+
+    void invalidateRange(Orientation axis);
 
     /// Lays out the given cell.
     /// The row and column layout indexes are necessary to identify the position of a cell among the others
@@ -174,11 +175,14 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// Converts the given item to a cell. The result is either on of the cells cached in [VFXCellsCache] that
     /// is updated with the given item, or a totally new one created by the [VFXGrid#getCellFactory()].
     default C itemToCell(T item) {
-        VFXGrid<T, C> grid = getContainer();
-        VFXCellsCache<T, C> cache = grid.getCache();
-        Optional<C> opt = cache.tryTake();
-        opt.ifPresent(c -> c.updateItem(item));
-        return opt.orElseGet(() -> grid.create(item));
+        VFXCellsCache<T, C> cache = getContainer().getCache();
+        C cell;
+        if ((cell = cache.take()) != null) {
+            cell.updateItem(item);
+        } else {
+            cell = getContainer().create(item);
+        }
+        return cell;
     }
 
     /// Concrete implementation of [VFXGridHelper], here the range of rows and columns to display, as well as the
@@ -230,8 +234,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// [#maxRows()] both read it: an items change is handled by [VFXGridManager#onItemsChanged()], which invalidates
     /// them explicitly through [#invalidateVirtualSizes()], on purpose and before anything else can read a stale value.
     class DefaultHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXGrid<T, C>> implements VFXGridHelper<T, C> {
-        protected final IntegerRangeProperty columnsRange = new IntegerRangeProperty();
-        protected final IntegerRangeProperty rowsRange = new IntegerRangeProperty();
+        protected ObjectBinding<IntegerRange> columnsRange;
+        protected ObjectBinding<IntegerRange> rowsRange;
         protected final SizeProperty totalCellSize = new SizeProperty(Size.zero());
 
         public DefaultHelper(VFXGrid<T, C> grid) {
@@ -241,7 +245,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         @Override
         protected void createBindings() {
-            columnsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
+            columnsRange = ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
                     if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalColumns();
@@ -252,14 +256,9 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(container.columnsNumProperty())
-                .addSources(container.widthProperty())
-                .addSources(container.hPosProperty())
-                .addSources(container.bufferSizeProperty())
-                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.hSpacingProperty())
-                .get()
-            );
-            rowsRange.bind(ObjectBindingBuilder.<IntegerRange>build()
+                .addSources(container.sizeProperty())
+                .get();
+            rowsRange = ObjectBindingBuilder.<IntegerRange>build()
                 .setMapper(() -> {
                     if (container.getHeight() <= 0) return Utils.INVALID_RANGE;
                     int needed = totalRows();
@@ -270,13 +269,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                     if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
                     return IntegerRange.of(start, end);
                 })
-                .addSources(container.columnsNumProperty())
-                .addSources(container.heightProperty())
-                .addSources(container.vPosProperty())
-                .addSources(container.bufferSizeProperty())
-                .addSources(container.sizeProperty(), container.cellSizeProperty(), container.vSpacingProperty())
-                .get()
-            );
+                .addSources(container.sizeProperty())
+                .get();
 
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
@@ -296,10 +290,9 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
                     double x = -(cPixelsToFirst + cVisibleAmount);
                     double y = -(rPixelsToFirst + rVisibleAmount);
-                    return position(x, y);
-
+                    return position(container.snapPositionX(x), container.snapPositionY(y));
                 })
-                .addSources(container.layoutBoundsProperty())
+                .addSources(container.layoutBoundsProperty(), columnsRange, rowsRange)
                 .addSources(container.vPosProperty(), container.hPosProperty())
                 .addSources(container.cellSizeProperty())
                 .addSources(container.hSpacingProperty(), container.vSpacingProperty())
@@ -386,8 +379,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         }
 
         @Override
-        public ReadOnlyObjectProperty<NumberRange<Integer>> columnsRangeProperty() {
-            return columnsRange.getReadOnlyProperty();
+        public ObservableValue<IntegerRange> columnsRangeProperty() {
+            return columnsRange;
         }
 
         /// {@inheritDoc}
@@ -444,8 +437,14 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         }
 
         @Override
-        public ReadOnlyObjectProperty<NumberRange<Integer>> rowsRangeProperty() {
+        public ObservableValue<IntegerRange> rowsRangeProperty() {
             return rowsRange;
+        }
+
+        @Override
+        public void invalidateRange(Orientation axis) {
+            if (axis == Orientation.HORIZONTAL) columnsRange.invalidate();
+            else rowsRange.invalidate();
         }
 
         @Override
@@ -496,8 +495,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         @Override
         public void dispose() {
-            columnsRange.unbind();
-            rowsRange.unbind();
+            columnsRange.dispose();
+            rowsRange.dispose();
             viewportPosition.unbind();
             totalCellSize.unbind();
             super.dispose();

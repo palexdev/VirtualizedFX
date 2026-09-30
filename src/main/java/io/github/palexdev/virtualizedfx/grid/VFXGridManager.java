@@ -24,7 +24,6 @@ import java.util.SequencedMap;
 import java.util.Set;
 
 import io.github.palexdev.mfxcore.base.beans.range.IntegerRange;
-import io.github.palexdev.mfxcore.controls.MFXBehavior;
 import io.github.palexdev.mfxcore.utils.GridUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
@@ -35,6 +34,9 @@ import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ListProperty;
 import javafx.geometry.Orientation;
+
+import static io.github.palexdev.mfxcore.observables.When.onInvalidated;
+import static java.util.Objects.requireNonNull;
 
 /// Default behavior implementation for[VFXGrid]. Although, to be precise, and as the name also suggests,
 /// this can be considered more like a 'manager' than a behavior. Behaviors typically respond to user input, and then
@@ -57,22 +59,70 @@ import javafx.geometry.Orientation;
 /// triggered, thus generating an unwanted 'middle' state. For this reason a special flag [#invalidatingPos] is set
 /// to `true` before the invalidation, so that the other method will exit immediately. It's reset back to false
 /// after the computation or if any of the checks before the actual computation fails.
-public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid<T, C>> {
+public class VFXGridManager<T, C extends VFXCell<T>> {
+
     //================================================================================
     // Properties
     //================================================================================
+
+    private final VFXGrid<T, C> grid;
     protected boolean invalidatingPos = false;
 
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXGridManager(VFXGrid<T, C> grid) {
-        super(grid);
+        this.grid = grid;
     }
 
     //================================================================================
     // Methods
     //================================================================================
+
+    protected void install() {
+        // Geometry
+        onInvalidated(grid.widthProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.HORIZONTAL);
+            onGeometryChanged();
+        }).listen();
+        onInvalidated(grid.heightProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.VERTICAL);
+            onGeometryChanged();
+        }).listen();
+        onInvalidated(grid.bufferSizeProperty()).then(_ -> {
+            invalidateRanges();
+            onGeometryChanged();
+        }).listen();
+        // Position
+        onInvalidated(grid.hPosProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.HORIZONTAL);
+            onPositionChanged(Orientation.HORIZONTAL);
+        }).listen();
+        onInvalidated(grid.vPosProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.VERTICAL);
+            onPositionChanged(Orientation.VERTICAL);
+        }).listen();
+        // Others
+        onInvalidated(grid.columnsNumProperty()).then(_ -> {
+            invalidateRanges();
+            onColumnsNumChanged();
+        }).listen();
+        onInvalidated(grid.getCellFactory()).then(_ -> onCellFactoryChanged()).listen();
+        onInvalidated(grid.cellSizeProperty()).then(_ -> {
+            invalidateRanges();
+            onCellSizeChanged();
+        }).listen();
+        onInvalidated(grid.hSpacingProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.HORIZONTAL);
+            onSpacingChanged();
+        }).listen();
+        onInvalidated(grid.vSpacingProperty()).then(_ -> {
+            helper().invalidateRange(Orientation.VERTICAL);
+            onSpacingChanged();
+        }).listen();
+        onInvalidated(grid.itemsProperty()).then(_ -> onItemsChanged()).listen();
+    }
 
     /// This core method is responsible for ensuring that the viewport always has the right number of cells.
     /// This is called every time the grid's geometry changes (width/height changes), which means that this is also
@@ -85,7 +135,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// [VFXGridHelper#invalidatePos()].
     protected void onGeometryChanged() {
         invalidatingPos = true;
-        VFXGrid<T, C> grid = getNode();
         VFXGridHelper<T, C> helper = grid.getHelper();
         if (!gridFactorySizeCheck()) return;
 
@@ -143,7 +192,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// we always want to update the layout to ensure that cells are at the correct x and y coordinates.
     protected void onPositionChanged(Orientation axis) {
         if (invalidatingPos) return;
-        VFXGrid<T, C> grid = getNode();
         VFXGridState<T, C> state = grid.getState();
         if (state == VFXGridState.INVALID) return;
 
@@ -184,7 +232,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// [VFXGridHelper#invalidatePos()].
     protected void onColumnsNumChanged() {
         invalidatingPos = true;
-        VFXGrid<T, C> grid = getNode();
         if (!gridFactorySizeCheck()) return;
         VFXGridHelper<T, C> helper = grid.getHelper();
 
@@ -222,7 +269,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// The new state's [VFXGridState#haveCellsChanged()] flag will always be `true` of course.
     /// The great thing about the factory change is that there is no need to invalidate the position.
     protected void onCellFactoryChanged() {
-        VFXGrid<T, C> grid = getNode();
 
         // Dispose current state, cells if any (not INVALID) are now in cache
         // Purge cache too, cells are from old factory
@@ -252,7 +298,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// didn't change for obvious reasons.
     protected void onCellSizeChanged() {
         invalidatingPos = true;
-        VFXGrid<T, C> grid = getNode();
         VFXGridHelper<T, C> helper = grid.getHelper();
 
         // Ensure positions are valid!
@@ -283,7 +328,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// [VFXGrid#requestViewportLayout()], even if the cells didn't change for obvious reasons.
     protected void onSpacingChanged() {
         invalidatingPos = true;
-        VFXGrid<T, C> grid = getNode();
         if (!gridFactorySizeCheck()) return;
         VFXGridHelper<T, C> helper = grid.getHelper();
 
@@ -361,7 +405,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// different layout positions. There is no easy way to detect this, so better safe than sorry, always update the layout.
     protected void onItemsChanged() {
         invalidatingPos = true;
-        VFXGrid<T, C> grid = getNode();
         VFXGridHelper<T, C> helper = grid.getHelper();
 
         /*
@@ -429,7 +472,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// @see VFXGridHelper#indexToCell(int)
     /// @see VFXGrid#getCellFactory()
     protected void moveReuseCreateAlgorithm(IntegerRange rowsRange, IntegerRange columnsRange, VFXGridState<T, C> newState) {
-        VFXGrid<T, C> grid = getNode();
         int nColumns = grid.getHelper().maxColumns();
         VFXGridState<T, C> current = grid.getState();
         Set<Integer> remaining = new LinkedHashSet<>();
@@ -465,7 +507,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// be taken from the cache, automatically updates its item then returns it. Otherwise, invokes the
     /// [VFXGrid#getCellFactory()] to create a new one
     protected void remainingAlgorithm(Set<Integer> remaining, VFXGridState<T, C> newState) {
-        VFXGrid<T, C> grid = getNode();
         VFXGridHelper<T, C> helper = grid.getHelper();
         VFXGridState<T, C> current = grid.getState();
 
@@ -511,7 +552,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// @return whether all the aforementioned checks have passed
     @SuppressWarnings("unchecked")
     protected boolean gridFactorySizeCheck() {
-        VFXGrid<T, C> grid = getNode();
         if (grid.isEmpty() || !grid.getCellFactory().canCreate() ||
             grid.getCellSize().width() <= 0 || grid.getCellSize().height() <= 0) {
             disposeCurrent();
@@ -542,7 +582,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     /// @return whether the range is valid or not
     @SuppressWarnings("unchecked")
     protected boolean rangeCheck(IntegerRange rowsRange, IntegerRange columnsRange, boolean update, boolean dispose) {
-        VFXGrid<T, C> grid = getNode();
         if (Utils.INVALID_RANGE.equals(rowsRange) || Utils.INVALID_RANGE.equals(columnsRange)) {
             if (dispose) disposeCurrent();
             if (update) grid.update(VFXGridState.INVALID);
@@ -558,11 +597,29 @@ public class VFXGridManager<T, C extends VFXCell<T>> extends MFXBehavior<VFXGrid
     ///
     /// @return whether the disposal was done or not
     protected boolean disposeCurrent() {
-        VFXGridState<T, C> state = getNode().getState();
+        VFXGridState<T, C> state = grid.getState();
         if (!state.isEmpty()) {
             state.dispose();
             return true;
         }
         return false;
+    }
+
+    protected void invalidateRanges() {
+        VFXGridHelper<T, C> helper = helper();
+        helper.invalidateRange(Orientation.HORIZONTAL);
+        helper.invalidateRange(Orientation.VERTICAL);
+    }
+
+    //================================================================================
+    // Getters
+    //================================================================================
+
+    protected VFXGrid<T, C> getGrid() {
+        return grid;
+    }
+
+    protected VFXGridHelper<T, C> helper() {
+        return requireNonNull(grid.getHelper(), "The grid's manager cannot operate without a helper");
     }
 }

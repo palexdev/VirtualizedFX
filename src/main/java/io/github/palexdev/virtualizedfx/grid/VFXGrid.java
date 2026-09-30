@@ -59,6 +59,7 @@ import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 
 import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
+import static java.util.Objects.requireNonNull;
 
 /// Implementation of a virtualized container to show a list of items in a "2D" perspective.
 /// The default style class is: '.vfx-grid'.
@@ -148,9 +149,11 @@ import static io.github.palexdev.virtualizedfx.utils.ScrollParams.cells;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     implements VFXContainer<T>, WithCellFactory<T, C>, VFXScrollable {
+
     //================================================================================
     // Properties
     //================================================================================
+
     private final VFXContext<T> context = new VFXContext<>(this);
 
     private final VFXCellsCache<T, C> cache;
@@ -162,6 +165,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
         }
     };
     private final CellFactory<T, C> cellFactory = new CellFactory<>(context);
+    private VFXGridManager<T, C> manager;
     private final ReadOnlyObjectWrapper<VFXGridHelper<T, C>> helper = new ReadOnlyObjectWrapper<>() {
         @Override
         public void set(VFXGridHelper<T, C> newValue) {
@@ -201,6 +205,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     //================================================================================
     // Constructors
     //================================================================================
+
     public VFXGrid() {
         this(FXCollections.observableArrayList(), null);
     }
@@ -215,9 +220,16 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     //================================================================================
     // Methods
     //================================================================================
+
     private void initialize() {
         setDefaultStyleClasses();
         setHelper(getHelperFactory().get());
+        manager = requireNonNull(createManager(), "Grid's manager cannot be null!");
+        manager.install();
+    }
+
+    protected VFXGridManager<T, C> createManager() {
+        return new VFXGridManager<>(this);
     }
 
     /// Calls [#autoArrange(int)] with 0 as parameter.
@@ -294,6 +306,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     //================================================================================
     // Overridden Methods
     //================================================================================
+
     @Override
     public void update(int... indexes) {
         VFXGridState<T, C> state = getState();
@@ -312,7 +325,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
 
     @Override
     public Supplier<MFXBehavior<? extends Node>> defaultBehaviorFactory() {
-        return () -> new VFXGridManager<>(this);
+        return () -> new MFXBehavior<>(this) {};
     }
 
     @Override
@@ -414,6 +427,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     //================================================================================
     // Styleable Properties
     //================================================================================
+
     private final StyleableObjectProperty<Size> cellSize = SizeProperty.styleableProperty(
         StyleableProperties.CELL_SIZE,
         this,
@@ -636,6 +650,7 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     //================================================================================
     // CssMetaData
     //================================================================================
+
     private static class StyleableProperties {
         private static final StyleablePropertyFactory<VFXGrid<?, ?>> FACTORY = new StyleablePropertyFactory<>(MFXControl.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
@@ -743,6 +758,10 @@ public class VFXGrid<T, C extends VFXCell<T>> extends MFXControl
     @Override
     public CellFactory<T, C> getCellFactory() {
         return cellFactory;
+    }
+
+    protected VFXGridManager<T, C> getManager() {
+        return manager;
     }
 
     public VFXGridHelper<T, C> getHelper() {
