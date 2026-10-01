@@ -32,6 +32,7 @@ public class TestFXUtils {
     //================================================================================
     public static final Counter counter = new Counter();
     public static final double FP_ASSERTIONS_DELTA = 2.0;
+    public static final double VIEWPORT_DELTA = 0.5;
 
     //================================================================================
     // Constructors

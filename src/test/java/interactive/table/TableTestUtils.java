@@ -72,6 +72,7 @@ import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.insets;
 import static io.github.palexdev.mfxcore.utils.fx.InsetsUtils.uniform;
 import static org.junit.jupiter.api.Assertions.*;
 import static src.utils.TestFXUtils.FP_ASSERTIONS_DELTA;
+import static src.utils.TestFXUtils.VIEWPORT_DELTA;
 
 // TODO improve assertion messages
 // TODO improve asserts structure (feels chaotic, unorganized)
@@ -134,6 +135,7 @@ public class TableTestUtils {
                 assertEquals(cIdx, column.getIndex());
                 assertNotNull(column.getParent());
                 assertLayout(table, cIdx, column);
+                assertViewport(table, cIdx, column);
             } catch (Exception ex) {
                 fail(ex);
             }
@@ -157,6 +159,7 @@ public class TableTestUtils {
             assertEquals(columnsRange, row.columnsRange());
             assertEquals(items.get(rIdx), row.getItem());
             assertLayout(table, i, row);
+            assertViewport(table, rIdx, row);
 
             SequencedMap<Integer, VFXTableCell<User>> cells = row.cellsByIndex();
             if (partial) {
@@ -182,6 +185,7 @@ public class TableTestUtils {
                         assertEquals(items.get(rIdx), sCell.getItem());
                     }
                     assertLayout(table, cIdx, sCell);
+                    assertViewport(table, cIdx, row, sCell);
                 } else {
                     System.err.println("Cannot assert for cell of type: " + cell);
                 }
@@ -264,6 +268,42 @@ public class TableTestUtils {
         double x = 0.0;
         for (int i = 0; i < index; i++) x += columnWidth(table, i);
         return x;
+    }
+
+    static void assertViewport(VFXTable<User> table, int columnIdx, VFXTableColumn<User, ? extends VFXTableCell<User>> column) {
+        Node columnsPane = column.getParent();
+        Node viewport = columnsPane.getParent();
+        double x = column.getBoundsInParent().getMinX() + columnsPane.getTranslateX() + viewport.getTranslateX();
+        try {
+            assertEquals(columnX(table, columnIdx) - table.getHPos(), x, FP_ASSERTIONS_DELTA);
+        } catch (AssertionFailedError err) {
+            System.err.printf("Failed viewport assertion for column %s%n".formatted(column.getText()));
+            throw err;
+        }
+    }
+
+    static void assertViewport(VFXTable<User> table, int rowIdx, VFXTableRow<User> row) {
+        Node rowsPane = row.getParent();
+        double y = row.getBoundsInParent().getMinY() + rowsPane.getTranslateY();
+        try {
+            assertEquals(rowIdx * table.getRowsHeight() - table.getVPos(), y, VIEWPORT_DELTA);
+        } catch (AssertionFailedError err) {
+            System.err.printf("Failed viewport assertion for row %d%n".formatted(rowIdx));
+            throw err;
+        }
+    }
+
+    static void assertViewport(VFXTable<User> table, int columnIdx, VFXTableRow<User> row, VFXTableCell<User> cell) {
+        Node rowsPane = row.getParent();
+        Node viewport = rowsPane.getParent();
+        double x = cell.toNode().getBoundsInParent().getMinX() + row.getBoundsInParent().getMinX() +
+                   rowsPane.getTranslateX() + viewport.getTranslateX();
+        try {
+            assertEquals(columnX(table, columnIdx) - table.getHPos(), x, FP_ASSERTIONS_DELTA);
+        } catch (AssertionFailedError err) {
+            System.err.printf("Failed viewport assertion for cell in row %d for column %d%n".formatted(row.getIndex(), columnIdx));
+            throw err;
+        }
     }
 
     static void assertLayout(VFXTable<User> table, int columnIdx, VFXTableColumn<User, ? extends VFXTableCell<User>> column) {

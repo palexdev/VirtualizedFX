@@ -40,6 +40,7 @@ import org.opentest4j.AssertionFailedError;
 import src.cells.TestGridCell;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static src.utils.TestFXUtils.VIEWPORT_DELTA;
 import static src.utils.TestFXUtils.counter;
 
 public class GridTestUtils {
@@ -90,6 +91,7 @@ public class GridTestUtils {
                         assertEquals(items.get(linear), cb.getItem());
                     }
                     assertPosition(grid, i, j, cell);
+                    assertViewport(grid, linear, cell);
                 }
                 j++;
             }
@@ -102,6 +104,23 @@ public class GridTestUtils {
         VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
         assertEquals(hLength, helper.getVirtualMaxX());
         assertEquals(vLength, helper.getVirtualMaxY());
+    }
+
+    static void assertViewport(VFXGrid<Integer, VFXCell<Integer>> grid, int linear, VFXCell<Integer> cell) {
+        VFXGridHelper<Integer, VFXCell<Integer>> helper = grid.getHelper();
+        Node node = cell.toNode();
+        Node viewport = node.getParent();
+        Bounds bounds = node.getBoundsInParent();
+        int nColumns = helper.maxColumns();
+        double x = (linear % nColumns) * helper.getTotalCellSize().width() - grid.getHPos();
+        double y = (linear / nColumns) * helper.getTotalCellSize().height() - grid.getVPos();
+        try {
+            assertEquals(x, bounds.getMinX() + viewport.getTranslateX(), VIEWPORT_DELTA);
+            assertEquals(y, bounds.getMinY() + viewport.getTranslateY(), VIEWPORT_DELTA);
+        } catch (AssertionFailedError err) {
+            System.err.printf("Failed viewport assertion for cell at index %d%n", linear);
+            throw err;
+        }
     }
 
     static void assertPosition(VFXGrid<Integer, VFXCell<Integer>> grid, int rIdxIt, int cIdxIt, VFXCell<Integer> cell) {

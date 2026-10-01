@@ -42,6 +42,7 @@ import src.cells.TestCell;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static src.utils.TestFXUtils.VIEWPORT_DELTA;
 import static src.utils.TestFXUtils.counter;
 
 public class ListTestUtils {
@@ -83,6 +84,7 @@ public class ListTestUtils {
                 assertEquals(items.get(index), cb.getItem());
             }
             assertPosition(list, index - range.getMin(), cell);
+            assertViewport(list, index, cell);
         }
     }
 
@@ -91,6 +93,24 @@ public class ListTestUtils {
         Function<Bounds, Double> inParentPos = (o == Orientation.VERTICAL) ? Bounds::getMinY : Bounds::getMinX;
         double pos = iteration * list.getHelper().getTotalCellSize();
         assertEquals(pos, inParentPos.apply(cell.toNode().getBoundsInParent()));
+    }
+
+    static void assertViewport(VFXList<Integer, VFXCell<Integer>> list, int index, VFXCell<Integer> cell) {
+        VFXListHelper<Integer, VFXCell<Integer>> helper = list.getHelper();
+        Node node = cell.toNode();
+        Node viewport = node.getParent();
+        Bounds bounds = node.getBoundsInParent();
+        double pos = index * helper.getTotalCellSize();
+        boolean vertical = list.getOrientation() == Orientation.VERTICAL;
+        double x = vertical ? -Math.min(list.getHPos(), helper.getMaxHScroll()) : pos - list.getHPos();
+        double y = vertical ? pos - list.getVPos() : -Math.min(list.getVPos(), helper.getMaxVScroll());
+        try {
+            assertEquals(x, bounds.getMinX() + viewport.getTranslateX(), VIEWPORT_DELTA);
+            assertEquals(y, bounds.getMinY() + viewport.getTranslateY(), VIEWPORT_DELTA);
+        } catch (AssertionFailedError err) {
+            System.err.printf("Failed viewport assertion for cell at index %d%n", index);
+            throw err;
+        }
     }
 
     //================================================================================
