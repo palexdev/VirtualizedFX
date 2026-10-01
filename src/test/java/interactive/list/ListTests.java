@@ -800,6 +800,29 @@ public class ListTests {
     }
 
     @Test
+    void testWrapAndRemoveAtEnd(FxRobot robot) {
+        StackPane pane = setupStage();
+        List list = new List(items(50));
+        robot.interact(() -> pane.getChildren().add(list.makeScrollable()));
+
+        // Scroll to end
+        robot.interact(() -> list.setVPos(Double.MAX_VALUE));
+        counter.reset();
+
+        // The scroll pane decides the list's size, so the range is read rather than hard-coded
+        IntegerRange range = list.getState().getRange();
+        assertEquals(49, range.getMax());
+        assertState(list, range);
+
+        // Remove at end: at the bottom, the range shifts up by the number of removed items,
+        // and only the cells that showed them are updated
+        robot.interact(() -> Utils.removeAll(list, 49, 48, 47, 46));
+        assertState(list, IntegerRange.of(range.getMin() - 4, range.getMax() - 4));
+        assertCounter(0, 1, 4, 4, 0, 0, 0);
+        assertEquals(list.getCellSize() * list.size() - list.getHeight(), list.getVPos());
+    }
+
+    @Test
     void testRemoveSparse(FxRobot robot) {
         StackPane pane = setupStage();
         List list = new List(items(50));

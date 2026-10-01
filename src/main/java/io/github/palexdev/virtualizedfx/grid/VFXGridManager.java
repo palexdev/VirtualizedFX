@@ -365,21 +365,11 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// 1) This is one of those methods that to produce a valid new state needs to validate the grid's positions,
     /// so it calls [#invalidatePos()]
     ///
-    /// 2) Before invalidating the position, this must also request the re-computation of the container's virtual sizes
-    /// by calling [VFXGridHelper#invalidateVirtualSizes()]
-    ///
-    /// 3) To make sure the layout is always correct, at the end we always invoke [VFXGrid#requestViewportLayout()].
+    /// 2) To make sure the layout is always correct, at the end we always invoke [VFXGrid#requestViewportLayout()].
     /// After changes like this, items may be still present in the viewport, but at different indexes, which translates to
     /// different layout positions. There is no easy way to detect this, so better safe than sorry, always update the layout.
     protected void onItemsChanged() {
         VFXGridHelper<T, C> helper = grid.getHelper();
-
-        /*
-         * Force the re-computation of the container's virtual sizes which depend on the number of items.
-         * Doing this here is crucial because an automatic invalidation may trigger the onPositionChanged(...) method
-         * before this, therefore leading to an incorrect state.
-         */
-        helper.invalidateVirtualSizes();
 
         /*
          * Ensure positions are valid!

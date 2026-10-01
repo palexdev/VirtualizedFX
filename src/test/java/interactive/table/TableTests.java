@@ -1181,6 +1181,34 @@ public class TableTests {
     }
 
     @Test
+    void testWrapAndRemoveItemsAtEnd(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> pane.getChildren().add(table.makeScrollable()));
+
+        // Scroll to end
+        robot.interact(table::scrollToLastRow);
+        resetCounters();
+
+        // The scroll pane decides the table's size, so the ranges are read rather than hard-coded
+        IntegerRange rowsRange = table.getState().getRowsRange();
+        IntegerRange columnsRange = table.getState().getColumnsRange();
+        int nRows = rowsRange.diff() + 1;
+        int nColumns = columnsRange.diff() + 1;
+        assertEquals(49, rowsRange.getMax());
+        assertState(table, rowsRange, columnsRange);
+
+        // Remove at end: at the bottom, the rows range shifts up by the number of removed items,
+        // and only the rows that showed them are updated (one item update per cell)
+        robot.interact(() -> removeAll(table, 46, 47, 48, 49));
+        double viewportHeight = table.getHeight() - table.getColumnsSize().height();
+        assertEquals(table.size() * table.getRowsHeight() - viewportHeight, table.getVPos());
+        assertState(table, IntegerRange.of(rowsRange.getMin() - 4, rowsRange.getMax() - 4), columnsRange);
+        assertCounter(0, 1, 0, 0, 4 * nColumns, 0, 0, 0);
+        assertRowsCounter(0, nRows, 4, 0, 0, 0);
+    }
+
+    @Test
     void testRemoveItemsSparse(FxRobot robot) {
         StackPane pane = setupStage();
         Table table = new Table(users(50));

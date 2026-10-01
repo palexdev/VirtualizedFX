@@ -220,10 +220,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// means that it's not the actual size of the container, rather the size it would have if it was not virtualized.
     /// The two values are given by the max number of rows/columns multiplied by the total cell size, minus the spacing
     /// (otherwise we would have the spacing applied between the last row/column and the grid's border too).
-    /// The computations depend on the number of columns and on the total cell size (which in turn folds in the cell
-    /// size and both spacings). They do **not** depend on the number of items, even though [#maxColumns()] and
-    /// [#maxRows()] both read it: an items change is handled by [VFXGridManager#onItemsChanged()], which invalidates
-    /// them explicitly through [#invalidateVirtualSizes()], on purpose and before anything else can read a stale value.
+    /// The computations depend on the number of items, the number of columns and the total cell size (which in turn
+    /// folds in the cell size and both spacings).
     class DefaultHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXGrid<T, C>> implements VFXGridHelper<T, C> {
         protected final SizeProperty totalCellSize = new SizeProperty(Size.zero());
 
@@ -280,7 +278,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         protected DoubleBinding createVirtualMaxXBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> (maxColumns() * getTotalCellSize().width()) - container.getHSpacing())
-                .addSources(container.columnsNumProperty(), totalCellSize)
+                .addSources(container.sizeProperty(), container.columnsNumProperty(), totalCellSize)
                 .get();
         }
 
@@ -288,7 +286,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         protected DoubleBinding createVirtualMaxYBinding() {
             return DoubleBindingBuilder.build()
                 .setMapper(() -> (maxRows() * getTotalCellSize().height()) - container.getVSpacing())
-                .addSources(container.columnsNumProperty(), totalCellSize)
+                .addSources(container.sizeProperty(), container.columnsNumProperty(), totalCellSize)
                 .get();
         }
 

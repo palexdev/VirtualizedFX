@@ -51,11 +51,10 @@ import static java.util.Objects.requireNonNull;
 ///
 /// ## How a state is produced
 ///
-/// Most of these computations follow the same skeleton. Make sure the positions, and sometimes the virtual sizes, are
-/// valid. Check that a state can be produced at all, [#tableFactorySizeCheck()] and
-/// [#rangeCheck(IntegerRange,boolean,boolean)]. Ask the helper for the two ranges. Fill the new state with one of the
-/// three algorithms below. Hand it to the table, which also schedules the layout,
-/// [VFXTable#updateState(VFXTableState)] and [VFXTable#updateState(VFXTableState,IntegerRange)].
+/// Most of these computations follow the same skeleton. Make sure the positions are valid. Check that a state can be
+/// produced at all, [#tableFactorySizeCheck()] and [#rangeCheck(IntegerRange,boolean,boolean)]. Ask the helper for
+/// the two ranges. Fill the new state with one of the three algorithms below. Hand it to the table, which also
+/// schedules the layout, [VFXTable#updateState(VFXTableState)] and [VFXTable#updateState(VFXTableState,IntegerRange)].
 ///
 /// The three algorithms are [#moveReuseCreateAlgorithm(IntegerRange,IntegerRange,VFXTableState)],
 /// [#intersectionAlgorithm(IntegerRange,VFXTableState)] and
@@ -236,8 +235,7 @@ public class VFXTableManager<T> {
     /// [VFXTable#onColumnsChanged(ListChangeListener.Change)], which does the bookkeeping on the columns first (the
     /// table reference and the index hint), and by then the helper has already seen the change too.
     ///
-    /// The number of columns changed, so both the virtual sizes and the horizontal position may be stale and are
-    /// invalidated before anything else.
+    /// The number of columns changed, so the horizontal position may be stale and is invalidated before anything else.
     ///
     /// Rows are kept, and each of them is asked to update its cells with `true` as the second parameter,
     /// [VFXTableRow#updateColumns(IntegerRange,boolean)]: this is the one case where the columns can be the same
@@ -249,8 +247,7 @@ public class VFXTableManager<T> {
     protected void onColumnsChanged(int from) {
         VFXTableHelper<T> helper = helper();
 
-        // The number of columns changed, so both virtual sizes and hPos may be stale
-        helper.invalidateVirtualSizes();
+        // The number of columns changed, so hPos may be stale
         invalidatePos();
 
         IntegerRange columnsRange = helper.columnsRange();
@@ -300,8 +297,8 @@ public class VFXTableManager<T> {
     /// if a row for it exists we only update its index and move it to the new state, excluding that index from the
     /// ones still to process. What remains goes to [#remainingAlgorithm(ExcludingIntegerRange,VFXTableState)].
     ///
-    /// Both the virtual sizes and the positions are invalidated before the computation, in this order, since the
-    /// second depends on the first. The number of items may also have made the table unrenderable, which is what
+    /// The positions are invalidated before the computation, since the number of items decides how far the table can
+    /// scroll. The number of items may also have made the table unrenderable, which is what
     /// [#tableFactorySizeCheck()] is for.
     ///
     /// No column moves here, so only the rows are laid out at the end. As the example shows, rows that are still in
@@ -309,8 +306,7 @@ public class VFXTableManager<T> {
     protected void onItemsChanged() {
         VFXTableHelper<T> helper = helper();
 
-        // Ensure that both virtual sizes and position (which depends on the first) are correct
-        helper.invalidateVirtualSizes();
+        // Ensure the positions are correct
         invalidatePos();
 
         if (!tableFactorySizeCheck()) return; // If the table is now empty, then set empty state

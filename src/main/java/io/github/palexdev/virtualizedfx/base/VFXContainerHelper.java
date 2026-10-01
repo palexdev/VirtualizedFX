@@ -77,13 +77,6 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
     /// @return the [VFXContainer] implementation instance associated to this helper
     C getContainer();
 
-    /// Implementations should define the logic to manually invalidate the virtual sizes ([#virtualMaxXProperty()]
-    /// and [#virtualMaxYProperty()]) of the container when needed.
-    ///
-    /// There are exceptional cases where we can't rely on automatic invalidation because it could lead to incorrect states,
-    /// the easiest and most stable solution for those is manual invalidation.
-    void invalidateVirtualSizes();
-
     /// Converts the given index to an item (shortcut for `getContainer().getItems().get(index)`).
     default T indexToItem(int index) {
         return getContainer().getItems().get(index);
@@ -126,7 +119,7 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
         /// Subclasses that add bindings of their own override this and call `super` first.
         ///
         /// The two virtual max factories are allowed to return `null`, in which case the property is left unbound for
-        /// the subclass to bind itself. [#invalidateVirtualSizes()] and [#dispose()] both account for that.
+        /// the subclass to bind itself. [#dispose()] accounts for that.
         protected void createBindings() {
             vmxBinding = createVirtualMaxXBinding();
             if (vmxBinding != null) virtualMaxX.bind(vmxBinding);
@@ -198,12 +191,6 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
         @Override
         public C getContainer() {
             return container;
-        }
-
-        @Override
-        public void invalidateVirtualSizes() {
-            if (vmxBinding != null) vmxBinding.invalidate();
-            if (vmyBinding != null) vmyBinding.invalidate();
         }
 
         @Override

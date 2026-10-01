@@ -317,22 +317,12 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// 1) This is one of those methods that to produce a valid new state needs to validate the list's positions,
     /// so it calls [#invalidatePos()]
     ///
-    /// 2) Before invalidating the position, this must also request the re-computation of the container's virtual sizes
-    /// by calling [VFXListHelper#invalidateVirtualSizes()]
-    ///
-    /// 3) To make sure the layout is always correct, at the end we always invoke [VFXList#requestViewportLayout()].
+    /// 2) To make sure the layout is always correct, at the end we always invoke [VFXList#requestViewportLayout()].
     /// You can guess why from the above example, items 2 and 3 are still in the viewport, but at different indexes,
     /// which also means at different layout positions. There is no easy way to detect this, so better safe than sorry,
     /// always update the layout.
     protected void onItemsChanged() {
         VFXListHelper<T, C> helper = list.getHelper();
-
-        /*
-         * Force the re-computation of the container's virtual sizes which depend on the number of items.
-         * Doing this here is crucial because an automatic invalidation may trigger the onPositionChanged(...) method
-         * before this, therefore leading to an incorrect state.
-         */
-        helper.invalidateVirtualSizes();
 
         /*
          * Ensure positions are correct
