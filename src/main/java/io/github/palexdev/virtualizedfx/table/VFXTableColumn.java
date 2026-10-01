@@ -338,6 +338,11 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
         return table.get();
     }
 
+    /// @return the table's context if the column is part of a table, `null` otherwise.
+    public VFXContext<T> context() {
+        return getTable() != null ? getTable().context() : null;
+    }
+
     /// Specifies the table's instance this column belongs to.<br >
     /// Set automatically by the table as the column is added to/removed from its columns' list, the value is `null`
     /// if the column is not part of any table.
