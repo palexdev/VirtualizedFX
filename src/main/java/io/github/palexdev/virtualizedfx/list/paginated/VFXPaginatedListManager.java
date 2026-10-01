@@ -21,7 +21,6 @@ package io.github.palexdev.virtualizedfx.list.paginated;
 import io.github.palexdev.mfxcore.builders.bindings.DoubleBindingBuilder;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.list.VFXList;
-import io.github.palexdev.virtualizedfx.list.VFXListHelper;
 import io.github.palexdev.virtualizedfx.list.VFXListManager;
 import javafx.beans.binding.DoubleBinding;
 import javafx.geometry.Orientation;
@@ -100,9 +99,6 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     /// [Parent#requestLayout()].
     ///
     /// This way, computations that also rely on the container size become invalid too, thus leading to correct values.
-    ///
-    /// The range is invalidated too, [VFXListHelper#invalidateRange()], since the number of cells per page is the
-    /// number of visible cells, see [VFXPaginatedListHelper].
     protected void onCellsPerPageChanged() {
         getList().requestLayout();
     }

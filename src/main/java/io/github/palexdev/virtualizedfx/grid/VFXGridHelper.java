@@ -45,10 +45,10 @@ import static io.github.palexdev.mfxcore.base.beans.Size.size;
 ///
 /// ## Ranges
 ///
-/// The two ranges, [#columnsRangeProperty()] and [#rowsRangeProperty()], are observable values, but they are not
-/// required to observe everything they depend on. The grid's manager calls [#invalidateRange(Orientation)] whenever a
-/// property that affects a range changes (the positions, the grid's size, the buffer, the number of columns...),
-/// before it reads the range to compute the new state.
+/// The two ranges, [#columnsRange()] and [#rowsRange()], are computed every time they are asked for, so they always
+/// reflect the grid's current properties. They are not observable. To be notified when the displayed rows or columns
+/// change, observe the grid's state, [VFXGrid#stateProperty()]: it carries both ranges, and it's published only once
+/// it's complete.
 public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelper<T, VFXGrid<T, C>> {
 
     /// @return the maximum number of columns the grid can have. This value is essentially the same as
@@ -185,9 +185,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// start is corrected to be `end - needed + 1`. A typical situation for this is when the grid's horizontal position
     /// reaches the max scroll.
     /// The range computation has the following dependencies: the number of columns, the grid's width, horizontal position,
-    /// the buffer size, the number of items, the cell size and the horizontal spacing. Only the number of items is
-    /// observed by the binding, the grid's manager invalidates the range for the others, see
-    /// [#invalidateRange(Orientation)].
+    /// the buffer size, the number of items, the cell size and the horizontal spacing.
     ///
     /// - the rows range is given by the [#firstRow()] element minus the buffer size [VFXGrid#bufferSizeProperty()],
     /// (cannot be negative) and the sum between this start index and the total number of needed rows given by [#totalRows()]
@@ -196,9 +194,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// start is corrected to be `end - needed + 1`. A typical situation for this is when the grid's vertical position
     /// reaches the max scroll.
     /// The range computation has the following dependencies: the number of columns, the grid's height, vertical position,
-    /// the buffer size, the number of items, the cell size and the vertical spacing. Only the number of items is
-    /// observed by the binding, the grid's manager invalidates the range for the others, see
-    /// [#invalidateRange(Orientation)].
+    /// the buffer size, the number of items, the cell size and the vertical spacing.
     ///
     /// - the viewport position, a computation that is at the core of virtual scrolling. The viewport, which contains the cells,
     /// is not supposed to scroll by insane numbers of pixels both for performance reasons and because it is not necessary.
@@ -217,8 +213,8 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// allows avoiding 'hacks' to correctly lay out the cells in the viewport. No special offsets are needed at the top
     /// or bottom.
     /// The viewport's position computation has the following dependencies: the horizontal position, the vertical position,
-    /// the cell size, both the vertical and horizontal spacing, and both ranges. Both values are snapped to whole
-    /// pixels.
+    /// the cell size, both the vertical and horizontal spacing, and everything the two ranges depend on. Both values
+    /// are snapped to whole pixels.
     ///
     /// - the virtual max x and y properties, which give the total number of pixels on the x-axis and y-axis. Virtual
     /// means that it's not the actual size of the container, rather the size it would have if it was not virtualized.
@@ -345,6 +341,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             return visible == 0 ? 0 : Math.min(visible + container.getBufferSize().val() * 2, maxColumns());
         }
 
+        /// {@inheritDoc}
+        ///
+        /// See the class docs for how it's computed. It's [Utils#INVALID_RANGE] if the grid's width is 0, or if no
+        /// columns are needed.
         @Override
         public IntegerRange columnsRange() {
             if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
@@ -410,6 +410,10 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             return visible == 0 ? 0 : Math.min(visible + container.getBufferSize().val() * 2, maxRows());
         }
 
+        /// {@inheritDoc}
+        ///
+        /// See the class docs for how it's computed. It's [Utils#INVALID_RANGE] if the grid's height is 0, or if no rows
+        /// are needed.
         @Override
         public IntegerRange rowsRange() {
             if (container.getHeight() <= 0) return Utils.INVALID_RANGE;
@@ -470,7 +474,7 @@ public interface VFXGridHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         /// {@inheritDoc}
         ///
-        /// Also disposes the two range bindings, and unbinds the viewport's position and the total cell size.
+        /// Also unbinds the viewport's position and the total cell size.
         @Override
         public void dispose() {
             viewportPosition.unbind();

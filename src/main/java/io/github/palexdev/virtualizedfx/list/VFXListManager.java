@@ -91,9 +91,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// Registers all the listeners on the list's properties. Called once, when the list builds this manager with
     /// [VFXList#createManager()].
     ///
-    /// When a change also affects the range, the helper is told to invalidate it, [VFXListHelper#invalidateRange()],
-    /// before the handler runs, so that the computation reads a fresh range, see [VFXListHelper].
-    ///
     /// The width and the height are handled depending on the orientation. The one along the orientation is a geometry
     /// change, the other one only needs the viewport to be laid out again.
     ///
@@ -656,12 +653,8 @@ public class VFXListManager<T, C extends VFXCell<T>> {
 
     /// Scrolling along the list's orientation is what produces new states. The position on the other axis only moves the
     /// viewport, see [VFXListHelper#viewportPositionProperty()]. For this reason, there is one and only one listener for
-    /// the position change: this adds it to the [VFXList#vPosProperty()] for [Orientation#VERTICAL], to the
-    /// [VFXList#hPosProperty()] otherwise, and removes it from the other one.
-    ///
-    /// The listener invalidates the range, [VFXListHelper#invalidateRange()], then calls [#onPositionChanged()]. The
-    /// invalidation happens in the listener rather than in that method, because other computations change the positions
-    /// while [#invalidatingPos] makes it exit immediately, and the range must be invalidated all the same.
+    /// the position change, which calls [#onPositionChanged()]: this adds it to the [VFXList#vPosProperty()] for
+    /// [Orientation#VERTICAL], to the [VFXList#hPosProperty()] otherwise, and removes it from the other one.
     ///
     /// Called by [#install()], and every time the orientation changes, before [#onOrientationChanged()].
     protected void swapPositionListener() {

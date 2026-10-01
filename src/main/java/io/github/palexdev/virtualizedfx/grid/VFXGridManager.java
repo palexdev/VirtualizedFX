@@ -84,16 +84,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
 
     /// Registers all the listeners on the grid's properties. Called once, when the grid builds this manager with
     /// [VFXGrid#createManager()].
-    ///
-    /// When a change also affects a range, the helper is told to invalidate it,
-    /// [VFXGridHelper#invalidateRange(Orientation)], before the handler runs, so that the computation reads a fresh
-    /// range, see [VFXGridHelper]. Only the affected axis is invalidated: the width, the horizontal position and the
-    /// horizontal spacing affect the columns, the height, the vertical position and the vertical spacing affect the rows.
-    /// The buffer size, the number of columns and the cell size affect both, see [#invalidateRanges()].
-    ///
-    /// For the positions, the invalidation happens in the listener rather than in [#onPositionChanged(Orientation)],
-    /// because other computations change the positions while [#invalidatingPos] makes that method exit immediately,
-    /// and the range must be invalidated all the same.
     protected void install() {
         // Geometry
         onInvalidated(grid.widthProperty()).then(_ -> onGeometryChanged()).listen();

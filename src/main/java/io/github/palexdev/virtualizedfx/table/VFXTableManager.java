@@ -92,10 +92,6 @@ public class VFXTableManager<T> {
 
     /// Registers all the listeners on the table's properties. Called once, when the table builds this manager with
     /// [VFXTable#createManager()].
-    ///
-    /// When a change also affects a range, the helper is told to invalidate it,
-    /// [VFXTableHelper#invalidateRange(Orientation)], before the handler runs, so that the computation reads a fresh
-    /// range, see [VFXTableHelper].
     protected void install() {
         // Geometry
         onInvalidated(table.widthProperty()).then(_ -> onGeometryChanged(GeometryChangeType.WIDTH)).listen();

@@ -54,10 +54,10 @@ import static io.github.palexdev.mfxcore.base.beans.Position.position;
 ///
 /// ## Ranges
 ///
-/// The two ranges, [#columnsRangeProperty()] and [#rowsRangeProperty()], are observable values, but they are not required
-/// to observe everything they depend on. The table's manager calls [#invalidateRange(Orientation)] whenever a property
-/// that affects a range changes (the position, the table's size, the buffers...), and before it reads the range to
-/// compute the new state.
+/// The two ranges, [#columnsRange()] and [#rowsRange()], are computed every time they are asked for, so they always
+/// reflect the table's current properties. They are not observable. To be notified when the displayed rows or columns
+/// change, observe the table's state, [VFXTable#stateProperty()]: it carries both ranges, and it's published only once
+/// it's complete.
 public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
     //================================================================================
@@ -84,6 +84,8 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         return getContainer().columns().size();
     }
 
+    /// @return the range of columns that should be present in the viewport. This also takes into account buffer columns,
+    /// see [#visibleColumns()] and [#totalColumns()]
     IntegerRange columnsRange();
 
     /// Called by the table's manager when the width specified by [VFXTable#columnsSizeProperty()] changes.
@@ -239,7 +241,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     ///
     /// A column's position is the sum of every previous column's width, a prefix sum. Prefix sums are monotonic, therefore
     /// binary-searchable: [#columnAt(double)] finds in `O(log n)` the last column whose position is still `<= x`. The
-    /// visible span then falls out of two such probes, one at `hPos` and one at `hPos + tableWidth`, and the range binding
+    /// visible span then falls out of two such probes, one at `hPos` and one at `hPos + tableWidth`, and [#columnsRange()]
     /// widens the result by the buffer.
     ///
     /// Positions are not recomputed per query, the cache keeps them and invalidates them only when something can
@@ -309,19 +311,9 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
         /// {@inheritDoc}
         ///
-        /// On top of those, defines the two range bindings and the viewport's position (see the class docs).
-        ///
-        /// The two ranges share the same shape. The start is the first visible row/column minus the buffer size
-        /// ([VFXTable#rowsBufferSizeProperty()], [VFXTable#columnsBufferSizeProperty()]), never negative. The end is that
-        /// start plus the total number of needed rows/columns ([#totalRows()], [#totalColumns()]), never past the last
-        /// index. It may happen that the resulting `end - start + 1` is lesser than what is needed, typically when the
-        /// position reaches the max scroll, in such cases the start is corrected back to `end - needed + 1`.
-        /// If the table's width (the viewport's height for the rows) is 0, or the number of needed rows/columns is 0,
-        /// the range is [Utils#INVALID_RANGE].
-        ///
-        /// The columns range observes the columns' list, the columns' size and the [ColumnsLayoutCache]. The rows range
-        /// observes the number of items and the columns' size. Everything else arrives through
-        /// [#invalidateRange(Orientation)], see [VFXTableHelper].
+        /// On top of those, defines the viewport's position (see the class docs). The binding observes what the position
+        /// depends on, and what the ranges it reads depend on: the table's bounds, the two positions, the rows' height,
+        /// the columns' size, the rows' buffer, the number of items and the columns' list.
         @Override
         protected void createBindings() {
             super.createBindings();
@@ -417,6 +409,13 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             return visible == 0 ? 0 : Math.min(visible + buffer * 2, columnsCount());
         }
 
+        /// {@inheritDoc}
+        ///
+        /// The start is the first visible column minus the buffer size ([VFXTable#columnsBufferSizeProperty()]), never
+        /// negative. The end is that start plus the total number of needed columns ([#totalColumns()]), never past the
+        /// last index. It may happen that the resulting `end - start + 1` is lesser than what is needed, typically when
+        /// the position reaches the max scroll, in such cases the start is corrected back to `end - needed + 1`.<br >
+        /// If the table's width is 0, or the number of needed columns is 0, the range is [Utils#INVALID_RANGE].
         @Override
         public IntegerRange columnsRange() {
             if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
@@ -525,6 +524,12 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             return visible == 0 ? 0 : Math.min(visible + container.getRowsBufferSize().val() * 2, container.size());
         }
 
+        /// {@inheritDoc}
+        ///
+        /// Same shape as [#columnsRange()], with the rows' values: the first visible row, the
+        /// [VFXTable#rowsBufferSizeProperty()], the total number of needed rows ([#totalRows()]) and the number of
+        /// items.<br >
+        /// If the viewport's height is 0, or the number of needed rows is 0, the range is [Utils#INVALID_RANGE].
         @Override
         public IntegerRange rowsRange() {
             if (viewportHeight() <= 0) return Utils.INVALID_RANGE;
@@ -584,7 +589,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
         /// {@inheritDoc}
         ///
-        /// Disposes the [ColumnsLayoutCache] and the two range bindings, and unbinds the viewport's position.
+        /// Disposes the [ColumnsLayoutCache], and unbinds the viewport's position.
         @Override
         public void dispose() {
             layoutCache.dispose();
