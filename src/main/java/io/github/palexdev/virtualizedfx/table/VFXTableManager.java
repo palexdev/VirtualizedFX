@@ -575,12 +575,14 @@ public class VFXTableManager<T> {
 
     /* UTILS */
 
-    /// Invalidates the table's positions, [VFXTableHelper#invalidatePos()], with the flag that keeps
-    /// [#onPositionChanged(Orientation)] from running while it happens, see the class docs.
+    /// Forces the [VFXTable#vPosProperty()] and the [VFXTable#hPosProperty()] to be validated again, by calling the
+    /// respective setters with their current values: the two properties clamp themselves between 0 and the max scroll.
+    ///
+    /// The flag keeps [#onPositionChanged(Orientation)] from running while it happens, see the class docs.
     protected void invalidatePos() {
-        VFXTableHelper<T> helper = helper();
         invalidatingPos = true;
-        helper.invalidatePos();
+        table.setVPos(table.getVPos());
+        table.setHPos(table.getHPos());
         invalidatingPos = false;
     }
 

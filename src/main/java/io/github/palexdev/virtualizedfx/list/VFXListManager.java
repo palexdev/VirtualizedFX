@@ -57,11 +57,11 @@ import static java.util.Objects.requireNonNull;
 /// ## Positions, and the flag that guards them
 ///
 /// Some of these computations may need to ensure the current vertical and horizontal positions are correct,
-/// so that a valid state can be produced. To achieve this, [VFXListHelper#invalidatePos()] is called.
+/// so that a valid state can be produced. To achieve this, [#invalidatePos()] is called.
 /// However, invalidating the positions, also means that the [#onPositionChanged()] method could be potentially
 /// triggered, thus generating an unwanted 'middle' state. For this reason a special flag [#invalidatingPos] is set
 /// to `true` before the invalidation, so that the other method will exit immediately. It's reset back to false
-/// after the computation or if any of the checks before the actual computation fails.
+/// right after.
 public class VFXListManager<T, C extends VFXCell<T>> {
 
     //================================================================================
@@ -135,14 +135,13 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// the computation for the new state is delegated to the [#moveReuseCreateAlgorithm(IntegerRange, VFXListState)].
     ///
     /// Note that to compute a valid new state, it is important to also validate the list's positions by invoking
-    /// [VFXListHelper#invalidatePos()].
+    /// [#invalidatePos()].
     protected void onGeometryChanged() {
-        invalidatingPos = true;
         VFXListHelper<T, C> helper = list.getHelper();
         if (!listFactorySizeCheck()) return;
 
         // Ensure positions are correct!
-        helper.invalidatePos();
+        invalidatePos();
 
         // If for whatever reason, the computed range is invalid, then set the state to INVALID
         IntegerRange range = helper.range();
@@ -154,7 +153,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
 
         if (disposeCurrent()) newState.setCellsChanged(true);
         list.update(newState);
-        invalidatingPos = false;
     }
 
     /// This core method is responsible for updating the list's state when the 'main' position changes (vPos for VERTICAL
@@ -164,7 +162,7 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// It's run by the single position listener, see [#swapPositionListener()].
     ///
     /// Immediately exits if: the special flag [#invalidatingPos] is true or the current state is [VFXListState#INVALID].
-    /// Many other computations here need to validate the positions by calling [VFXListHelper#invalidatePos()], so that
+    /// Many other computations here need to validate the positions by calling [#invalidatePos()], so that
     /// the resulting state is valid.
     /// However, invalidating the positions may trigger this method, causing two or more state computations to run at the
     /// 'same time'. This must be avoided, and that flag exists specifically for this reason.
@@ -252,7 +250,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// The new state's [VFXListState#haveCellsChanged()] flag will always be `true` of course.
     /// The great thing about the factory change is that there is no need to invalidate the position.
     protected void onCellFactoryChanged() {
-
         // Dispose current state, cells if any (not INVALID) are now in cache
         // Purge cache too, cells are from old factory
         if (disposeCurrent()) list.getCache().clear();
@@ -318,7 +315,7 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// Last notes:
     ///
     /// 1) This is one of those methods that to produce a valid new state needs to validate the list's positions,
-    /// so it calls [VFXListHelper#invalidatePos()]
+    /// so it calls [#invalidatePos()]
     ///
     /// 2) Before invalidating the position, this must also request the re-computation of the container's virtual sizes
     /// by calling [VFXListHelper#invalidateVirtualSizes()]
@@ -328,7 +325,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// which also means at different layout positions. There is no easy way to detect this, so better safe than sorry,
     /// always update the layout.
     protected void onItemsChanged() {
-        invalidatingPos = true;
         VFXListHelper<T, C> helper = list.getHelper();
 
         /*
@@ -344,7 +340,7 @@ public class VFXListManager<T, C extends VFXCell<T>> {
          * But since that information is lost (we would have to track it here in some way), we always
          * invalidate positions, after all, it's not a big deal anyway.
          */
-        helper.invalidatePos();
+        invalidatePos();
 
         // If the list is now empty, then set INVALID state
         VFXListState<T, C> current = list.getState();
@@ -374,15 +370,13 @@ public class VFXListManager<T, C extends VFXCell<T>> {
         if (disposeCurrent()) newState.setCellsChanged(true);
         list.update(newState);
         if (!newState.haveCellsChanged()) list.requestViewportLayout();
-        invalidatingPos = false;
     }
 
     /// The easiest of all changes. It's enough to request a viewport layout, [VFXList#requestViewportLayout()],
-    /// and to make sure that the horizontal position is valid, [VFXListHelper#invalidatePos()].
+    /// and to make sure that the horizontal position is valid, [#invalidatePos()].
     protected void onFitToViewportChanged() {
-        VFXListHelper<T, C> helper = list.getHelper();
         list.requestViewportLayout();
-        helper.invalidatePos(); // Not necessary to set invalidatingPos flag
+        invalidatePos();
     }
 
     /// This method is responsible for computing a new state when the [VFXList#cellSizeProperty()] changes.
@@ -391,16 +385,13 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// the [#intersectionAlgorithm()].
     ///
     /// Note that to compute a valid new state, it is important to also validate the list's positions by invoking
-    /// [VFXListHelper#invalidatePos()].
+    /// [#invalidatePos()].
     ///
     /// Note that this will request the layout computation, [VFXList#requestViewportLayout()], even if the cells
     /// didn't change for obvious reasons.
     protected void onCellSizeChanged() {
-        invalidatingPos = true;
-        VFXListHelper<T, C> helper = list.getHelper();
-
         // Ensure positions are correct
-        helper.invalidatePos();
+        invalidatePos();
 
         if (!listFactorySizeCheck()) return;
 
@@ -410,7 +401,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
         if (disposeCurrent()) newState.setCellsChanged(true);
         list.update(newState);
         if (!newState.haveCellsChanged()) list.requestViewportLayout();
-        invalidatingPos = false;
     }
 
     /// This method is responsible for computing a new state when the [VFXList#orientationProperty()] changes.
@@ -422,12 +412,13 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// Note that to compute a valid new state, it is important to also validate the list's positions by invoking
     /// This will also request the layout computation, [VFXList#requestViewportLayout()], even if the cells didn't change.
     protected void onOrientationChanged() {
-        invalidatingPos = true;
         if (!listFactorySizeCheck()) return;
 
         // When the orientation changes, it's a better behavior to just reset the positions
+        invalidatingPos = true;
         list.setVPos(0.0);
         list.setHPos(0.0);
+        invalidatingPos = false;
 
         // Compute new state with the intersection algorithm
         VFXListState<T, C> newState = intersectionAlgorithm();
@@ -435,7 +426,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
         if (disposeCurrent()) newState.setCellsChanged(true);
         list.update(newState);
         if (!newState.haveCellsChanged()) list.requestViewportLayout();
-        invalidatingPos = false;
     }
 
     /// This method is responsible for updating the list's state when the [VFXList#spacingProperty()] changes.
@@ -444,14 +434,13 @@ public class VFXListManager<T, C extends VFXCell<T>> {
     /// the computation for the new state is delegated to the [#moveReuseCreateAlgorithm(IntegerRange, VFXListState)].
     ///
     /// Note that to compute a valid new state, it is important to also validate the list's positions by invoking
-    /// [VFXListHelper#invalidatePos()]. Also, this will request the layout computation,
+    /// [#invalidatePos()]. Also, this will request the layout computation,
     /// [VFXList#requestViewportLayout()], even if the cells didn't change.
     protected void onSpacingChanged() {
-        invalidatingPos = true;
         VFXListHelper<T, C> helper = list.getHelper();
 
         // Ensure positions are correct
-        helper.invalidatePos();
+        invalidatePos();
 
         // If range is invalid
         IntegerRange range = helper.range();
@@ -464,7 +453,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
         if (disposeCurrent()) newState.setCellsChanged(true);
         list.update(newState);
         if (!newState.haveCellsChanged()) list.requestViewportLayout();
-        invalidatingPos = false;
     }
 
     //================================================================================
@@ -578,6 +566,19 @@ public class VFXListManager<T, C extends VFXCell<T>> {
             }
             newState.addCell(index, item, c);
         }
+    }
+
+    /// Forces the [VFXList#vPosProperty()] and the [VFXList#hPosProperty()] to be validated again.
+    ///
+    /// This is simply done by calling the respective setters with their current values, the two properties clamp
+    /// themselves between 0 and the max scroll.
+    ///
+    /// The flag keeps [#onPositionChanged()] from running while it happens, see the class docs.
+    protected void invalidatePos() {
+        invalidatingPos = true;
+        list.setVPos(list.getVPos());
+        list.setHPos(list.getHPos());
+        invalidatingPos = false;
     }
 
     /// Avoids code duplication. This method checks for three things:

@@ -56,11 +56,11 @@ import static java.util.Objects.requireNonNull;
 /// ## Positions, and the flag that guards them
 ///
 /// Some of these computations may need to ensure the current vertical and horizontal positions are correct,
-/// so that a valid new state can be produced. To achieve this, [VFXGridHelper#invalidatePos()] is called when necessary.
+/// so that a valid new state can be produced. To achieve this, [#invalidatePos()] is called when necessary.
 /// However, invalidating the positions, also means that the [#onPositionChanged(Orientation)] method could be potentially
 /// triggered, thus generating an unwanted 'middle' state. For this reason a special flag [#invalidatingPos] is set
 /// to `true` before the invalidation, so that the other method will exit immediately. It's reset back to false
-/// after the computation or if any of the checks before the actual computation fails.
+/// right after.
 public class VFXGridManager<T, C extends VFXCell<T>> {
 
     //================================================================================
@@ -109,14 +109,13 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// the computation of the new state is delegated to the [#moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXGridState)].
     ///
     /// Note that to compute a valid new state, it is important to also validate the grid's positions by invoking
-    /// [VFXGridHelper#invalidatePos()].
+    /// [#invalidatePos()].
     protected void onGeometryChanged() {
-        invalidatingPos = true;
         VFXGridHelper<T, C> helper = grid.getHelper();
         if (!gridFactorySizeCheck()) return;
 
         // Ensure positions are valid!
-        helper.invalidatePos();
+        invalidatePos();
 
         IntegerRange rowsRange = helper.rowsRange();
         IntegerRange columnsRange = helper.columnsRange();
@@ -128,7 +127,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
 
         if (disposeCurrent()) newState.setCellsChanged(true);
         grid.update(newState);
-        invalidatingPos = false;
     }
 
     /// This core method is responsible for updating the grid's state when the vertical and horizontal positions change.
@@ -136,7 +134,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// and since scrolling can happen very fast, performance here is crucial.
     ///
     /// Immediately exits if: the special flag [#invalidatingPos] is true or the current state is [VFXGridState#INVALID].
-    /// Many other computations here need to validate the positions by calling [VFXGridHelper#invalidatePos()],
+    /// Many other computations here need to validate the positions by calling [#invalidatePos()],
     /// to ensure that the resulting state is valid.
     /// However, invalidating the positions may trigger this method, causing two or more state computations to run at the
     /// 'same time'. This must be avoided, and that flag exists specifically for this reason.
@@ -206,16 +204,15 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// we always want to update the layout to ensure that cells are at the correct x and y coordinates.
     ///
     /// Note that to compute a valid new state, it is important to also validate the grid's positions by invoking
-    /// [VFXGridHelper#invalidatePos()].
+    /// [#invalidatePos()].
     protected void onColumnsNumChanged() {
-        invalidatingPos = true;
         if (!gridFactorySizeCheck()) return;
         VFXGridHelper<T, C> helper = grid.getHelper();
 
         // Ensure positions are valid!
         // When the number of columns changes, both the estimated width and height change too
         // As a result of that, it is indeed needed to ensure that the current scroll positions are valid
-        helper.invalidatePos();
+        invalidatePos();
 
         // Second check: ensure that both ranges are valid
         IntegerRange rowsRange = helper.rowsRange();
@@ -231,7 +228,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
         if (disposeCurrent()) newState.setCellsChanged(true);
         grid.update(newState);
         if (!newState.haveCellsChanged()) grid.requestViewportLayout();
-        invalidatingPos = false;
     }
 
     /// This method is responsible for updating the grid's state when the [VFXGrid#getCellFactory()]
@@ -246,7 +242,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// The new state's [VFXGridState#haveCellsChanged()] flag will always be `true` of course.
     /// The great thing about the factory change is that there is no need to invalidate the position.
     protected void onCellFactoryChanged() {
-
         // Dispose current state, cells if any (not INVALID) are now in cache
         // Purge cache too, cells are from old factory
         if (disposeCurrent()) grid.getCache().clear();
@@ -269,16 +264,15 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// the [#moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXGridState)].
     ///
     /// Note that to compute a valid new state, it is important to also validate the grid's positions by invoking
-    /// [VFXGridHelper#invalidatePos()].
+    /// [#invalidatePos()].
     ///
     /// Note that this will request the layout computation, [VFXGrid#requestViewportLayout()], even if the cells
     /// didn't change for obvious reasons.
     protected void onCellSizeChanged() {
-        invalidatingPos = true;
         VFXGridHelper<T, C> helper = grid.getHelper();
 
         // Ensure positions are valid!
-        helper.invalidatePos();
+        invalidatePos();
 
         if (!gridFactorySizeCheck()) return;
 
@@ -291,7 +285,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
         if (disposeCurrent()) newState.setCellsChanged(true);
         grid.update(newState);
         if (!newState.haveCellsChanged()) grid.requestViewportLayout();
-        invalidatingPos = false;
     }
 
     /// This method is responsible for updating the grid's state when either the [VFXGrid#hSpacingProperty()] or
@@ -301,15 +294,14 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// the computation for the new state is delegated to the [#moveReuseCreateAlgorithm(IntegerRange, IntegerRange, VFXGridState)].
     ///
     /// Note that to compute a valid new state, it is important to also validate the grid's positions by invoking
-    /// [VFXGridHelper#invalidatePos()]. Also, this will request the layout computation,
+    /// [#invalidatePos()]. Also, this will request the layout computation,
     /// [VFXGrid#requestViewportLayout()], even if the cells didn't change for obvious reasons.
     protected void onSpacingChanged() {
-        invalidatingPos = true;
         if (!gridFactorySizeCheck()) return;
         VFXGridHelper<T, C> helper = grid.getHelper();
 
         // Ensure positions are valid!
-        helper.invalidatePos();
+        invalidatePos();
 
         // Ensure ranges are valid
         IntegerRange rowsRange = helper.rowsRange();
@@ -323,7 +315,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
         if (disposeCurrent()) newState.setCellsChanged(true);
         grid.update(newState);
         if (!newState.haveCellsChanged()) grid.requestViewportLayout();
-        invalidatingPos = false;
     }
 
     /// Before describing the operations performed by this method, it's important for the reader to understand the difference
@@ -372,7 +363,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// Last notes:
     ///
     /// 1) This is one of those methods that to produce a valid new state needs to validate the grid's positions,
-    /// so it calls [VFXGridHelper#invalidatePos()]
+    /// so it calls [#invalidatePos()]
     ///
     /// 2) Before invalidating the position, this must also request the re-computation of the container's virtual sizes
     /// by calling [VFXGridHelper#invalidateVirtualSizes()]
@@ -381,7 +372,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// After changes like this, items may be still present in the viewport, but at different indexes, which translates to
     /// different layout positions. There is no easy way to detect this, so better safe than sorry, always update the layout.
     protected void onItemsChanged() {
-        invalidatingPos = true;
         VFXGridHelper<T, C> helper = grid.getHelper();
 
         /*
@@ -397,7 +387,7 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
          * But since that information is lost (we would have to track it here in some way), we always
          * invalidate positions, after all, it's not a big deal anyway.
          */
-        helper.invalidatePos();
+        invalidatePos();
 
         VFXGridState<T, C> current = grid.getState();
         if (!gridFactorySizeCheck()) return;
@@ -432,7 +422,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
         if (disposeCurrent()) newState.setCellsChanged(true);
         grid.update(newState);
         if (!newState.haveCellsChanged()) grid.requestViewportLayout();
-        invalidatingPos = false;
     }
 
     //================================================================================
@@ -504,6 +493,19 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
             }
             newState.addCell(index, item, c);
         }
+    }
+
+    /// Forces the [VFXGrid#vPosProperty()] and the [VFXGrid#hPosProperty()] to be validated again.
+    ///
+    /// This is simply done by calling the respective setters with their current values, the two properties clamp
+    /// themselves between 0 and the max scroll.
+    ///
+    /// The flag keeps [#onPositionChanged(Orientation)] from running while it happens, see the class docs.
+    protected void invalidatePos() {
+        invalidatingPos = true;
+        grid.setVPos(grid.getVPos());
+        grid.setHPos(grid.getHPos());
+        invalidatingPos = false;
     }
 
     /// Avoids code duplication. This method checks for three things:

@@ -77,18 +77,6 @@ public interface VFXContainerHelper<T, C extends Region & VFXContainer<T>> {
     /// @return the [VFXContainer] implementation instance associated to this helper
     C getContainer();
 
-    /// Forces the [VFXContainer#vPosProperty()] and [VFXContainer#hPosProperty()] to be invalidated.
-    ///
-    /// This is simply done by calling the respective setters with their current respective values. Those two properties
-    /// will automatically call [#getMaxVScroll()] and [#getMaxHScroll()] to ensure the values are correct.
-    ///
-    /// Automatically invoked when needed.
-    default void invalidatePos() {
-        C container = getContainer();
-        container.setVPos(container.getVPos());
-        container.setHPos(container.getHPos());
-    }
-
     /// Implementations should define the logic to manually invalidate the virtual sizes ([#virtualMaxXProperty()]
     /// and [#virtualMaxYProperty()]) of the container when needed.
     ///
