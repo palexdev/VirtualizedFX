@@ -12,7 +12,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/palexdev/VirtualizedFX">
-    <img src=https://imgur.com/0Ae689U.png" alt="Logo">
+    <img src="https://imgur.com/0Ae689U.png" alt="Logo">
   </a>
 </p>
 
