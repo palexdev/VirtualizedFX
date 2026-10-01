@@ -74,10 +74,11 @@ import static java.util.Optional.ofNullable;
 ///
 /// ## Width
 ///
-/// The width of each column is decided by the table's [VFXTableHelper], since the layout methods are defined there.
-/// So, the column's min, pref and max widths do not determine it. What the column can do is ask for a width through the
-/// [#userPrefWidthProperty()]. How the request is honored is up to the helper, see [VFXTable] for the columns' size and
-/// how the space left in the table is distributed. For the latter, a column can also have a weight, see [VFXTable#setWeight(VFXTableColumn,int)].
+/// The width of each column is decided by the table. It's computed by the table's [ColumnsLayoutCache], and applied at
+/// layout by its [VFXTableHelper]. So, the column's min, pref and max widths do not determine it. What the column can do
+/// is ask for a width through the [#userPrefWidthProperty()]. How the request is honored is up to the cache, see [VFXTable]
+/// for the columns' size and how the space left in the table is distributed. For the latter, a column can also have a
+/// weight, see [VFXTable#setWeight(VFXTableColumn,int)].
 ///
 /// A column can be sized to fit its content with [#sizeToContent()].
 ///
@@ -393,7 +394,7 @@ public abstract class VFXTableColumn<T, C extends VFXTableCell<T>> extends MFXLa
     /// Specifies the width the column would like to have, -1 (the default value) means none.<br >
     /// This is also where [#sizeToContent()] stores its result, and where gestures should store theirs.
     ///
-    /// How the value is honored is up to the table's [VFXTableHelper], see [VFXTable#columnsSizeProperty()] and
+    /// How the value is honored is up to the table's [ColumnsLayoutCache], see [VFXTable#columnsSizeProperty()] and
     /// [VFXTable#columnsFillPolicyProperty()]. Changes are notified to the table, see [#onColumnWidthChanged()].
     public ExtendedProperty<Double> userPrefWidthProperty() {
         return userPrefWidth;

@@ -118,6 +118,7 @@ import static java.util.Optional.ofNullable;
 /// In other words, to support such features the x-axis can't be virtualized by a simple multiplication anymore, since
 /// every column may have a different width. So, the columns' positions are kept in a cache, [ColumnsLayoutCache], and the
 /// x-axis is virtualized by looking up which columns fall in the viewport (backed by a binary search, `O(logn)`).
+/// The cache is built by [#createLayoutCache()] along with the table.
 ///
 /// As for the columns' size:
 /// - The [#columnsSizeProperty()] specifies the height of all the columns, and the minimum width each of them has.
@@ -195,6 +196,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     };
 
     private final ColumnsList<T> columns = new ColumnsList<>();
+    private final ColumnsLayoutCache<T> layoutCache;
     private final VFXCellsCache<T, VFXTableRow<T>> rowsCache;
     private final CellFactory<T, VFXTableRow<T>> rowsFactory = new CellFactory<>(context);
 
@@ -249,6 +251,7 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     public VFXTable(ObservableList<T> items, Collection<VFXTableColumn<T, ? extends VFXTableCell<T>>> columns) {
         setItems(items);
         this.columns.setAll(columns);
+        layoutCache = requireNonNull(createLayoutCache(), "Table's layout cache cannot be null!").init();
         rowsCache = createRowsCache();
         init();
     }
@@ -315,6 +318,16 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         return new VFXTableManager<>(this);
     }
 
+    /// Responsible for creating the table's [ColumnsLayoutCache], which computes the columns' widths and positions.
+    /// Called only once, when the table is built, and the result cannot be `null`. The table initializes it right after,
+    /// [ColumnsLayoutCache#init()].
+    ///
+    /// Override this to use a custom cache. Beware, it runs during the table's construction, so it must not depend on
+    /// state initialized in a subclass' constructor.
+    protected ColumnsLayoutCache<T> createLayoutCache() {
+        return new ColumnsLayoutCache<>(this);
+    }
+
     /// @return the default function used to build rows. Uses [VFXDefaultTableRow].
     public Function<T, VFXTableRow<T>> defaultRowsFactory() {
         return VFXDefaultTableRow::new;
@@ -341,13 +354,13 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         requestViewportLayout(interval);
     }
 
-    /// Handles changes in the columns' list. First, the helper is notified so that its cache is up to date,
-    /// see [VFXTableHelper#onColumnsChanged(ListChangeListener.Change)]. Then, the table reference is set on added columns
+    /// Handles changes in the columns' list. First, the layout cache is notified so that it is up to date,
+    /// see [ColumnsLayoutCache#onColumnsChanged(ListChangeListener.Change)]. Then, the table reference is set on added columns
     /// and removed from removed ones. A column both removed and added by the same change (e.g. a `setAll` that keeps some
     /// of the old columns) is simply left as it is. Finally, the columns' indexes are hinted from the first changed index
     /// on, and the manager is notified, see [VFXTableManager#onColumnsChanged(int)].
     protected void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ? extends VFXTableCell<T>>> c) {
-        getHelper().onColumnsChanged(c);
+        layoutCache.onColumnsChanged(c);
 
         c.reset();
         // A setAll operation may end up adding the same columns as before (or even just some of them)
@@ -479,6 +492,11 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
         return columns.stream()
             .mapToInt(VFXTableColumn::cacheSize)
             .sum();
+    }
+
+    /// Delegate for [ColumnsLayoutCache#isSharedAbsorber(int)], with the given column's index.
+    public boolean isSharedAbsorber(VFXTableColumn<T, ?> column) {
+        return layoutCache.isSharedAbsorber(column.getIndex());
     }
 
     /// Delegate for [VFXTableState#getRowsRange()]
@@ -704,7 +722,8 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     ///
     /// The width is the **minimum** width all columns must have: a column's natural width is the greater between this and
     /// its [VFXTableColumn#userPrefWidthProperty()]. The height is the height of all the columns.
-    /// This behavior can also be modified as it is defined by the default [VFXTableHelper] implementation.
+    /// This behavior can also be modified: the width is handled by the [ColumnsLayoutCache], the height by the default
+    /// [VFXTableHelper] implementation.
     ///
     /// Can be set in CSS via the property: '-vfx-columns-size'.
     public StyleableObjectProperty<Size> columnsSizeProperty() {
@@ -900,6 +919,11 @@ public class VFXTable<T> extends MFXControl implements VFXContainer<T>, VFXScrol
     /// This is the observable list containing all the table's columns. See [ColumnsList].
     public ColumnsList<T> columns() {
         return columns;
+    }
+
+    /// @return the table's [ColumnsLayoutCache], see [#createLayoutCache()]
+    protected ColumnsLayoutCache<T> getLayoutCache() {
+        return layoutCache;
     }
 
     public VFXTableHelper<T> getHelper() {

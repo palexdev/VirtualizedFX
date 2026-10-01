@@ -28,7 +28,8 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
-/// Cache mechanism to simplify and vastly improve the columns' layout performance, used by the [VFXDefaultTableHelper].
+/// Cache mechanism to simplify and vastly improve the columns' layout performance. Every [VFXTable] has one, built by
+/// [VFXTable#createLayoutCache()], and the [VFXDefaultTableHelper] reads from it.
 ///
 /// Columns may have different widths, which makes some computations way more expensive. A column's position cannot be
 /// determined by a simple multiplication, but it's the sum of all previous columns' widths ([a prefix sum](https://www.geeksforgeeks.org/dsa/understanding-prefix-sums/)).
@@ -82,8 +83,8 @@ import javafx.collections.ObservableList;
 /// The cache also computes the [VFXTable#virtualMaxXProperty()], because the two are tightly coupled: `virtualMaxX` is
 /// where the columns end, the position after the last column. See [#computeValue()].
 ///
-/// The binding has no dependencies. The helper forwards the relevant changes to the `on...` handlers, which invalidate
-/// only what the change affects. Those that return an `int` also tell which columns need to be laid out again: the index
+/// The binding has no dependencies. The table and its [VFXTableManager] forward the relevant changes to the `on...`
+/// handlers, which invalidate only what the change affects. Those that return an `int` also tell which columns need to be laid out again: the index
 /// of the first column whose position or width changed, or -1 if none did.
 public class ColumnsLayoutCache<T> extends DoubleBinding {
 

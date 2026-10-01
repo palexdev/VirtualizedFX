@@ -26,18 +26,15 @@ import io.github.palexdev.mfxcore.utils.NumberUtils;
 import io.github.palexdev.virtualizedfx.base.VFXContainerHelper;
 import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
-import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXTableColumnBehavior;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.binding.DoubleBinding;
-import javafx.collections.ListChangeListener;
 import javafx.geometry.Orientation;
 
 import static io.github.palexdev.mfxcore.base.beans.Position.position;
 
 /// Utility API for [VFXTable]. The helper computes the ranges of rows and columns to display, the virtual sizes and the
-/// viewport's position, decides the columns' width and position, and lays out columns, rows and cells.
+/// viewport's position, and lays out columns, rows and cells.
 /// The default implementation is [VFXDefaultTableHelper], you can change it through [VFXTable#helperFactoryProperty()].
 ///
 /// ## Indexes
@@ -48,9 +45,8 @@ import static io.github.palexdev.mfxcore.base.beans.Position.position;
 ///
 /// ## Columns' width
 ///
-/// The helper is the one deciding each column's width and position. The table's changes that can affect them are
-/// forwarded to the `on...` methods below. Those that return an `int` also tell which columns need to be laid out again:
-/// the index of the first column whose position or width changed, or -1 if none did.
+/// Each column's width and position are computed by the table's [ColumnsLayoutCache]. The default helper,
+/// [VFXDefaultTableHelper], reads them from there, both to find the columns to display and to lay out columns and cells.
 ///
 /// ## Ranges
 ///
@@ -87,35 +83,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// @return the range of columns that should be present in the viewport. This also takes into account buffer columns,
     /// see [#visibleColumns()] and [#totalColumns()]
     IntegerRange columnsRange();
-
-    /// Called by the table's manager when the width specified by [VFXTable#columnsSizeProperty()] changes.
-    void onColumnsSizeChanged();
-
-    /// Called by the table's manager when a column's [VFXTableColumn#userPrefWidthProperty()] changes.
-    ///
-    /// @return the index of the first column whose position or width changed, -1 if none did
-    int onColumnResized(VFXTableColumn<T, ?> column);
-
-    /// Called by the table's manager when the table's width changes.
-    ///
-    /// @return the index of the first column whose position or width changed, -1 if none did
-    int onTableWidthChanged();
-
-    /// Called by the table's manager when the [VFXTable#columnsFillPolicyProperty()] changes.
-    void onFillPolicyChanged();
-
-    /// Called by the table's manager when a column's weight changes, see [VFXTable#setWeight(VFXTableColumn,int)].
-    ///
-    /// @return the index of the first column whose position or width changed, -1 if none did
-    int onColumnWeightChanged(VFXTableColumn<T, ?> column);
-
-    /// Called by the table when its columns' list changes, before the manager computes the new state.
-    void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change);
-
-    /// @return whether the given column takes part of the leftover width, but not all of it, since other columns absorb
-    /// too. See [ColumnsFillPolicy] for what the leftover width is. Used by the resize rule of the default column behavior,
-    /// [VFXTableColumnBehavior]
-    boolean isSharedAbsorber(VFXTableColumn<T, ?> column);
 
     /// Lays out the given column, identified by its absolute index in [VFXTable#columns()].
     void layoutColumn(int columnIdx, VFXTableColumn<T, ?> column);
@@ -236,8 +203,9 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// ## How the x-axis is virtualized
     ///
     /// Columns may have different widths, so the x-axis geometry cannot be derived by multiplying a single value. Every
-    /// column's width and position come from a [ColumnsLayoutCache], which also implements the fill policy and computes
-    /// the [#virtualMaxXProperty()]. The `on...` methods are simply forwarded to it.
+    /// column's width and position come from the table's [ColumnsLayoutCache], which also implements the fill policy and
+    /// computes the [#virtualMaxXProperty()]. The cache belongs to the table, which keeps it up to date, the helper reads
+    /// from it.
     ///
     /// A column's position is the sum of every previous column's width, a prefix sum. Prefix sums are monotonic, therefore
     /// binary-searchable: [#columnAt(double)] finds in `O(log n)` the last column whose position is still `<= x`. The
@@ -276,10 +244,10 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// the snapped positions of columns and cells land on whole pixels on screen too.
     class VFXDefaultTableHelper<T> extends VFXContainerHelperBase<T, VFXTable<T>> implements VFXTableHelper<T> {
 
-        private final ColumnsLayoutCache<T> layoutCache;
+        protected final ColumnsLayoutCache<T> layoutCache;
 
         public VFXDefaultTableHelper(VFXTable<T> table) {
-            layoutCache = new ColumnsLayoutCache<>(table).init();
+            layoutCache = table.getLayoutCache();
             super(table);
             createBindings();
         }
@@ -343,10 +311,11 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                 .get());
         }
 
-        /// @return the [ColumnsLayoutCache], which computes where the columns end, see [ColumnsLayoutCache#computeValue()]
+        /// @return the table's [ColumnsLayoutCache], which computes where the columns end, see
+        /// [ColumnsLayoutCache#computeValue()]
         @Override
         protected DoubleBinding createVirtualMaxXBinding() {
-            return layoutCache;
+            return container.getLayoutCache();
         }
 
         /// The value is given by the number of items multiplied by the rows' height, 0 if there are no columns.
@@ -426,48 +395,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             int end = Math.min(columnsCount() - 1, start + needed - 1);
             if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
             return IntegerRange.of(start, end);
-        }
-
-        /// Delegate for [ColumnsLayoutCache#onColumnsSizeChanged()].
-        @Override
-        public void onColumnsSizeChanged() {
-            layoutCache.onColumnsSizeChanged();
-        }
-
-        /// Delegate for [ColumnsLayoutCache#onColumnResized(VFXTableColumn)].
-        @Override
-        public int onColumnResized(VFXTableColumn<T, ?> column) {
-            return layoutCache.onColumnResized(column);
-        }
-
-        /// Delegate for [ColumnsLayoutCache#onTableWidthChanged()].
-        @Override
-        public int onTableWidthChanged() {
-            return layoutCache.onTableWidthChanged();
-        }
-
-        /// Delegate for [ColumnsLayoutCache#onFillPolicyChanged()].
-        @Override
-        public void onFillPolicyChanged() {
-            layoutCache.onFillPolicyChanged();
-        }
-
-        /// Delegate for [ColumnsLayoutCache#onColumnWeightChanged(VFXTableColumn)].
-        @Override
-        public int onColumnWeightChanged(VFXTableColumn<T, ?> column) {
-            return layoutCache.onColumnWeightChanged(column);
-        }
-
-        /// Delegate for [ColumnsLayoutCache#onColumnsChanged(ListChangeListener.Change)].
-        @Override
-        public void onColumnsChanged(ListChangeListener.Change<? extends VFXTableColumn<T, ?>> change) {
-            layoutCache.onColumnsChanged(change);
-        }
-
-        /// Delegate for [ColumnsLayoutCache#isSharedAbsorber(int)].
-        @Override
-        public boolean isSharedAbsorber(VFXTableColumn<T, ?> column) {
-            return layoutCache.isSharedAbsorber(column.getIndex());
         }
 
         /// {@inheritDoc}
@@ -589,11 +516,12 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
 
         /// {@inheritDoc}
         ///
-        /// Disposes the [ColumnsLayoutCache], and unbinds the viewport's position.
+        /// Also unbinds the viewport's position. The [ColumnsLayoutCache] is left alone, since it belongs to the table and
+        /// outlives the helper.
         @Override
         public void dispose() {
-            layoutCache.dispose();
             viewportPosition.unbind();
+            vmxBinding = null; // It's the table's cache, super would dispose it
             super.dispose();
         }
     }

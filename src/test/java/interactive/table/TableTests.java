@@ -222,6 +222,18 @@ public class TableTests {
     }
 
     @Test
+    void testSwitchHelper(FxRobot robot) {
+        StackPane pane = setupStage();
+        Table table = new Table(users(50));
+        robot.interact(() -> pane.getChildren().add(table));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+
+        // The layout cache belongs to the table, disposing the old helper must leave it usable
+        robot.interact(() -> table.setHelperFactory(table.defaultHelperFactory()));
+        assertState(table, IntegerRange.of(0, 15), IntegerRange.of(0, 6));
+    }
+
+    @Test
     void testPopulateCache(FxRobot robot) {
         StackPane pane = setupStage();
         Table table = new Table(users(50));

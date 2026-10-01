@@ -49,6 +49,9 @@ import static java.util.Objects.requireNonNull;
 /// Not all of them come from a listener registered here. The columns' list is watched by the table itself, while a
 /// column's width, weight and cell factory are pushed by [VFXTableColumn].
 ///
+/// The changes that can affect a column's width or position go to the table's [ColumnsLayoutCache] first, so that
+/// the ranges and the layout are computed on up to date values.
+///
 /// ## How a state is produced
 ///
 /// Most of these computations follow the same skeleton. Make sure the positions are valid. Check that a state can be
@@ -103,11 +106,11 @@ public class VFXTableManager<T> {
         // Others
         onInvalidated(table.itemsProperty()).then(_ -> onItemsChanged()).listen();
         onChanged(table.columnsSizeProperty()).then((_, _) -> {
-            helper().onColumnsSizeChanged();
+            layoutCache().onColumnsSizeChanged();
             onColumnsSizeChanged();
         }).listen();
         onInvalidated(table.columnsFillPolicyProperty()).then(_ -> {
-            helper().onFillPolicyChanged();
+            layoutCache().onFillPolicyChanged();
             onFillPolicyChanged();
         }).listen();
         onInvalidated(table.rowsHeightProperty()).then(_ -> onRowsHeightChanged()).listen();
@@ -118,7 +121,7 @@ public class VFXTableManager<T> {
     /// cells. Since it runs on width and height changes, it's also the one that initializes the table, when the sizes
     /// become greater than 0. The buffer sizes take this path too.
     ///
-    /// On a width change the helper comes first, [VFXTableHelper#onTableWidthChanged()]: the leftover width is
+    /// On a width change the layout cache comes first, [ColumnsLayoutCache#onTableWidthChanged()]: the leftover width is
     /// redistributed as specified by the [VFXTable#columnsFillPolicyProperty()], and the index it gives back is the
     /// first column that ends up somewhere else because of it.
     ///
@@ -131,7 +134,7 @@ public class VFXTableManager<T> {
     protected void onGeometryChanged(GeometryChangeType gct) {
         VFXTableHelper<T> helper = helper();
 
-        int fillFrom = gct == GeometryChangeType.WIDTH ? helper.onTableWidthChanged() : -1; // redistribute leftover width
+        int fillFrom = gct == GeometryChangeType.WIDTH ? layoutCache().onTableWidthChanged() : -1; // redistribute leftover width
         invalidatePos(); // Ensure positions are correct before potentially producing an empty state!
         if (!tableFactorySizeCheck()) return;
 
@@ -233,7 +236,7 @@ public class VFXTableManager<T> {
 
     /// This method is responsible for computing a new state when the columns' list changes. It's called by
     /// [VFXTable#onColumnsChanged(ListChangeListener.Change)], which does the bookkeeping on the columns first (the
-    /// table reference and the index hint), and by then the helper has already seen the change too.
+    /// table reference and the index hint), and by then the layout cache has already seen the change too.
     ///
     /// The number of columns changed, so the horizontal position may be stale and is invalidated before anything else.
     ///
@@ -360,18 +363,18 @@ public class VFXTableManager<T> {
         table.updateState(newState);
     }
 
-    /// Called by a column when its [VFXTableColumn#userPrefWidthProperty()] changes. Tells the helper,
-    /// [VFXTableHelper#onColumnResized(VFXTableColumn)], and hands the first affected column to
+    /// Called by a column when its [VFXTableColumn#userPrefWidthProperty()] changes. Tells the layout cache,
+    /// [ColumnsLayoutCache#onColumnResized(VFXTableColumn)], and hands the first affected column to
     /// [#layoutColumnsFrom(int)].
     protected void onColumnResized(VFXTableColumn<T, ?> column) {
-        layoutColumnsFrom(helper().onColumnResized(column));
+        layoutColumnsFrom(layoutCache().onColumnResized(column));
     }
 
-    /// Called when a column's weight changes, see [VFXTable#setWeight(VFXTableColumn,int)]. Tells the helper,
-    /// [VFXTableHelper#onColumnWeightChanged(VFXTableColumn)], and hands the first affected column to
+    /// Called when a column's weight changes, see [VFXTable#setWeight(VFXTableColumn,int)]. Tells the layout cache,
+    /// [ColumnsLayoutCache#onColumnWeightChanged(VFXTableColumn)], and hands the first affected column to
     /// [#layoutColumnsFrom(int)].
     protected void onColumnWeightChanged(VFXTableColumn<T, ?> column) {
-        layoutColumnsFrom(helper().onColumnWeightChanged(column));
+        layoutColumnsFrom(layoutCache().onColumnWeightChanged(column));
     }
 
     /// Both a column's resize and a weight change end up here, with the index of the first column whose width or
@@ -684,6 +687,10 @@ public class VFXTableManager<T> {
 
     public VFXTableHelper<T> helper() {
         return requireNonNull(table.getHelper(), "The table's manager cannot operate without a helper");
+    }
+
+    protected ColumnsLayoutCache<T> layoutCache() {
+        return table.getLayoutCache();
     }
 
     public VFXTableState<T> state() {

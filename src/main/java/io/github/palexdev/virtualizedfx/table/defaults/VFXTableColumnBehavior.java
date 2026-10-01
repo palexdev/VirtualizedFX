@@ -24,8 +24,8 @@ import io.github.palexdev.mfxcore.utils.fx.resize.Resizer;
 import io.github.palexdev.mfxcore.utils.fx.resize.targets.RegionTarget;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
 import io.github.palexdev.virtualizedfx.table.ColumnsLayoutCache;
+import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
-import io.github.palexdev.virtualizedfx.table.VFXTableHelper;
 import io.github.palexdev.virtualizedfx.enums.ColumnsFillPolicy;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
@@ -142,7 +142,7 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
         /// | absorbs all of the leftover width | kept | see below |
         /// | absorbs nothing | untouched | the column takes the dragged width |
         ///
-        /// The check is [VFXTableHelper#isSharedAbsorber(VFXTableColumn)], so it's done on the effective weights. With
+        /// The check is [VFXTable#isSharedAbsorber(VFXTableColumn)], so it's done on the effective weights. With
         /// [ColumnsFillPolicy#LAST] no column is a shared absorber, and the weights declared on the other columns are not
         /// cleared, they still apply if the policy is switched to [ColumnsFillPolicy#WEIGHTED].
         ///
@@ -158,8 +158,7 @@ public class VFXTableColumnBehavior<T, C extends VFXTableCell<T>> extends MFXBeh
         /// the next events skip the check, the column is not an absorber anymore. The width the gesture computes starts
         /// from the column's bounds at press, which include the absorbed width, so the edge does not jump.
         protected <T> void onResize(VFXTableColumn<T, ?> column, double width) {
-            VFXTableHelper<T> helper = column.getTable().getHelper();
-            if (helper.isSharedAbsorber(column)) setWeight(column, DEFAULT_WEIGHT);
+            if (column.getTable().isSharedAbsorber(column)) setWeight(column, DEFAULT_WEIGHT);
             column.setUserPrefWidth(width);
         }
 

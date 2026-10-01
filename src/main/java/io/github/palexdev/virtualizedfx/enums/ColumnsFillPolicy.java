@@ -18,9 +18,9 @@
 
 package io.github.palexdev.virtualizedfx.enums;
 
+import io.github.palexdev.virtualizedfx.table.ColumnsLayoutCache;
 import io.github.palexdev.virtualizedfx.table.VFXTable;
 import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
-import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VFXDefaultTableHelper;
 
 /// Enumeration to specify how a [VFXTable] distributes the **leftover width** among its columns, see [VFXTable#columnsFillPolicyProperty()].
 ///
@@ -28,7 +28,7 @@ import io.github.palexdev.virtualizedfx.table.VFXTableHelper.VFXDefaultTableHelp
 /// When they are as wide as the table or wider, there is nothing to distribute, and the policy has no effect.<br >
 /// A column that gets part of the leftover width grows by that amount. A policy never shrinks a column.
 ///
-/// These are the semantics implemented by the default helper, [VFXDefaultTableHelper].
+/// These are the semantics implemented by the table's [ColumnsLayoutCache].
 ///
 /// ## Absorbers on the left
 ///
