@@ -36,6 +36,8 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
 import javafx.util.StringConverter;
 
+import static io.github.palexdev.mfxcore.controls.MFXStyleable.extend;
+
 /// Extension of [VFXCellBase] which also implements [VFXMappingTableCell]. Uses an inline extension of [VFXLabeledCellSkin]
 /// as the default skin (see below why). This is intended to be used with models that do not use JavaFX's properties.
 /// Expands the default style classes to be: ".cell-base" and ".table-cell".
@@ -109,7 +111,7 @@ public class VFXSimpleTableCell<T, E> extends VFXCellBase<T> implements VFXMappi
 
     @Override
     public List<String> defaultStyleClasses() {
-        return List.of("cell-base", "table-cell");
+        return extend(super.defaultStyleClasses(), "table-cell");
     }
 
     @Override

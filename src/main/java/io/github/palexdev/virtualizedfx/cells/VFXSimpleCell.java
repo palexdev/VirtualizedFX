@@ -18,7 +18,6 @@
 
 package io.github.palexdev.virtualizedfx.cells;
 
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -72,11 +71,6 @@ public class VFXSimpleCell<T> extends VFXCellBase<T> {
                 label.setText(converter.toString(item));
             }
         };
-    }
-
-    @Override
-    public List<String> defaultStyleClasses() {
-        return List.of("cell-base", "cell");
     }
 
     //================================================================================

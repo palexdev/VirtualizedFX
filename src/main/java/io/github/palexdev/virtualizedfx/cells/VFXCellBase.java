@@ -37,6 +37,8 @@ import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 
+import static io.github.palexdev.mfxcore.controls.MFXStyleable.styleClasses;
+
 /// The basic and typical implementation of a cell in JavaFX is a cell with just two properties: one to keep track
 /// of the cell's index and the other to keep track of the displayed item.
 ///
@@ -102,7 +104,7 @@ public abstract class VFXCellBase<T> extends MFXControl implements VFXCell<T> {
 
     @Override
     public List<String> defaultStyleClasses() {
-        return List.of("cell-base");
+        return styleClasses("vfx-cell");
     }
 
     @Override
