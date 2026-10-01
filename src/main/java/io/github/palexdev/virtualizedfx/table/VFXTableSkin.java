@@ -107,6 +107,7 @@ public class VFXTableSkin<T> extends MFXSkinBase<VFXTable<T>> {
             @Override
             protected void layoutChildren() {/*manual, no-op*/}
         };
+        viewport.getStyleClass().add("viewport");
 
         // Init clips
 
