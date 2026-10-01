@@ -96,45 +96,18 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
     /// and the range must be invalidated all the same.
     protected void install() {
         // Geometry
-        onInvalidated(grid.widthProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.HORIZONTAL);
-            onGeometryChanged();
-        }).listen();
-        onInvalidated(grid.heightProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.VERTICAL);
-            onGeometryChanged();
-        }).listen();
-        onInvalidated(grid.bufferSizeProperty()).then(_ -> {
-            invalidateRanges();
-            onGeometryChanged();
-        }).listen();
+        onInvalidated(grid.widthProperty()).then(_ -> onGeometryChanged()).listen();
+        onInvalidated(grid.heightProperty()).then(_ -> onGeometryChanged()).listen();
+        onInvalidated(grid.bufferSizeProperty()).then(_ -> onGeometryChanged()).listen();
         // Position
-        onInvalidated(grid.hPosProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.HORIZONTAL);
-            onPositionChanged(Orientation.HORIZONTAL);
-        }).listen();
-        onInvalidated(grid.vPosProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.VERTICAL);
-            onPositionChanged(Orientation.VERTICAL);
-        }).listen();
+        onInvalidated(grid.hPosProperty()).then(_ -> onPositionChanged(Orientation.HORIZONTAL)).listen();
+        onInvalidated(grid.vPosProperty()).then(_ -> onPositionChanged(Orientation.VERTICAL)).listen();
         // Others
-        onInvalidated(grid.columnsNumProperty()).then(_ -> {
-            invalidateRanges();
-            onColumnsNumChanged();
-        }).listen();
+        onInvalidated(grid.columnsNumProperty()).then(_ -> onColumnsNumChanged()).listen();
         onInvalidated(grid.getCellFactory()).then(_ -> onCellFactoryChanged()).listen();
-        onInvalidated(grid.cellSizeProperty()).then(_ -> {
-            invalidateRanges();
-            onCellSizeChanged();
-        }).listen();
-        onInvalidated(grid.hSpacingProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.HORIZONTAL);
-            onSpacingChanged();
-        }).listen();
-        onInvalidated(grid.vSpacingProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.VERTICAL);
-            onSpacingChanged();
-        }).listen();
+        onInvalidated(grid.cellSizeProperty()).then(_ -> onCellSizeChanged()).listen();
+        onInvalidated(grid.hSpacingProperty()).then(_ -> onSpacingChanged()).listen();
+        onInvalidated(grid.vSpacingProperty()).then(_ -> onSpacingChanged()).listen();
         onInvalidated(grid.itemsProperty()).then(_ -> onItemsChanged()).listen();
     }
 
@@ -428,7 +401,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
          */
         helper.invalidateVirtualSizes();
 
-
         /*
          * Ensure positions are valid!
          * In theory, this is only needed if the list now is smaller than before (or the old one)
@@ -617,13 +589,6 @@ public class VFXGridManager<T, C extends VFXCell<T>> {
             return true;
         }
         return false;
-    }
-
-    /// Convenience method to invalidate both ranges, see [VFXGridHelper#invalidateRange(Orientation)].
-    protected void invalidateRanges() {
-        VFXGridHelper<T, C> helper = helper();
-        helper.invalidateRange(Orientation.HORIZONTAL);
-        helper.invalidateRange(Orientation.VERTICAL);
     }
 
     //================================================================================

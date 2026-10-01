@@ -31,8 +31,6 @@ import io.github.palexdev.virtualizedfx.table.defaults.VFXTableColumnBehavior;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Orientation;
 
@@ -86,13 +84,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         return getContainer().columns().size();
     }
 
-    /// Specifies the range of columns that should be present in the viewport. This also takes into account buffer columns,
-    /// see [#visibleColumns()] and [#totalColumns()].
-    ObservableValue<IntegerRange> columnsRangeProperty();
-
-    default IntegerRange columnsRange() {
-        return columnsRangeProperty().getValue();
-    }
+    IntegerRange columnsRange();
 
     /// Called by the table's manager when the width specified by [VFXTable#columnsSizeProperty()] changes.
     void onColumnsSizeChanged();
@@ -144,15 +136,9 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// @see VFXTable#rowsBufferSizeProperty()
     int totalRows();
 
-    /// Specifies the range of rows that should be present in the viewport. This also takes into account buffer rows,
-    /// see [#visibleRows()] and [#totalRows()].
-    ObservableValue<IntegerRange> rowsRangeProperty();
-
     /// @return the range of rows that should be present in the viewport. This also takes into account buffer rows,
     /// see [#visibleRows()] and [#totalRows()]
-    default IntegerRange rowsRange() {
-        return rowsRangeProperty().getValue();
-    }
+    IntegerRange rowsRange();
 
     /// Lays out the given row.
     ///
@@ -206,12 +192,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     //================================================================================
     // Misc
     //================================================================================
-
-    /// Invalidates the range of the given axis, [#columnsRangeProperty()] for [Orientation#HORIZONTAL],
-    /// [#rowsRangeProperty()] for [Orientation#VERTICAL].
-    ///
-    /// Called by the table's manager when a property that affects the range changes, see the class docs.
-    void invalidateRange(Orientation axis);
 
     /// @return the viewport's height by taking into account the table's header height, which is given by
     /// [VFXTable#columnsSizeProperty()]
@@ -294,9 +274,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
     /// the snapped positions of columns and cells land on whole pixels on screen too.
     class VFXDefaultTableHelper<T> extends VFXContainerHelperBase<T, VFXTable<T>> implements VFXTableHelper<T> {
 
-        private ObjectBinding<IntegerRange> columnsRange;
-        private ObjectBinding<IntegerRange> rowsRange;
-
         private final ColumnsLayoutCache<T> layoutCache;
 
         public VFXDefaultTableHelper(VFXTable<T> table) {
@@ -348,33 +325,6 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         @Override
         protected void createBindings() {
             super.createBindings();
-            columnsRange = ObjectBindingBuilder.<IntegerRange>build()
-                .setMapper(() -> {
-                    if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
-                    int needed = totalColumns();
-                    if (needed == 0) return Utils.INVALID_RANGE;
-
-                    int start = Math.max(0, firstColumn() - container.getColumnsBufferSize().val());
-                    int end = Math.min(columnsCount() - 1, start + needed - 1);
-                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
-                    return IntegerRange.of(start, end);
-                })
-                .addSources(container.columns())
-                .addSources(layoutCache)
-                .get();
-            rowsRange = ObjectBindingBuilder.<IntegerRange>build()
-                .setMapper(() -> {
-                    if (viewportHeight() <= 0) return Utils.INVALID_RANGE;
-                    int needed = totalRows();
-                    if (needed == 0) return Utils.INVALID_RANGE;
-
-                    int start = Math.max(0, firstRow() - container.getRowsBufferSize().val());
-                    int end = Math.min(container.size() - 1, start + needed - 1);
-                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
-                    return IntegerRange.of(start, end);
-                })
-                .addSources(container.sizeProperty())
-                .get();
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
                     double x = 0;
@@ -397,6 +347,7 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
                 .addSources(container.layoutBoundsProperty())
                 .addSources(container.vPosProperty(), container.hPosProperty())
                 .addSources(container.rowsHeightProperty(), container.columnsSizeProperty())
+                .addSources(container.rowsBufferSizeProperty(), container.sizeProperty(), container.columns())
                 .get());
         }
 
@@ -467,8 +418,15 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         }
 
         @Override
-        public ObservableValue<IntegerRange> columnsRangeProperty() {
-            return columnsRange;
+        public IntegerRange columnsRange() {
+            if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
+            int needed = totalColumns();
+            if (needed == 0) return Utils.INVALID_RANGE;
+
+            int start = Math.max(0, firstColumn() - container.getColumnsBufferSize().val());
+            int end = Math.min(columnsCount() - 1, start + needed - 1);
+            if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
+            return IntegerRange.of(start, end);
         }
 
         /// Delegate for [ColumnsLayoutCache#onColumnsSizeChanged()].
@@ -568,8 +526,15 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
         }
 
         @Override
-        public ObservableValue<IntegerRange> rowsRangeProperty() {
-            return rowsRange;
+        public IntegerRange rowsRange() {
+            if (viewportHeight() <= 0) return Utils.INVALID_RANGE;
+            int needed = totalRows();
+            if (needed == 0) return Utils.INVALID_RANGE;
+
+            int start = Math.max(0, firstRow() - container.getRowsBufferSize().val());
+            int end = Math.min(container.size() - 1, start + needed - 1);
+            if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
+            return IntegerRange.of(start, end);
         }
 
         /// {@inheritDoc}
@@ -617,20 +582,12 @@ public interface VFXTableHelper<T> extends VFXContainerHelper<T, VFXTable<T>> {
             }
         }
 
-        @Override
-        public void invalidateRange(Orientation axis) {
-            if (axis == Orientation.HORIZONTAL) columnsRange.invalidate();
-            else rowsRange.invalidate();
-        }
-
         /// {@inheritDoc}
         ///
         /// Disposes the [ColumnsLayoutCache] and the two range bindings, and unbinds the viewport's position.
         @Override
         public void dispose() {
             layoutCache.dispose();
-            columnsRange.dispose();
-            rowsRange.dispose();
             viewportPosition.unbind();
             super.dispose();
         }

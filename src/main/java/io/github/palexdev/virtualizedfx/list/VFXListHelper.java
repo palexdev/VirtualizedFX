@@ -29,8 +29,6 @@ import io.github.palexdev.virtualizedfx.cells.base.VFXCell;
 import io.github.palexdev.virtualizedfx.utils.Utils;
 import io.github.palexdev.virtualizedfx.utils.VFXCellsCache;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 
@@ -69,20 +67,9 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// the number of buffer cells
     int totalNum();
 
-    /// Specifies the range of items present in the list. This also takes into account buffer items, see [#visibleNum()]
-    /// and [#totalNum()]
-    ObservableValue<IntegerRange> rangeProperty();
-
     /// @return the range of items present in the list. This also takes into account buffer items, see [#visibleNum()]
     /// and [#totalNum()]
-    default IntegerRange range() {
-        return rangeProperty().getValue();
-    }
-
-    /// Invalidates the [#rangeProperty()], so that the next read recomputes it.
-    ///
-    /// Called by the list's manager when a property that affects the range changes, see the class docs.
-    void invalidateRange();
+    IntegerRange range();
 
     /// Computes the width or height of the cell depending on the container's orientation.
     ///
@@ -98,7 +85,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     /// [VFXListSkin#layout()] counts it from 0 while iterating the state. The offset from the range's start to the
     /// first visible cell is carried by [#viewportPositionProperty()] instead
     void layout(int layoutIndex, VFXCell<T> cell);
-
 
     /// Scrolls in the viewport by the given number of pixels.
     void scrollBy(double pixels);
@@ -144,8 +130,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
     ///
     /// - the total number of cells in the viewport
     abstract class AbstractHelper<T, C extends VFXCell<T>> extends VFXContainerHelperBase<T, VFXList<T, C>> implements VFXListHelper<T, C> {
-        protected ObjectBinding<IntegerRange> range;
-
         public AbstractHelper(VFXList<T, C> list) {
             super(list);
         }
@@ -156,15 +140,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
             return visible == 0 ? 0 : Math.min(visible + container.getBufferSize().val() * 2, container.size());
         }
 
-        @Override
-        public ObservableValue<IntegerRange> rangeProperty() {
-            return range;
-        }
-
-        @Override
-        public void invalidateRange() {
-            range.invalidate();
-        }
     }
 
     /// Concrete implementation of [AbstractHelper] for [Orientation#VERTICAL]. Here the range of items to
@@ -205,20 +180,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         @Override
         protected void createBindings() {
-            range = ObjectBindingBuilder.<IntegerRange>build()
-                .setMapper(() -> {
-                    if (container.getHeight() <= 0) return Utils.INVALID_RANGE;
-                    int needed = totalNum();
-                    if (needed == 0) return Utils.INVALID_RANGE;
-
-                    int start = Math.max(0, firstVisible() - container.getBufferSize().val());
-                    int end = Math.min(container.size() - 1, start + needed - 1);
-                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
-                    return IntegerRange.of(start, end);
-                })
-                .addSources(container.sizeProperty())
-                .get();
-
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
                     if (container.isEmpty()) return Position.origin();
@@ -234,7 +195,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                     double y = -(pixelsToFirst + visibleAmountFirst);
                     return position(container.snapPositionX(x), container.snapPositionY(y));
                 })
-                .addSources(container.layoutBoundsProperty(), range)
+                .addSources(container.layoutBoundsProperty(), container.bufferSizeProperty(), container.sizeProperty())
                 .addSources(container.hPosProperty(), container.vPosProperty())
                 .addSources(container.cellSizeProperty(), container.spacingProperty())
                 .get()
@@ -258,6 +219,18 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         /// {@inheritDoc}
         ///
         /// Given by `vPos / totalCellSize`, clamped between 0 and itemsNum - 1.
+        @Override
+        public IntegerRange range() {
+            if (container.getHeight() <= 0) return Utils.INVALID_RANGE;
+            int needed = totalNum();
+            if (needed == 0) return Utils.INVALID_RANGE;
+
+            int start = Math.max(0, firstVisible() - container.getBufferSize().val());
+            int end = Math.min(container.size() - 1, start + needed - 1);
+            if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
+            return IntegerRange.of(start, end);
+        }
+
         @Override
         public int firstVisible() {
             return NumberUtils.clamp(
@@ -348,7 +321,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         /// Also disposes the range binding and unbinds the viewport's position.
         @Override
         public void dispose() {
-            range.dispose();
             viewportPosition.unbind();
             super.dispose();
         }
@@ -392,20 +364,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
 
         @Override
         protected void createBindings() {
-            range = ObjectBindingBuilder.<IntegerRange>build()
-                .setMapper(() -> {
-                    if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
-                    int needed = totalNum();
-                    if (needed == 0) return Utils.INVALID_RANGE;
-
-                    int start = Math.max(0, firstVisible() - container.getBufferSize().val());
-                    int end = Math.min(container.size() - 1, start + needed - 1);
-                    if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
-                    return IntegerRange.of(start, end);
-                })
-                .addSources(container.sizeProperty())
-                .get();
-
             viewportPosition.bind(ObjectBindingBuilder.<Position>build()
                 .setMapper(() -> {
                     if (container.isEmpty()) return Position.origin();
@@ -421,7 +379,7 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
                     double y = -NumberUtils.clamp(container.getVPos(), 0.0, getMaxVScroll());
                     return position(container.snapPositionX(x), container.snapPositionY(y));
                 })
-                .addSources(container.layoutBoundsProperty(), range)
+                .addSources(container.layoutBoundsProperty(), container.bufferSizeProperty(), container.sizeProperty())
                 .addSources(container.hPosProperty(), container.vPosProperty())
                 .addSources(container.cellSizeProperty(), container.spacingProperty())
                 .get()
@@ -445,6 +403,18 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         /// {@inheritDoc}
         ///
         /// Given by `hPos / totalCellSize`, clamped between 0 and itemsNum - 1.
+        @Override
+        public IntegerRange range() {
+            if (container.getWidth() <= 0) return Utils.INVALID_RANGE;
+            int needed = totalNum();
+            if (needed == 0) return Utils.INVALID_RANGE;
+
+            int start = Math.max(0, firstVisible() - container.getBufferSize().val());
+            int end = Math.min(container.size() - 1, start + needed - 1);
+            if (end - start + 1 < needed) start = Math.max(0, end - needed + 1);
+            return IntegerRange.of(start, end);
+        }
+
         @Override
         public int firstVisible() {
             return NumberUtils.clamp(
@@ -535,7 +505,6 @@ public interface VFXListHelper<T, C extends VFXCell<T>> extends VFXContainerHelp
         /// Also disposes the range binding and unbinds the viewport's position.
         @Override
         public void dispose() {
-            range.dispose();
             viewportPosition.unbind();
             super.dispose();
         }

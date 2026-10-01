@@ -104,7 +104,6 @@ public class VFXPaginatedListManager<T, C extends VFXCell<T>> extends VFXListMan
     /// The range is invalidated too, [VFXListHelper#invalidateRange()], since the number of cells per page is the
     /// number of visible cells, see [VFXPaginatedListHelper].
     protected void onCellsPerPageChanged() {
-        helper().invalidateRange();
         getList().requestLayout();
     }
 

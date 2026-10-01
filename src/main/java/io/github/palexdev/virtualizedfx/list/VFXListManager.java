@@ -73,7 +73,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
 
     private final InvalidationListener positionListener = o -> {
         ((ObservableDoubleValue) o).get(); // Read it, or the property fires nothing on the next set
-        helper().invalidateRange();
         onPositionChanged();
     };
 
@@ -104,7 +103,6 @@ public class VFXListManager<T, C extends VFXCell<T>> {
         // Geometry
         onInvalidated(list.widthProperty()).then(_ -> {
             if (list.getOrientation() == Orientation.HORIZONTAL) {
-                helper().invalidateRange();
                 onGeometryChanged();
             } else {
                 list.requestViewportLayout();
@@ -112,16 +110,12 @@ public class VFXListManager<T, C extends VFXCell<T>> {
         }).listen();
         onInvalidated(list.heightProperty()).then(_ -> {
             if (list.getOrientation() == Orientation.VERTICAL) {
-                helper().invalidateRange();
                 onGeometryChanged();
             } else {
                 list.requestViewportLayout();
             }
         }).listen();
-        onInvalidated(list.bufferSizeProperty()).then(_ -> {
-            helper().invalidateRange();
-            onGeometryChanged();
-        }).listen();
+        onInvalidated(list.bufferSizeProperty()).then(_ -> onGeometryChanged()).listen();
         // Position
         swapPositionListener();
         // Others
@@ -132,14 +126,8 @@ public class VFXListManager<T, C extends VFXCell<T>> {
         onInvalidated(list.itemsProperty()).then(_ -> onItemsChanged()).listen();
         onInvalidated(list.getCellFactory()).then(_ -> onCellFactoryChanged()).listen();
         onInvalidated(list.fitToViewportProperty()).then(_ -> onFitToViewportChanged()).listen();
-        onInvalidated(list.cellSizeProperty()).then(_ -> {
-            helper().invalidateRange();
-            onCellSizeChanged();
-        }).listen();
-        onInvalidated(list.spacingProperty()).then(_ -> {
-            helper().invalidateRange();
-            onSpacingChanged();
-        }).listen();
+        onInvalidated(list.cellSizeProperty()).then(_ -> onCellSizeChanged()).listen();
+        onInvalidated(list.spacingProperty()).then(_ -> onSpacingChanged()).listen();
     }
 
     /// This core method is responsible for ensuring that the viewport always has the right number of cells.

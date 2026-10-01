@@ -98,48 +98,24 @@ public class VFXTableManager<T> {
     /// range, see [VFXTableHelper].
     protected void install() {
         // Geometry
-        onInvalidated(table.widthProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.HORIZONTAL);
-            onGeometryChanged(GeometryChangeType.WIDTH);
-        }).listen();
-        onInvalidated(table.heightProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.VERTICAL);
-            onGeometryChanged(GeometryChangeType.HEIGHT);
-        }).listen();
-        onInvalidated(table.columnsBufferSizeProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.HORIZONTAL);
-            onGeometryChanged(GeometryChangeType.OTHER);
-        }).listen();
-        onInvalidated(table.rowsBufferSizeProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.VERTICAL);
-            onGeometryChanged(GeometryChangeType.OTHER);
-        }).listen();
+        onInvalidated(table.widthProperty()).then(_ -> onGeometryChanged(GeometryChangeType.WIDTH)).listen();
+        onInvalidated(table.heightProperty()).then(_ -> onGeometryChanged(GeometryChangeType.HEIGHT)).listen();
+        onInvalidated(table.columnsBufferSizeProperty()).then(_ -> onGeometryChanged(GeometryChangeType.OTHER)).listen();
+        onInvalidated(table.rowsBufferSizeProperty()).then(_ -> onGeometryChanged(GeometryChangeType.OTHER)).listen();
         // Position
-        onInvalidated(table.hPosProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.HORIZONTAL);
-            onPositionChanged(Orientation.HORIZONTAL);
-        }).listen();
-        onInvalidated(table.vPosProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.VERTICAL);
-            onPositionChanged(Orientation.VERTICAL);
-        }).listen();
+        onInvalidated(table.hPosProperty()).then(_ -> onPositionChanged(Orientation.HORIZONTAL)).listen();
+        onInvalidated(table.vPosProperty()).then(_ -> onPositionChanged(Orientation.VERTICAL)).listen();
         // Others
         onInvalidated(table.itemsProperty()).then(_ -> onItemsChanged()).listen();
-        onChanged(table.columnsSizeProperty()).then((o, n) -> {
+        onChanged(table.columnsSizeProperty()).then((_, _) -> {
             helper().onColumnsSizeChanged();
-            if (o.width() != n.width()) helper().invalidateRange(Orientation.HORIZONTAL);
-            if (o.height() != n.height()) helper().invalidateRange(Orientation.VERTICAL);
             onColumnsSizeChanged();
         }).listen();
         onInvalidated(table.columnsFillPolicyProperty()).then(_ -> {
             helper().onFillPolicyChanged();
-            helper().invalidateRange(Orientation.HORIZONTAL);
             onFillPolicyChanged();
         }).listen();
-        onInvalidated(table.rowsHeightProperty()).then(_ -> {
-            helper().invalidateRange(Orientation.VERTICAL);
-            onRowsHeightChanged();
-        }).listen();
+        onInvalidated(table.rowsHeightProperty()).then(_ -> onRowsHeightChanged()).listen();
         onInvalidated(table.rowsFactoryProperty()).then(_ -> onRowsFactoryChanged()).listen();
     }
 
