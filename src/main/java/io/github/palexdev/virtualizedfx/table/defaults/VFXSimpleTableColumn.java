@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import io.github.palexdev.mfxcore.base.properties.styleable.StyleableBooleanProperty;
-import io.github.palexdev.mfxcore.base.properties.styleable.StyleableObjectProperty;
 import io.github.palexdev.mfxcore.controls.MFXSkinBase;
 import io.github.palexdev.mfxcore.utils.fx.StyleUtils;
 import io.github.palexdev.virtualizedfx.cells.base.VFXTableCell;
@@ -31,16 +30,20 @@ import io.github.palexdev.virtualizedfx.table.VFXTableColumn;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleablePropertyFactory;
-import javafx.geometry.HPos;
 import javafx.scene.Node;
+import javafx.scene.control.ContentDisplay;
 
 /// Concrete and simple implementation of [VFXTableColumn]. Has its own skin: [VFXSimpleTableColumnSkin].
 ///
 /// These are the features this implementation offers:
 ///
-/// - the [#graphicAlignmentProperty()] allows you to specify on which side of the text the column's graphic goes
+/// - the header's text and graphic can be arranged in several ways, through the column's [#alignmentProperty()], its
+///   [#contentDisplayProperty()] and the [#graphicDetachedProperty()]. See [VFXSimpleTableColumnSkin] for how they combine
 /// - the [#enableOverlayProperty()] makes the column display an extra node which can be used to indicate selection or hovering
 /// - the [#overlayOnHeaderProperty()] makes the aforementioned node cover the column's header too
+///
+/// The column starts with the graphic on the right of the text, [ContentDisplay#RIGHT], and a gap of 8 between the two.
+/// Both can be changed as usual, in code or in CSS.
 public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTableColumn<T, C> {
 
     //================================================================================
@@ -60,8 +63,9 @@ public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTable
     {
         // Prevent overlay from capturing mouse events on rows (mouse transparent is not enough)
         setPickOnBounds(false);
-        // Start with a wider gap by default
+        // Init defaults
         StyleUtils.initProperty(graphicTextGapProperty(), 8.0);
+        StyleUtils.initProperty(contentDisplayProperty(), ContentDisplay.RIGHT);
     }
 
     //================================================================================
@@ -77,11 +81,11 @@ public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTable
     // Styleable Properties
     //================================================================================
 
-    private final StyleableObjectProperty<HPos> graphicAlignment = new StyleableObjectProperty<>(
-        StyleableProperties.GRAPHIC_ALIGNMENT,
+    private final StyleableBooleanProperty graphicDetached = new StyleableBooleanProperty(
+        StyleableProperties.GRAPHIC_DETACHED,
         this,
-        "graphicAlignment",
-        HPos.RIGHT
+        "graphicDetached",
+        true
     );
 
     private final StyleableBooleanProperty enableOverlay = new StyleableBooleanProperty(
@@ -98,22 +102,23 @@ public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTable
         false
     );
 
-    public HPos getGraphicAlignment() {
-        return graphicAlignment.get();
+    public boolean isGraphicDetached() {
+        return graphicDetached.get();
     }
 
-    /// Specifies the side on which the graphic is placed, with respect to the text.
+    /// Specifies whether the graphic is detached from the text.
     ///
-    /// By setting the alignment to [HPos#CENTER] the default skin, [VFXSimpleTableColumnSkin], hides the text and
-    /// shows only the graphic at the center.
+    /// When detached, the default skin, [VFXSimpleTableColumnSkin], places the graphic at the edge of the column and
+    /// aligns the text on its own. Otherwise, the two stay together, one gap apart, and are aligned as a group.<br >
+    /// It only matters when both are shown, side by side. See the skin for the details.
     ///
-    /// Can be set in CSS via the property: '-vfx-graphic-alignment'.
-    public StyleableObjectProperty<HPos> graphicAlignmentProperty() {
-        return graphicAlignment;
+    /// Can be set in CSS via the property: '-vfx-graphic-detached'.
+    public StyleableBooleanProperty graphicDetachedProperty() {
+        return graphicDetached;
     }
 
-    public void setGraphicAlignment(HPos graphicAlignment) {
-        this.graphicAlignment.set(graphicAlignment);
+    public void setGraphicDetached(boolean graphicDetached) {
+        this.graphicDetached.set(graphicDetached);
     }
 
     public boolean isEnableOverlay() {
@@ -163,12 +168,11 @@ public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTable
         private static final StyleablePropertyFactory<VFXSimpleTableColumn<?, ?>> FACTORY = new StyleablePropertyFactory<>(VFXTableColumn.getClassCssMetaData());
         private static final List<CssMetaData<? extends Styleable, ?>> cssMetaDataList;
 
-        private static final CssMetaData<VFXSimpleTableColumn<?, ?>, HPos> GRAPHIC_ALIGNMENT =
-            FACTORY.createEnumCssMetaData(
-                HPos.class,
-                "-vfx-graphic-alignment",
-                VFXSimpleTableColumn::graphicAlignmentProperty,
-                HPos.RIGHT
+        private static final CssMetaData<VFXSimpleTableColumn<?, ?>, Boolean> GRAPHIC_DETACHED =
+            FACTORY.createBooleanCssMetaData(
+                "-vfx-graphic-detached",
+                VFXSimpleTableColumn::graphicDetachedProperty,
+                true
             );
 
         private static final CssMetaData<VFXSimpleTableColumn<?, ?>, Boolean> ENABLE_OVERLAY =
@@ -188,7 +192,7 @@ public class VFXSimpleTableColumn<T, C extends VFXTableCell<T>> extends VFXTable
         static {
             cssMetaDataList = StyleUtils.cssMetaDataList(
                 VFXTableColumn.getClassCssMetaData(),
-                GRAPHIC_ALIGNMENT, ENABLE_OVERLAY, OVERLAY_ON_HEADER
+                GRAPHIC_DETACHED, ENABLE_OVERLAY, OVERLAY_ON_HEADER
             );
         }
     }

@@ -30,13 +30,12 @@ import io.github.palexdev.mfxcore.utils.fx.CSSFragment;
 import io.github.palexdev.mfxcore.utils.fx.ColorUtils;
 import io.github.palexdev.virtualizedfx.base.VFXScrollable;
 import io.github.palexdev.virtualizedfx.controls.VFXScrollPane;
-import io.github.palexdev.virtualizedfx.table.defaults.VFXSimpleTableColumn;
 import io.github.palexdev.virtualizedfx.utils.ScrollParams;
 import javafx.application.Application;
-import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -78,8 +77,8 @@ public class ScrollTests extends Application {
         vc.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
             if (e.getButton() != MouseButton.SECONDARY) return;
             vc.columns().forEach(c -> {
-                HPos next = EnumUtils.next(HPos.class, ((VFXSimpleTableColumn) c).getGraphicAlignment());
-                ((VFXSimpleTableColumn) c).setGraphicAlignment(next);
+                ContentDisplay next = EnumUtils.next(ContentDisplay.class, c.getContentDisplay());
+                c.setContentDisplay(next);
             });
         });
 
